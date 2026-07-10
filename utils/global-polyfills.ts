@@ -196,32 +196,21 @@ Date.prototype.toLocaleString = function (
 };
 
 // 3. Monkey-patch Intl.NumberFormat
-// @ts-expect-error - Overriding native Intl constructor
-Intl.NumberFormat = function (locales?: string | string[], options?: Intl.NumberFormatOptions) {
-  const activeLocale = getActiveLocale(locales, 'numeral');
-  return new OriginalNumberFormat(activeLocale, options);
-};
-
-Object.defineProperty(Intl.NumberFormat, 'prototype', {
-  value: OriginalNumberFormat.prototype,
-});
-Object.defineProperty(Intl.NumberFormat, 'supportedLocalesOf', {
-  value: OriginalNumberFormat.supportedLocalesOf,
-});
+class NumberFormatOverride extends OriginalNumberFormat {
+  constructor(locales?: string | string[], options?: Intl.NumberFormatOptions) {
+    const activeLocale = getActiveLocale(locales, 'numeral');
+    super(activeLocale, options);
+  }
+}
+Intl.NumberFormat = NumberFormatOverride as unknown as typeof Intl.NumberFormat;
 
 // 4. Monkey-patch Intl.DateTimeFormat
-// @ts-expect-error - Overriding native Intl constructor
-Intl.DateTimeFormat = function (locales?: string | string[], options?: Intl.DateTimeFormatOptions) {
-  // Use numeral locale to ensure digits follow user preference
-  const activeLocale = getActiveLocale(locales, 'numeral');
-  return new OriginalDateTimeFormat(activeLocale, options);
-};
-
-Object.defineProperty(Intl.DateTimeFormat, 'prototype', {
-  value: OriginalDateTimeFormat.prototype,
-});
-Object.defineProperty(Intl.DateTimeFormat, 'supportedLocalesOf', {
-  value: OriginalDateTimeFormat.supportedLocalesOf,
-});
+class DateTimeFormatOverride extends OriginalDateTimeFormat {
+  constructor(locales?: string | string[], options?: Intl.DateTimeFormatOptions) {
+    const activeLocale = getActiveLocale(locales, 'numeral');
+    super(activeLocale, options);
+  }
+}
+Intl.DateTimeFormat = DateTimeFormatOverride as unknown as typeof Intl.DateTimeFormat;
 
 export {};

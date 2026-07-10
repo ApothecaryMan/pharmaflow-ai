@@ -7,7 +7,12 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import type { Branch, Employee } from '../../types';
 import { BANNER_STYLES, renderBanner } from '../../utils/banners';
 import { idGenerator } from '../../utils/idGenerator';
-import { INPUT_BASE, PROFILE_GLASS_CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import {
+  INPUT_BASE,
+  MODAL_FOOTER_BTN_CANCEL,
+  MODAL_FOOTER_BTN_PRIMARY,
+  PROFILE_GLASS_CARD_BASE,
+} from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { BUTTON_CLOSE_BASE, Modal } from '../common/Modal';
@@ -305,16 +310,10 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       }
       footer={
         <div className='flex items-center justify-end gap-3'>
-          <button
-            onClick={handleClose}
-            className={MODAL_FOOTER_BTN_CANCEL}
-          >
+          <button onClick={handleClose} className={MODAL_FOOTER_BTN_CANCEL}>
             {t.modal.cancel}
           </button>
-          <button
-            onClick={handleSave}
-            className={MODAL_FOOTER_BTN_PRIMARY}
-          >
+          <button onClick={handleSave} className={MODAL_FOOTER_BTN_PRIMARY}>
             {isSaving ? (
               <>
                 <span className='animate-spin rounded-full h-4 w-4 border-2 border-(--text-primary) border-t-transparent' />
@@ -349,7 +348,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   color: '#ec4899',
                   label: language === 'AR' ? 'نيون' : 'Synthwave',
                 },
-                { styleId: 'abstract', color: '#8b5cf6', label: language === 'AR' ? 'تجريدي' : 'Abstract' },
+                {
+                  styleId: 'abstract',
+                  color: '#8b5cf6',
+                  label: language === 'AR' ? 'تجريدي' : 'Abstract',
+                },
                 {
                   styleId: 'cyberhex',
                   color: '#10b981',

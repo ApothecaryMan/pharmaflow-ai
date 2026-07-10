@@ -543,9 +543,7 @@ export const intelligenceService = {
           product_name: getDisplayName({ name: item.name, dosageForm: item.dosageForm }),
           quantity: item.quantity,
           amount: money.multiply(
-            item.isUnit
-              ? money.divide(item.publicPrice, item.unitsPerPack || 1)
-              : item.publicPrice,
+            item.isUnit ? money.divide(item.publicPrice, item.unitsPerPack || 1) : item.publicPrice,
             item.quantity,
             0
           ),

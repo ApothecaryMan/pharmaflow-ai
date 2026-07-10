@@ -1,7 +1,7 @@
 import { supabase } from '../../../lib/supabase';
 import type { LoginAuditEntry } from '../../../types';
 
-const isValidUuid = (id: string | undefined | null) => 
+const isValidUuid = (id: string | undefined | null) =>
   id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null;
 
 export const auditRepository = {
@@ -37,7 +37,17 @@ export const auditRepository = {
     // Try to flush any previously queued entries first
     await this._flushQueue();
 
-    const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout', 'force_logout', 'switch_org', 'employee_logout'];
+    const allowedActions = [
+      'login',
+      'logout',
+      'switch_user',
+      'switch_branch',
+      'system_login',
+      'system_logout',
+      'force_logout',
+      'switch_org',
+      'employee_logout',
+    ];
     const safeAction = allowedActions.includes(entry.action) ? entry.action : 'login';
     const finalDetails = entry.details;
 
@@ -56,8 +66,12 @@ export const auditRepository = {
     if (error) {
       // Only queue for retry on network errors (5xx) or timeout.
       // Do NOT queue 400 (Bad Request), 42xxx (postgres errors like 42804), or 401/403 (Auth issues)
-      const shouldRetry = error.code && !error.code.startsWith('40') && !error.code.startsWith('42') && !error.message?.includes('JWT');
-      
+      const shouldRetry =
+        error.code &&
+        !error.code.startsWith('40') &&
+        !error.code.startsWith('42') &&
+        !error.message?.includes('JWT');
+
       if (shouldRetry) {
         this._pendingQueue.push(entry);
         console.debug('[AuditRepository] Queued audit log for later sync:', error.code);
@@ -80,7 +94,17 @@ export const auditRepository = {
 
     const results = await Promise.allSettled(
       batch.map((entry) => {
-        const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout', 'force_logout', 'switch_org', 'employee_logout'];
+        const allowedActions = [
+          'login',
+          'logout',
+          'switch_user',
+          'switch_branch',
+          'system_login',
+          'system_logout',
+          'force_logout',
+          'switch_org',
+          'employee_logout',
+        ];
         const safeAction = allowedActions.includes(entry.action) ? entry.action : 'login';
         const finalDetails = entry.details;
 
@@ -104,7 +128,11 @@ export const auditRepository = {
         this._pendingQueue.push(batch[i]);
       } else if (result.status === 'fulfilled' && result.value.error) {
         const error = result.value.error;
-        const shouldRetry = error.code && !error.code.startsWith('40') && !error.code.startsWith('42') && !error.message?.includes('JWT');
+        const shouldRetry =
+          error.code &&
+          !error.code.startsWith('40') &&
+          !error.code.startsWith('42') &&
+          !error.message?.includes('JWT');
         if (shouldRetry) {
           this._pendingQueue.push(batch[i]);
         }

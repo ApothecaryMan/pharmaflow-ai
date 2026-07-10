@@ -1,13 +1,16 @@
 import type React from 'react';
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
+import { supabase } from '../../lib/supabase';
+import {
+  sessionRepository,
+  type UserActiveSession,
+} from '../../services/auth/repositories/sessionRepository';
 import type { Employee, EmploymentRequest, UserProfile } from '../../types';
 import { DocumentsTab } from './tabs/DocumentsTab';
+import { EmployeeSessionsTab } from './tabs/EmployeeSessionsTab';
 import { HistoryTab } from './tabs/HistoryTab';
 import { ProfileTab } from './tabs/ProfileTab';
-import { EmployeeSessionsTab } from './tabs/EmployeeSessionsTab';
-import { supabase } from '../../lib/supabase';
-import { sessionRepository, type UserActiveSession } from '../../services/auth/repositories/sessionRepository';
-import { isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
 
 interface EmployeePortalProfileProps {
   profile: UserProfile | null;
@@ -59,20 +62,26 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   const [sessionsError, setSessionsError] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
-  const workspaceIdsString = workspaces.map(w => w.id).sort().join(',');
+  const workspaceIdsString = workspaces
+    .map((w) => w.id)
+    .sort()
+    .join(',');
 
-  const reloadSessions = useMemo(() => async () => {
-    try {
-      setLoadingSessions(true);
-      const data = await sessionRepository.getActiveSessions();
-      setSessions(data);
-    } catch (err) {
-      console.error(err);
-      setSessionsError(isRTL ? 'فشل تحميل الجلسات' : 'Failed to load sessions');
-    } finally {
-      setLoadingSessions(false);
-    }
-  }, [isRTL]);
+  const reloadSessions = useMemo(
+    () => async () => {
+      try {
+        setLoadingSessions(true);
+        const data = await sessionRepository.getActiveSessions();
+        setSessions(data);
+      } catch (err) {
+        console.error(err);
+        setSessionsError(isRTL ? 'فشل تحميل الجلسات' : 'Failed to load sessions');
+      } finally {
+        setLoadingSessions(false);
+      }
+    },
+    [isRTL]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -82,25 +91,49 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
 
     const employeeIds = workspaceIdsString ? workspaceIdsString.split(',') : [];
     const uniqueChannelName = `employee_sessions_changes_profile_${Math.random().toString(36).substring(7)}`;
-    
+
     let dbChannel = supabase.channel(uniqueChannelName);
 
     // Listen to their own portal sessions
-    dbChannel = dbChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions', filter: `user_id=eq.${profile.id}` }, () => {
-      sessionRepository.getActiveSessions().then(data => { if (isMounted) setSessions(data); });
-    });
+    dbChannel = dbChannel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'user_active_sessions',
+        filter: `user_id=eq.${profile.id}`,
+      },
+      () => {
+        sessionRepository.getActiveSessions().then((data) => {
+          if (isMounted) setSessions(data);
+        });
+      }
+    );
 
     // Listen to their POS sessions
     if (employeeIds.length > 0) {
-      dbChannel = dbChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions', filter: `employee_id=in.(${employeeIds.join(',')})` }, () => {
-        sessionRepository.getActiveSessions().then(data => { if (isMounted) setSessions(data); });
-      });
+      dbChannel = dbChannel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_active_sessions',
+          filter: `employee_id=in.(${employeeIds.join(',')})`,
+        },
+        () => {
+          sessionRepository.getActiveSessions().then((data) => {
+            if (isMounted) setSessions(data);
+          });
+        }
+      );
     }
 
     dbChannel.subscribe();
 
-    const tickInterval = setInterval(() => { if (isMounted) setTick(t => t + 1); }, 60_000);
-      
+    const tickInterval = setInterval(() => {
+      if (isMounted) setTick((t) => t + 1);
+    }, 60_000);
+
     return () => {
       isMounted = false;
       supabase.removeChannel(dbChannel);
@@ -115,18 +148,22 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     }
   }, [activeTab, reloadSessions]);
 
-  const employeeIds = useMemo(() => workspaces.map(w => w.id), [workspaces]);
+  const employeeIds = useMemo(() => workspaces.map((w) => w.id), [workspaces]);
 
-  const mySessions = useMemo(() => sessions.filter(session => {
-    if (!session.org_id || !session.branch_id) return false;
-    if (currentOrgId && session.org_id !== currentOrgId) return false;
-    if (currentBranchId && session.branch_id !== currentBranchId) return false;
-    if (session.user_id === profile?.id) return true;
-    if (session.employee_id && employeeIds.includes(session.employee_id)) return true;
-    return false;
-  }), [sessions, profile?.id, employeeIds, currentBranchId, currentOrgId]);
+  const mySessions = useMemo(
+    () =>
+      sessions.filter((session) => {
+        if (!session.org_id || !session.branch_id) return false;
+        if (currentOrgId && session.org_id !== currentOrgId) return false;
+        if (currentBranchId && session.branch_id !== currentBranchId) return false;
+        if (session.user_id === profile?.id) return true;
+        if (session.employee_id && employeeIds.includes(session.employee_id)) return true;
+        return false;
+      }),
+    [sessions, profile?.id, employeeIds, currentBranchId, currentOrgId]
+  );
 
-  const onlineCount = mySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
+  const onlineCount = mySessions.filter((session) => isSessionOnline(session.last_seen_at)).length;
   const offlineCount = mySessions.length - onlineCount;
 
   const tabs = useMemo(
@@ -134,7 +171,11 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
       { value: 'profile' as const, label: t.employeeProfile.profile, icon: 'person' },
       { value: 'history' as const, label: t.employeeProfile.workHistory, icon: 'work_history' },
       { value: 'documents' as const, label: t.employeeProfile.documents, icon: 'description' },
-      { value: 'sessions' as const, label: t.employeeProfile.sessions || 'Active Sessions', icon: 'devices' },
+      {
+        value: 'sessions' as const,
+        label: t.employeeProfile.sessions || 'Active Sessions',
+        icon: 'devices',
+      },
     ],
     [t]
   );
@@ -150,29 +191,44 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={`flex-1 sm:flex-none justify-center sm:justify-start flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 text-[13px] sm:text-sm font-medium transition-colors relative whitespace-nowrap !font-['GraphicSansFont'] ${
-                isActive 
-                  ? 'text-gray-900 dark:text-white' 
+                isActive
+                  ? 'text-gray-900 dark:text-white'
                   : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
-              style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              style={{
+                fontFeatureSettings:
+                  '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+              }}
             >
               <div className='flex items-center gap-0.5'>
                 <div className='relative flex items-center justify-center'>
-                  <span className='material-symbols-rounded text-[18px] sm:text-[20px]'>{tab.icon}</span>
+                  <span className='material-symbols-rounded text-[18px] sm:text-[20px]'>
+                    {tab.icon}
+                  </span>
                   {tab.value === 'sessions' && (onlineCount > 0 || offlineCount > 0) && (
                     <div className='absolute -top-2 -end-[-10px] flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-gray-100 dark:bg-[#25282c] ring-2 ring-white dark:ring-[#1a1c1e] shadow-sm min-h-[14px] z-10'>
                       {onlineCount > 0 && (
-                        <div className='flex items-center gap-0.5' title={isRTL ? 'متصل' : 'Online'}>
+                        <div
+                          className='flex items-center gap-0.5'
+                          title={isRTL ? 'متصل' : 'Online'}
+                        >
                           <span className='w-1.5 h-1.5 rounded-full bg-green-500 relative'>
                             <span className='absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75'></span>
                           </span>
-                          <span className='text-gray-800 dark:text-gray-200 font-bold text-[9px] leading-none mt-[1px]'>{onlineCount}</span>
+                          <span className='text-gray-800 dark:text-gray-200 font-bold text-[9px] leading-none mt-[1px]'>
+                            {onlineCount}
+                          </span>
                         </div>
                       )}
                       {offlineCount > 0 && (
-                        <div className='flex items-center gap-0.5' title={isRTL ? 'غير متصل' : 'Offline'}>
+                        <div
+                          className='flex items-center gap-0.5'
+                          title={isRTL ? 'غير متصل' : 'Offline'}
+                        >
                           <span className='w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500'></span>
-                          <span className='text-gray-800 dark:text-gray-200 font-bold text-[9px] leading-none mt-[1px]'>{offlineCount}</span>
+                          <span className='text-gray-800 dark:text-gray-200 font-bold text-[9px] leading-none mt-[1px]'>
+                            {offlineCount}
+                          </span>
                         </div>
                       )}
                     </div>

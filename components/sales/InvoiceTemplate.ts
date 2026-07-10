@@ -6,7 +6,7 @@
  */
 
 import { StorageKeys } from '../../config/storageKeys';
-import { type Sale } from '../../types';
+import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { printDocument } from '../../utils/printing';
 import { generateLayout2HTML } from './InvoiceLayout2';
@@ -108,7 +108,12 @@ export const INVOICE_DEFAULTS = {
  * @param opts - Optional configuration for the template
  * @returns Complete HTML string for the receipt
  */
-export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
+export function generateLayout1HTML(
+  sale: Sale,
+  opts: InvoiceTemplateOptions,
+  _lang?: string,
+  _defaults?: any
+): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
 
@@ -221,13 +226,13 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         ${
-          !opts.hideLogo ? (
-            opts.logoSvgCode
+          !opts.hideLogo
+            ? opts.logoSvgCode
               ? `<div class="store-logo" style="width: 40mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>`
               : opts.logoBase64
                 ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
                 : `<img src="/app_icon.svg" alt="Logo" class="store-logo" style="width: 60px;" />`
-          ) : ''
+            : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
@@ -441,14 +446,43 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
  * @param options - Optional template configuration
  */
 
-
 export const RECEIPT_TEMPLATES = [
   { id: 'layout-1', name: 'Standard (Default)', isPremium: false },
-  { id: 'layout-2', name: 'Modern Dark', isPremium: true, price: 9.99, description: 'A bold, modern look with an inverted header.' },
-  { id: 'layout-3', name: 'Compact Minimal', isPremium: true, price: 4.99, description: 'Saves thermal paper with tight spacing and smaller fonts.' },
-  { id: 'layout-4', name: 'Structured Grid', isPremium: true, price: 5.99, description: 'A highly organized table-based design for clear data separation.' },
-  { id: 'layout-5', name: 'Elegant Typography', isPremium: true, price: 6.99, description: 'Distinctive design using modern fonts for a premium feel.' },
-  { id: 'layout-6', name: 'Borderless Minimal', isPremium: true, price: 3.99, description: 'A completely clean, border-free design that organizes data using whitespace.' }
+  {
+    id: 'layout-2',
+    name: 'Modern Dark',
+    isPremium: true,
+    price: 9.99,
+    description: 'A bold, modern look with an inverted header.',
+  },
+  {
+    id: 'layout-3',
+    name: 'Compact Minimal',
+    isPremium: true,
+    price: 4.99,
+    description: 'Saves thermal paper with tight spacing and smaller fonts.',
+  },
+  {
+    id: 'layout-4',
+    name: 'Structured Grid',
+    isPremium: true,
+    price: 5.99,
+    description: 'A highly organized table-based design for clear data separation.',
+  },
+  {
+    id: 'layout-5',
+    name: 'Elegant Typography',
+    isPremium: true,
+    price: 6.99,
+    description: 'Distinctive design using modern fonts for a premium feel.',
+  },
+  {
+    id: 'layout-6',
+    name: 'Borderless Minimal',
+    isPremium: true,
+    price: 3.99,
+    description: 'A completely clean, border-free design that organizes data using whitespace.',
+  },
 ];
 
 export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {}): string {
@@ -471,9 +505,12 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
   return generateLayout1HTML(safeSale, opts);
 }
 
-export async function printInvoice(sale: Sale, options: InvoiceTemplateOptions = {}): Promise<void> {
+export async function printInvoice(
+  sale: Sale,
+  options: InvoiceTemplateOptions = {}
+): Promise<void> {
   const htmlContent = generateInvoiceHTML(sale, options);
-  
+
   await printDocument({
     html: htmlContent,
     width: 80,

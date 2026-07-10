@@ -9,11 +9,11 @@
  * the orientation/size handling are decided here once, consistently.
  */
 
-import { getPrinterSettings } from '../qzPrinter';
 import { printerService } from '../../services/infrastructure/printerService';
+import { isTauri } from '../platform';
+import { getPrinterSettings } from '../qzPrinter';
 import type { PrintOrientation } from './printShell';
 import { mmToPopupSize, openPrintWindow } from './printWindow';
-import { isTauri } from '../platform';
 
 export type PrintKind = 'label' | 'receipt';
 
@@ -60,19 +60,18 @@ export interface PrintDocumentOptions {
  *
  * Returns true if printed silently, false if the browser popup was used.
  */
-export const printDocument = async (
-  options: PrintDocumentOptions
-): Promise<boolean> => {
+export const printDocument = async (options: PrintDocumentOptions): Promise<boolean> => {
   const { html, width, height, kind, orientation, rawCommands } = options;
   const settings = printerService.getSettings();
-  const shouldTrySilent = 
-    (isTauri() && (settings.preferredInterface === 'auto' || settings.preferredInterface === 'tauri')) ||
+  const shouldTrySilent =
+    (isTauri() &&
+      (settings.preferredInterface === 'auto' || settings.preferredInterface === 'tauri')) ||
     (settings.enabled && settings.silentMode !== 'off');
 
   if (shouldTrySilent) {
     try {
       let printed = false;
-      
+
       if (rawCommands && rawCommands.length > 0 && kind === 'label') {
         // Raw printing bypasses HTML rendering
         printed = await printerService.printLabelRaw(rawCommands);
@@ -98,9 +97,7 @@ export const printDocument = async (
       // 'fallback' mode → fall through to browser popup.
     } catch (err: any) {
       if (settings.silentMode === 'on') {
-        alert(
-          `Silent printing failed: ${err?.message || 'Check QZ Tray connection'}.`
-        );
+        alert(`Silent printing failed: ${err?.message || 'Check QZ Tray connection'}.`);
         return false;
       }
       // 'fallback' → log and continue to browser popup.

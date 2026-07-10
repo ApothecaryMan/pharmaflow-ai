@@ -40,8 +40,18 @@
     bottom: calc(var(--statusbar-height) + var(--spacing-base)) !important;
     left: auto !important;
     width: var(--sidebar-modal-width, 512px) !important;
-    height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - calc(var(--spacing-base) * 2)) !important;
-    max-height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - calc(var(--spacing-base) * 2)) !important;
+    height: calc(
+      100vh -
+      var(--navbar-height) -
+      var(--statusbar-height) -
+      calc(var(--spacing-base) * 2)
+    ) !important;
+    max-height: calc(
+      100vh -
+      var(--navbar-height) -
+      var(--statusbar-height) -
+      calc(var(--spacing-base) * 2)
+    ) !important;
     border-radius: var(--radius-2xl, 16px) !important;
     border: 1px solid var(--border-divider) !important;
   }

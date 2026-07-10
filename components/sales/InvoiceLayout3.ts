@@ -1,8 +1,13 @@
-import { Sale } from '../../types';
-import { InvoiceTemplateOptions, INVOICE_DEFAULTS } from './InvoiceTemplate';
+import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 
-export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
+export function generateLayout3HTML(
+  sale: Sale,
+  opts: InvoiceTemplateOptions,
+  _lang?: string,
+  _defaults?: any
+): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
   const currentDefaults = INVOICE_DEFAULTS[lang];
@@ -96,12 +101,16 @@ export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         <span>ID:${sale.serialId || sale.id}</span>
         <span>${new Date(sale.date).toLocaleDateString('en-GB')} ${new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
       </div>
-      ${sale.saleType === 'delivery' ? `
+      ${
+        sale.saleType === 'delivery'
+          ? `
       <div style="text-align: center; margin: 4px 0;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block;">DELIVERY</span></div>
       ${sale.customerPhone ? `<div dir="ltr" style="text-align: center;">${sale.customerPhone}</div>` : ''}
       ${sale.customerAddress ? `<div dir="rtl" style="text-align: center;">${sale.customerAddress.replace(/\n/g, ' ')}</div>` : ''}
       ${sale.customerStreetAddress ? `<div dir="rtl" style="text-align: center;">${sale.customerStreetAddress.replace(/\n/g, ' ')}</div>` : ''}
-      ` : ''}
+      `
+          : ''
+      }
       <hr class="divider">
 
       <table>
@@ -109,7 +118,10 @@ export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         <tbody>
           ${(sale.items || [])
             .map((item) => {
-              const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
+              const effectivePrice =
+                item.isUnit && item.unitsPerPack
+                  ? item.publicPrice / item.unitsPerPack
+                  : item.publicPrice;
               const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
               return `
             <tr>
@@ -119,7 +131,8 @@ export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
               </td>
               <td class="right">${lineTotal.toFixed(2)}</td>
             </tr>`;
-            }).join('')}
+            })
+            .join('')}
         </tbody>
       </table>
       
@@ -157,7 +170,10 @@ export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
                       return true;
                     });
                     if (!item) return '';
-                    const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
+                    const effectivePrice =
+                      item.isUnit && item.unitsPerPack
+                        ? item.publicPrice / item.unitsPerPack
+                        : item.publicPrice;
                     const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
                     return `
           <div style="display: flex; justify-content: space-between;  margin: 1px 0;">

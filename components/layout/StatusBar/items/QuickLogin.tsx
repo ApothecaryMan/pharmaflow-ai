@@ -92,9 +92,7 @@ const LoginInputView: React.FC<{
         </>
       )}
 
-      <div
-        className='relative z-10 flex items-center h-full w-full gap-2'
-      >
+      <div className='relative z-10 flex items-center h-full w-full gap-2'>
         <span
           className={`material-symbols-rounded leading-none ${isError ? 'text-red-500' : ''}`}
           style={{ fontSize: 'var(--status-icon-size, 16px)' }}
@@ -360,12 +358,14 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
 
   if (!onSelectEmployee) {
     return (
-      <StatusBarItem
-        icon='person'
-        tooltip={roleLabel || userName}
-        variant='default'
-      >
-        <span className='!font-["GraphicSansFont"] tracking-tight pt-px' style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}>
+      <StatusBarItem icon='person' tooltip={roleLabel || userName} variant='default'>
+        <span
+          className='!font-["GraphicSansFont"] tracking-tight pt-px'
+          style={{
+            fontFeatureSettings:
+              '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+          }}
+        >
           {roleLabel ? `${userName} (${roleLabel})` : userName}
         </span>
       </StatusBarItem>
@@ -388,7 +388,13 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
             className='cursor-pointer hover:bg-black/5 dark:hover:bg-white/10'
           >
             {currentEmployeeId ? (
-              <span className='!font-["GraphicSansFont"] tracking-tight pt-px' style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}>
+              <span
+                className='!font-["GraphicSansFont"] tracking-tight pt-px'
+                style={{
+                  fontFeatureSettings:
+                    '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+                }}
+              >
                 {loginLabel}
               </span>
             ) : (

@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { PopupAlert } from '../../common/PopupAlert';
+import React, { useEffect, useRef, useState } from 'react';
 import type { UserRole } from '../../../config/permissions';
 import { permissionsService } from '../../../services/auth/permissionsService';
 import { pricingService } from '../../../services/sales/pricingService';
@@ -10,6 +9,7 @@ import {
   parseExpiryEndOfMonth,
 } from '../../../utils/expiryUtils';
 import { money, pricing } from '../../../utils/money';
+import { PopupAlert } from '../../common/PopupAlert';
 
 export interface CartItemExpiryBadgeProps {
   item: CartItem;
@@ -212,7 +212,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
 
   const [localPack, setLocalPack] = useState(formatQty(packItem?.quantity));
   const [localUnit, setLocalUnit] = useState(formatQty(unitItem?.quantity));
-  
+
   const [popupState, setPopupState] = useState<{
     isOpen: boolean;
     type: 'confirm' | 'warning' | 'info';
@@ -223,7 +223,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
     onConfirm?: () => void;
     onCancel?: () => void;
   }>({ isOpen: false, type: 'info', message: '' });
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setLocalPack(formatQty(packItem?.quantity)), [packItem?.quantity]);
@@ -274,7 +274,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
         message: t.stockLimitReached || 'لا يوجد رصيد كافي في المخزن لتلبية هذه الكمية',
         confirmText: 'حسناً',
         onConfirm: () => {
-          setPopupState(prev => ({ ...prev, isOpen: false }));
+          setPopupState((prev) => ({ ...prev, isOpen: false }));
           setLocal(formatQty(target?.quantity));
         },
       });
@@ -288,7 +288,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       : Math.floor(currentBatchStock / unitsPerPack);
 
     if (val > currentBatchMax) {
-      const currentCartQty = isUnit ? (unitItem?.quantity || 0) : (packItem?.quantity || 0);
+      const currentCartQty = isUnit ? unitItem?.quantity || 0 : packItem?.quantity || 0;
       const hasOtherBatchesInCart = cart.some(
         (i) => i.name === item.name && i.dosageForm === item.dosageForm && i.id !== item.id
       );
@@ -305,20 +305,22 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
           isOpen: true,
           type: 'confirm',
           title: 'توزيع باقي الكمية',
-          message: 'الكمية المطلوبة غير متوفرة بالكامل في هذه التشغيلة. هل تريد استكمال الباقي من التشغيلات الأخرى؟',
+          message:
+            'الكمية المطلوبة غير متوفرة بالكامل في هذه التشغيلة. هل تريد استكمال الباقي من التشغيلات الأخرى؟',
           confirmText: 'توزيع الباقي',
           cancelText: 'إلغاء',
           onConfirm: () => {
-            const newPackQty = isUnit ? (packItem?.quantity || 0) : val;
-            const newUnitQty = isUnit ? val : (unitItem?.quantity || 0);
-            const currentDrug = allBatches.find((b) => b.id === item.id) || (item as unknown as Drug);
+            const newPackQty = isUnit ? packItem?.quantity || 0 : val;
+            const newUnitQty = isUnit ? val : unitItem?.quantity || 0;
+            const currentDrug =
+              allBatches.find((b) => b.id === item.id) || (item as unknown as Drug);
             onSelectBatch(item, currentDrug, newPackQty, newUnitQty);
-            setPopupState(prev => ({ ...prev, isOpen: false }));
+            setPopupState((prev) => ({ ...prev, isOpen: false }));
           },
           onCancel: () => {
             setLocal(formatQty(target?.quantity));
-            setPopupState(prev => ({ ...prev, isOpen: false }));
-          }
+            setPopupState((prev) => ({ ...prev, isOpen: false }));
+          },
         });
         return;
       }
@@ -350,7 +352,9 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       const q = (isUnit ? unitItem : packItem)?.quantity || 0;
       const isMaxed = isUnit ? isUnitMaxed : isPackMaxed;
       return (
-        <div className={`flex items-center rounded-lg h-6 overflow-hidden ${isMaxed ? 'bg-red-50 dark:bg-red-900/20 ring-1 ring-red-500/50' : 'bg-black/[0.03] dark:bg-white/[0.05]'}`}>
+        <div
+          className={`flex items-center rounded-lg h-6 overflow-hidden ${isMaxed ? 'bg-red-50 dark:bg-red-900/20 ring-1 ring-red-500/50' : 'bg-black/[0.03] dark:bg-white/[0.05]'}`}
+        >
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -407,7 +411,10 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   }
 
   return (
-    <div ref={containerRef} className={`flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 border ${isAnyMaxed ? 'bg-red-50 dark:bg-red-900/20 border-red-500/50' : 'bg-black/[0.03] dark:bg-white/[0.05] border-gray-100/50 dark:border-white/5'} relative`}>
+    <div
+      ref={containerRef}
+      className={`flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 border ${isAnyMaxed ? 'bg-red-50 dark:bg-red-900/20 border-red-500/50' : 'bg-black/[0.03] dark:bg-white/[0.05] border-gray-100/50 dark:border-white/5'} relative`}
+    >
       <div className='flex-1 h-full flex items-center min-w-0'>
         <input
           type='number'
@@ -423,7 +430,9 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       </div>
       {hasDualMode && (
         <>
-          <div className={`w-px h-full shrink-0 ${isAnyMaxed ? 'bg-red-500/20' : 'bg-gray-100/50 dark:bg-white/5'}`} />
+          <div
+            className={`w-px h-full shrink-0 ${isAnyMaxed ? 'bg-red-500/20' : 'bg-gray-100/50 dark:bg-white/5'}`}
+          />
           <div className='flex-1 h-full flex items-center min-w-0'>
             <input
               type='number'

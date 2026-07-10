@@ -60,10 +60,18 @@ html:not(.dark).none-border-mode .card-shadow {
 *::before,
 *::after {
   transition:
-    color 0s, background-color 0s, border-color 0s,
-    outline-color 0s, text-decoration-color 0s, fill 0s, stroke 0s,
-    opacity 150ms, transform 150ms, box-shadow 150ms,
-    filter 150ms, backdrop-filter 150ms !important;
+    color 0s,
+    background-color 0s,
+    border-color 0s,
+    outline-color 0s,
+    text-decoration-color 0s,
+    fill 0s,
+    stroke 0s,
+    opacity 150ms,
+    transform 150ms,
+    box-shadow 150ms,
+    filter 150ms,
+    backdrop-filter 150ms !important;
 }
 
 /* Global animation/transition kill switch (overrides the permanent rule above) */

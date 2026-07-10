@@ -91,7 +91,7 @@ export const MicroSegmentedProgressCard = ({
   const percentage = Math.min(100, Math.max(0, (value / max) * 100));
   const overfillAmount = Math.max(0, value - max);
   const overfillPercentage = Math.min(100, (overfillAmount / (max * 0.1)) * 100);
-  
+
   let colorClass = 'bg-red-500';
   if (percentage >= 66) colorClass = 'bg-emerald-500';
   else if (percentage >= 33) colorClass = 'bg-amber-500';
@@ -100,19 +100,37 @@ export const MicroSegmentedProgressCard = ({
     <div className='flex items-center bg-gray-100 dark:bg-[#2A2A2A] rounded-full px-5 h-[40px] gap-4 w-fit border border-gray-200 dark:border-white/5 shadow-sm'>
       {/* Side Stat */}
       <div className='flex items-center justify-center gap-1.5 ltr:border-r rtl:border-l border-gray-300 dark:border-gray-700/80 ltr:pr-4 rtl:pl-4 h-5 whitespace-nowrap'>
-        <span className={`material-symbols-rounded text-[18px] ${overfillPercentage > 0 ? 'text-yellow-500' : 'text-red-500'}`}>target</span>
+        <span
+          className={`material-symbols-rounded text-[18px] ${overfillPercentage > 0 ? 'text-yellow-500' : 'text-red-500'}`}
+        >
+          target
+        </span>
         <div className='flex items-center gap-1'>
-          <span className={`text-[15px] leading-none font-bold tracking-tight ${sideStat.valueColor || 'text-gray-900 dark:text-white'}`}>{sideStat.value}</span>
-          {sideStat.targetValue && <span className='text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none'>/ {sideStat.targetValue}</span>}
+          <span
+            className={`text-[15px] leading-none font-bold tracking-tight ${sideStat.valueColor || 'text-gray-900 dark:text-white'}`}
+          >
+            {sideStat.value}
+          </span>
+          {sideStat.targetValue && (
+            <span className='text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none'>
+              / {sideStat.targetValue}
+            </span>
+          )}
         </div>
       </div>
-      
+
       {/* Main Content */}
       <div className='flex items-center min-w-[180px] w-full'>
         <div className='relative flex h-2.5 w-full rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800'>
-          <div style={{ width: `${percentage}%` }} className={`${colorClass} absolute ltr:left-0 rtl:right-0 top-0 h-full transition-all duration-300 ease-out`} />
+          <div
+            style={{ width: `${percentage}%` }}
+            className={`${colorClass} absolute ltr:left-0 rtl:right-0 top-0 h-full transition-all duration-300 ease-out`}
+          />
           {overfillPercentage > 0 && (
-            <div style={{ width: `${overfillPercentage}%` }} className={`bg-yellow-400 absolute ltr:left-0 rtl:right-0 top-0 h-full transition-all duration-300 ease-out shadow-[inset_0_0_8px_rgba(255,255,255,0.4)]`} />
+            <div
+              style={{ width: `${overfillPercentage}%` }}
+              className={`bg-yellow-400 absolute ltr:left-0 rtl:right-0 top-0 h-full transition-all duration-300 ease-out shadow-[inset_0_0_8px_rgba(255,255,255,0.4)]`}
+            />
           )}
         </div>
       </div>
@@ -679,17 +697,24 @@ export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({ color, t, langua
             max={100}
             sideStat={{
               value: `$${Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }).format(testProgress * 1000)}`,
-              valueColor: testProgress > 100 ? 'text-yellow-500' : testProgress >= 66 ? 'text-emerald-500' : testProgress >= 33 ? 'text-amber-500' : 'text-red-500',
+              valueColor:
+                testProgress > 100
+                  ? 'text-yellow-500'
+                  : testProgress >= 66
+                    ? 'text-emerald-500'
+                    : testProgress >= 33
+                      ? 'text-amber-500'
+                      : 'text-red-500',
               targetValue: `$100K`,
             }}
           />
-          <input 
-            type="range" 
-            min="0" 
-            max="200" 
-            value={testProgress} 
+          <input
+            type='range'
+            min='0'
+            max='200'
+            value={testProgress}
             onChange={(e) => setTestProgress(Number(e.target.value))}
-            className="w-32 accent-primary-500 cursor-pointer"
+            className='w-32 accent-primary-500 cursor-pointer'
           />
         </div>
       </section>

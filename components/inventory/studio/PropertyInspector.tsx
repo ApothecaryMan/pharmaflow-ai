@@ -2,9 +2,9 @@ import type React from 'react';
 import { useState } from 'react';
 import type { Drug } from '../../../types';
 import { CARD_BASE } from '../../../utils/themeStyles';
+import { FilterDropdown } from '../../common/FilterDropdown';
 import { SearchInput } from '../../common/SearchInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
-import { FilterDropdown } from '../../common/FilterDropdown';
 import { SidebarSection } from './SidebarSection';
 import type { LabelElement } from './types';
 
@@ -180,14 +180,10 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     }}
                     keyExtractor={(item) => item.id}
                     renderItem={(item) => (
-                      <span className='text-sm text-gray-700 dark:text-gray-300'>
-                        {item.name}
-                      </span>
+                      <span className='text-sm text-gray-700 dark:text-gray-300'>{item.name}</span>
                     )}
                     renderSelected={(item) => (
-                      <span className='text-sm text-gray-700 dark:text-gray-300'>
-                        {item?.name}
-                      </span>
+                      <span className='text-sm text-gray-700 dark:text-gray-300'>{item?.name}</span>
                     )}
                     variant='input'
                     color={color}

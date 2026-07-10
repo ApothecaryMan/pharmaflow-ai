@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useState } from 'react';
-import { useSettings } from '../../context/SettingsContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useTypography } from '../../context/TypographyContext';
 import { CARD_BASE } from '../../utils/themeStyles';
 
 export interface PerformanceGoalItem {
@@ -20,7 +21,8 @@ interface PerformanceGoalsCardProps {
 }
 
 export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ title, data = [] }) => {
-  const { darkMode: isDark, language } = useSettings();
+  const { darkMode: isDark } = useTheme();
+  const { language } = useTypography();
   const [legendLayout, setLegendLayout] = useState<'horizontal' | 'vertical'>('vertical');
 
   const isRTL = language === 'AR';

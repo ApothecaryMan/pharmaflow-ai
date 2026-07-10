@@ -189,8 +189,6 @@ export const batchService = {
     return allocations;
   },
 
-
-
   async getTotalStock(drugId: string, branchId?: string): Promise<number> {
     const batches = await this.getAllBatches(branchId, drugId);
     return batches.reduce((sum, b) => sum + b.quantity, 0);

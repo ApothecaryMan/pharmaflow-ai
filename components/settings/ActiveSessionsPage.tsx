@@ -1,15 +1,29 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { PageHeader } from '../common/PageHeader';
-import { Icons } from '../common/Icons';
-import { sessionRepository, type UserActiveSession } from '../../services/auth/repositories/sessionRepository';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getSessionStatus, isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
 import { supabase } from '../../lib/supabase';
-import { getDeviceName, getBrowserName, getSessionUserAgent, isDesktopAppUserAgent } from '../../utils/platform';
-import { formatDateWithRelativeLabel, getRelativeTime, getDurationMs, getDurationStr } from '../../utils/dateFormatter';
 import { authService } from '../../services/auth/authService';
+import {
+  sessionRepository,
+  type UserActiveSession,
+} from '../../services/auth/repositories/sessionRepository';
 import { employeeService } from '../../services/hr/employeeService';
-import { isSessionOnline, getSessionStatus } from '../../hooks/infrastructure/useSessionHeartbeat';
-import { Tooltip } from '../common/Tooltip';
+import {
+  formatDateWithRelativeLabel,
+  getDurationMs,
+  getDurationStr,
+  getRelativeTime,
+} from '../../utils/dateFormatter';
+import {
+  getBrowserName,
+  getDeviceName,
+  getSessionUserAgent,
+  isDesktopAppUserAgent,
+} from '../../utils/platform';
+import { Icons } from '../common/Icons';
+import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
+import { Tooltip } from '../common/Tooltip';
 
 interface ActiveSessionsPageProps {
   color?: string;
@@ -48,7 +62,8 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const currentUser = authService.getCurrentUserSync();
 
-  const currentUserAgent = typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
+  const currentUserAgent =
+    typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
 
   // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
   const [, setTick] = useState(0);
@@ -88,23 +103,27 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
         const data = await employeeService.getAll();
         setEmployees(data);
       } catch (err) {
-        console.error("Failed to load employees for sessions", err);
+        console.error('Failed to load employees for sessions', err);
       }
     };
     loadEmployees();
-    
+
     const uniqueChannelName = `active_sessions_changes_${Math.random().toString(36).substring(7)}`;
     const dbChannel = supabase
       .channel(uniqueChannelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions' }, () => {
-        sessionRepository.getActiveSessions(currentUser?.userId).then(setSessions);
-      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_active_sessions' },
+        () => {
+          sessionRepository.getActiveSessions(currentUser?.userId).then(setSessions);
+        }
+      )
       .subscribe();
 
     // Local tick every 60s — recalculates online/offline without DB calls.
     // Actual data updates come from the postgres_changes subscription above.
-    const tickInterval = setInterval(() => setTick(t => t + 1), 60_000);
-      
+    const tickInterval = setInterval(() => setTick((t) => t + 1), 60_000);
+
     return () => {
       supabase.removeChannel(dbChannel);
       clearInterval(tickInterval);
@@ -112,13 +131,20 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   }, [currentUser?.userId]);
 
   const handleLogout = async (sessionId: string) => {
-    setEndingSessions(prev => new Set(prev).add(sessionId));
+    setEndingSessions((prev) => new Set(prev).add(sessionId));
     try {
       const terminatorName = currentUser?.employeeName || 'Admin';
       await sessionRepository.logoutSession(sessionId, terminatorName);
-      const session = sessions.find(s => s.id === sessionId);
-      const targetEmp = session?.employee_id ? employees.find(e => e.id === session.employee_id) : null;
-      const targetName = targetEmp?.name || session?.employee_name || session?.user_name || session?.user_agent || 'Unknown';
+      const session = sessions.find((s) => s.id === sessionId);
+      const targetEmp = session?.employee_id
+        ? employees.find((e) => e.id === session.employee_id)
+        : null;
+      const targetName =
+        targetEmp?.name ||
+        session?.employee_name ||
+        session?.user_name ||
+        session?.user_agent ||
+        'Unknown';
       const targetCode = targetEmp?.employeeCode;
       const targetRole = targetEmp?.role || session?.role || 'unassigned';
       authService.logAuditEvent({
@@ -135,7 +161,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     } catch (err) {
       console.error('Failed to logout session', err);
     } finally {
-      setEndingSessions(prev => {
+      setEndingSessions((prev) => {
         const next = new Set(prev);
         next.delete(sessionId);
         return next;
@@ -148,17 +174,19 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     if (!window.confirm(confirmMsg)) return;
     setIsEndingAll(true);
     try {
-      const others = sessions.filter(s => s.user_agent !== currentUserAgent);
-      await Promise.all(others.map(async (s) => {
-        await sessionRepository.logoutSession(s.id, currentUser?.employeeName);
-        authService.logAuditEvent({
-          username: currentUser?.username || 'System',
-          role: currentUser?.role || 'unassigned',
-          branchId: s.branch_id || currentUser?.branchId || '',
-          action: 'force_logout',
-          details: `Session terminated by ${currentUser?.employeeName || 'Admin'}`,
-        });
-      }));
+      const others = sessions.filter((s) => s.user_agent !== currentUserAgent);
+      await Promise.all(
+        others.map(async (s) => {
+          await sessionRepository.logoutSession(s.id, currentUser?.employeeName);
+          authService.logAuditEvent({
+            username: currentUser?.username || 'System',
+            role: currentUser?.role || 'unassigned',
+            branchId: s.branch_id || currentUser?.branchId || '',
+            action: 'force_logout',
+            details: `Session terminated by ${currentUser?.employeeName || 'Admin'}`,
+          });
+        })
+      );
       await refreshSessions();
     } catch (err) {
       console.error('Failed to end other sessions', err);
@@ -169,7 +197,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc');
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc'));
     } else {
       setSortKey(key);
       setSortDir('asc');
@@ -181,16 +209,23 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
     const query = searchQuery.trim().toLowerCase();
     if (query) {
-      result = result.filter(session => {
-        const displayDeviceName = getDeviceName(session.user_agent || '', session.device_info || '');
+      result = result.filter((session) => {
+        const displayDeviceName = getDeviceName(
+          session.user_agent || '',
+          session.device_info || ''
+        );
         const displayBrowserName = getBrowserName(session.user_agent || '');
-        const sessionEmployee = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
+        const sessionEmployee = session.employee_id
+          ? employees.find((e) => e.id === session.employee_id)
+          : null;
         const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || '';
-        return displayDeviceName.toLowerCase().includes(query)
-          || displayBrowserName.toLowerCase().includes(query)
-          || (session.ip_address || '').toLowerCase().includes(query)
-          || sessionUserName.toLowerCase().includes(query)
-          || (session.user_id || '').toLowerCase().includes(query);
+        return (
+          displayDeviceName.toLowerCase().includes(query) ||
+          displayBrowserName.toLowerCase().includes(query) ||
+          (session.ip_address || '').toLowerCase().includes(query) ||
+          sessionUserName.toLowerCase().includes(query) ||
+          (session.user_id || '').toLowerCase().includes(query)
+        );
       });
     }
 
@@ -199,8 +234,8 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
         let cmp = 0;
         switch (sortKey) {
           case 'user': {
-            const empA = a.employee_id ? employees.find(e => e.id === a.employee_id) : null;
-            const empB = b.employee_id ? employees.find(e => e.id === b.employee_id) : null;
+            const empA = a.employee_id ? employees.find((e) => e.id === a.employee_id) : null;
+            const empB = b.employee_id ? employees.find((e) => e.id === b.employee_id) : null;
             const nameA = (empA?.name || empA?.en_name || '').toLowerCase();
             const nameB = (empB?.name || empB?.en_name || '').toLowerCase();
             cmp = nameA.localeCompare(nameB);
@@ -221,11 +256,12 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
           case 'started':
             cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             break;
-          case 'duration':
+          case 'duration': {
             const endA = a.logged_out_at || a.last_seen_at;
             const endB = b.logged_out_at || b.last_seen_at;
             cmp = getDurationMs(a.created_at, endA) - getDurationMs(b.created_at, endB);
             break;
+          }
           case 'ip':
             cmp = (a.ip_address || '').localeCompare(b.ip_address || '');
             break;
@@ -239,7 +275,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     }
 
     // Always pin the current device to the top
-    const currentIdx = result.findIndex(s => s.user_agent === currentUserAgent);
+    const currentIdx = result.findIndex((s) => s.user_agent === currentUserAgent);
     if (currentIdx > 0) {
       const [currentSession] = result.splice(currentIdx, 1);
       result.unshift(currentSession);
@@ -248,61 +284,92 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     return result;
   }, [sessions, searchQuery, sortKey, sortDir, employees, currentUserAgent]);
 
-  const hasOtherSessions = sessions.some(s => s.user_agent !== currentUserAgent);
+  const hasOtherSessions = sessions.some((s) => s.user_agent !== currentUserAgent);
 
-  const onlineCount = processedSessions.filter(s => isSessionOnline(s.last_seen_at)).length;
+  const onlineCount = processedSessions.filter((s) => isSessionOnline(s.last_seen_at)).length;
   const offlineCount = processedSessions.length - onlineCount;
-  const currentCount = processedSessions.filter(s => s.user_agent === currentUserAgent).length;
-  const staleCount = processedSessions.filter(s => {
+  const currentCount = processedSessions.filter((s) => s.user_agent === currentUserAgent).length;
+  const staleCount = processedSessions.filter((s) => {
     const age = Date.now() - new Date(s.created_at).getTime();
     return age > 86400000;
   }).length;
 
   const getSessionUserName = (session: UserActiveSession): string => {
-    const emp = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
+    const emp = session.employee_id ? employees.find((e) => e.id === session.employee_id) : null;
     return emp?.name || emp?.en_name || t.activeSessions.unassigned;
   };
 
-  const onlineSessions = processedSessions.filter(s => isSessionOnline(s.last_seen_at));
-  const offlineSessions = processedSessions.filter(s => !isSessionOnline(s.last_seen_at));
-  const staleSessions = processedSessions.filter(s => {
+  const onlineSessions = processedSessions.filter((s) => isSessionOnline(s.last_seen_at));
+  const offlineSessions = processedSessions.filter((s) => !isSessionOnline(s.last_seen_at));
+  const staleSessions = processedSessions.filter((s) => {
     const age = Date.now() - new Date(s.created_at).getTime();
     return age > 86400000;
   });
-  const currentSession = processedSessions.find(s => s.user_agent === currentUserAgent);
+  const currentSession = processedSessions.find((s) => s.user_agent === currentUserAgent);
 
-  const getPrevSession = useCallback((session: UserActiveSession): UserActiveSession | undefined => {
-    return sessions
-      .filter(s => s.created_at < session.created_at)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  }, [sessions]);
+  const getPrevSession = useCallback(
+    (session: UserActiveSession): UserActiveSession | undefined => {
+      return sessions
+        .filter((s) => s.created_at < session.created_at)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+    },
+    [sessions]
+  );
 
   const SortArrow = ({ columnKey }: { columnKey: SortKey }) => {
-    if (sortKey !== columnKey || !sortDir) return (
-      <span className='ml-1 rtl:mr-1 rtl:ml-0 w-4 inline-block text-gray-300 dark:text-gray-600'>
-        <svg width='10' height='12' viewBox='0 0 10 12' className='inline-block align-middle' fill='currentColor'>
-          <polygon points='5,1 9,5 1,5' opacity='0.4' />
-          <polygon points='5,11 9,7 1,7' opacity='0.4' />
-        </svg>
-      </span>
-    );
-    if (sortDir === 'asc') return (
-      <span className='ml-1 rtl:mr-1 rtl:ml-0 w-4 inline-block'>
-        <svg width='10' height='12' viewBox='0 0 10 12' className='inline-block align-middle' fill='currentColor'>
-          <polygon points='5,1 9,6 1,6' />
-        </svg>
-      </span>
-    );
+    if (sortKey !== columnKey || !sortDir)
+      return (
+        <span className='ml-1 rtl:mr-1 rtl:ml-0 w-4 inline-block text-gray-300 dark:text-gray-600'>
+          <svg
+            width='10'
+            height='12'
+            viewBox='0 0 10 12'
+            className='inline-block align-middle'
+            fill='currentColor'
+          >
+            <polygon points='5,1 9,5 1,5' opacity='0.4' />
+            <polygon points='5,11 9,7 1,7' opacity='0.4' />
+          </svg>
+        </span>
+      );
+    if (sortDir === 'asc')
+      return (
+        <span className='ml-1 rtl:mr-1 rtl:ml-0 w-4 inline-block'>
+          <svg
+            width='10'
+            height='12'
+            viewBox='0 0 10 12'
+            className='inline-block align-middle'
+            fill='currentColor'
+          >
+            <polygon points='5,1 9,6 1,6' />
+          </svg>
+        </span>
+      );
     return (
       <span className='ml-1 rtl:mr-1 rtl:ml-0 w-4 inline-block'>
-        <svg width='10' height='12' viewBox='0 0 10 12' className='inline-block align-middle' fill='currentColor'>
+        <svg
+          width='10'
+          height='12'
+          viewBox='0 0 10 12'
+          className='inline-block align-middle'
+          fill='currentColor'
+        >
           <polygon points='5,11 9,6 1,6' />
         </svg>
       </span>
     );
   };
 
-  const SortableTh = ({ columnKey, children, className = '' }: { columnKey: SortKey; children: React.ReactNode; className?: string }) => (
+  const SortableTh = ({
+    columnKey,
+    children,
+    className = '',
+  }: {
+    columnKey: SortKey;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
     <th
       className={`${className} cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
       onClick={() => handleSort(columnKey)}
@@ -323,98 +390,139 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
           ) : (
             <>
               <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 flex-shrink-0'>
-                <h2 
+                <h2
                   className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
-                  style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+                  style={{
+                    fontFeatureSettings:
+                      '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+                  }}
                 >
                   {t.activeSessions.title}
                 </h2>
                 <div className='flex flex-wrap items-center gap-2'>
-                  <Tooltip content={
-                    <div className='whitespace-normal text-[11px] font-semibold'>
-                      {processedSessions.length} {t.activeSessions.sessionsCount} · {onlineCount} {t.activeSessions.online} · {offlineCount} {t.activeSessions.offline}{staleCount > 0 ? ` · ${staleCount} ${t.activeSessions.stale}` : ''}
+                  <Tooltip
+                    content={
+                      <div className='whitespace-normal text-[11px] font-semibold'>
+                        {processedSessions.length} {t.activeSessions.sessionsCount} · {onlineCount}{' '}
+                        {t.activeSessions.online} · {offlineCount} {t.activeSessions.offline}
+                        {staleCount > 0 ? ` · ${staleCount} ${t.activeSessions.stale}` : ''}
+                      </div>
+                    }
+                    position='bottom'
+                  >
+                    <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium'>
+                      <span>{processedSessions.length}</span>
+                      <span>{t.activeSessions.activeCount}</span>
                     </div>
-                  } position='bottom'>
-                  <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium'>
-                    <span>{processedSessions.length}</span>
-                    <span>{t.activeSessions.activeCount}</span>
-                  </div>
                   </Tooltip>
 
                   {onlineCount > 0 && (
-                    <Tooltip content={
-                      <div className='whitespace-normal text-[11px] font-semibold space-y-1'>
-                        {onlineSessions.map(s => (
-                          <div key={s.id} className='flex items-center gap-1'>
-                            <span className='w-1 h-1 rounded-full bg-green-400 inline-block' />
-                            {getSessionUserName(s)}{s.user_agent === currentUserAgent ? ` (${t.activeSessions.thisDevice})` : ''}
-                          </div>
-                        ))}
+                    <Tooltip
+                      content={
+                        <div className='whitespace-normal text-[11px] font-semibold space-y-1'>
+                          {onlineSessions.map((s) => (
+                            <div key={s.id} className='flex items-center gap-1'>
+                              <span className='w-1 h-1 rounded-full bg-green-400 inline-block' />
+                              {getSessionUserName(s)}
+                              {s.user_agent === currentUserAgent
+                                ? ` (${t.activeSessions.thisDevice})`
+                                : ''}
+                            </div>
+                          ))}
+                        </div>
+                      }
+                      position='bottom'
+                    >
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium'>
+                        <span className='w-1.5 h-1.5 rounded-full bg-green-500 inline-block' />
+                        <span>{onlineCount}</span>
+                        <span>{t.activeSessions.online}</span>
                       </div>
-                    } position='bottom'>
-                    <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium'>
-                      <span className='w-1.5 h-1.5 rounded-full bg-green-500 inline-block' />
-                      <span>{onlineCount}</span>
-                      <span>{t.activeSessions.online}</span>
-                    </div>
                     </Tooltip>
                   )}
 
                   {offlineCount > 0 && (
-                    <Tooltip content={
-                      <div className='whitespace-normal text-[11px] font-semibold space-y-1'>
-                        {offlineSessions.map(s => (
-                          <div key={s.id} className='flex items-center gap-1'>
-                            <span className='w-1 h-1 rounded-full bg-gray-400 inline-block' />
-                            {getSessionUserName(s)} · {getRelativeTime(s.last_seen_at, language) || formatDateWithRelativeLabel(s.last_seen_at, language).label}
-                          </div>
-                        ))}
+                    <Tooltip
+                      content={
+                        <div className='whitespace-normal text-[11px] font-semibold space-y-1'>
+                          {offlineSessions.map((s) => (
+                            <div key={s.id} className='flex items-center gap-1'>
+                              <span className='w-1 h-1 rounded-full bg-gray-400 inline-block' />
+                              {getSessionUserName(s)} ·{' '}
+                              {getRelativeTime(s.last_seen_at, language) ||
+                                formatDateWithRelativeLabel(s.last_seen_at, language).label}
+                            </div>
+                          ))}
+                        </div>
+                      }
+                      position='bottom'
+                    >
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium'>
+                        <span className='w-1.5 h-1.5 rounded-full bg-gray-400 inline-block' />
+                        <span>{offlineCount}</span>
+                        <span>{t.activeSessions.offline}</span>
                       </div>
-                    } position='bottom'>
-                    <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium'>
-                      <span className='w-1.5 h-1.5 rounded-full bg-gray-400 inline-block' />
-                      <span>{offlineCount}</span>
-                      <span>{t.activeSessions.offline}</span>
-                    </div>
                     </Tooltip>
                   )}
 
                   {currentCount > 0 && (
-                    <Tooltip content={
-                      <div className='whitespace-normal text-[11px] font-semibold'>
-                        {currentSession ? `${getDeviceName(currentSession.user_agent || '', currentSession.device_info || '')} · ${getBrowserName(currentSession.user_agent || '')}` : ''}
-                        <br />{t.activeSessions.yourCurrentDevice}
+                    <Tooltip
+                      content={
+                        <div className='whitespace-normal text-[11px] font-semibold'>
+                          {currentSession
+                            ? `${getDeviceName(currentSession.user_agent || '', currentSession.device_info || '')} · ${getBrowserName(currentSession.user_agent || '')}`
+                            : ''}
+                          <br />
+                          {t.activeSessions.yourCurrentDevice}
+                        </div>
+                      }
+                      position='bottom'
+                    >
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium'>
+                        <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
+                          <circle cx='5' cy='5' r='4' />
+                        </svg>
+                        <span>{currentCount}</span>
+                        <span>{t.activeSessions.current}</span>
                       </div>
-                    } position='bottom'>
-                    <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium'>
-                      <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
-                        <circle cx='5' cy='5' r='4' />
-                      </svg>
-                      <span>{currentCount}</span>
-                      <span>{t.activeSessions.current}</span>
-                    </div>
                     </Tooltip>
                   )}
 
                   {staleCount > 0 && (
-                    <Tooltip content={
-                      <div className='whitespace-normal text-[11px] font-semibold space-y-1'>
-                        <div className='opacity-70 text-[10px]'>{t.activeSessions.runningMoreThan24h}:</div>
-                        {staleSessions.map(s => {
-                          const end = s.logged_out_at || s.last_seen_at;
-                          const dur = getDurationStr(s.created_at, end, language === 'AR' ? 'AR' : 'EN');
-                          return <div key={s.id} className='flex items-center gap-1'><span className='w-1 h-1 rounded-full bg-amber-400 inline-block' />{getSessionUserName(s)} · {dur}</div>;
-                        })}
-                        <div className='opacity-70 text-[10px] pt-1 border-t border-white/20 dark:border-black/20 mt-1'>{t.activeSessions.considerEndingStale}</div>
+                    <Tooltip
+                      content={
+                        <div className='whitespace-normal text-[11px] font-semibold space-y-1'>
+                          <div className='opacity-70 text-[10px]'>
+                            {t.activeSessions.runningMoreThan24h}:
+                          </div>
+                          {staleSessions.map((s) => {
+                            const end = s.logged_out_at || s.last_seen_at;
+                            const dur = getDurationStr(
+                              s.created_at,
+                              end,
+                              language === 'AR' ? 'AR' : 'EN'
+                            );
+                            return (
+                              <div key={s.id} className='flex items-center gap-1'>
+                                <span className='w-1 h-1 rounded-full bg-amber-400 inline-block' />
+                                {getSessionUserName(s)} · {dur}
+                              </div>
+                            );
+                          })}
+                          <div className='opacity-70 text-[10px] pt-1 border-t border-white/20 dark:border-black/20 mt-1'>
+                            {t.activeSessions.considerEndingStale}
+                          </div>
+                        </div>
+                      }
+                      position='bottom'
+                    >
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium'>
+                        <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
+                          <circle cx='5' cy='5' r='4' />
+                        </svg>
+                        <span>{staleCount}</span>
+                        <span>{t.activeSessions.stale}</span>
                       </div>
-                    } position='bottom'>
-                    <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium'>
-                      <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
-                        <circle cx='5' cy='5' r='4' />
-                      </svg>
-                      <span>{staleCount}</span>
-                      <span>{t.activeSessions.stale}</span>
-                    </div>
                     </Tooltip>
                   )}
                 </div>
@@ -428,25 +536,30 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     wrapperClassName='w-full'
                   />
 
-                  <Tooltip content={
-                    <div className='whitespace-normal text-[11px] font-semibold'>
-                      {t.activeSessions.refresh}
-                    </div>
-                  } position='bottom'>
-                  <button
-                    onClick={refreshSessions}
-                    disabled={refreshing}
-                    className='p-2 border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
+                  <Tooltip
+                    content={
+                      <div className='whitespace-normal text-[11px] font-semibold'>
+                        {t.activeSessions.refresh}
+                      </div>
+                    }
+                    position='bottom'
                   >
-                    <svg
-                      className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`}
-                      fill='none' stroke='currentColor' viewBox='0 0 24 24'
+                    <button
+                      onClick={refreshSessions}
+                      disabled={refreshing}
+                      className='p-2 border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
                     >
-                      <polyline points='23 4 23 10 17 10' />
-                      <polyline points='1 20 1 14 7 14' />
-                      <path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15' />
-                    </svg>
-                  </button>
+                      <svg
+                        className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`}
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <polyline points='23 4 23 10 17 10' />
+                        <polyline points='1 20 1 14 7 14' />
+                        <path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15' />
+                      </svg>
+                    </button>
                   </Tooltip>
 
                   {hasOtherSessions && (
@@ -455,9 +568,21 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       disabled={isEndingAll}
                       className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0'
                     >
-                      {isEndingAll && <div className='animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-red-700 dark:border-red-300'></div>}
-                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
+                      {isEndingAll && (
+                        <div className='animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-red-700 dark:border-red-300'></div>
+                      )}
+                      <svg
+                        className='w-4 h-4'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'
+                        />
                       </svg>
                       <span className='hidden sm:inline'>{t.activeSessions.endAllOthers}</span>
                     </button>
@@ -466,289 +591,421 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
               </div>
 
               <div className='flex-1 overflow-y-auto md:bg-(--bg-card) md:border border-(--border-divider)'>
-                {(loading || refreshing) ? (
+                {loading || refreshing ? (
                   <div className='flex items-center justify-center min-h-[400px]'>
                     <div className='animate-spin rounded-full h-10 w-10 border-4 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
                   </div>
                 ) : (
                   <table className='w-full text-sm text-left rtl:text-right block md:table'>
                     <thead className='hidden md:table-header-group md:sticky md:top-0 z-10 text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400'>
-                    <tr>
-                      <SortableTh columnKey='user' className='px-6 py-4 font-medium'>{t.activeSessions.sort.user}</SortableTh>
-                      <SortableTh columnKey='device' className='px-6 py-4 font-medium'>{t.activeSessions.sort.device}</SortableTh>
-                      <SortableTh columnKey='browser' className='px-6 py-4 font-medium'>{t.activeSessions.sort.browser}</SortableTh>
-                      <SortableTh columnKey='started' className='px-6 py-4 font-medium'>{t.activeSessions.sort.started}</SortableTh>
-                      <SortableTh columnKey='duration' className='px-6 py-4 font-medium'>{t.activeSessions.sort.duration}</SortableTh>
-                      <SortableTh columnKey='ip' className='px-6 py-4 font-medium'>{t.activeSessions.sort.ip}</SortableTh>
-                      <SortableTh columnKey='lastSeen' className='px-6 py-4 font-medium'>{t.activeSessions.sort.lastSeen}</SortableTh>
-                      <th className='px-6 py-4 text-center font-medium'>{t.activeSessions.action}</th>
-                    </tr>
-                  </thead>
-                  <tbody className='block md:table-row-group space-y-4 md:space-y-0 md:divide-y divide-(--border-divider)'>
-                    {processedSessions.length === 0 ? (
-                      <tr className='block md:table-row md:h-[72px]'>
-                        <td colSpan={8} className='block md:table-cell px-6 py-8 text-center text-gray-500 md:h-[72px] md:align-middle'>
-                          {searchQuery
-                            ? t.activeSessions.noSearchResults
-                            : t.activeSessions.noActiveSessions}
-                        </td>
+                      <tr>
+                        <SortableTh columnKey='user' className='px-6 py-4 font-medium'>
+                          {t.activeSessions.sort.user}
+                        </SortableTh>
+                        <SortableTh columnKey='device' className='px-6 py-4 font-medium'>
+                          {t.activeSessions.sort.device}
+                        </SortableTh>
+                        <SortableTh columnKey='browser' className='px-6 py-4 font-medium'>
+                          {t.activeSessions.sort.browser}
+                        </SortableTh>
+                        <SortableTh columnKey='started' className='px-6 py-4 font-medium'>
+                          {t.activeSessions.sort.started}
+                        </SortableTh>
+                        <SortableTh columnKey='duration' className='px-6 py-4 font-medium'>
+                          {t.activeSessions.sort.duration}
+                        </SortableTh>
+                        <SortableTh columnKey='ip' className='px-6 py-4 font-medium'>
+                          {t.activeSessions.sort.ip}
+                        </SortableTh>
+                        <SortableTh columnKey='lastSeen' className='px-6 py-4 font-medium'>
+                          {t.activeSessions.sort.lastSeen}
+                        </SortableTh>
+                        <th className='px-6 py-4 text-center font-medium'>
+                          {t.activeSessions.action}
+                        </th>
                       </tr>
-                    ) : (
-                      processedSessions.map((session) => {
-                        const displayDeviceName = getDeviceName(session.user_agent || '', session.device_info || '');
-                        const displayBrowserName = getBrowserName(session.user_agent || '');
-                        const isDesktopAppSession = isDesktopAppUserAgent(session.user_agent || '');
-                        
-                        const sessionEmployee = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
-                        const hasEmployee = !!sessionEmployee;
-                        const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || t.activeSessions.unassigned;
-                        const sessionUserImage = sessionEmployee?.image || null;
-                        const status = getSessionStatus(session.last_seen_at);
-                        
-                        let IconComponent = Icons.Desktop;
-                        let iconColor = 'text-primary-600';
-                        let iconBg = 'bg-primary-50 dark:bg-primary-900/20';
+                    </thead>
+                    <tbody className='block md:table-row-group space-y-4 md:space-y-0 md:divide-y divide-(--border-divider)'>
+                      {processedSessions.length === 0 ? (
+                        <tr className='block md:table-row md:h-[72px]'>
+                          <td
+                            colSpan={8}
+                            className='block md:table-cell px-6 py-8 text-center text-gray-500 md:h-[72px] md:align-middle'
+                          >
+                            {searchQuery
+                              ? t.activeSessions.noSearchResults
+                              : t.activeSessions.noActiveSessions}
+                          </td>
+                        </tr>
+                      ) : (
+                        processedSessions.map((session) => {
+                          const displayDeviceName = getDeviceName(
+                            session.user_agent || '',
+                            session.device_info || ''
+                          );
+                          const displayBrowserName = getBrowserName(session.user_agent || '');
+                          const isDesktopAppSession = isDesktopAppUserAgent(
+                            session.user_agent || ''
+                          );
 
-                        if (displayDeviceName.includes('Android')) {
-                          IconComponent = Icons.Android;
-                          iconColor = 'text-green-600';
-                        } else if (displayDeviceName.includes('iPhone') || displayDeviceName.includes('iPad') || displayDeviceName.includes('Mac')) {
-                          IconComponent = Icons.Apple;
-                          iconColor = 'text-gray-600 dark:text-gray-300';
-                        } else if (displayDeviceName.includes('Windows')) {
-                          IconComponent = Icons.Windows;
-                          iconColor = 'text-blue-600';
-                        } else if (displayDeviceName.includes('Linux') || displayDeviceName.includes('Ubuntu')) {
-                          IconComponent = Icons.Linux;
-                          iconColor = 'text-orange-600';
-                        }
+                          const sessionEmployee = session.employee_id
+                            ? employees.find((e) => e.id === session.employee_id)
+                            : null;
+                          const hasEmployee = !!sessionEmployee;
+                          const sessionUserName =
+                            sessionEmployee?.name ||
+                            sessionEmployee?.en_name ||
+                            t.activeSessions.unassigned;
+                          const sessionUserImage = sessionEmployee?.image || null;
+                          const status = getSessionStatus(session.last_seen_at);
 
-                        const relativeTime = status === 'online' ? '' : getRelativeTime(session.last_seen_at, language);
-                        const startedInfo = formatDateWithRelativeLabel(session.created_at, language);
-                        const lastSeenInfo = formatDateWithRelativeLabel(session.last_seen_at, language);
-                        const sessionEnd = session.logged_out_at || session.last_seen_at;
-                        const durationStr = getDurationStr(session.created_at, sessionEnd, language);
-                        
-                        const isCurrentDevice = session.user_agent === currentUserAgent;
-                        
-                      return (
-                      <tr key={session.id} className={`block md:table-row rounded-xl md:rounded-none md:h-[72px] border border-(--border-divider) md:border-none bg-(--bg-card) md:bg-transparent ${isCurrentDevice ? 'md:bg-gray-50 md:dark:bg-gray-800/60' : ''}`}>
-                        <td className='block md:table-cell px-4 pt-4 pb-2 md:px-6 md:h-[72px] md:align-middle'>
-                          <div className='group relative'>
-                            <div className='flex items-center gap-3'>
-                              <div className="relative shrink-0">
-                                  {sessionUserImage ? (
-                                  <img src={sessionUserImage} alt={sessionUserName} className={`w-8 h-8 rounded-full object-cover ${status === 'online' ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : status === 'stale' ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'}`} />
-                                ) : (
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${status === 'online' ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : status === 'stale' ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'} ${
-                                    hasEmployee 
-                                      ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' 
-                                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                                  }`}>
-                                    {hasEmployee ? sessionUserName.charAt(0).toUpperCase() : '?'}
+                          let IconComponent = Icons.Desktop;
+                          let iconColor = 'text-primary-600';
+                          const iconBg = 'bg-primary-50 dark:bg-primary-900/20';
+
+                          if (displayDeviceName.includes('Android')) {
+                            IconComponent = Icons.Android;
+                            iconColor = 'text-green-600';
+                          } else if (
+                            displayDeviceName.includes('iPhone') ||
+                            displayDeviceName.includes('iPad') ||
+                            displayDeviceName.includes('Mac')
+                          ) {
+                            IconComponent = Icons.Apple;
+                            iconColor = 'text-gray-600 dark:text-gray-300';
+                          } else if (displayDeviceName.includes('Windows')) {
+                            IconComponent = Icons.Windows;
+                            iconColor = 'text-blue-600';
+                          } else if (
+                            displayDeviceName.includes('Linux') ||
+                            displayDeviceName.includes('Ubuntu')
+                          ) {
+                            IconComponent = Icons.Linux;
+                            iconColor = 'text-orange-600';
+                          }
+
+                          const relativeTime =
+                            status === 'online'
+                              ? ''
+                              : getRelativeTime(session.last_seen_at, language);
+                          const startedInfo = formatDateWithRelativeLabel(
+                            session.created_at,
+                            language
+                          );
+                          const lastSeenInfo = formatDateWithRelativeLabel(
+                            session.last_seen_at,
+                            language
+                          );
+                          const sessionEnd = session.logged_out_at || session.last_seen_at;
+                          const durationStr = getDurationStr(
+                            session.created_at,
+                            sessionEnd,
+                            language
+                          );
+
+                          const isCurrentDevice = session.user_agent === currentUserAgent;
+
+                          return (
+                            <tr
+                              key={session.id}
+                              className={`block md:table-row rounded-xl md:rounded-none md:h-[72px] border border-(--border-divider) md:border-none bg-(--bg-card) md:bg-transparent ${isCurrentDevice ? 'md:bg-gray-50 md:dark:bg-gray-800/60' : ''}`}
+                            >
+                              <td className='block md:table-cell px-4 pt-4 pb-2 md:px-6 md:h-[72px] md:align-middle'>
+                                <div className='group relative'>
+                                  <div className='flex items-center gap-3'>
+                                    <div className='relative shrink-0'>
+                                      {sessionUserImage ? (
+                                        <img
+                                          src={sessionUserImage}
+                                          alt={sessionUserName}
+                                          className={`w-8 h-8 rounded-full object-cover ${status === 'online' ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : status === 'stale' ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'}`}
+                                        />
+                                      ) : (
+                                        <div
+                                          className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${status === 'online' ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : status === 'stale' ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'} ${
+                                            hasEmployee
+                                              ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                          }`}
+                                        >
+                                          {hasEmployee
+                                            ? sessionUserName.charAt(0).toUpperCase()
+                                            : '?'}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className='flex flex-col min-w-0'>
+                                      <span
+                                        className={`font-medium truncate ${hasEmployee ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 italic'}`}
+                                      >
+                                        {sessionUserName}
+                                      </span>
+                                      <div className='md:hidden mt-0.5 text-xs'>
+                                        {status === 'online' ? (
+                                          <span className='text-green-600 dark:text-green-400 font-medium'>
+                                            {t.activeSessions.onlineNow}
+                                          </span>
+                                        ) : status === 'stale' ? (
+                                          <span className='text-amber-600 dark:text-amber-400 font-medium'>
+                                            {language === 'AR' ? 'غادر لتوه' : 'Just left'} ·{' '}
+                                            {lastSeenInfo.time}
+                                          </span>
+                                        ) : (
+                                          <span className='text-gray-500'>
+                                            {relativeTime ? relativeTime : lastSeenInfo.label}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                              <div className='flex flex-col min-w-0'>
-                                <span className={`font-medium truncate ${hasEmployee ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 italic'}`}>
-                                  {sessionUserName}
-                                </span>
-                                <div className='md:hidden mt-0.5 text-xs'>
-                                  {status === 'online' ? (
-                                    <span className='text-green-600 dark:text-green-400 font-medium'>
-                                      {t.activeSessions.onlineNow}
-                                    </span>
-                                  ) : status === 'stale' ? (
-                                    <span className='text-amber-600 dark:text-amber-400 font-medium'>
-                                      {language === 'AR' ? 'غادر لتوه' : 'Just left'} · {lastSeenInfo.time}
-                                    </span>
-                                  ) : (
-                                    <span className='text-gray-500'>
-                                      {relativeTime ? relativeTime : lastSeenInfo.label}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
 
-                            {(() => {
-                              const prevSession = getPrevSession(session);
-                              const startedLabel = formatDateWithRelativeLabel(session.created_at, language);
-                              return (
-                                <div className={`absolute ${language === 'AR' ? 'right-0' : 'left-0'} top-full pt-1.5 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none`}>
-                                  <div className='bg-(--bg-card) border border-(--border-divider) rounded-lg shadow-xl p-3 min-w-[240px] space-y-2'>
-                                    <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                                      {t.activeSessions.sessionInfo}
-                                    </div>
-                                    <div className='text-xs text-gray-600 dark:text-gray-400'>
-                                      {t.activeSessions.loggedIn} {getRelativeTime(session.created_at, language) || startedLabel.label} · {startedLabel.time}
-                                    </div>
-                                    <div className='text-xs text-gray-500 dark:text-gray-400'>
-                                      {getDeviceName(session.user_agent || '', session.device_info || '')} · {getBrowserName(session.user_agent || '')}
-                                    </div>
-
-                                    {prevSession && (() => {
-                                      const prevEmp = prevSession.employee_id ? employees.find(e => e.id === prevSession.employee_id) : null;
-                                      const prevName = prevEmp?.name || prevEmp?.en_name || t.activeSessions.unassigned;
-                                      const prevImg = prevEmp?.image || null;
-                                      const prevStartedLabel = formatDateWithRelativeLabel(prevSession.created_at, language);
-                                      return (
-                                        <>
-                                          <div className='border-t border-(--border-divider) pt-2 mt-2'>
-                                            <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                                              {t.activeSessions.previously}
-                                            </div>
-                                            <div className='flex items-center gap-2 mt-1.5'>
-                                              <div className='shrink-0'>
-                                                {prevImg ? (
-                                                  <img src={prevImg} alt={prevName} className='w-6 h-6 rounded-full object-cover border border-(--border-divider)' />
-                                                ) : (
-                                                  <div className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'>
-                                                    {prevName.charAt(0).toUpperCase()}
-                                                  </div>
-                                                )}
-                                              </div>
-                                              <div className='flex flex-col min-w-0'>
-                                                <span className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate'>{prevName}</span>
-                                                <span className='text-[11px] text-gray-500 dark:text-gray-400'>
-                                                  {getDeviceName(prevSession.user_agent || '', prevSession.device_info || '')} · {getRelativeTime(prevSession.created_at, language) || prevStartedLabel.label}
-                                                </span>
-                                              </div>
-                                            </div>
+                                  {(() => {
+                                    const prevSession = getPrevSession(session);
+                                    const startedLabel = formatDateWithRelativeLabel(
+                                      session.created_at,
+                                      language
+                                    );
+                                    return (
+                                      <div
+                                        className={`absolute ${language === 'AR' ? 'right-0' : 'left-0'} top-full pt-1.5 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none`}
+                                      >
+                                        <div className='bg-(--bg-card) border border-(--border-divider) rounded-lg shadow-xl p-3 min-w-[240px] space-y-2'>
+                                          <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                                            {t.activeSessions.sessionInfo}
                                           </div>
-                                        </>
-                                      );
-                                    })()}
+                                          <div className='text-xs text-gray-600 dark:text-gray-400'>
+                                            {t.activeSessions.loggedIn}{' '}
+                                            {getRelativeTime(session.created_at, language) ||
+                                              startedLabel.label}{' '}
+                                            · {startedLabel.time}
+                                          </div>
+                                          <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                            {getDeviceName(
+                                              session.user_agent || '',
+                                              session.device_info || ''
+                                            )}{' '}
+                                            · {getBrowserName(session.user_agent || '')}
+                                          </div>
+
+                                          {prevSession &&
+                                            (() => {
+                                              const prevEmp = prevSession.employee_id
+                                                ? employees.find(
+                                                    (e) => e.id === prevSession.employee_id
+                                                  )
+                                                : null;
+                                              const prevName =
+                                                prevEmp?.name ||
+                                                prevEmp?.en_name ||
+                                                t.activeSessions.unassigned;
+                                              const prevImg = prevEmp?.image || null;
+                                              const prevStartedLabel = formatDateWithRelativeLabel(
+                                                prevSession.created_at,
+                                                language
+                                              );
+                                              return (
+                                                <>
+                                                  <div className='border-t border-(--border-divider) pt-2 mt-2'>
+                                                    <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                                                      {t.activeSessions.previously}
+                                                    </div>
+                                                    <div className='flex items-center gap-2 mt-1.5'>
+                                                      <div className='shrink-0'>
+                                                        {prevImg ? (
+                                                          <img
+                                                            src={prevImg}
+                                                            alt={prevName}
+                                                            className='w-6 h-6 rounded-full object-cover border border-(--border-divider)'
+                                                          />
+                                                        ) : (
+                                                          <div className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'>
+                                                            {prevName.charAt(0).toUpperCase()}
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                      <div className='flex flex-col min-w-0'>
+                                                        <span className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate'>
+                                                          {prevName}
+                                                        </span>
+                                                        <span className='text-[11px] text-gray-500 dark:text-gray-400'>
+                                                          {getDeviceName(
+                                                            prevSession.user_agent || '',
+                                                            prevSession.device_info || ''
+                                                          )}{' '}
+                                                          ·{' '}
+                                                          {getRelativeTime(
+                                                            prevSession.created_at,
+                                                            language
+                                                          ) || prevStartedLabel.label}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </>
+                                              );
+                                            })()}
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              </td>
+                              <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
+                                <div className='flex items-center gap-3'>
+                                  <div className={`${iconColor} flex-shrink-0`}>
+                                    <IconComponent size={24} className='md:w-[28px] md:h-[28px]' />
+                                  </div>
+                                  <div className='flex flex-col'>
+                                    <div
+                                      dir='auto'
+                                      className='font-medium text-gray-900 dark:text-gray-100'
+                                    >
+                                      {displayDeviceName}
+                                    </div>
                                   </div>
                                 </div>
-                              );
-                            })()}
-                          </div>
-                        </td>
-                        <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
-                          <div className='flex items-center gap-3'>
-                            <div className={`${iconColor} flex-shrink-0`}>
-                              <IconComponent size={24} className='md:w-[28px] md:h-[28px]' />
-                            </div>
-                            <div className='flex flex-col'>
-                              <div dir="auto" className='font-medium text-gray-900 dark:text-gray-100'>
-                                {displayDeviceName}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
-                          <div className='flex items-center gap-2'>
-                            {(() => {
-                              if (isDesktopAppSession) {
-                                return <img src='/app_icon_color.svg' alt='' className='w-6 h-6 md:w-4 md:h-4 inline-block shrink-0' />;
-                              }
-                              const bn = displayBrowserName.toLowerCase();
-                              let BrowserIcon = null;
-                              if (bn.includes('edge')) BrowserIcon = Icons.Edge;
-                              else if (bn.includes('chrome')) BrowserIcon = Icons.Chrome;
-                              else if (bn.includes('safari')) BrowserIcon = Icons.Safari;
-                              else if (bn.includes('firefox')) BrowserIcon = Icons.Firefox;
-                              return BrowserIcon ? <BrowserIcon className='w-6 h-6 md:w-4 md:h-4 inline-block shrink-0' /> : null;
-                            })()}
-                            <span className='hidden md:inline'>{displayBrowserName}</span>
-                            <span dir="ltr" className="md:hidden font-mono text-sm">{session.ip_address || '-'}</span>
-                          </div>
-                        </td>
-                        <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
-                          <div className='flex items-center gap-2'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{t.activeSessions.startedLabel}</span>
-                            <div className='flex items-center gap-1 md:block'>
-                              <div className='text-gray-900 dark:text-gray-100 text-xs'>{startedInfo.label}</div>
-                              <div className='text-xs text-gray-500 hidden md:block'>{startedInfo.time}</div>
-                              <div className='text-xs text-gray-500 md:hidden'>· {startedInfo.time}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
-                          <div className='flex items-center gap-2'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{t.activeSessions.durationLabel}</span>
-                            <span>{durationStr}</span>
-                          </div>
-                        </td>
-
-                        <td className='hidden md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
-                          <div className='flex items-center gap-2'>
-                            <span dir="ltr">{session.ip_address || '-'}</span>
-                          </div>
-                        </td>
-                        <td className='hidden md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
-                          <div className='flex items-center gap-2 md:block'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{t.activeSessions.seenLabel}</span>
-                            <div className='flex items-center gap-2 md:block'>
-                              {status === 'online' ? (
-                                <div className='text-green-600 dark:text-green-400 font-medium'>
-                                  {t.activeSessions.onlineNow}
+                              </td>
+                              <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
+                                <div className='flex items-center gap-2'>
+                                  {(() => {
+                                    if (isDesktopAppSession) {
+                                      return (
+                                        <img
+                                          src='/app_icon_color.svg'
+                                          alt=''
+                                          className='w-6 h-6 md:w-4 md:h-4 inline-block shrink-0'
+                                        />
+                                      );
+                                    }
+                                    const bn = displayBrowserName.toLowerCase();
+                                    let BrowserIcon = null;
+                                    if (bn.includes('edge')) BrowserIcon = Icons.Edge;
+                                    else if (bn.includes('chrome')) BrowserIcon = Icons.Chrome;
+                                    else if (bn.includes('safari')) BrowserIcon = Icons.Safari;
+                                    else if (bn.includes('firefox')) BrowserIcon = Icons.Firefox;
+                                    return BrowserIcon ? (
+                                      <BrowserIcon className='w-6 h-6 md:w-4 md:h-4 inline-block shrink-0' />
+                                    ) : null;
+                                  })()}
+                                  <span className='hidden md:inline'>{displayBrowserName}</span>
+                                  <span dir='ltr' className='md:hidden font-mono text-sm'>
+                                    {session.ip_address || '-'}
+                                  </span>
                                 </div>
-                              ) : status === 'stale' ? (
-                                <div className='text-amber-600 dark:text-amber-400 font-medium'>
-                                  {language === 'AR' ? 'غادر لتوه' : 'Just left'}
-                                  <span className='text-xs text-amber-500 block'>{lastSeenInfo.time}</span>
-                                </div>
-                              ) : (
-                                <>
-                                  {relativeTime ? (
-                                    <div className='text-gray-500'>
-                                      <span className='text-gray-900 dark:text-gray-100'>{relativeTime}</span>
-                                      <span className='text-xs text-gray-500 block'>{lastSeenInfo.time}</span>
+                              </td>
+                              <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
+                                <div className='flex items-center gap-2'>
+                                  <span className='md:hidden text-xs font-semibold uppercase opacity-70'>
+                                    {t.activeSessions.startedLabel}
+                                  </span>
+                                  <div className='flex items-center gap-1 md:block'>
+                                    <div className='text-gray-900 dark:text-gray-100 text-xs'>
+                                      {startedInfo.label}
                                     </div>
+                                    <div className='text-xs text-gray-500 hidden md:block'>
+                                      {startedInfo.time}
+                                    </div>
+                                    <div className='text-xs text-gray-500 md:hidden'>
+                                      · {startedInfo.time}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
+                                <div className='flex items-center gap-2'>
+                                  <span className='md:hidden text-xs font-semibold uppercase opacity-70'>
+                                    {t.activeSessions.durationLabel}
+                                  </span>
+                                  <span>{durationStr}</span>
+                                </div>
+                              </td>
+
+                              <td className='hidden md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
+                                <div className='flex items-center gap-2'>
+                                  <span dir='ltr'>{session.ip_address || '-'}</span>
+                                </div>
+                              </td>
+                              <td className='hidden md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
+                                <div className='flex items-center gap-2 md:block'>
+                                  <span className='md:hidden text-xs font-semibold uppercase opacity-70'>
+                                    {t.activeSessions.seenLabel}
+                                  </span>
+                                  <div className='flex items-center gap-2 md:block'>
+                                    {status === 'online' ? (
+                                      <div className='text-green-600 dark:text-green-400 font-medium'>
+                                        {t.activeSessions.onlineNow}
+                                      </div>
+                                    ) : status === 'stale' ? (
+                                      <div className='text-amber-600 dark:text-amber-400 font-medium'>
+                                        {language === 'AR' ? 'غادر لتوه' : 'Just left'}
+                                        <span className='text-xs text-amber-500 block'>
+                                          {lastSeenInfo.time}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        {relativeTime ? (
+                                          <div className='text-gray-500'>
+                                            <span className='text-gray-900 dark:text-gray-100'>
+                                              {relativeTime}
+                                            </span>
+                                            <span className='text-xs text-gray-500 block'>
+                                              {lastSeenInfo.time}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className='text-gray-900 dark:text-gray-100'>
+                                              {lastSeenInfo.label}
+                                            </div>
+                                            <div className='text-xs text-gray-500'>
+                                              {lastSeenInfo.time}
+                                            </div>
+                                          </>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className='block md:table-cell px-4 pb-4 pt-3 mt-2 border-t border-(--border-divider) md:border-none md:mt-0 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
+                                <div className='flex justify-start md:justify-center'>
+                                  {session.user_agent === currentUserAgent ? (
+                                    <span className='inline-flex items-center gap-2 text-xs font-medium text-green-600 dark:text-green-400'>
+                                      <Icons.Check size={14} />
+                                      {t.activeSessions.current}
+                                    </span>
                                   ) : (
-                                    <>
-                                      <div className='text-gray-900 dark:text-gray-100'>
-                                        {lastSeenInfo.label}
-                                      </div>
-                                      <div className='text-xs text-gray-500'>
-                                        {lastSeenInfo.time}
-                                      </div>
-                                    </>
+                                    <button
+                                      onClick={() => handleLogout(session.id)}
+                                      disabled={endingSessions.has(session.id)}
+                                      className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
+                                      title={t.activeSessions.terminate}
+                                    >
+                                      {endingSessions.has(session.id) ? (
+                                        <div className='animate-spin rounded-full h-3.5 w-3.5 border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
+                                      ) : (
+                                        <Icons.Logout size={14} />
+                                      )}
+                                      <span className='text-xs font-medium'>
+                                        {t.activeSessions.end}
+                                      </span>
+                                    </button>
                                   )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className='block md:table-cell px-4 pb-4 pt-3 mt-2 border-t border-(--border-divider) md:border-none md:mt-0 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
-                          <div className='flex justify-start md:justify-center'>
-                            {session.user_agent === currentUserAgent ? (
-                              <span className='inline-flex items-center gap-2 text-xs font-medium text-green-600 dark:text-green-400'>
-                                <Icons.Check size={14} />
-                                {t.activeSessions.current}
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleLogout(session.id)}
-                                disabled={endingSessions.has(session.id)}
-                                className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
-                                title={t.activeSessions.terminate}
-                              >
-                                {endingSessions.has(session.id) ? (
-                                  <div className='animate-spin rounded-full h-3.5 w-3.5 border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
-                                ) : (
-                                  <Icons.Logout size={14} />
-                                )}
-                                <span className='text-xs font-medium'>
-                                  {t.activeSessions.end}
-                               </span>
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )})
-                  )}
-                </tbody>
-              </table>
-            )}
-            </div>
-          </>
-        )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };

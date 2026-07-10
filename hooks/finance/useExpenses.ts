@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabase';
 import { expenseService } from '../../services/financials/expenseService';
 import { expenseRepository } from '../../services/financials/repositories/expenseRepository';
+import { useAuthStore } from '../../stores/authStore';
 
 import type { Expense, ExpenseCategory, ExpensePaymentMethod, ExpenseSummary } from '../../types';
 
 export type ExpenseFilterType = 'today' | 'week' | 'month' | 'custom';
 
 export const useExpenses = () => {
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
-  const currentEmployee = useAuthStore(s => s.currentEmployee);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [summary, setSummary] = useState<ExpenseSummary>({
     total: 0,

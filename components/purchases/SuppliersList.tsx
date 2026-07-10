@@ -1,12 +1,17 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Supplier } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY, MODAL_FOOTER_BTN_DANGER } from '../../utils/themeStyles';
+import {
+  CARD_BASE,
+  MODAL_FOOTER_BTN_CANCEL,
+  MODAL_FOOTER_BTN_DANGER,
+  MODAL_FOOTER_BTN_PRIMARY,
+} from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
 import { LocationSelector } from '../common/LocationSelector';
@@ -75,7 +80,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   language,
 }) => {
   const { showMenu } = useContextMenu();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const [search, setSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
@@ -602,16 +607,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           disabled={isSaving}
           footer={
             <div className='flex gap-3'>
-              <button
-                onClick={() => setEditingSupplier(null)}
-                className={MODAL_FOOTER_BTN_CANCEL}
-              >
+              <button onClick={() => setEditingSupplier(null)} className={MODAL_FOOTER_BTN_CANCEL}>
                 {t.modal?.cancel || 'Cancel'}
               </button>
-              <button
-                onClick={handleSaveEdit}
-                className={MODAL_FOOTER_BTN_PRIMARY}
-              >
+              <button onClick={handleSaveEdit} className={MODAL_FOOTER_BTN_PRIMARY}>
                 {isSaving ? (
                   <>
                     <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
@@ -746,7 +745,6 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               </div>
             </div>
           </div>
-
         </Modal>
       )}
 
@@ -762,16 +760,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           subtitle={t.modal?.deleteSubtitle || 'This action cannot be undone'}
           footer={
             <div className='flex gap-3'>
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className={MODAL_FOOTER_BTN_CANCEL}
-              >
+              <button onClick={() => setDeleteConfirm(null)} className={MODAL_FOOTER_BTN_CANCEL}>
                 {t.modal?.cancel || 'Cancel'}
               </button>
-              <button
-                onClick={confirmDelete}
-                className={MODAL_FOOTER_BTN_DANGER}
-              >
+              <button onClick={confirmDelete} className={MODAL_FOOTER_BTN_DANGER}>
                 {t.modal?.deleteBtn || 'Delete'}
               </button>
             </div>
@@ -782,7 +774,6 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               {t.modal?.confirmDelete || 'Are you sure you want to delete'}{' '}
               <strong>{deleteConfirm.name}</strong>?
             </p>
-
           </div>
         </Modal>
       )}

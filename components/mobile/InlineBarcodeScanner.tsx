@@ -1,7 +1,7 @@
 import { BarcodeDetector } from 'barcode-detector';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useSettings } from '../../context/SettingsContext';
+import { useTypography } from '../../context/TypographyContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 
 interface InlineBarcodeScannerProps {
@@ -17,7 +17,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   color,
   isActive = true,
 }) => {
-  const { language } = useSettings();
+  const { language } = useTypography();
   const t = TRANSLATIONS[language];
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -163,7 +163,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
           if (barcodes.length > 0) {
             const currentBarcode = barcodes[0].rawValue;
             const now = Date.now();
-            
+
             // Hardware Scanner Emulation: Same Symbol Timeout
             // If it's the exact same barcode, ignore it until timeout passes (e.g., 1500ms)
             // If it's a different barcode, scan it instantly (0ms delay)
@@ -183,7 +183,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
 
             if (window.navigator.vibrate) window.navigator.vibrate([20, 30, 20]);
             onScanSuccess(currentBarcode);
-            
+
             // Immediately continue scanning for the next frame
             isProcessingRef.current = false;
             animationFrameRef.current = requestAnimationFrame(detectFrame);

@@ -532,8 +532,8 @@ export const TRANSLATIONS = {
         started: 'Started',
         duration: 'Duration',
         ip: 'IP Address',
-        lastSeen: 'Last Seen'
-      }
+        lastSeen: 'Last Seen',
+      },
     },
     pendingBranch: {
       title: 'Branch Assignment Pending',
@@ -2236,7 +2236,7 @@ export const TRANSLATIONS = {
           'layout-1': 'Standard (Default)',
           'layout-2': 'Modern Dark',
           'layout-3': 'Compact Minimal',
-        }
+        },
       },
     },
     printerSettings: {
@@ -3140,7 +3140,8 @@ export const TRANSLATIONS = {
       authorizedTitle: 'Access Authorized',
       authorizedDesc: 'You have the necessary permissions to access this area.',
       unauthorizedTitle: 'Access Denied',
-      unauthorizedDesc: 'You do not have permission to access this area. Access is restricted to managers and owners.',
+      unauthorizedDesc:
+        'You do not have permission to access this area. Access is restricted to managers and owners.',
       confirmUnlock: 'Confirm Identity',
       lockoutTimer: 'Locked out.. retry in {{timeLeft}}s',
       usernamePlaceholder: 'Username',
@@ -4094,8 +4095,8 @@ export const TRANSLATIONS = {
         started: 'البداية',
         duration: 'المدة',
         ip: 'IP',
-        lastSeen: 'آخر ظهور'
-      }
+        lastSeen: 'آخر ظهور',
+      },
     },
     pendingBranch: {
       title: 'في انتظار التعيين لفرع',
@@ -5781,7 +5782,7 @@ export const TRANSLATIONS = {
           'layout-1': 'الأساسي (الافتراضي)',
           'layout-2': 'الحديث (داكن)',
           'layout-3': 'المضغوط (بسيط)',
-        }
+        },
       },
     },
     printerSettings: {
@@ -6302,7 +6303,8 @@ export const TRANSLATIONS = {
       authorizedTitle: 'مسموح بالدخول',
       authorizedDesc: 'لديك الصلاحيات اللازمة للوصول إلى هذه المنطقة.',
       unauthorizedTitle: 'تم رفض الوصول',
-      unauthorizedDesc: 'ليس لديك الصلاحية للوصول إلى هذه المنطقة. الدخول يقتصر على المدراء والملاك.',
+      unauthorizedDesc:
+        'ليس لديك الصلاحية للوصول إلى هذه المنطقة. الدخول يقتصر على المدراء والملاك.',
       confirmUnlock: 'تأكيد الهوية',
       lockoutTimer: 'تم القفل.. حاول بعد {{timeLeft}} ثانية',
       usernamePlaceholder: 'اسم المستخدم',

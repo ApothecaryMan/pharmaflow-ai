@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { customerService } from '../../services/customers';
 import type { Customer } from '../../types';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useCustomers(branchId: string) {
   return useQuery({

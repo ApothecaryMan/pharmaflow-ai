@@ -116,7 +116,12 @@ export function formatDateWithRelativeLabel(
   timeZone?: string
 ): { label: string; time: string } {
   const tz = timeZone || CAIRO_TZ;
-  const opts: Intl.DateTimeFormatOptions = { timeZone: tz, year: 'numeric', month: 'numeric', day: 'numeric' };
+  const opts: Intl.DateTimeFormatOptions = {
+    timeZone: tz,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  };
   const d = new Date(dateStr).toLocaleDateString('en-CA', opts);
   const today = new Date().toLocaleDateString('en-CA', opts);
   const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', opts);
@@ -125,7 +130,11 @@ export function formatDateWithRelativeLabel(
   if (d === today) label = language === 'AR' ? 'اليوم' : 'Today';
   else if (d === yesterday) label = language === 'AR' ? 'أمس' : 'Yesterday';
   else label = new Date(dateStr).toLocaleDateString(locale, { timeZone: tz });
-  const time = new Date(dateStr).toLocaleTimeString(locale, { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+  const time = new Date(dateStr).toLocaleTimeString(locale, {
+    timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+  });
   return { label, time };
 }
 

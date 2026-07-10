@@ -165,10 +165,11 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
                   e.stopPropagation();
                   navigate(i - activePage);
                 }}
-                className={`rounded-full transition-colors duration-300 cursor-pointer ${activePage === i
+                className={`rounded-full transition-colors duration-300 cursor-pointer ${
+                  activePage === i
                     ? 'bg-primary-500'
                     : 'bg-zinc-400/50 dark:bg-zinc-400/60 hover:bg-zinc-500/80 dark:hover:bg-zinc-300/80'
-                  }`}
+                }`}
                 variants={{
                   collapsed: {
                     width: activePage === i ? 10 : 3.5,

@@ -52,9 +52,7 @@ export const openPrintWindow = (
   const printWindow = window.open('', '', features);
 
   if (!printWindow) {
-    alert(
-      'Popup blocked! Please allow popups for this site to enable printing.'
-    );
+    alert('Popup blocked! Please allow popups for this site to enable printing.');
     return null;
   }
 
@@ -146,10 +144,11 @@ export const printViaIframe = (html: string): void => {
   };
 
   // Wait for all fonts (local and Google Fonts) to load before printing
-  const ready = (contentWindow.document.fonts && contentWindow.document.fonts.ready) || Promise.resolve();
+  const ready =
+    (contentWindow.document.fonts && contentWindow.document.fonts.ready) || Promise.resolve();
   Promise.all([
     ready,
-    new Promise((resolve) => setTimeout(resolve, 200)) // Small extra tick to guarantee rendering
+    new Promise((resolve) => setTimeout(resolve, 200)), // Small extra tick to guarantee rendering
   ])
     .then(executePrint)
     .catch((e) => {

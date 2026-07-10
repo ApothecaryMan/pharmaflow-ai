@@ -64,7 +64,9 @@ describe('Login Component', () => {
 
     // Fill form
     fireEvent.change(screen.getByPlaceholderText(/username/i), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByPlaceholderText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText(/^Password$/i), {
+      target: { value: 'password123' },
+    });
 
     // Submit
     const submitBtn = screen.getByRole('button', { name: /continue/i });
@@ -88,7 +90,9 @@ describe('Login Component', () => {
     render(<Login />);
 
     fireEvent.change(screen.getByPlaceholderText(/username/i), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByPlaceholderText(/^Password$/i), { target: { value: 'wrongpass' } });
+    fireEvent.change(screen.getByPlaceholderText(/^Password$/i), {
+      target: { value: 'wrongpass' },
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 

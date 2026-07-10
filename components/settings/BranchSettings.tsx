@@ -2,7 +2,6 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 import { useAlert, useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { getLocationName } from '../../data/locations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -10,17 +9,18 @@ import { attendanceService } from '../../services/hr/attendanceService';
 import { employeeService } from '../../services/hr/employeeService';
 import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Branch, Employee } from '../../types';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { LocationSelector } from '../common/LocationSelector';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
-import { SecureGate } from '../common/SecureGate';
 import { PageHeader } from '../common/PageHeader';
+import { SecureGate } from '../common/SecureGate';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
-import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -270,7 +270,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
   onViewChange,
 }) => {
   const t = TRANSLATIONS[language];
-  const refreshAll = useAuthStore(s => s.refreshAll);
+  const refreshAll = useAuthStore((s) => s.refreshAll);
   const { activeBranchId } = useSettings();
 
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -884,7 +884,10 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               </>
             ) : branches.length === 0 ? (
               <div className='col-span-full py-20 flex flex-col items-center justify-center text-center opacity-40'>
-                <span className='material-symbols-rounded text-zinc-400' style={{ fontSize: '64px' }}>
+                <span
+                  className='material-symbols-rounded text-zinc-400'
+                  style={{ fontSize: '64px' }}
+                >
                   domain_disabled
                 </span>
                 <h3 className='text-lg font-bold mt-4'>{t.settings.noBranchesYet}</h3>
@@ -935,10 +938,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
             {modalView !== 'attendance' && (
               <div className='flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6'>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className={MODAL_FOOTER_BTN_CANCEL}
-                >
+                <button onClick={() => setIsModalOpen(false)} className={MODAL_FOOTER_BTN_CANCEL}>
                   {language === 'AR' ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button

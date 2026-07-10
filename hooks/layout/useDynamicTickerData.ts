@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import { useAuthStore } from '../../stores/authStore';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
 
 export interface TickerData {
   todaySales: number;
@@ -22,7 +22,7 @@ export interface TickerData {
 }
 
 export const useDynamicTickerData = (): TickerData => {
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: sales = [] } = useRecentSales(activeBranchId);
   const { data: inventory = [] } = useInventory(activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);

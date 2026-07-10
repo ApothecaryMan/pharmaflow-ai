@@ -6,7 +6,6 @@ import { Calculator } from './Calculator';
 import { CurrencyConverter } from './CurrencyConverter';
 import { HolidaysTracker } from './HolidaysTracker';
 
-
 export interface ToolsMenuProps {
   dropDirection?: 'up' | 'down';
   showTrigger?: boolean;
@@ -86,10 +85,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                   key={tool}
                   type='button'
                   onClick={() => setActiveTool(tool)}
-                  className={`flex-1 py-1 flex items-center justify-center rounded-md transition-all duration-200 focus:outline-none ${activeTool === tool
+                  className={`flex-1 py-1 flex items-center justify-center rounded-md transition-all duration-200 focus:outline-none ${
+                    activeTool === tool
                       ? 'bg-white dark:bg-white/10 text-primary-500 shadow-xs'
                       : 'text-(--text-secondary) hover:text-(--text-primary)'
-                    }`}
+                  }`}
                   title={
                     tool === 'converter'
                       ? cT?.title || 'Converter'
@@ -112,8 +112,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             <button
               type='button'
               onClick={() => setIsPinned(!isPinned)}
-              className={`flex items-center justify-center w-10 h-10 rounded-full shadow-sm focus:outline-none bg-black/5 dark:bg-white/5 ${isPinned ? 'text-primary-500' : 'text-(--text-tertiary) hover:text-(--text-primary)'
-                }`}
+              className={`flex items-center justify-center w-10 h-10 rounded-full shadow-sm focus:outline-none bg-black/5 dark:bg-white/5 ${
+                isPinned ? 'text-primary-500' : 'text-(--text-tertiary) hover:text-(--text-primary)'
+              }`}
               title={isPinned ? 'Unpin' : 'Pin to stay open'}
             >
               <span className='material-symbols-rounded text-[16px] leading-none'>keep</span>

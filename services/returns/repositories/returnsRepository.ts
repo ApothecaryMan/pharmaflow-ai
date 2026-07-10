@@ -105,7 +105,11 @@ export const returnsRepository = {
     return (data || []).map((item) => this.mapSalesFromDb(item));
   },
 
-  async getRecentSales(effectiveBranchId: string, orgId?: string, limit: number = 100): Promise<Return[]> {
+  async getRecentSales(
+    effectiveBranchId: string,
+    orgId?: string,
+    limit: number = 100
+  ): Promise<Return[]> {
     let query = supabase.from(this.salesTableName).select('*, items:return_items(*)');
     if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
@@ -127,16 +131,21 @@ export const returnsRepository = {
     return data ? this.mapSalesFromDb(data) : null;
   },
 
-  async listSalesReturnsPage(options: ReturnsPageOptions): Promise<{ rows: Return[]; total: number; page: number; pageSize: number }> {
+  async listSalesReturnsPage(
+    options: ReturnsPageOptions
+  ): Promise<{ rows: Return[]; total: number; page: number; pageSize: number }> {
     const page = Math.max(1, options.page || 1);
     const pageSize = Math.min(Math.max(1, options.pageSize || 50), 200);
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     const filters = options.filters || {};
     const effectiveBranchId = options.branchId || '';
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
-    let query = supabase.from(this.salesTableName).select('*, items:return_items(*)', { count: 'exact' });
+    let query = supabase
+      .from(this.salesTableName)
+      .select('*, items:return_items(*)', { count: 'exact' });
 
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
@@ -151,20 +160,14 @@ export const returnsRepository = {
     if (filters.search?.trim()) {
       const term = filters.search.trim().replace(/[%_,]/g, '');
       query = query.or(
-        [
-          `id.ilike.%${term}%`,
-          `serial_id.ilike.%${term}%`,
-          `sale_id.ilike.%${term}%`,
-        ].join(',')
+        [`id.ilike.%${term}%`, `serial_id.ilike.%${term}%`, `sale_id.ilike.%${term}%`].join(',')
       );
     }
 
     const sortColumn = options.sort?.column || 'date';
     const ascending = options.sort?.ascending ?? false;
 
-    const { data, error, count } = await query
-      .order(sortColumn, { ascending })
-      .range(from, to);
+    const { data, error, count } = await query.order(sortColumn, { ascending }).range(from, to);
 
     if (error) throw error;
 
@@ -224,7 +227,11 @@ export const returnsRepository = {
     return (data || []).map((item) => this.mapPurchaseFromDb(item));
   },
 
-  async getRecentPurchase(effectiveBranchId: string, orgId?: string, limit: number = 100): Promise<PurchaseReturn[]> {
+  async getRecentPurchase(
+    effectiveBranchId: string,
+    orgId?: string,
+    limit: number = 100
+  ): Promise<PurchaseReturn[]> {
     let query = supabase.from(this.purchaseTableName).select('*, items:purchase_return_items(*)');
     if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
@@ -246,16 +253,21 @@ export const returnsRepository = {
     return data ? this.mapPurchaseFromDb(data) : null;
   },
 
-  async listPurchaseReturnsPage(options: ReturnsPageOptions): Promise<{ rows: PurchaseReturn[]; total: number; page: number; pageSize: number }> {
+  async listPurchaseReturnsPage(
+    options: ReturnsPageOptions
+  ): Promise<{ rows: PurchaseReturn[]; total: number; page: number; pageSize: number }> {
     const page = Math.max(1, options.page || 1);
     const pageSize = Math.min(Math.max(1, options.pageSize || 50), 200);
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     const filters = options.filters || {};
     const effectiveBranchId = options.branchId || '';
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
-    let query = supabase.from(this.purchaseTableName).select('*, items:purchase_return_items(*)', { count: 'exact' });
+    let query = supabase
+      .from(this.purchaseTableName)
+      .select('*, items:purchase_return_items(*)', { count: 'exact' });
 
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
@@ -269,20 +281,16 @@ export const returnsRepository = {
     if (filters.search?.trim()) {
       const term = filters.search.trim().replace(/[%_,]/g, '');
       query = query.or(
-        [
-          `id.ilike.%${term}%`,
-          `purchase_id.ilike.%${term}%`,
-          `supplier_name.ilike.%${term}%`,
-        ].join(',')
+        [`id.ilike.%${term}%`, `purchase_id.ilike.%${term}%`, `supplier_name.ilike.%${term}%`].join(
+          ','
+        )
       );
     }
 
     const sortColumn = options.sort?.column || 'date';
     const ascending = options.sort?.ascending ?? false;
 
-    const { data, error, count } = await query
-      .order(sortColumn, { ascending })
-      .range(from, to);
+    const { data, error, count } = await query.order(sortColumn, { ascending }).range(from, to);
 
     if (error) throw error;
 

@@ -1,12 +1,12 @@
-import { useEffect, useRef, useCallback } from 'react';
-import type { Drug } from '../../../../types';
+import { useCallback, useEffect, useRef } from 'react';
 import { inventorySearchEngine } from '../../../../services/search/drugSearchService';
+import type { Drug } from '../../../../types';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const FAST_KEY_THRESHOLD_MS = 50;   // Most HID scanners fire keys < 30ms apart
+const FAST_KEY_THRESHOLD_MS = 50; // Most HID scanners fire keys < 30ms apart
 const MIN_FAST_KEYS_TO_CONFIRM = 3; // Need 3+ fast keys to confirm it's a scanner
-const MIN_BARCODE_LENGTH = 3;       // Minimum barcode length to process
-const BUFFER_TIMEOUT_MS = 500;      // Clear stale buffer after 500ms of silence
+const MIN_BARCODE_LENGTH = 3; // Minimum barcode length to process
+const BUFFER_TIMEOUT_MS = 500; // Clear stale buffer after 500ms of silence
 
 // ─── Scanner Event ───────────────────────────────────────────────────────────
 export interface BarcodeScanResult {
@@ -103,9 +103,7 @@ export const useBarcodeScanner = ({
     const drug = inventorySearchEngine.searchByBarcode(barcode) as Drug | null;
 
     // Also check internalCode (some scanners read internal labels)
-    const match = drug || inventoryRef.current.find(
-      (d) => d.internalCode === barcode
-    );
+    const match = drug || inventoryRef.current.find((d) => d.internalCode === barcode);
 
     if (match) {
       cb.addToCart(match);
@@ -137,9 +135,7 @@ export const useBarcodeScanner = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore modifier-only keys
-      if (
-        ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape'].includes(e.key)
-      ) {
+      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape'].includes(e.key)) {
         return;
       }
 

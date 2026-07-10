@@ -6,13 +6,14 @@ import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
 
-const PROFILE_GLASS_CARD_NO_BORDER = PROFILE_GLASS_CARD_BASE
-  .split(' ')
-  .filter(c => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
-  .join(' ') + ' border border-transparent';
+const PROFILE_GLASS_CARD_NO_BORDER =
+  PROFILE_GLASS_CARD_BASE.split(' ')
+    .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+    .join(' ') + ' border border-transparent';
+
+import { EmployeeAvatar } from '../../common/EmployeeAvatar';
 import { ColorPicker, FRAME_COLORS } from '../avatar-color-settings';
 import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES } from '../avatar-decorations';
-import { EmployeeAvatar } from '../../common/EmployeeAvatar';
 import type { RingStyle } from '../avatar-ring';
 import AvatarRing, { AnimationToggle, RING_STYLES } from '../avatar-ring';
 
@@ -84,7 +85,9 @@ export const EditField: React.FC<EditFieldProps> = ({
   <div
     className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5 ${disabled ? 'opacity-60' : ''}`}
   >
-    <span className='material-symbols-rounded text-[18px] text-(--text-tertiary) shrink-0'>{icon}</span>
+    <span className='material-symbols-rounded text-[18px] text-(--text-tertiary) shrink-0'>
+      {icon}
+    </span>
     <div className='min-w-0 flex-1'>
       <p className='text-[10px] text-(--text-tertiary) font-bold truncate'>{label}</p>
       {onChange && !disabled ? (
@@ -296,7 +299,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const offsetStart = useRef({ x: 0, y: 0 });
   const lastPinchDist = useRef(0);
   const readerRef = useRef<FileReader | null>(null);
-  
+
   const originalDesignSettings = useRef({
     coverStyle,
     bannerZoom,
@@ -306,7 +309,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     frameColor,
     ringStyle,
     ringThickness,
-    ringAnimated
+    ringAnimated,
   });
 
   const MIN_ZOOM = 1;
@@ -327,19 +330,19 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       if (!isDragging) return;
       const dx = (e.clientX - dragStart.current.x) / bannerZoom;
       const dy = (e.clientY - dragStart.current.y) / bannerZoom;
-      
+
       let newX = offsetStart.current.x + dx;
       let newY = offsetStart.current.y + dy;
-      
+
       if (bannerRef.current) {
         const w = bannerRef.current.offsetWidth;
         const h = bannerRef.current.offsetHeight;
-        const maxX = (w / 2) * (bannerZoom - 1) / bannerZoom;
-        const maxY = (h / 2) * (bannerZoom - 1) / bannerZoom;
+        const maxX = ((w / 2) * (bannerZoom - 1)) / bannerZoom;
+        const maxY = ((h / 2) * (bannerZoom - 1)) / bannerZoom;
         newX = Math.max(-maxX, Math.min(maxX, newX));
         newY = Math.max(-maxY, Math.min(maxY, newY));
       }
-      
+
       setBannerOffset({ x: newX, y: newY });
     },
     [isDragging, bannerZoom]
@@ -349,10 +352,15 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     if (!bannerRef.current) return;
     const w = bannerRef.current.offsetWidth;
     const h = bannerRef.current.offsetHeight;
-    const maxX = (w / 2) * (bannerZoom - 1) / bannerZoom;
-    const maxY = (h / 2) * (bannerZoom - 1) / bannerZoom;
-    
-    if (bannerOffset.x < -maxX || bannerOffset.x > maxX || bannerOffset.y < -maxY || bannerOffset.y > maxY) {
+    const maxX = ((w / 2) * (bannerZoom - 1)) / bannerZoom;
+    const maxY = ((h / 2) * (bannerZoom - 1)) / bannerZoom;
+
+    if (
+      bannerOffset.x < -maxX ||
+      bannerOffset.x > maxX ||
+      bannerOffset.y < -maxY ||
+      bannerOffset.y > maxY
+    ) {
       setBannerOffset({
         x: Math.max(-maxX, Math.min(maxX, bannerOffset.x)),
         y: Math.max(-maxY, Math.min(maxY, bannerOffset.y)),
@@ -437,7 +445,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       frameColor,
       ringStyle,
       ringThickness,
-      ringAnimated
+      ringAnimated,
     };
     setEditFields({
       fullName: profile?.fullName || sessionName || '',
@@ -448,9 +456,18 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     });
     setIsEditing(true);
   }, [
-    profile, sessionName, setIsEditing,
-    coverStyle, bannerZoom, bannerOffset, avatarDecoration, decorationAnimated,
-    frameColor, ringStyle, ringThickness, ringAnimated
+    profile,
+    sessionName,
+    setIsEditing,
+    coverStyle,
+    bannerZoom,
+    bannerOffset,
+    avatarDecoration,
+    decorationAnimated,
+    frameColor,
+    ringStyle,
+    ringThickness,
+    ringAnimated,
   ]);
 
   const cancelEditing = useCallback(() => {
@@ -458,7 +475,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     setPreview(undefined);
     setRemoveImage(false);
     setEditFields({ fullName: '', nameArabic: '', email: '', phone: '', licenseNumber: '' });
-    
+
     // Restore exact state from before edit was clicked
     const orig = originalDesignSettings.current;
     setCoverStyle(orig.coverStyle as any);
@@ -578,7 +595,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             {/* Top controls: dot picker + zoom */}
             <div className='flex items-start justify-between gap-2 p-3'>
               {/* Pattern picker */}
-              <div 
+              <div
                 className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto max-w-[136px] sm:max-w-none overflow-x-auto scrollbar-none'
                 onPointerDown={(e) => e.stopPropagation()}
               >
@@ -595,7 +612,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
 
               {/* Zoom controls */}
-              <div 
+              <div
                 className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto'
                 onPointerDown={(e) => e.stopPropagation()}
               >
@@ -651,7 +668,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
       {/* Avatar & Header */}
       <div className='relative pb-6 -mt-12 pointer-events-none'>
-        <div className='flex flex-row items-end gap-5 mb-4 px-6 max-sm:px-4 relative z-10 pointer-events-none' dir='ltr'>
+        <div
+          className='flex flex-row items-end gap-5 mb-4 px-6 max-sm:px-4 relative z-10 pointer-events-none'
+          dir='ltr'
+        >
           <div className='relative shrink-0 pointer-events-auto'>
             {/* Avatar with image support */}
             <label
@@ -677,8 +697,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     frameColor: frameColor,
                     ringStyle: ringStyle,
                     ringThickness: ringThickness,
-                    ringAnimated: ringAnimated
-                  }
+                    ringAnimated: ringAnimated,
+                  },
                 }}
               >
                 {onUpdateProfile && isEditing && (
@@ -779,7 +799,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
         {/* Decoration and Frame pickers in edit mode */}
         {isEditing && (
-          <div className={`${PROFILE_GLASS_CARD_NO_BORDER} mb-4 p-4 sm:p-5 flex flex-col gap-4 pointer-events-auto`}>
+          <div
+            className={`${PROFILE_GLASS_CARD_NO_BORDER} mb-4 p-4 sm:p-5 flex flex-col gap-4 pointer-events-auto`}
+          >
             <div>
               <div className='flex items-center justify-between mb-2'>
                 <p className='text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-(--text-tertiary)'>
@@ -808,48 +830,49 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                       title={isRTL ? dec.nameAr : dec.name}
                     >
                       {/* Mini avatar circle */}
-                    <div
-                      className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
-                        avatarDecoration === dec.id
-                          ? 'ring-2 ring-primary-500 shadow-md'
-                          : 'ring-1 ring-(--border-secondary) shadow-sm'
-                      }`}
-                    >
-                      <div className='w-full h-full bg-gradient-to-br from-primary-500/10 to-primary-600/20' />
-                    </div>
-                    {/* Decoration overlay matching real avatar layout */}
-                    {dec.svg ? (
-                      <div className='absolute inset-0 pointer-events-none z-[1]'>{dec.svg}</div>
-                    ) : (
-                      <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
-                        close
-                      </span>
-                    )}
-                    {dec.isAnimated && (
-                      <div className='absolute inset-0 z-10 flex items-center justify-center pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'>
-                        <svg
-                          width='24'
-                          height='24'
-                          viewBox='0 0 24 24'
-                          fill='currentColor'
-                          className='text-white'
-                        >
-                          {decorationAnimated ? (
-                            <>
-                              <rect x='6' y='4' width='4' height='16' rx='1' />
-                              <rect x='14' y='4' width='4' height='16' rx='1' />
-                            </>
-                          ) : (
-                            <polygon points='5,3 19,12 5,21' />
-                          )}
-                        </svg>
+                      <div
+                        className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
+                          avatarDecoration === dec.id
+                            ? 'ring-2 ring-primary-500 shadow-md'
+                            : 'ring-1 ring-(--border-secondary) shadow-sm'
+                        }`}
+                      >
+                        <div className='w-full h-full bg-gradient-to-br from-primary-500/10 to-primary-600/20' />
                       </div>
-                    )}
-                  </button>
-                )))}
+                      {/* Decoration overlay matching real avatar layout */}
+                      {dec.svg ? (
+                        <div className='absolute inset-0 pointer-events-none z-[1]'>{dec.svg}</div>
+                      ) : (
+                        <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
+                          close
+                        </span>
+                      )}
+                      {dec.isAnimated && (
+                        <div className='absolute inset-0 z-10 flex items-center justify-center pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'>
+                          <svg
+                            width='24'
+                            height='24'
+                            viewBox='0 0 24 24'
+                            fill='currentColor'
+                            className='text-white'
+                          >
+                            {decorationAnimated ? (
+                              <>
+                                <rect x='6' y='4' width='4' height='16' rx='1' />
+                                <rect x='14' y='4' width='4' height='16' rx='1' />
+                              </>
+                            ) : (
+                              <polygon points='5,3 19,12 5,21' />
+                            )}
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
-            
+
             <div className='border-t border-black/10 dark:border-white/5 pt-4 space-y-4'>
               <ColorPicker
                 label={isRTL ? 'لون الإطار' : 'Frame Color'}
@@ -919,9 +942,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         <div className='space-y-4 pointer-events-auto'>
           <div className='space-y-2 pt-2'>
             <div className='flex items-center justify-between'>
-              <h4 
+              <h4
                 className='text-sm font-bold uppercase tracking-wider text-(--text-primary) !font-["GraphicSansFont"]'
-                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+                style={{
+                  fontFeatureSettings:
+                    '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+                }}
               >
                 {t.employeeProfile.personalInformation}
               </h4>
@@ -1118,9 +1144,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           {/* Login & Fingerprint Credentials (Workspaces) */}
           {(workspaces.length > 0 || isLoading) && (
             <div className='space-y-2 pt-2'>
-              <h4 
+              <h4
                 className='text-sm font-bold uppercase tracking-wider text-(--text-primary) !font-["GraphicSansFont"]'
-                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+                style={{
+                  fontFeatureSettings:
+                    '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+                }}
               >
                 {t.employeeProfile.workspacesAndCredentials}
               </h4>
@@ -1190,7 +1219,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                             <div
                               className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}
                             >
-                              <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                              <span
+                                className='material-symbols-rounded'
+                                style={{ fontSize: '16px' }}
+                              >
                                 {getStatusStyle(ws.status).icon}
                               </span>
                               {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
@@ -1531,9 +1563,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
           {/* Quick Stats */}
           <div className='space-y-2 pt-2'>
-            <h4 
+            <h4
               className='text-sm font-bold uppercase tracking-wider text-(--text-primary) !font-["GraphicSansFont"]'
-              style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              style={{
+                fontFeatureSettings:
+                  '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+              }}
             >
               {t.employeeProfile.overview}
             </h4>

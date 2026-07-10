@@ -79,10 +79,11 @@ interface DockButtonProps {
   badgeCount?: number;
 }
 
-const DockButton = React.memo<DockButtonProps>(({ icon: Icon, label, isActive, onClick, badgeCount }) => (
-  <button
-    onClick={onClick}
-    className={`
+const DockButton = React.memo<DockButtonProps>(
+  ({ icon: Icon, label, isActive, onClick, badgeCount }) => (
+    <button
+      onClick={onClick}
+      className={`
       relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all duration-500
       ${
         isActive
@@ -90,29 +91,30 @@ const DockButton = React.memo<DockButtonProps>(({ icon: Icon, label, isActive, o
           : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
       }
     `}
-    aria-label={label}
-    aria-current={isActive ? 'page' : undefined}
-    type='button'
-  >
-    {isActive && (
-      <div className='absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none' />
-    )}
-    <div className='relative z-10 flex flex-col items-center justify-center min-h-[22px]'>
-      <Icon
-        className={`w-[22px] h-[22px] relative z-10 transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
-      />
-      {!!badgeCount && badgeCount > 0 && (
-        <span className='absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-1 shadow-sm z-20 animate-scale-in'>
-          {badgeCount > 99 ? '99+' : badgeCount}
-        </span>
-      )}
-    </div>
-    <span
-      className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}
+      aria-label={label}
+      aria-current={isActive ? 'page' : undefined}
+      type='button'
     >
-      {label}
-    </span>
-  </button>
-));
+      {isActive && (
+        <div className='absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none' />
+      )}
+      <div className='relative z-10 flex flex-col items-center justify-center min-h-[22px]'>
+        <Icon
+          className={`w-[22px] h-[22px] relative z-10 transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
+        />
+        {!!badgeCount && badgeCount > 0 && (
+          <span className='absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-1 shadow-sm z-20 animate-scale-in'>
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        )}
+      </div>
+      <span
+        className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}
+      >
+        {label}
+      </span>
+    </button>
+  )
+);
 
 DockButton.displayName = 'DockButton';

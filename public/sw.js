@@ -78,20 +78,19 @@ self.addEventListener('fetch', (event) => {
   if (!url.protocol.startsWith('http')) return;
 
   event.respondWith(
-    fetch(request)
-      .catch(() => {
-        // Network failed, try to serve from our static cache
-        return caches.match(request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // Fallback to index.html for navigation requests
-          if (request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
-          return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-        });
-      })
+    fetch(request).catch(() => {
+      // Network failed, try to serve from our static cache
+      return caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // Fallback to index.html for navigation requests
+        if (request.mode === 'navigate') {
+          return caches.match('/index.html');
+        }
+        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+      });
+    })
   );
 });
 

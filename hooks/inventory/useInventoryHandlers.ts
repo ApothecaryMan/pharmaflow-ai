@@ -111,12 +111,14 @@ export function useInventoryHandlers({
             branchId: activeBranchId,
             performerId: currentEmployeeId,
             performerName: employee?.name,
-            adjustments: [{
-              drugId: drug.id,
-              quantity: diff,
-              reason: 'Manual Edit',
-              notes: 'Pharmacist manual stock correction',
-            }],
+            adjustments: [
+              {
+                drugId: drug.id,
+                quantity: diff,
+                reason: 'Manual Edit',
+                notes: 'Pharmacist manual stock correction',
+              },
+            ],
           });
           const updatedBatches = await batchService.getAllBatches(activeBranchId);
           setBatches(updatedBatches);
@@ -221,21 +223,21 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
           performerId: currentEmployeeId!,
           performerName: employee?.name,
-          adjustments: [{
-            drugId: drug.id,
-            quantity: unitsToAdd,
-            reason: 'Manual Restock / Adjustment',
-            notes: 'MANUAL_RESTOCK',
-            expiryDate: drug.expiryDate,
-          }],
+          adjustments: [
+            {
+              drugId: drug.id,
+              quantity: unitsToAdd,
+              reason: 'Manual Restock / Adjustment',
+              notes: 'MANUAL_RESTOCK',
+              expiryDate: drug.expiryDate,
+            },
+          ],
         });
 
         // Refresh local state from server
         const updatedDrug = await inventoryService.getById(id);
         if (updatedDrug) {
-          setInventory((prev) =>
-            prev.map((d) => (d.id === id ? updatedDrug : d))
-          );
+          setInventory((prev) => prev.map((d) => (d.id === id ? updatedDrug : d)));
         }
         const updatedBatches = await batchService.getAllBatches(activeBranchId);
         setBatches(updatedBatches);

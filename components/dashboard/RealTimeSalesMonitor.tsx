@@ -1,3 +1,5 @@
+import { emit } from '@tauri-apps/api/event';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -12,29 +14,27 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { emit } from '@tauri-apps/api/event';
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { useSettings, useAlert } from '../../context';
-import { isTauri } from '../../utils/platform';
-import { useAuthStore } from '../../stores/authStore';
+import { useAlert, useSettings } from '../../context';
+import { usePageHelp } from '../../context/HelpContext';
 import { useShift } from '../../hooks/sales/useShift';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
+import { useAuthStore } from '../../stores/authStore';
 import type { Customer, Drug, Sale, ThemeColor } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { money } from '../../utils/money';
+import { isTauri } from '../../utils/platform';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { ChartWidget } from '../common/ChartWidget';
 import { ExpandedModal } from '../common/ExpandedModal';
-import { usePageHelp } from '../../context/HelpContext';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { InsightTooltip } from '../common/InsightTooltip';
+import { MicroProgressCard } from '../common/MicroProgressCard';
 import { PageHeader } from '../common/PageHeader';
 import { FlexDataCard } from '../common/ProgressCard';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
-import { MicroProgressCard } from '../common/MicroProgressCard';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
 
 // --- Local Mini-Components for Clean Code ---
@@ -150,10 +150,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const { playHighValue } = usePosSounds();
   const [expandedView, setExpandedView] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'VIP' | 'HIGH_VALUE'>('ALL');
-  const isLoading = useAuthStore(s => s.isLoading);
-  const branches = useAuthStore(s => s.branches);
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeBranch = useMemo(() => branches.find(b => b.id === activeBranchId), [branches, activeBranchId]);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const branches = useAuthStore((s) => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeBranch = useMemo(
+    () => branches.find((b) => b.id === activeBranchId),
+    [branches, activeBranchId]
+  );
   const { shifts } = useShift();
   const [branchFilter, setBranchFilter] = useState<string>(activeBranchId || 'all');
 
@@ -422,7 +425,11 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     key={s.id}
                     className='border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                   >
-                    <td className='p-4 font-bold text-sm'><span data-no-convert="true" dir="ltr">#{s.serialId || s.id.substring(0, 8)}</span></td>
+                    <td className='p-4 font-bold text-sm'>
+                      <span data-no-convert='true' dir='ltr'>
+                        #{s.serialId || s.id.substring(0, 8)}
+                      </span>
+                    </td>
                     <td className='p-4 text-sm text-gray-500'>
                       {new Date(s.date).toLocaleTimeString()}
                     </td>
@@ -513,12 +520,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   // --- Chart Data Mapping ---
   const returnsData = useMemo(() => {
-    const salesWithReturns = todaysSales.filter(s => s.hasReturns);
+    const salesWithReturns = todaysSales.filter((s) => s.hasReturns);
     salesWithReturns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     let totalReturnedQty = 0;
-    salesWithReturns.forEach(s => {
-      s.items.forEach(item => {
+    salesWithReturns.forEach((s) => {
+      s.items.forEach((item) => {
         const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
         const qty = s.itemReturnedQuantities?.[lineKey] || s.itemReturnedQuantities?.[item.id] || 0;
         totalReturnedQty += qty;
@@ -530,13 +537,15 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     if (lastReturn) {
       const diff = Math.floor((new Date().getTime() - lastReturn.getTime()) / 60000);
       if (diff < 60) lastReturnText = language === 'AR' ? `منذ ${diff} دقيقة` : `${diff}m ago`;
-      else lastReturnText = language === 'AR' ? `منذ ${Math.floor(diff / 60)} ساعة` : `${Math.floor(diff / 60)}h ago`;
+      else
+        lastReturnText =
+          language === 'AR' ? `منذ ${Math.floor(diff / 60)} ساعة` : `${Math.floor(diff / 60)}h ago`;
     }
 
     return {
       count: salesWithReturns.length,
       returnedQty: totalReturnedQty,
-      lastReturnText
+      lastReturnText,
     };
   }, [todaysSales, language]);
 
@@ -583,13 +592,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               {
                 label: language === 'AR' ? 'نظرة عامة' : 'Overview',
                 value: 'dashboard',
-                icon: 'dashboard'
+                icon: 'dashboard',
               },
               {
                 label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time',
                 value: 'real-time-sales',
                 dotColor: '#10b981',
-                pulseDot: true
+                pulseDot: true,
               },
             ]}
             value='real-time-sales'
@@ -606,16 +615,23 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               className='hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700 shadow-sm backdrop-blur-sm hover:shadow-md cursor-pointer active:scale-95 transition-all'
             >
               <div className='flex items-center gap-1.5'>
-                <span className='material-symbols-rounded text-[18px] text-primary-500'>payments</span>
+                <span className='material-symbols-rounded text-[18px] text-primary-500'>
+                  payments
+                </span>
                 <span className='text-sm font-bold tracking-tight text-gray-800 dark:text-gray-100'>
                   {formatCurrency(revenue)}
                 </span>
               </div>
               <div className='w-px h-4 bg-gray-200 dark:bg-gray-700'></div>
               <div className='flex items-center gap-1.5'>
-                <span className='material-symbols-rounded text-[18px] text-blue-500'>shopping_bag</span>
+                <span className='material-symbols-rounded text-[18px] text-blue-500'>
+                  shopping_bag
+                </span>
                 <span className='text-sm font-bold tracking-tight text-gray-800 dark:text-gray-100'>
-                  {transactions} <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>{language === 'AR' ? 'طلب' : 'Orders'}</span>
+                  {transactions}{' '}
+                  <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                    {language === 'AR' ? 'طلب' : 'Orders'}
+                  </span>
                 </span>
               </div>
             </div>
@@ -638,7 +654,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             </div>
           ) : undefined
         }
-
       />
 
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
@@ -734,109 +749,109 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 <tbody>
                   {isLoading
                     ? Array.from({ length: 8 }).map((_, i) => (
-                      <tr
-                        key={i}
-                        className='border-b border-[var(--border-divider)] animate-pulse'
-                      >
-                        <td className='py-4 px-2'>
-                          <div className='h-3 w-16 bg-gray-100 dark:bg-gray-800 rounded' />
-                        </td>
-                        <td className='py-4 px-2'>
-                          <div className='h-3 w-12 bg-gray-100 dark:bg-gray-800 rounded' />
-                        </td>
-                        <td className='py-4 px-2'>
-                          <div className='h-3 w-8 bg-gray-100 dark:bg-gray-800 rounded' />
-                        </td>
-                        <td className='py-4 px-2'>
-                          <div className='h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded' />
-                        </td>
-                        <td className='py-4 px-2'>
-                          <div className='h-3 w-16 bg-gray-100 dark:bg-gray-800 rounded' />
-                        </td>
-                        <td className='py-4 px-2'>
-                          <div className='h-2 w-2 rounded-full bg-gray-100 dark:bg-gray-800' />
-                        </td>
-                      </tr>
-                    ))
-                    : displayedSales.map((sale) => {
-                      const vip = isVIP(sale);
-                      const high = highValueAnalysis.highValueIds.has(sale.id);
-                      const isSpecial = vip || high;
-
-                      return (
                         <tr
-                          key={sale.id}
-                          className={`
+                          key={i}
+                          className='border-b border-[var(--border-divider)] animate-pulse'
+                        >
+                          <td className='py-4 px-2'>
+                            <div className='h-3 w-16 bg-gray-100 dark:bg-gray-800 rounded' />
+                          </td>
+                          <td className='py-4 px-2'>
+                            <div className='h-3 w-12 bg-gray-100 dark:bg-gray-800 rounded' />
+                          </td>
+                          <td className='py-4 px-2'>
+                            <div className='h-3 w-8 bg-gray-100 dark:bg-gray-800 rounded' />
+                          </td>
+                          <td className='py-4 px-2'>
+                            <div className='h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded' />
+                          </td>
+                          <td className='py-4 px-2'>
+                            <div className='h-3 w-16 bg-gray-100 dark:bg-gray-800 rounded' />
+                          </td>
+                          <td className='py-4 px-2'>
+                            <div className='h-2 w-2 rounded-full bg-gray-100 dark:bg-gray-800' />
+                          </td>
+                        </tr>
+                      ))
+                    : displayedSales.map((sale) => {
+                        const vip = isVIP(sale);
+                        const high = highValueAnalysis.highValueIds.has(sale.id);
+                        const isSpecial = vip || high;
+
+                        return (
+                          <tr
+                            key={sale.id}
+                            className={`
                           group transition-all duration-300
                           ${sale.isNew ? 'new-transaction' : ''} 
                           relative
                         `}
-                        >
-                          <td
-                            className={`py-3 px-2 text-sm text-gray-500 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10 rounded-s-xl' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 group-hover:rounded-s-xl'}`}
                           >
-                            {new Date(sale.date).toLocaleTimeString(
-                              language === 'AR' ? 'ar-EG' : 'en-US',
-                              { hour: '2-digit', minute: '2-digit' }
-                            )}
-                          </td>
-                          <td
-                            className={`py-3 px-2 text-sm font-medium transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
-                          >
-                            <span data-no-convert="true" dir="ltr">
-                              #{sale.serialId || sale.id.substring(0, 8)}
-                            </span>
-                          </td>
-                          <td
-                            className={`py-3 px-2 text-sm transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
-                          >
-                            {sale.items.length}
-                          </td>
-                          <td
-                            className={`py-3 px-2 text-sm font-bold transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
-                          >
-                            {formatCurrency(sale.total)}
-                          </td>
-                          <td
-                            className={`py-3 px-2 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
-                          >
-                            <span className='flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400'>
-                              <span className='material-symbols-rounded text-[16px] opacity-70'>
-                                {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
+                            <td
+                              className={`py-3 px-2 text-sm text-gray-500 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10 rounded-s-xl' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 group-hover:rounded-s-xl'}`}
+                            >
+                              {new Date(sale.date).toLocaleTimeString(
+                                language === 'AR' ? 'ar-EG' : 'en-US',
+                                { hour: '2-digit', minute: '2-digit' }
+                              )}
+                            </td>
+                            <td
+                              className={`py-3 px-2 text-sm font-medium transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
+                            >
+                              <span data-no-convert='true' dir='ltr'>
+                                #{sale.serialId || sale.id.substring(0, 8)}
                               </span>
-                              {getPaymentLabel(sale.paymentMethod)}
-                            </span>
-                          </td>
-                          <td
-                            className={`py-3 px-2 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10 rounded-e-xl' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 group-hover:rounded-e-xl'}`}
-                          >
-                            <div className='flex gap-1.5'>
-                              {vip && (
-                                <div
-                                  className='p-1 rounded-lg bg-amber-200/80 dark:bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-300/50 dark:border-amber-500/30 shadow-xs'
-                                  title='VIP'
-                                >
-                                  <span className='material-symbols-rounded text-[18px] block'>
-                                    verified
-                                  </span>
-                                </div>
-                              )}
-                              {high && (
-                                <div
-                                  className='p-1 rounded-lg bg-amber-200/80 dark:bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-300/50 dark:border-amber-500/30 shadow-xs'
-                                  title='High Value'
-                                >
-                                  <span className='material-symbols-rounded text-[18px] block'>
-                                    stars
-                                  </span>
-                                </div>
-                              )}
-                              {!vip && !high && null}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                            <td
+                              className={`py-3 px-2 text-sm transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
+                            >
+                              {sale.items.length}
+                            </td>
+                            <td
+                              className={`py-3 px-2 text-sm font-bold transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
+                            >
+                              {formatCurrency(sale.total)}
+                            </td>
+                            <td
+                              className={`py-3 px-2 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
+                            >
+                              <span className='flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400'>
+                                <span className='material-symbols-rounded text-[16px] opacity-70'>
+                                  {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
+                                </span>
+                                {getPaymentLabel(sale.paymentMethod)}
+                              </span>
+                            </td>
+                            <td
+                              className={`py-3 px-2 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10 rounded-e-xl' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 group-hover:rounded-e-xl'}`}
+                            >
+                              <div className='flex gap-1.5'>
+                                {vip && (
+                                  <div
+                                    className='p-1 rounded-lg bg-amber-200/80 dark:bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-300/50 dark:border-amber-500/30 shadow-xs'
+                                    title='VIP'
+                                  >
+                                    <span className='material-symbols-rounded text-[18px] block'>
+                                      verified
+                                    </span>
+                                  </div>
+                                )}
+                                {high && (
+                                  <div
+                                    className='p-1 rounded-lg bg-amber-200/80 dark:bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-300/50 dark:border-amber-500/30 shadow-xs'
+                                    title='High Value'
+                                  >
+                                    <span className='material-symbols-rounded text-[18px] block'>
+                                      stars
+                                    </span>
+                                  </div>
+                                )}
+                                {!vip && !high && null}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                 </tbody>
               </table>
             </div>
@@ -964,29 +979,37 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             <div className='space-y-3' dir='ltr'>
               {isLoading
                 ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className='flex items-center justify-between p-2 animate-pulse'>
-                    <div className='flex items-center gap-4'>
-                      <div className='h-6 w-4 bg-gray-100 dark:bg-gray-800 rounded' />
-                      <div className='h-4 w-32 bg-gray-100 dark:bg-gray-800 rounded' />
+                    <div key={i} className='flex items-center justify-between p-2 animate-pulse'>
+                      <div className='flex items-center gap-4'>
+                        <div className='h-6 w-4 bg-gray-100 dark:bg-gray-800 rounded' />
+                        <div className='h-4 w-32 bg-gray-100 dark:bg-gray-800 rounded' />
+                      </div>
+                      <div className='h-6 w-16 bg-gray-100 dark:bg-gray-800 rounded-lg' />
                     </div>
-                    <div className='h-6 w-16 bg-gray-100 dark:bg-gray-800 rounded-lg' />
-                  </div>
-                ))
+                  ))
                 : topProducts.map((p, idx) => (
-                  <div key={idx} className='flex items-center justify-between p-2 group hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors'>
-                    <div className='flex items-center gap-4 overflow-hidden'>
-                      <span className='text-2xl font-bold text-gray-300 dark:text-gray-600 font-mono'>{idx + 1}</span>
-                      <p className='text-sm font-semibold text-gray-900 dark:text-gray-100 truncate'>
-                        {getDisplayName(p, textTransform)}
-                      </p>
+                    <div
+                      key={idx}
+                      className='flex items-center justify-between p-2 group hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors'
+                    >
+                      <div className='flex items-center gap-4 overflow-hidden'>
+                        <span className='text-2xl font-bold text-gray-300 dark:text-gray-600 font-mono'>
+                          {idx + 1}
+                        </span>
+                        <p className='text-sm font-semibold text-gray-900 dark:text-gray-100 truncate'>
+                          {getDisplayName(p, textTransform)}
+                        </p>
+                      </div>
+                      <div className='flex items-center ms-4 shrink-0'>
+                        <span
+                          className='px-2.5 py-1 rounded-lg bg-gray-100/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 text-xs font-bold border border-gray-200/50 dark:border-gray-700/50'
+                          dir={isRTL ? 'rtl' : 'ltr'}
+                        >
+                          {t.dashboard?.sold || t.realTimeSales?.sold || 'sold'} {p.qty}
+                        </span>
+                      </div>
                     </div>
-                    <div className='flex items-center ms-4 shrink-0'>
-                      <span className='px-2.5 py-1 rounded-lg bg-gray-100/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 text-xs font-bold border border-gray-200/50 dark:border-gray-700/50' dir={isRTL ? 'rtl' : 'ltr'}>
-                        {t.dashboard?.sold || t.realTimeSales?.sold || 'sold'} {p.qty}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
             </div>
           </div>
         </div>
@@ -1090,7 +1113,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Returns Chart */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-bold'>{t.realTimeSales?.returnActivity || 'Returns Activity'}</h3>
+            <h3 className='text-lg font-bold'>
+              {t.realTimeSales?.returnActivity || 'Returns Activity'}
+            </h3>
             {returnsData.count > 0 && (
               <span className='text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-lg flex items-center gap-1'>
                 <span className='material-symbols-rounded text-[14px]'>schedule</span>
@@ -1111,24 +1136,35 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <div className='text-3xl font-bold'>
                 <AnimatedCounter value={returnsData.count} />
               </div>
-              <p className='text-sm text-gray-500'>{t.realTimeSales?.returnsProcessed || 'Returns Processed'}</p>
+              <p className='text-sm text-gray-500'>
+                {t.realTimeSales?.returnsProcessed || 'Returns Processed'}
+              </p>
             </div>
             <div className='w-full pt-4 border-t border-[var(--border-divider)] grid grid-cols-3 gap-2'>
               <div className='px-2'>
-                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>{t.realTimeSales?.value || 'Value'}</p>
+                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
+                  {t.realTimeSales?.value || 'Value'}
+                </p>
                 <div className='text-sm font-bold text-rose-600'>
                   <AnimatedCounter value={returnedValue} />
                 </div>
               </div>
               <div className='px-2'>
-                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>{t.realTimeSales?.tableItems || 'Items'}</p>
+                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
+                  {t.realTimeSales?.tableItems || 'Items'}
+                </p>
                 <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
                   <AnimatedCounter value={returnsData.returnedQty} />
                 </div>
               </div>
               <div className='px-2'>
-                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>{t.realTimeSales?.rate || 'Rate'}</p>
-                <div className='text-sm font-bold flex items-center justify-center gap-0.5 text-gray-700 dark:text-gray-300' dir='ltr'>
+                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
+                  {t.realTimeSales?.rate || 'Rate'}
+                </p>
+                <div
+                  className='text-sm font-bold flex items-center justify-center gap-0.5 text-gray-700 dark:text-gray-300'
+                  dir='ltr'
+                >
                   <AnimatedCounter
                     value={
                       returnsData.count > 0 ? (returnsData.count / (transactions || 1)) * 100 : 0

@@ -1,20 +1,20 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { useAuthStore } from '../../stores/authStore';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { pricingService } from '../../services/sales/pricingService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Return, ReturnItem, ReturnReason, Sale, Shift } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { idGenerator } from '../../utils/idGenerator';
 import { money, pricing, tax } from '../../utils/money';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
-import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -49,7 +49,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   // Resolve role internally
   const userRole = permissionsService.getEffectiveRole();
   const { getVerifiedDate } = useStatusBar();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventoryData } = useInventory(activeBranchId);
   const inventory = inventoryData ?? [];
 
@@ -357,11 +357,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       footer={
         <div dir='ltr' className='flex gap-3'>
           {step > 1 && (
-            <button
-              onClick={handleBack}
-              className={MODAL_FOOTER_BTN_CANCEL}
-              title={t.returns.back}
-            >
+            <button onClick={handleBack} className={MODAL_FOOTER_BTN_CANCEL} title={t.returns.back}>
               <span className='material-symbols-rounded text-lg'>arrow_back</span>
             </button>
           )}
@@ -378,10 +374,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               <span className='material-symbols-rounded text-lg'>arrow_forward</span>
             </button>
           ) : (
-            <button
-              onClick={handleConfirm}
-              className={MODAL_FOOTER_BTN_PRIMARY}
-            >
+            <button onClick={handleConfirm} className={MODAL_FOOTER_BTN_PRIMARY}>
               {isProcessing ? (
                 <span className='material-symbols-rounded text-[20px] animate-spin'>sync</span>
               ) : (

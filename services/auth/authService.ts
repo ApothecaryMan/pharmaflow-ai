@@ -12,7 +12,7 @@ import type {
   OrgRole,
   UserSession,
 } from '../../types';
-import { isTauri, getDeviceName, getBrowserName, getSessionUserAgent } from '../../utils/platform';
+import { getBrowserName, getDeviceName, getSessionUserAgent, isTauri } from '../../utils/platform';
 import { storage } from '../../utils/storage';
 import { employeeRepository } from '../hr/repositories/employeeRepository';
 import { orgService } from '../org/orgService';
@@ -111,7 +111,8 @@ export const authService = {
       // Auto-migrate legacy accounts missing metadata
       if (!accountType) {
         memberData = await orgRepository.getMemberByUserId(sbUser.id);
-        accountType = (memberData?.role === 'owner' || memberData?.role === 'admin') ? 'pharmacy' : 'employee';
+        accountType =
+          memberData?.role === 'owner' || memberData?.role === 'admin' ? 'pharmacy' : 'employee';
         supabase.auth.updateUser({ data: { accountType } }).catch(() => {});
       }
 
@@ -159,20 +160,27 @@ export const authService = {
       cachedSession = session;
 
       // Register or update active session (Full Backend)
-      sessionRepository.registerSession({
-        userId: session.userId,
-        orgId: session.orgId,
-        branchId: session.branchId,
-        employeeId: session.employeeId,
-        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(getSessionUserAgent(navigator.userAgent))}` : 'Unknown Device',
-        userAgent: typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : 'Unknown User Agent',
-      })
+      sessionRepository
+        .registerSession({
+          userId: session.userId,
+          orgId: session.orgId,
+          branchId: session.branchId,
+          employeeId: session.employeeId,
+          deviceInfo:
+            typeof navigator !== 'undefined'
+              ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(getSessionUserAgent(navigator.userAgent))}`
+              : 'Unknown Device',
+          userAgent:
+            typeof navigator !== 'undefined'
+              ? getSessionUserAgent(navigator.userAgent)
+              : 'Unknown User Agent',
+        })
         .then((sessionId) => {
           if (sessionId) {
             storage.set(StorageKeys.ACTIVE_SESSION_ID, sessionId);
           }
         })
-        .catch(e => console.warn('Failed to register active session during sync:', e));
+        .catch((e) => console.warn('Failed to register active session during sync:', e));
 
       return session;
     } catch (err) {
@@ -360,17 +368,20 @@ export const authService = {
     // Auto-migrate legacy accounts missing metadata
     if (!accountType) {
       memberData = await orgRepository.getMemberByUserId(authData.user.id);
-      accountType = (memberData?.role === 'owner' || memberData?.role === 'admin') ? 'pharmacy' : 'employee';
+      accountType =
+        memberData?.role === 'owner' || memberData?.role === 'admin' ? 'pharmacy' : 'employee';
       supabase.auth.updateUser({ data: { accountType } }).catch(() => {});
     }
 
     const destination = accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal';
-    
+
     if (accountType === 'pharmacy') {
       // Fetch only if not already fetched during migration
       if (!memberData) memberData = await orgRepository.getMemberByUserId(authData.user.id);
     } else {
-      employeeWorkspaces = await employeeRepository.getAllByAuthUserId(authData.user.id).catch(() => []);
+      employeeWorkspaces = await employeeRepository
+        .getAllByAuthUserId(authData.user.id)
+        .catch(() => []);
     }
 
     const orgRole = (memberData?.role || 'member') as OrgRole;
@@ -408,18 +419,26 @@ export const authService = {
     });
 
     try {
-      await sessionRepository.registerSession({
-        userId: session.userId,
-        orgId: session.orgId,
-        branchId: session.branchId,
-        employeeId: session.employeeId,
-        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(getSessionUserAgent(navigator.userAgent))}` : 'Unknown Device',
-        userAgent: typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : 'Unknown User Agent',
-      }).then((sessionId) => {
-        if (sessionId) {
-          storage.set(StorageKeys.ACTIVE_SESSION_ID, sessionId);
-        }
-      });
+      await sessionRepository
+        .registerSession({
+          userId: session.userId,
+          orgId: session.orgId,
+          branchId: session.branchId,
+          employeeId: session.employeeId,
+          deviceInfo:
+            typeof navigator !== 'undefined'
+              ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(getSessionUserAgent(navigator.userAgent))}`
+              : 'Unknown Device',
+          userAgent:
+            typeof navigator !== 'undefined'
+              ? getSessionUserAgent(navigator.userAgent)
+              : 'Unknown User Agent',
+        })
+        .then((sessionId) => {
+          if (sessionId) {
+            storage.set(StorageKeys.ACTIVE_SESSION_ID, sessionId);
+          }
+        });
     } catch (e) {
       console.warn('Failed to register active session:', e);
     }
@@ -494,14 +513,14 @@ export const authService = {
       console.error('Logout error:', err);
       // Failsafe: ensure local cleanup even if Supabase signOut fails
       cachedSession = null;
-      
+
       const userId = storage.getUserId();
       storage.remove('pharma_view');
       storage.remove('pharma_activeModule');
       storage.remove('pharma_active_org_id');
       storage.remove('pharma_active_branch_id');
       storage.remove('area_unlocked');
-      
+
       if (userId) {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -512,7 +531,7 @@ export const authService = {
         }
         keysToRemove.forEach((key) => localStorage.removeItem(key));
       }
-      
+
       // Destroy ghost session tokens manually
       try {
         const sbKeys = [];

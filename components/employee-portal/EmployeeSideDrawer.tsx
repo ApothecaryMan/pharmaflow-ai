@@ -1,4 +1,4 @@
-import { Clock, Globe, LogOut, Menu, Moon, Search, Sun, UserCircle, Loader2 } from 'lucide-react';
+import { Clock, Globe, Loader2, LogOut, Menu, Moon, Search, Sun, UserCircle } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useSettings } from '../../context';
 import { Switch } from '../common/Switch';

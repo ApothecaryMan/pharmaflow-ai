@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { supabase } from '../lib/supabase';
 import { storage } from '../utils/storage';
 import { timeService } from './timeService';
-
-import { supabase } from '../lib/supabase';
 
 // Mock storage
 vi.mock('../utils/storage', () => ({
@@ -15,7 +14,10 @@ vi.mock('../utils/storage', () => ({
 describe('TimeService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: null, error: new Error('RPC failed') as any });
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({
+      data: null,
+      error: new Error('RPC failed') as any,
+    });
     // Reset private state if possible, or create fresh instance logic if needed.
     // Since it's a singleton, we might affect other tests, but in unit tests files are isolated.
   });

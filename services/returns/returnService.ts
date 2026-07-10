@@ -3,8 +3,8 @@
  * Business logic layer that orchestrates data access via ReturnsRepository.
  */
 
-import type { PurchaseReturn, Return } from '../../types';
 import { supabase } from '../../lib/supabase';
+import type { PurchaseReturn, Return } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { authService } from '../auth/authService';
 import { settingsService } from '../settings/settingsService';
@@ -25,7 +25,9 @@ export const returnService: ReturnService = {
     return returnsRepository.getRecentSales(effectiveBranchId, settings.orgId, limit);
   },
 
-  listSalesReturnsPage: async (options: ReturnsPageOptions): Promise<{ rows: Return[]; total: number; page: number; pageSize: number }> => {
+  listSalesReturnsPage: async (
+    options: ReturnsPageOptions
+  ): Promise<{ rows: Return[]; total: number; page: number; pageSize: number }> => {
     const settings = await settingsService.getAll();
     return returnsRepository.listSalesReturnsPage({
       ...options,
@@ -63,7 +65,10 @@ export const returnService: ReturnService = {
     return returnsRepository.getAllPurchases(effectiveBranchId, settings.orgId);
   },
 
-  getRecentPurchaseReturns: async (branchId?: string, limit: number = 100): Promise<PurchaseReturn[]> => {
+  getRecentPurchaseReturns: async (
+    branchId?: string,
+    limit: number = 100
+  ): Promise<PurchaseReturn[]> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return returnsRepository.getRecentPurchase(effectiveBranchId, settings.orgId, limit);
@@ -73,7 +78,9 @@ export const returnService: ReturnService = {
     return returnsRepository.getPurchaseById(id);
   },
 
-  listPurchaseReturnsPage: async (options: ReturnsPageOptions): Promise<{ rows: PurchaseReturn[]; total: number; page: number; pageSize: number }> => {
+  listPurchaseReturnsPage: async (
+    options: ReturnsPageOptions
+  ): Promise<{ rows: PurchaseReturn[]; total: number; page: number; pageSize: number }> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = options.branchId || settings.activeBranchId || settings.branchCode;
     return returnsRepository.listPurchaseReturnsPage({

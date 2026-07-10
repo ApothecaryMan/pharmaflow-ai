@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { salesService } from '../../services/sales';
 import { transactionService } from '../../services/transactions/transactionService';
 import { useAuthStore } from '../../stores/authStore';
 import type { ActionContext, CartItem } from '../../types';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useCompleteSale() {
   const queryClient = useQueryClient();

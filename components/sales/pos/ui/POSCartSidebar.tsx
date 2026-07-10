@@ -3,10 +3,10 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import React, { useCallback, useMemo } from 'react';
 import type { UserRole } from '../../../../config/permissions';
-import { useAuthStore } from '../../../../stores/authStore';
 import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
+import { useAuthStore } from '../../../../stores/authStore';
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
 import { formatCurrency, getCurrencySymbol } from '../../../../utils/currency';
 import { money } from '../../../../utils/money';
@@ -207,9 +207,12 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
     setDeliveryFee,
   }) => {
     const { isOnline } = useNetworkStatus();
-    const branches = useAuthStore(s => s.branches);
-    const activeBranchId = useAuthStore(s => s.activeBranchId);
-    const activeBranch = useMemo(() => branches.find(b => b.id === activeBranchId), [branches, activeBranchId]);
+    const branches = useAuthStore((s) => s.branches);
+    const activeBranchId = useAuthStore((s) => s.activeBranchId);
+    const activeBranch = useMemo(
+      () => branches.find((b) => b.id === activeBranchId),
+      [branches, activeBranchId]
+    );
     const { hideMenu } = useContextMenu();
     const globalDeliveryFee = activeBranch?.deliveryFee ?? 5;
 

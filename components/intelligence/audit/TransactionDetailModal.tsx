@@ -4,8 +4,8 @@ import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { AuditTransaction } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
-import { Modal } from '../../common/Modal';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../../utils/themeStyles';
+import { Modal } from '../../common/Modal';
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -150,20 +150,13 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
         {/* Actions */}
         <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto'>
-          <button
-            onClick={() => console.log('Print receipt')}
-            className={MODAL_FOOTER_BTN_CANCEL}
-          >
+          <button onClick={() => console.log('Print receipt')} className={MODAL_FOOTER_BTN_CANCEL}>
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
               print
             </span>
             {t?.common?.print || 'Print'}
           </button>
-          <button
-            type='button'
-            onClick={onClose}
-            className={MODAL_FOOTER_BTN_PRIMARY}
-          >
+          <button type='button' onClick={onClose} className={MODAL_FOOTER_BTN_PRIMARY}>
             {t?.common?.close || 'Close'}
           </button>
         </div>

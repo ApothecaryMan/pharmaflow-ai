@@ -1,7 +1,8 @@
 export const queryKeys = {
   inventory: {
     all: (branchId: string) => ['inventory', branchId] as const,
-    lowStock: (branchId: string, threshold: number) => ['inventory', 'low-stock', branchId, threshold] as const,
+    lowStock: (branchId: string, threshold: number) =>
+      ['inventory', 'low-stock', branchId, threshold] as const,
     detail: (drugId: string) => ['drug', drugId] as const,
   },
   batches: {
@@ -19,7 +20,8 @@ export const queryKeys = {
   },
   returns: {
     sales: (branchId: string, limit = 100) => ['returns', 'sales', branchId, limit] as const,
-    purchases: (branchId: string, limit = 100) => ['returns', 'purchases', branchId, limit] as const,
+    purchases: (branchId: string, limit = 100) =>
+      ['returns', 'purchases', branchId, limit] as const,
   },
   employees: {
     all: (branchId: string) => ['employees', branchId] as const,

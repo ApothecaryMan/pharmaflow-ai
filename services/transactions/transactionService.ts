@@ -353,7 +353,7 @@ export const transactionService = {
         {
           ...returnInput,
           paymentMethod: originalPurchase.paymentMethod,
-          shiftId: context.shiftId
+          shiftId: context.shiftId,
         } as any,
         context.branchId
       );
@@ -387,7 +387,10 @@ export const transactionService = {
 
       if (error) {
         console.error('[TransactionService] RPC error:', error);
-        return { success: false, error: error.message || 'Server error during delivery finalization' };
+        return {
+          success: false,
+          error: error.message || 'Server error during delivery finalization',
+        };
       }
 
       if (data && !data.success) {

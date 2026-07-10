@@ -410,7 +410,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     const rows = filteredShifts.map((shift) => {
       const duration = shift.closeTime
         ? (new Date(shift.closeTime).getTime() - new Date(shift.openTime).getTime()) /
-        (1000 * 60 * 60)
+          (1000 * 60 * 60)
         : 0;
       // BUG-SH-05: Sync CSV export math with table logic
       const expected =
@@ -624,7 +624,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                   {
                     icon: 'person',
                     label: t.shiftHistory?.details?.openedBy || 'Opened By',
-                    value: employees?.find((e) => e.id === selectedShift.openedBy)?.name ||
+                    value:
+                      employees?.find((e) => e.id === selectedShift.openedBy)?.name ||
                       selectedShift.openedBy,
                     color: '',
                   },
@@ -688,7 +689,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
               <div className='flex flex-col gap-0.5'>
                 <div className='flex items-center justify-between py-3 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-t-2xl rounded-b-md'>
                   <div className='flex items-center gap-2 shrink-0'>
-                    <span className='material-symbols-rounded text-base opacity-40'>account_balance</span>
+                    <span className='material-symbols-rounded text-base opacity-40'>
+                      account_balance
+                    </span>
                     <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>
                       {t.shiftHistory?.headers?.openingBalance || 'Opening Balance'}
                     </span>
@@ -704,7 +707,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                 </div>
                 <div className='flex items-center justify-between py-3 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-b-2xl rounded-t-md'>
                   <div className='flex items-center gap-2 shrink-0'>
-                    <span className='material-symbols-rounded text-base opacity-40'>account_balance</span>
+                    <span className='material-symbols-rounded text-base opacity-40'>
+                      account_balance
+                    </span>
                     <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>
                       {t.shiftHistory?.headers?.closingBalance || 'Closing Balance'}
                     </span>

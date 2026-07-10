@@ -2,10 +2,10 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { isAfter, isToday, parseISO, subHours } from 'date-fns';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAlert, useSettings } from '../../../context';
-import { useAuthStore } from '../../../stores/authStore';
 import { useShift } from '../../../hooks/sales/useShift';
 import { batchService } from '../../../services/inventory/batchService';
 import { pricingService } from '../../../services/sales/pricingService';
+import { useAuthStore } from '../../../stores/authStore';
 import {
   type CartItem,
   type Customer,
@@ -139,7 +139,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   activeBranchId,
 }) => {
   const { currentShift } = useShift();
-  const branches = useAuthStore(s => s.branches);
+  const branches = useAuthStore((s) => s.branches);
   const hasOpenShift = !!currentShift;
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
   const { error: showToastError } = useAlert();
@@ -752,10 +752,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   onViewCustomerHistory(customer);
                 }
               }}
-              className={`font-mono font-bold text-sm select-none ${isClickable
+              className={`font-mono font-bold text-sm select-none ${
+                isClickable
                   ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95'
                   : 'text-gray-700 dark:text-gray-300'
-                }`}
+              }`}
               title={isClickable ? t.viewCustomerHistory || 'View Customer History' : undefined}
             >
               {code || '-'}
@@ -913,17 +914,17 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 {(s.status === 'pending' ||
                   s.status === 'with_delivery' ||
                   s.status === 'on_way') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOrderToCancelId(s.id);
-                      }}
-                      className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
-                      title={t.cancel || 'Cancel'}
-                    >
-                      <span className='material-symbols-rounded text-[20px]'>block</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOrderToCancelId(s.id);
+                    }}
+                    className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
+                    title={t.cancel || 'Cancel'}
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>block</span>
+                  </button>
+                )}
               </div>
 
               {/* Slot 2: Main Action Button (Fixed Width) */}
@@ -1078,12 +1079,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                   {/* 3. Status Badge (Compact) */}
                   <div
-                    className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${selectedSale.status === 'completed'
+                    className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${
+                      selectedSale.status === 'completed'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                         : selectedSale.status === 'cancelled'
                           ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
                           : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
-                      }`}
+                    }`}
                   >
                     <span
                       className='material-symbols-rounded text-sm'
@@ -1401,20 +1403,22 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                     return (
                                       <div
                                         title={`Max: ${effectiveMax}%`}
-                                        className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${currentDiscount > 0
+                                        className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
+                                          currentDiscount > 0
                                             ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                                             : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
-                                          }`}
+                                        }`}
                                       >
                                         <button
                                           onClick={() => {
                                             const newVal = currentDiscount === 0 ? effectiveMax : 0;
                                             handleDiscountChange(common.id, newVal);
                                           }}
-                                          className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${currentDiscount > 0
+                                          className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
+                                            currentDiscount > 0
                                               ? 'text-green-600 dark:text-green-400'
                                               : 'text-gray-400'
-                                            }`}
+                                          }`}
                                         >
                                           <span
                                             className='material-symbols-rounded'
@@ -1434,10 +1438,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             if (finalVal > effectiveMax) finalVal = effectiveMax;
                                             handleDiscountChange(common.id, finalVal);
                                           }}
-                                          className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${currentDiscount > 0
+                                          className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                            currentDiscount > 0
                                               ? 'text-green-700 dark:text-green-300 placeholder-green-300'
                                               : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
-                                            }`}
+                                          }`}
                                         />
                                       </div>
                                     );
@@ -1544,14 +1549,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           <div key={record.id} className='relative z-10'>
                             {/* Timeline Node */}
                             <div
-                              className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${isExpanded
+                              className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${
+                                isExpanded
                                   ? hasDeletions
                                     ? 'bg-red-500 scale-110'
                                     : 'bg-orange-500 scale-125'
                                   : hasDeletions
                                     ? 'bg-red-300'
                                     : 'bg-orange-300'
-                                }`}
+                              }`}
                             ></div>
 
                             <MaterialTabs
@@ -1614,43 +1620,43 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                         {record.modifications.some(
                                           (m) => m.type === 'item_removed'
                                         ) && (
-                                            <span
-                                              className='material-symbols-rounded text-xl text-red-600 dark:text-red-400'
-                                              title={t.deleted || 'Deleted'}
-                                            >
-                                              delete
-                                            </span>
-                                          )}
+                                          <span
+                                            className='material-symbols-rounded text-xl text-red-600 dark:text-red-400'
+                                            title={t.deleted || 'Deleted'}
+                                          >
+                                            delete
+                                          </span>
+                                        )}
                                         {record.modifications.some(
                                           (m) => m.type === 'quantity_update'
                                         ) && (
-                                            <span
-                                              className='material-symbols-rounded text-xl text-orange-600 dark:text-orange-400'
-                                              title={t.quantityUpdated || 'Quantity Updated'}
-                                            >
-                                              edit_square
-                                            </span>
-                                          )}
+                                          <span
+                                            className='material-symbols-rounded text-xl text-orange-600 dark:text-orange-400'
+                                            title={t.quantityUpdated || 'Quantity Updated'}
+                                          >
+                                            edit_square
+                                          </span>
+                                        )}
                                         {record.modifications.some(
                                           (m) => m.type === 'discount_update'
                                         ) && (
-                                            <span
-                                              className='material-symbols-rounded text-xl text-blue-600 dark:text-blue-400'
-                                              title={t.discountUpdated || 'Discount Updated'}
-                                            >
-                                              percent
-                                            </span>
-                                          )}
+                                          <span
+                                            className='material-symbols-rounded text-xl text-blue-600 dark:text-blue-400'
+                                            title={t.discountUpdated || 'Discount Updated'}
+                                          >
+                                            percent
+                                          </span>
+                                        )}
                                         {record.modifications.some(
                                           (m) => m.type === 'item_added'
                                         ) && (
-                                            <span
-                                              className='material-symbols-rounded text-xl text-green-600 dark:text-green-400'
-                                              title={t.itemAdded || 'Item Added'}
-                                            >
-                                              add_circle
-                                            </span>
-                                          )}
+                                          <span
+                                            className='material-symbols-rounded text-xl text-green-600 dark:text-green-400'
+                                            title={t.itemAdded || 'Item Added'}
+                                          >
+                                            add_circle
+                                          </span>
+                                        )}
                                         {record.modifiedBy && (
                                           <div className='flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hidden sm:flex'>
                                             <span>{record.modifiedBy}</span>
@@ -1715,14 +1721,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                               className='flex items-center gap-3 py-1'
                                             >
                                               <span
-                                                className={`shrink-0 ${isDeletion
+                                                className={`shrink-0 ${
+                                                  isDeletion
                                                     ? 'text-red-600 dark:text-red-400'
                                                     : isDiscount
                                                       ? 'text-blue-600 dark:text-blue-400'
                                                       : isIncrease
                                                         ? 'text-green-600 dark:text-green-400'
                                                         : 'text-orange-600 dark:text-orange-400'
-                                                  }`}
+                                                }`}
                                               >
                                                 <span className='material-symbols-rounded text-lg'>
                                                   {isDeletion ? 'delete' : 'edit_square'}
@@ -1747,14 +1754,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                                 </span>
                                                 <div className='flex items-center gap-2 ml-8 shrink-0'>
                                                   <div
-                                                    className={`flex items-center gap-1.5 font-bold text-xs ${isDeletion
+                                                    className={`flex items-center gap-1.5 font-bold text-xs ${
+                                                      isDeletion
                                                         ? 'text-red-600 dark:text-red-400'
                                                         : isDiscount
                                                           ? 'text-blue-600 dark:text-blue-400'
                                                           : isIncrease
                                                             ? 'text-green-600 dark:text-green-400'
                                                             : 'text-orange-600 dark:text-orange-400'
-                                                      }`}
+                                                    }`}
                                                   >
                                                     {isDiscount ? (
                                                       <>

@@ -177,7 +177,11 @@ export function SegmentedControl<T extends string | number | boolean>({
             </span>
           )}
           {o.count !== undefined && (
-            <span className={`text-[10px] opacity-70 ms-1 ${o.icon && value !== o.value && isCompact ? 'hidden' : ''}`}>({o.count})</span>
+            <span
+              className={`text-[10px] opacity-70 ms-1 ${o.icon && value !== o.value && isCompact ? 'hidden' : ''}`}
+            >
+              ({o.count})
+            </span>
           )}
         </button>
       ))}

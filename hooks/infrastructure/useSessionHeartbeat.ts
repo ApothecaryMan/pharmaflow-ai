@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { sessionRepository } from '../../services/auth/repositories/sessionRepository';
+import { storage } from '../../utils/storage';
 
 /**
  * Session heartbeat interval in milliseconds (2 minutes).

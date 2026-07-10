@@ -2,13 +2,12 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
-import { inventoryService } from '../../services/inventory/inventoryService';
 import { batchService } from '../../services/inventory/batchService';
-import { MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import { inventoryService } from '../../services/inventory/inventoryService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockBatch } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
@@ -17,7 +16,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { parseSearchTerm } from '../../utils/searchUtils';
 import { storage } from '../../utils/storage';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -66,10 +65,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   t,
 }) => {
   const { branchCode, language, textTransform } = useSettings();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
-  const branches = useAuthStore(s => s.branches);
-  const currentEmployee = useAuthStore(s => s.currentEmployee);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const branches = useAuthStore((s) => s.branches);
+  const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const { data: inventory = [] } = useInventory(activeBranchId);
 
   // Try to get pharmacy name from active branch, then storage/organization fallbacks
@@ -140,7 +139,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const handleApprove = async (movement: StockMovement) => {
     try {
       const currentEmployeeId = currentEmployee?.id;
-      if (!currentEmployeeId) throw new Error('Current employee is required to approve adjustments');
+      if (!currentEmployeeId)
+        throw new Error('Current employee is required to approve adjustments');
 
       await inventoryService.processStockAdjustment({
         branchId: movement.branchId || activeBranchId,

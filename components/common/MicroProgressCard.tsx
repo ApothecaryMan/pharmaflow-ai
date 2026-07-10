@@ -68,9 +68,7 @@ export const MicroProgressCard: React.FC<MicroProgressCardProps> = ({
   // overfillPercentage calculation based on overfillCapacity
   const maxOverfillAllowed = max * overfillCapacity;
   const overfillPercentage =
-    maxOverfillAllowed > 0
-      ? Math.min(100, (overfillAmount / maxOverfillAllowed) * 100)
-      : 0;
+    maxOverfillAllowed > 0 ? Math.min(100, (overfillAmount / maxOverfillAllowed) * 100) : 0;
 
   let colorClass = cLow;
   if (percentage >= tHigh) colorClass = cHigh;
@@ -83,8 +81,8 @@ export const MicroProgressCard: React.FC<MicroProgressCardProps> = ({
       const number = match[2];
       const suffix = match[3] || '';
       const symbolClass = isTarget
-        ? "text-[9px] opacity-50 font-medium mx-0.5"
-        : "text-[10px] opacity-60 font-medium mx-0.5";
+        ? 'text-[9px] opacity-50 font-medium mx-0.5'
+        : 'text-[10px] opacity-60 font-medium mx-0.5';
 
       return (
         <span className={baseClass}>
@@ -102,24 +100,30 @@ export const MicroProgressCard: React.FC<MicroProgressCardProps> = ({
       {/* Side Stat */}
       <div className='flex items-center justify-center gap-1.5 ltr:pr-4 rtl:pl-4 h-5 whitespace-nowrap'>
         <span
-          className={`material-symbols-rounded text-[18px] ${overfillPercentage > 0 ? iconOverfill : iconBase
-            }`}
+          className={`material-symbols-rounded text-[18px] ${
+            overfillPercentage > 0 ? iconOverfill : iconBase
+          }`}
         >
           {icon}
         </span>
         <div className='flex items-baseline gap-1'>
-          {renderWithFadedCurrency(formattedValue, `text-[15px] leading-none font-bold tracking-tight ${valueText}`)}
+          {renderWithFadedCurrency(
+            formattedValue,
+            `text-[15px] leading-none font-bold tracking-tight ${valueText}`
+          )}
           {formattedTarget && (
-            <div className={`flex items-baseline gap-0.5 text-[11px] font-medium leading-none ${targetText}`}>
+            <div
+              className={`flex items-baseline gap-0.5 text-[11px] font-medium leading-none ${targetText}`}
+            >
               <span>/</span>
-              {renderWithFadedCurrency(formattedTarget, "", true)}
+              {renderWithFadedCurrency(formattedTarget, '', true)}
             </div>
           )}
         </div>
       </div>
 
       {/* Main Content */}
-        <div className='flex items-center flex-1'>
+      <div className='flex items-center flex-1'>
         <div className='relative flex h-4 w-full rounded-full overflow-hidden bg-gray-200 dark:bg-(--border-divider)'>
           {/* Base progress */}
           <div

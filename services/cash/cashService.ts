@@ -3,8 +3,8 @@
  * Business logic layer that orchestrates data access via CashRepository.
  */
 
-import type { CashTransaction, Shift } from '../../types';
 import { supabase } from '../../lib/supabase';
+import type { CashTransaction, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { settingsService } from '../settings/settingsService';

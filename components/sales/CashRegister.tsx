@@ -1,10 +1,16 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
+import { usePageHelp } from '../../context/HelpContext';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import type { CashTransaction, CashTransactionType, Employee, Language } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
-import { CARD_BASE, INPUT_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import {
+  CARD_BASE,
+  INPUT_BASE,
+  MODAL_FOOTER_BTN_CANCEL,
+  MODAL_FOOTER_BTN_PRIMARY,
+} from '../../utils/themeStyles';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
@@ -13,7 +19,6 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { PriceDisplay } from '../common/table/PriceDisplay';
 import { useCashRegister } from './useCashRegister';
-import { usePageHelp } from '../../context/HelpContext';
 
 interface CashRegisterProps {
   color: string;
@@ -185,7 +190,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               displayReason = language === 'AR' ? `شراء: ${desc}` : `Purchase: ${desc}`;
             } else if (reason.startsWith('Purchase Return: ')) {
               const desc = reason.substring(17);
-              displayReason = language === 'AR' ? `مرتجع شراء: ${desc}` : `Purchase Return: ${desc}`;
+              displayReason =
+                language === 'AR' ? `مرتجع شراء: ${desc}` : `Purchase Return: ${desc}`;
             }
 
             content = (
@@ -462,7 +468,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   >
                     {!isLoading && (
                       <>
-                        <AnimatedCounter value={currentBalance} mode="rolling" />
+                        <AnimatedCounter value={currentBalance} mode='rolling' />
                         <span className='text-base font-normal opacity-40'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -485,7 +491,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         <AnimatedCounter
                           value={currentShift?.openingBalance || 0}
                           fractionDigits={0}
-                          mode="rolling"
+                          mode='rolling'
                         />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
@@ -509,7 +515,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           add
                         </span>
-                        <AnimatedCounter value={currentShift?.cashSales || 0} fractionDigits={0} mode="rolling" />
+                        <AnimatedCounter
+                          value={currentShift?.cashSales || 0}
+                          fractionDigits={0}
+                          mode='rolling'
+                        />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -532,7 +542,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           add
                         </span>
-                        <AnimatedCounter value={currentShift?.cardSales || 0} fractionDigits={0} mode="rolling" />
+                        <AnimatedCounter
+                          value={currentShift?.cardSales || 0}
+                          fractionDigits={0}
+                          mode='rolling'
+                        />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -555,7 +569,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           add
                         </span>
-                        <AnimatedCounter value={currentShift?.cashIn || 0} fractionDigits={0} mode="rolling" />
+                        <AnimatedCounter
+                          value={currentShift?.cashIn || 0}
+                          fractionDigits={0}
+                          mode='rolling'
+                        />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -578,7 +596,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           remove
                         </span>
-                        <AnimatedCounter value={currentShift?.cashOut || 0} fractionDigits={0} mode="rolling" />
+                        <AnimatedCounter
+                          value={currentShift?.cashOut || 0}
+                          fractionDigits={0}
+                          mode='rolling'
+                        />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -604,7 +626,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         <AnimatedCounter
                           value={currentShift?.cashPurchases || 0}
                           fractionDigits={0}
-                          mode="rolling"
+                          mode='rolling'
                         />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
@@ -631,7 +653,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         <AnimatedCounter
                           value={currentShift?.cashPurchaseReturns || 0}
                           fractionDigits={0}
-                          mode="rolling"
+                          mode='rolling'
                         />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
@@ -655,7 +677,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           remove
                         </span>
-                        <AnimatedCounter value={currentShift?.returns || 0} fractionDigits={0} mode="rolling" />
+                        <AnimatedCounter
+                          value={currentShift?.returns || 0}
+                          fractionDigits={0}
+                          mode='rolling'
+                        />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -749,10 +775,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           disabled={isLoading}
           footer={
             <div className='flex gap-3'>
-              <button
-                onClick={closeModal}
-                className={MODAL_FOOTER_BTN_CANCEL}
-              >
+              <button onClick={closeModal} className={MODAL_FOOTER_BTN_CANCEL}>
                 {t.cashRegister.modal.cancel}
               </button>
               <button
@@ -865,7 +888,6 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 )}
               </div>
             )}
-
           </div>
         </Modal>
       )}

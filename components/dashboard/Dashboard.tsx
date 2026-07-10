@@ -2,19 +2,23 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
+import { usePageHelp } from '../../context/HelpContext';
 import { useBatches } from '../../hooks/queries/useInventoryQuery';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { batchService } from '../../services/inventory/batchService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug, ExpandedView, Purchase, Sale } from '../../types';
 import { formatCompactCurrency, formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
-import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import {
+  CARD_BASE,
+  MODAL_FOOTER_BTN_CANCEL,
+  MODAL_FOOTER_BTN_PRIMARY,
+} from '../../utils/themeStyles';
 import { ChartWidget } from '../common/ChartWidget';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { HasPermission } from '../common/HasPermission';
-import { usePageHelp } from '../../context/HelpContext';
 import { CurrencyValue, InsightTooltip } from '../common/InsightTooltip';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
@@ -154,7 +158,10 @@ const GenericListItem: React.FC<{
   onClick,
   actionLabel,
 }) => (
-  <div dir='ltr' className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
+  <div
+    dir='ltr'
+    className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'
+  >
     <div className='flex items-center gap-4 min-w-0 flex-1'>
       {icon && (
         <div className='badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0'>
@@ -209,8 +216,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [restockIsUnit, setRestockIsUnit] = useState(false);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
   const { textTransform } = useSettings();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const isLoading = useAuthStore(s => s.isLoading);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const { data: batches = [] } = useBatches(activeBranchId);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [timeRange, setTimeRange] = useState('7');
@@ -648,7 +655,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         children: (
           <div className='flex flex-col space-y-4 py-2 px-1'>
             {recentSales20.map((sale, index) => (
-              <div key={sale.key || sale.id || `rs20-${index}`} className='flex gap-4 relative group'>
+              <div
+                key={sale.key || sale.id || `rs20-${index}`}
+                className='flex gap-4 relative group'
+              >
                 {/* Timeline Column */}
                 <div className='relative flex flex-col items-center w-4 shrink-0'>
                   <div
@@ -658,14 +668,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div className='absolute top-7 -bottom-8 w-0.5 bg-gray-200 dark:bg-gray-700 z-0' />
                   )}
                 </div>
-                
+
                 {/* Content Column */}
                 <div className='flex-1 min-w-0'>
                   <div className='p-3.5 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
                     <div className='min-w-0 flex-1'>
                       <p className='font-bold text-(--text-primary) text-sm truncate'>
                         {sale.customerName || 'Guest Customer'}{' '}
-                        <span data-no-convert='true' dir='ltr' className='text-[10px] font-normal opacity-50'>#{sale.serialId || sale.id}</span>
+                        <span
+                          data-no-convert='true'
+                          dir='ltr'
+                          className='text-[10px] font-normal opacity-50'
+                        >
+                          #{sale.serialId || sale.id}
+                        </span>
                       </p>
                       <p className='text-[10px] text-(--text-tertiary) mt-0.5'>{sale.timeAgo}</p>
                     </div>
@@ -720,16 +736,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { 
-                label: language === 'AR' ? 'نظرة عامة' : 'Overview', 
+              {
+                label: language === 'AR' ? 'نظرة عامة' : 'Overview',
                 value: 'dashboard',
-                icon: 'dashboard'
+                icon: 'dashboard',
               },
               {
                 label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time',
                 value: 'real-time-sales',
                 dotColor: '#10b981',
-                pulseDot: true
+                pulseDot: true,
               },
             ]}
             value='dashboard'
@@ -968,9 +984,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       >
                         {isExpired ? t.expired : `${days} ${t.days}`}
                       </p>
-                      <span className='badge-zinc'>
-                        {formatExpiryDate(item.expiryDate)}
-                      </span>
+                      <span className='badge-zinc'>{formatExpiryDate(item.expiryDate)}</span>
                     </div>
                   </div>
                 );
@@ -1069,7 +1083,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className='text-xs text-gray-500 flex items-center gap-2'>
                         <span className='text-(--text-tertiary)'>{sale.timeAgo}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-                        <span data-no-convert='true' dir='ltr' className='text-xs'>#{sale.serialId || sale.id}</span>
+                        <span data-no-convert='true' dir='ltr' className='text-xs'>
+                          #{sale.serialId || sale.id}
+                        </span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
                         <span
                           className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
@@ -1184,10 +1200,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 {t.modal.cancel}
               </button>
-              <button
-                type='submit'
-                className={MODAL_FOOTER_BTN_PRIMARY}
-              >
+              <button type='submit' className={MODAL_FOOTER_BTN_PRIMARY}>
                 {t.modal.confirm}
               </button>
             </div>
@@ -1204,7 +1217,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         color={color}
         disabled={isLoading || finLoading}
       />
-
     </div>
   );
 };

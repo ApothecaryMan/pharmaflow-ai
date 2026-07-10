@@ -10,7 +10,12 @@ import { money } from '../../utils/money';
 import { BaseDomainService } from '../core/baseDomainService';
 import { settingsService } from '../settings/settingsService';
 import { purchaseRepository } from './repositories/purchaseRepository';
-import type { PurchaseFilters, PurchasesPageOptions, PurchaseService, PurchaseStats } from './types';
+import type {
+  PurchaseFilters,
+  PurchaseService,
+  PurchaseStats,
+  PurchasesPageOptions,
+} from './types';
 
 class PurchaseServiceImpl extends BaseDomainService<Purchase> implements PurchaseService {
   protected tableName = 'purchases';
@@ -128,7 +133,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     return this.update(id, updates);
   }
 
-  async markAsReceived(id: string, receiverId: string, receiverName: string, shiftId?: string): Promise<Purchase> {
+  async markAsReceived(
+    id: string,
+    receiverId: string,
+    receiverName: string,
+    shiftId?: string
+  ): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
     if (purchase.status === 'received' || purchase.status === 'completed') return purchase;

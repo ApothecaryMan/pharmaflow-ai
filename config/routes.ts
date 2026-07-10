@@ -22,4 +22,3 @@ export const ROUTES = {
   COSMOCEUTICAL: 'cosmoceutical',
   PORTAL: 'employee-portal',
 } as const;
-

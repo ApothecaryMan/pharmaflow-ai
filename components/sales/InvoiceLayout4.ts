@@ -1,8 +1,13 @@
-import { Sale } from '../../types';
-import { InvoiceTemplateOptions, INVOICE_DEFAULTS } from './InvoiceTemplate';
+import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 
-export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
+export function generateLayout4HTML(
+  sale: Sale,
+  opts: InvoiceTemplateOptions,
+  _lang?: string,
+  _defaults?: any
+): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
   const currentDefaults = INVOICE_DEFAULTS[lang];
@@ -81,13 +86,13 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         ${
-          !opts.hideLogo ? (
-            opts.logoSvgCode
+          !opts.hideLogo
+            ? opts.logoSvgCode
               ? `<div class="store-logo" style="width: 20mm; overflow: hidden; margin: 0 auto 4px auto;">${opts.logoSvgCode}</div>`
               : opts.logoBase64
                 ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" />`
                 : ``
-          ) : ''
+            : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         ${opts.storeSubtitle ? `<div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle}</div>` : ''}
@@ -113,7 +118,9 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <th class="left">${lang === 'AR' ? 'العميل' : 'Customer'}</th>
             <td class="left">${sale.customerName ? sale.customerName : 'GUEST'}</td>
           </tr>
-          ${sale.saleType === 'delivery' ? `
+          ${
+            sale.saleType === 'delivery'
+              ? `
           <tr>
             <th class="left">${lang === 'AR' ? 'توصيل' : 'Delivery'}</th>
             <td class="left" dir="auto">
@@ -122,7 +129,9 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
               ${sale.customerStreetAddress ? `<div dir="rtl"> ${sale.customerStreetAddress.replace(/\n/g, ' - ')}</div>` : ''}
             </td>
           </tr>
-          ` : ''}
+          `
+              : ''
+          }
         </tbody>
       </table>
 
@@ -139,16 +148,20 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           ${(() => {
             let grossSubtotal = 0;
             let totalItemDiscounts = 0;
-            
-            const rows = (sale.items || []).map((item) => {
-              const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
-              const lineGross = effectivePrice * item.quantity;
-              const lineNet = lineGross * (1 - (item.discount || 0) / 100);
-              
-              grossSubtotal += lineGross;
-              totalItemDiscounts += (lineGross - lineNet);
-              
-              return `
+
+            const rows = (sale.items || [])
+              .map((item) => {
+                const effectivePrice =
+                  item.isUnit && item.unitsPerPack
+                    ? item.publicPrice / item.unitsPerPack
+                    : item.publicPrice;
+                const lineGross = effectivePrice * item.quantity;
+                const lineNet = lineGross * (1 - (item.discount || 0) / 100);
+
+                grossSubtotal += lineGross;
+                totalItemDiscounts += lineGross - lineNet;
+
+                return `
             <tr class="${item.isUnit ? 'unit-row' : ''}">
               <td dir="ltr" style="text-align: left; font-weight: bold;">
                 ${getDisplayName(item)}
@@ -156,12 +169,17 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
               <td class="center" dir="ltr">${item.quantity}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
               <td class="right" dir="ltr">${lineGross.toFixed(2)}</td>
             </tr>`;
-            }).join('');
-            
-            const globalDiscountAmt = sale.globalDiscount ? ((sale.subtotal || 0) * sale.globalDiscount / 100) : 0;
+              })
+              .join('');
+
+            const globalDiscountAmt = sale.globalDiscount
+              ? ((sale.subtotal || 0) * sale.globalDiscount) / 100
+              : 0;
             const totalDiscount = totalItemDiscounts + globalDiscountAmt;
-            
-            return rows + `
+
+            return (
+              rows +
+              `
         </tbody>
       </table>
       
@@ -171,22 +189,32 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <span>${lang === 'AR' ? 'الإجمالي' : 'Subtotal'}</span>
             <span dir="ltr">${grossSubtotal.toFixed(2)}</span>
           </div>
-          ${totalDiscount > 0 ? `
+          ${
+            totalDiscount > 0
+              ? `
           <div class="total-row">
             <span>${lang === 'AR' ? 'إجمالي الخصم' : 'Total Discount'}</span>
             <span dir="ltr">-${totalDiscount.toFixed(2)}</span>
-          </div>` : ''}
-          ${sale.deliveryFee && sale.deliveryFee > 0 ? `
+          </div>`
+              : ''
+          }
+          ${
+            sale.deliveryFee && sale.deliveryFee > 0
+              ? `
           <div class="total-row">
             <span>${lang === 'AR' ? 'خدمة التوصيل' : 'Delivery Fee'}</span>
             <span dir="ltr">${sale.deliveryFee.toFixed(2)}</span>
-          </div>` : ''}
+          </div>`
+              : ''
+          }
           ${
-            sale.tax && sale.tax > 0 ? `
+            sale.tax && sale.tax > 0
+              ? `
           <div class="total-row">
             <span>${lang === 'AR' ? 'الضريبة' : 'Tax'}</span>
             <span dir="ltr">${sale.tax.toFixed(2)}</span>
-          </div>` : ''
+          </div>`
+              : ''
           }
           
           <div class="total-row final-row">
@@ -194,7 +222,9 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <span dir="ltr">${sale.total.toFixed(2)} EGP</span>
           </div>
         
-        ${sale.hasReturns && sale.itemReturnedQuantities ? `
+        ${
+          sale.hasReturns && sale.itemReturnedQuantities
+            ? `
         <div class="returns-section">
           <div style="font-weight: bold; margin-bottom: 4px; text-align: center;">
             ${lang === 'AR' ? 'المرتجعات' : 'RETURNS'}
@@ -209,30 +239,35 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             </thead>
             <tbody>
               ${Object.entries(sale.itemReturnedQuantities)
-                  .filter(([_, qty]) => (qty as number) > 0)
-                  .map(([lineKey, qty]) => {
-                    const parts = lineKey.split('_');
-                    const drugId = parts[0];
-                    const suffix = parts.length > 1 ? parts[1] : null;
+                .filter(([_, qty]) => (qty as number) > 0)
+                .map(([lineKey, qty]) => {
+                  const parts = lineKey.split('_');
+                  const drugId = parts[0];
+                  const suffix = parts.length > 1 ? parts[1] : null;
 
-                    const item = (sale.items || []).find((it) => {
-                      const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
-                      if (itDrugId !== drugId) return false;
-                      if (!suffix) return true;
-                      if (suffix === 'unit') return !!it.isUnit;
-                      if (suffix === 'pack') return !it.isUnit;
-                      return true;
-                    });
-                    if (!item) return '';
-                    const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
-                    const returnedAmount = effectivePrice * (qty as number) * (1 - (item.discount || 0) / 100);
-                    return `
+                  const item = (sale.items || []).find((it) => {
+                    const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
+                    if (itDrugId !== drugId) return false;
+                    if (!suffix) return true;
+                    if (suffix === 'unit') return !!it.isUnit;
+                    if (suffix === 'pack') return !it.isUnit;
+                    return true;
+                  });
+                  if (!item) return '';
+                  const effectivePrice =
+                    item.isUnit && item.unitsPerPack
+                      ? item.publicPrice / item.unitsPerPack
+                      : item.publicPrice;
+                  const returnedAmount =
+                    effectivePrice * (qty as number) * (1 - (item.discount || 0) / 100);
+                  return `
                 <tr class="${item.isUnit ? 'unit-row' : ''}">
                   <td dir="ltr" style="text-align: left; font-weight: bold;">${getDisplayName(item)}</td>
                   <td class="center" dir="ltr">${qty}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
                   <td class="right" dir="ltr">${returnedAmount.toFixed(2)}</td>
                 </tr>`;
-                  }).join('')}
+                })
+                .join('')}
             </tbody>
           </table>
           <div class="total-row">
@@ -244,8 +279,9 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>
-        ` : sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
-            ? `
+        `
+            : sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
+              ? `
         <div class="returns-section">
           <div class="total-row">
             <span>${lang === 'AR' ? 'المرتجعات' : 'Returns'}</span>
@@ -256,9 +292,10 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>`
-            : ''
+              : ''
         }
-      </div>`;
+      </div>`
+            );
           })()}
       
       <div class="footer">

@@ -25,17 +25,14 @@ export const usePOSStore = create<POSState>((set) => ({
       if (existing) {
         return {
           cart: state.cart.map((c) =>
-            c.id === item.id
-              ? { ...c, quantity: c.quantity + item.quantity }
-              : c
+            c.id === item.id ? { ...c, quantity: c.quantity + item.quantity } : c
           ),
         };
       }
       return { cart: [...state.cart, item] };
     }),
 
-  removeFromCart: (id) =>
-    set((state) => ({ cart: state.cart.filter((c) => c.id !== id) })),
+  removeFromCart: (id) => set((state) => ({ cart: state.cart.filter((c) => c.id !== id) })),
 
   updateCartItem: (id, quantity) =>
     set((state) => ({

@@ -3,7 +3,6 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Switch } from './Switch';
 
-
 // Mock useSettings
 vi.mock('../../context/SettingsContext', () => ({
   useSettings: () => ({

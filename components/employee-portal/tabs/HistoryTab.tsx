@@ -4,10 +4,10 @@ import { useMemo } from 'react';
 import type { Employee, EmploymentRequest } from '../../../types';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 
-const PROFILE_GLASS_CARD_NO_BORDER = PROFILE_GLASS_CARD_BASE
-  .split(' ')
-  .filter(c => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
-  .join(' ') + ' border border-transparent';
+const PROFILE_GLASS_CARD_NO_BORDER =
+  PROFILE_GLASS_CARD_BASE.split(' ')
+    .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+    .join(' ') + ' border border-transparent';
 
 const statusIcon = (status: string) => {
   switch (status) {
@@ -137,7 +137,10 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
             {requests
               .filter((r) => r.status === 'pending')
               .map((req) => (
-                <div key={req.id} className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-3`}>
+                <div
+                  key={req.id}
+                  className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-3`}
+                >
                   <div className='w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0'>
                     <Clock className='w-4 h-4 text-amber-500' />
                   </div>

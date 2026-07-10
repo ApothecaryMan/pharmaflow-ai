@@ -1,11 +1,11 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
-import { useAuthStore } from '../../stores/authStore';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useShift } from '../../hooks/sales/useShift';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Employee, Sale, Shift, ThemeColor } from '../../types';
 import {
   type DateRangeFilter,
@@ -351,8 +351,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   onViewChange,
 }) => {
   // --- Data Context ---
-  const currentEmployee = useAuthStore(s => s.currentEmployee);
-  const branchId = useAuthStore(s => s.activeBranchId);
+  const currentEmployee = useAuthStore((s) => s.currentEmployee);
+  const branchId = useAuthStore((s) => s.activeBranchId);
   const { data: contextEmployees } = useEmployees(branchId);
   const { data: contextSales } = useRecentSales(branchId);
 

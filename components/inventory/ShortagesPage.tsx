@@ -3,8 +3,8 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
+import { useAuthStore } from '../../stores/authStore';
 import type { ViewState } from '../../types';
 import type { ProcurementItem } from '../../types/intelligence';
 import type { Drug } from '../../types/inventory';
@@ -60,7 +60,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   navigationParams: _navigationParams,
 }) => {
   const isAR = language === 'AR';
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { success, warning } = useAlert();
 
   // Async states for loading live intelligence calculations

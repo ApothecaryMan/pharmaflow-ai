@@ -38,23 +38,23 @@ export const isDesktopAppUserAgent = (userAgent: string): boolean => {
  */
 export const getDeviceName = (userAgent: string, platform: string): string => {
   if (!userAgent) return platform || 'Unknown Device';
-  
+
   const ua = userAgent.toLowerCase();
-  
+
   if (ua.includes('iphone')) return 'iPhone';
   if (ua.includes('ipad')) return 'iPad';
   if (ua.includes('android')) {
     return 'Android';
   }
-  
+
   if (ua.includes('windows')) {
     return 'Windows';
   }
-  
+
   if (ua.includes('macintosh') || ua.includes('mac os')) return 'Mac';
   if (ua.includes('linux') || ua.includes('x11')) return 'Linux';
   if (ua.includes('cros')) return 'Chrome OS';
-  
+
   return platform || 'Unknown Device';
 };
 
@@ -72,4 +72,3 @@ export const getBrowserName = (userAgent: string): string => {
   if (ua.includes('opr/') || ua.includes('opera')) return 'Opera';
   return '';
 };
-

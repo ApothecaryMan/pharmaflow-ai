@@ -26,7 +26,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useSettings } from '../../context/SettingsContext';
+import { useTheme } from '../../context/ThemeContext';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { PerformanceGoalsCard } from './PerformanceGoalsCard';
 
@@ -239,7 +239,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
   const isRTL = language === 'AR';
 
   // Detect dark mode dynamically using SettingsContext
-  const { darkMode: isDark } = useSettings();
+  const { darkMode: isDark } = useTheme();
 
   // Chart styling based on theme
   const chartStyle = useMemo(

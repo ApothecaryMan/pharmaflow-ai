@@ -177,7 +177,9 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
 
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <label className='text-xs font-bold text-gray-500 uppercase'>{language === 'AR' ? 'طابعة الفواتير (Receipts)' : 'Receipt Printer'}</label>
+              <label className='text-xs font-bold text-gray-500 uppercase'>
+                {language === 'AR' ? 'طابعة الفواتير (Receipts)' : 'Receipt Printer'}
+              </label>
               <FilterDropdown<string>
                 items={printers}
                 selectedItem={selectedPrinter || undefined}
@@ -188,12 +190,16 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 keyExtractor={(p) => p}
                 renderSelected={(p) => (
                   <span className='text-sm font-medium text-gray-800 dark:text-white truncate'>
-                    {p || pt.selectPrinter || (language === 'AR' ? 'اختر طابعة الفواتير...' : 'Select Receipt Printer...')}
+                    {p ||
+                      pt.selectPrinter ||
+                      (language === 'AR' ? 'اختر طابعة الفواتير...' : 'Select Receipt Printer...')}
                   </span>
                 )}
                 renderItem={(p) => (
                   <div className='flex items-center gap-2 py-1'>
-                    <span className='material-symbols-rounded text-[16px] text-gray-400'>receipt_long</span>
+                    <span className='material-symbols-rounded text-[16px] text-gray-400'>
+                      receipt_long
+                    </span>
                     <span className='text-sm'>{p}</span>
                   </div>
                 )}
@@ -202,7 +208,9 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
             </div>
 
             <div className='space-y-2'>
-              <label className='text-xs font-bold text-gray-500 uppercase'>{language === 'AR' ? 'طابعة الملصقات (Labels)' : 'Label Printer'}</label>
+              <label className='text-xs font-bold text-gray-500 uppercase'>
+                {language === 'AR' ? 'طابعة الملصقات (Labels)' : 'Label Printer'}
+              </label>
               <FilterDropdown<string>
                 items={printers}
                 selectedItem={selectedLabelPrinter || undefined}
@@ -213,12 +221,16 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 keyExtractor={(p) => p}
                 renderSelected={(p) => (
                   <span className='text-sm font-medium text-gray-800 dark:text-white truncate'>
-                    {p || pt.selectPrinter || (language === 'AR' ? 'اختر طابعة الملصقات...' : 'Select Label Printer...')}
+                    {p ||
+                      pt.selectPrinter ||
+                      (language === 'AR' ? 'اختر طابعة الملصقات...' : 'Select Label Printer...')}
                   </span>
                 )}
                 renderItem={(p) => (
                   <div className='flex items-center gap-2 py-1'>
-                    <span className='material-symbols-rounded text-[16px] text-gray-400'>label</span>
+                    <span className='material-symbols-rounded text-[16px] text-gray-400'>
+                      label
+                    </span>
                     <span className='text-sm'>{p}</span>
                   </div>
                 )}
@@ -336,10 +348,16 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
 
         {/* Browser Version Banner */}
         <div className='md:col-span-2 mt-4'>
-          <div className={`p-5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4`}>
+          <div
+            className={`p-5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4`}
+          >
             <div className='flex items-center gap-4'>
-              <div className={`w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 flex items-center justify-center flex-shrink-0`}>
-                <span className={`material-symbols-rounded text-[24px] text-gray-500 dark:text-gray-400`}>
+              <div
+                className={`w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 flex items-center justify-center flex-shrink-0`}
+              >
+                <span
+                  className={`material-symbols-rounded text-[24px] text-gray-500 dark:text-gray-400`}
+                >
                   public
                 </span>
               </div>

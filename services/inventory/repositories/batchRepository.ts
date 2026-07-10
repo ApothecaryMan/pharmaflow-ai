@@ -34,7 +34,12 @@ export const mapDbToBatch = (db: any): StockBatch => ({
 });
 
 export const batchRepository = {
-  async getAll(branchId?: string, orgId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
+  async getAll(
+    branchId?: string,
+    orgId?: string,
+    drugId?: string,
+    drugIds?: string[]
+  ): Promise<StockBatch[]> {
     try {
       let query = supabase
         .from('stock_batches')

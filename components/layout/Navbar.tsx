@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
 import { orgService } from '../../services/org/orgService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Organization } from '../../types';
 import { Language, ThemeColor, type ViewState } from '../../types';
 import { EventManager } from '../../utils/events/eventManager';
@@ -24,7 +24,22 @@ interface NavbarProps {
   onLogoClick?: () => void;
   currentView?: ViewState;
   onNavigate?: (view: ViewState) => void;
-  employees?: Array<{ id: string; name: string; employeeCode: string; image?: string; designSettings?: { avatar?: { decorationId?: string; decorationAnimated?: boolean; frameColor?: string | null; ringStyle?: string; ringThickness?: number; ringAnimated?: boolean } } }>;
+  employees?: Array<{
+    id: string;
+    name: string;
+    employeeCode: string;
+    image?: string;
+    designSettings?: {
+      avatar?: {
+        decorationId?: string;
+        decorationAnimated?: boolean;
+        frameColor?: string | null;
+        ringStyle?: string;
+        ringThickness?: number;
+        ringAnimated?: boolean;
+      };
+    };
+  }>;
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;

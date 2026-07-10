@@ -13,7 +13,12 @@ import { permissionsService } from '../../../../services/auth/permissionsService
 import { batchService } from '../../../../services/inventory/batchService';
 import type { CartItem, Drug, GroupedDrug } from '../../../../types';
 import { money } from '../../../../utils/money';
-import { convertToPacks, resolvePrice, resolveUnits, isStockConstraintMet } from '../../../../utils/stockUtils';
+import {
+  convertToPacks,
+  isStockConstraintMet,
+  resolvePrice,
+  resolveUnits,
+} from '../../../../utils/stockUtils';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -305,7 +310,7 @@ export const usePOSCart = ({
           const usedPacks = newItems
             .filter((i) => i.id === batch.id && !i.isUnit)
             .reduce((s, i) => s + i.quantity, 0);
-          const remainingStockForUnits = batch.stock - (usedPacks * unitsPerPack);
+          const remainingStockForUnits = batch.stock - usedPacks * unitsPerPack;
 
           if (remainingUnits > 0 && unitsPerPack > 1) {
             const unitsTake = Math.min(remainingUnits, remainingStockForUnits);

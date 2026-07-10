@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { employeeService } from '../../services/hr';
 import type { Employee } from '../../types';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useEmployees(branchId: string) {
   return useQuery({

@@ -1,11 +1,11 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context';
-import { TRANSLATIONS } from '../../i18n/translations';
-import { useAuthStore } from '../../stores/authStore';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { TRANSLATIONS } from '../../i18n/translations';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockMovement, StockMovementFilters, StockMovementSummary } from '../../types';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
 import { useSearchKeyboardNavigation } from '../common/SearchDropdown';
@@ -15,8 +15,8 @@ interface UseStockMovementReportProps {
 }
 
 export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportProps) => {
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const isDataLoading = useAuthStore(s => s.isLoading);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const isDataLoading = useAuthStore((s) => s.isLoading);
   const { data: inventory = [] } = useInventory(activeBranchId);
   const { language, theme, textTransform } = useSettings();
   const themeColor = theme.primary;

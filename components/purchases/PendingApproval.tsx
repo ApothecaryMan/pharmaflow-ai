@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useSettings } from '../../context';
+import { usePageHelp } from '../../context/HelpContext';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Employee, Purchase, Shift } from '../../types';
@@ -8,14 +9,7 @@ import { formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
 import { money, pricing, tax } from '../../utils/money';
-import {
-  Modal,
-  PageHeader,
-  SearchInput,
-  SegmentedControl,
-  useSmartDirection,
-} from '../common';
-import { usePageHelp } from '../../context/HelpContext';
+import { Modal, PageHeader, SearchInput, SegmentedControl, useSmartDirection } from '../common';
 
 // --- Sub-components (SalesHistory Style) ---
 
@@ -678,7 +672,6 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           </div>
         </div>
       </Modal>
-
     </div>
   );
 };

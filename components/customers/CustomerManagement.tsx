@@ -1,19 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { branchService } from '../../services/org/branchService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import type { FilterConfig } from '../common/FilterPill';
@@ -85,8 +85,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     }
   }, [navigationParams]);
 
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const branches = useAuthStore(s => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const branches = useAuthStore((s) => s.branches);
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
   const currentUser = authService.getCurrentUserSync();
@@ -571,13 +571,15 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     const c = viewingCustomer;
 
     return (
-      <Modal isOpen={!!viewingCustomer} onClose={handleCloseProfile} size='lg' zIndex={60} disabled={isLoading}
+      <Modal
+        isOpen={!!viewingCustomer}
+        onClose={handleCloseProfile}
+        size='lg'
+        zIndex={60}
+        disabled={isLoading}
         footer={
           <div className='flex gap-3'>
-            <button
-              onClick={handleCloseProfile}
-              className={MODAL_FOOTER_BTN_CANCEL}
-            >
+            <button onClick={handleCloseProfile} className={MODAL_FOOTER_BTN_CANCEL}>
               {t.modal.close}
             </button>
             <button
@@ -733,8 +735,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               </div>
             )}
           </div>
-
-
         </div>
       </Modal>
     );
@@ -1287,18 +1287,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         onTabChange={setActiveTab}
         footer={
           <div className='flex justify-end gap-3'>
-            <button
-              type='button'
-              onClick={handleCloseModal}
-              className={MODAL_FOOTER_BTN_CANCEL}
-            >
+            <button type='button' onClick={handleCloseModal} className={MODAL_FOOTER_BTN_CANCEL}>
               {t.modal.cancel}
             </button>
-            <button
-              type='submit'
-              form='customer-edit-form'
-              className={MODAL_FOOTER_BTN_PRIMARY}
-            >
+            <button type='submit' form='customer-edit-form' className={MODAL_FOOTER_BTN_PRIMARY}>
               {t.modal.save}
             </button>
           </div>
@@ -1518,7 +1510,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       </Modal>
 
       {/* Kiosk Mode - Updated with Address Form */}
-      <Modal isOpen={isKioskMode} onClose={() => setIsKioskMode(false)} size='2xl' zIndex={100} disabled={isLoading}
+      <Modal
+        isOpen={isKioskMode}
+        onClose={() => setIsKioskMode(false)}
+        size='2xl'
+        zIndex={100}
+        disabled={isLoading}
         footer={
           <div className='flex gap-3'>
             <button
@@ -1528,11 +1525,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             >
               {t.modal.cancel}
             </button>
-            <button
-              type='submit'
-              form='kiosk-form'
-              className={MODAL_FOOTER_BTN_PRIMARY}
-            >
+            <button type='submit' form='kiosk-form' className={MODAL_FOOTER_BTN_PRIMARY}>
               {t.modal.register}
             </button>
           </div>
@@ -1643,8 +1636,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </div>
               </div>
             </div>
-
-
           </form>
         </div>
       </Modal>

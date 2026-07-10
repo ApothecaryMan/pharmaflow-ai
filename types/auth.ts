@@ -101,7 +101,16 @@ export interface LoginAuditEntry {
   orgId?: string;
 
   /** Type of auth event */
-  action: 'login' | 'logout' | 'switch_user' | 'system_login' | 'system_logout' | 'switch_branch' | 'force_logout' | 'switch_org' | 'employee_logout';
+  action:
+    | 'login'
+    | 'logout'
+    | 'switch_user'
+    | 'system_login'
+    | 'system_logout'
+    | 'switch_branch'
+    | 'force_logout'
+    | 'switch_org'
+    | 'employee_logout';
 
   /** Additional metadata */
   details?: string;

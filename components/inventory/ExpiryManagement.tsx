@@ -3,8 +3,8 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { inventoryService } from '../../services/inventory/inventoryService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockBatch } from '../../types';
 import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -12,8 +12,8 @@ import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
 import { formatStock } from '../../utils/inventory';
 import { storage } from '../../utils/storage';
-import { ContextMenuItem, useContextMenu } from '../common/ContextMenu';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import { ContextMenuItem, useContextMenu } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -47,9 +47,9 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   onBatchesChanged,
 }) => {
   const { textTransform } = useSettings();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
-  const currentEmployee = useAuthStore(s => s.currentEmployee);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const [loading, setLoading] = useState(true);
   const { getVerifiedDate } = useStatusBar();
   const { success, error } = useAlert();
@@ -534,16 +534,10 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           </div>
 
           <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800'>
-            <button
-              onClick={() => setActiveModal(null)}
-              className={MODAL_FOOTER_BTN_CANCEL}
-            >
+            <button onClick={() => setActiveModal(null)} className={MODAL_FOOTER_BTN_CANCEL}>
               {t.expiryManagement?.cancel || 'Cancel'}
             </button>
-            <button
-              onClick={handleSaveAction}
-              className={MODAL_FOOTER_BTN_PRIMARY}
-            >
+            <button onClick={handleSaveAction} className={MODAL_FOOTER_BTN_PRIMARY}>
               {t.expiryManagement?.confirm || 'Confirm'}
             </button>
           </div>

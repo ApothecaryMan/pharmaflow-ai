@@ -1,14 +1,14 @@
 import { create } from 'zustand';
-import type { Branch, Employee, Organization } from '../types';
-import { authService } from '../services/auth/authService';
-import { branchService } from '../services/org/branchService';
-import { orgService } from '../services/org/orgService';
-import { permissionsService } from '../services/auth/permissionsService';
-import { settingsService } from '../services/settings/settingsService';
-import { storage } from '../utils/storage';
 import { StorageKeys } from '../config/storageKeys';
 import { queryClient } from '../lib/queryClient';
 import { queryKeys } from '../lib/queryKeys';
+import { authService } from '../services/auth/authService';
+import { permissionsService } from '../services/auth/permissionsService';
+import { branchService } from '../services/org/branchService';
+import { orgService } from '../services/org/orgService';
+import { settingsService } from '../services/settings/settingsService';
+import type { Branch, Employee, Organization } from '../types';
+import { storage } from '../utils/storage';
 
 interface AuthState {
   activeBranchId: string;
@@ -99,7 +99,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const activeSessionId = storage.get(StorageKeys.ACTIVE_SESSION_ID, null);
       const currentOrgId = get().activeOrgId;
       if (activeSessionId && currentOrgId) {
-        sessionRepository.updateSessionWorkspace(activeSessionId, currentOrgId, branchId).catch(console.error);
+        sessionRepository
+          .updateSessionWorkspace(activeSessionId, currentOrgId, branchId)
+          .catch(console.error);
       }
 
       set({ activeBranchId: branchId, branches: allBranches });

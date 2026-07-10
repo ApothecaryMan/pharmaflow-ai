@@ -1,6 +1,6 @@
 /**
  * QZ Tray Security Configuration
- * 
+ *
  * Contains the digital certificate and private key for PharmaFlow AI to enable Silent Printing.
  * The certificate must be imported into the local QZ Tray installation to suppress permission prompts.
  */
@@ -108,11 +108,7 @@ export async function signQZData(toSign: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(toSign);
 
-  const signature = await window.crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    key,
-    data
-  );
+  const signature = await window.crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, data);
 
   // Convert ArrayBuffer to base64
   let binary = '';

@@ -75,7 +75,11 @@ export const customerRepository = {
   },
 
   async getById(id: string): Promise<Customer | null> {
-    const { data, error } = await supabase.from(this.tableName).select('*').eq('id', id).maybeSingle();
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },

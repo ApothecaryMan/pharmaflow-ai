@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import type React from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import type { HelpContent } from '../components/common/HelpModal';
 
 interface HelpContextType {
@@ -30,7 +31,7 @@ export const useGlobalHelp = () => {
 // Custom hook for pages to register their help content on mount
 export const usePageHelp = (content: HelpContent | null) => {
   const { setHelpContent } = useGlobalHelp();
-  
+
   useEffect(() => {
     setHelpContent(content);
     // Cleanup on unmount

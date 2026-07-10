@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { purchaseService } from '../../services/purchases';
 import type { Purchase } from '../../types';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function usePurchases(branchId: string, limit = 100) {
   return useQuery({

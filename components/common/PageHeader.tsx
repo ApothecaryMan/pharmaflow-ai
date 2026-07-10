@@ -140,9 +140,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className='overflow-hidden'
             >
-              <div className='px-page pb-4 pt-2'>
-                {bottomContent}
-              </div>
+              <div className='px-page pb-4 pt-2'>{bottomContent}</div>
             </motion.div>
           )}
         </AnimatePresence>

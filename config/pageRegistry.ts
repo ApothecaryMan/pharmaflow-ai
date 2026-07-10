@@ -16,54 +16,166 @@ import type {
 import type { PermissionAction } from './permissions';
 import { PERMISSIONS_MAPPING } from './permissionsMapping';
 
-const Login = React.lazy(() => import('../components/auth/Login').then(m => ({ default: m.Login })));
-const CustomerHistory = React.lazy(() => import('../components/customers/CustomerHistory').then(m => ({ default: m.CustomerHistory })));
-const CustomerLoyaltyLookup = React.lazy(() => import('../components/customers/CustomerLoyaltyLookup').then(m => ({ default: m.CustomerLoyaltyLookup })));
-const CustomerLoyaltyOverview = React.lazy(() => import('../components/customers/CustomerLoyaltyOverview').then(m => ({ default: m.CustomerLoyaltyOverview })));
-const CustomerManagement = React.lazy(() => import('../components/customers/CustomerManagement').then(m => ({ default: m.CustomerManagement })));
-const CustomerOverview = React.lazy(() => import('../components/customers/CustomerOverview').then(m => ({ default: m.CustomerOverview })));
-const Dashboard = React.lazy(() => import('../components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })));
-const RealTimeSalesMonitor = React.lazy(() => import('../components/dashboard/RealTimeSalesMonitor').then(m => ({ default: m.RealTimeSalesMonitor })));
-const AdvancedSmCard = React.lazy(() => import('../components/experiments/AdvancedSmCard').then(m => ({ default: m.AdvancedSmCard })));
-const DashboardExperiments = React.lazy(() => import('../components/experiments/DashboardExperiments').then(m => ({ default: m.DashboardExperiments })));
-const ExpenseTracker = React.lazy(() => import('../components/finance/ExpenseTracker').then(m => ({ default: m.ExpenseTracker })));
-const EmployeeList = React.lazy(() => import('../components/hr/EmployeeList').then(m => ({ default: m.EmployeeList })));
-const EmployeeProfile = React.lazy(() => import('../components/hr/EmployeeProfile').then(m => ({ default: m.EmployeeProfile })));
-const StaffOverview = React.lazy(() => import('../components/hr/StaffOverview').then(m => ({ default: m.StaffOverview })));
-const DrugApprovalQueue = React.lazy(() => import('../components/inventory').then(m => ({ default: m.DrugApprovalQueue })));
-const ExpiryManagement = React.lazy(() => import('../components/inventory').then(m => ({ default: m.ExpiryManagement })));
-const StockMovementReport = React.lazy(() => import('../components/inventory').then(m => ({ default: m.StockMovementReport })));
-const AddProduct = React.lazy(() => import('../components/inventory/AddProduct').then(m => ({ default: m.AddProduct })));
-const BarcodePrinter = React.lazy(() => import('../components/inventory/BarcodePrinter').then(m => ({ default: m.BarcodePrinter })));
-const BarcodeStudio = React.lazy(() => import('../components/inventory/BarcodeStudio').then(m => ({ default: m.BarcodeStudio })));
-const Inventory = React.lazy(() => import('../components/inventory/Inventory').then(m => ({ default: m.Inventory })));
-const InventoryManagement = React.lazy(() => import('../components/inventory/InventoryManagement').then(m => ({ default: m.InventoryManagement })));
-const StockAdjustment = React.lazy(() => import('../components/inventory/StockAdjustment').then(m => ({ default: m.StockAdjustment })));
-const LandingPage = React.lazy(() => import('../components/layout/LandingPage').then(m => ({ default: m.LandingPage })));
-const PendingApproval = React.lazy(() => import('../components/purchases/PendingApproval').then(m => ({ default: m.PendingApproval })));
-const PurchaseHistory = React.lazy(() => import('../components/purchases/PurchaseHistory').then(m => ({ default: m.PurchaseHistory })));
-const PurchaseReturns = React.lazy(() => import('../components/purchases/PurchaseReturns').then(m => ({ default: m.PurchaseReturns })));
-const Purchases = React.lazy(() => import('../components/purchases/Purchases').then(m => ({ default: m.Purchases })));
-const SuppliersList = React.lazy(() => import('../components/purchases/SuppliersList').then(m => ({ default: m.SuppliersList })));
-const LoginAuditList = React.lazy(() => import('../components/reports/LoginAuditList').then(m => ({ default: m.LoginAuditList })));
-const ProfitLossPage = React.lazy(() => import('../components/reports/ProfitLossPage').then(m => ({ default: m.ProfitLossPage })));
-const CashRegister = React.lazy(() => import('../components/sales/CashRegister').then(m => ({ default: m.CashRegister })));
-const POS = React.lazy(() => import('../components/sales/pos/POS').then(m => ({ default: m.POS })));
-const ReceiptDesigner = React.lazy(() => import('../components/sales/ReceiptDesigner').then(m => ({ default: m.ReceiptDesigner })));
-const ReturnHistory = React.lazy(() => import('../components/sales/ReturnHistory').then(m => ({ default: m.ReturnHistory })));
-const SalesHistory = React.lazy(() => import('../components/sales/SalesHistory').then(m => ({ default: m.SalesHistory })));
-const ShiftHistory = React.lazy(() => import('../components/sales/ShiftHistory').then(m => ({ default: m.ShiftHistory })));
-const BranchSettings = React.lazy(() => import('../components/settings/BranchSettings').then(m => ({ default: m.BranchSettings })));
-const BrowserPrintSettings = React.lazy(() => import('../components/settings/BrowserPrintSettings').then(m => ({ default: m.BrowserPrintSettings })));
-const DesktopSettings = React.lazy(() => import('../components/settings/DesktopSettings').then(m => ({ default: m.DesktopSettings })));
-const PricingPage = React.lazy(() => import('../components/settings/PricingPage').then(m => ({ default: m.PricingPage })));
-const A5InvoiceDesigner = React.lazy(() => import('../components/test/A5InvoiceDesigner').then(m => ({ default: m.A5InvoiceDesigner })));
-const AnimatedCounterLab = React.lazy(() => import('../components/test/AnimatedCounterLab').then(m => ({ default: m.AnimatedCounterLab })));
-const FilterDropdownTest = React.lazy(() => import('../components/test/FilterDropdownTest').then(m => ({ default: m.FilterDropdownTest })));
-const ModalTests = React.lazy(() => import('../components/test/ModalTests').then(m => ({ default: m.ModalTests })));
-const ScrollbarLab = React.lazy(() => import('../components/test/ScrollbarLab').then(m => ({ default: m.ScrollbarLab })));
-const CosmoceuticalPage = React.lazy(() => import('../components/cosmoceutical/CosmoceuticalPage').then(m => ({ default: m.CosmoceuticalPage })));
-const IntelligenceDashboard = React.lazy(() => import('../pages/IntelligenceDashboard').then(m => ({ default: m.IntelligenceDashboard })));
+const Login = React.lazy(() =>
+  import('../components/auth/Login').then((m) => ({ default: m.Login }))
+);
+const CustomerHistory = React.lazy(() =>
+  import('../components/customers/CustomerHistory').then((m) => ({ default: m.CustomerHistory }))
+);
+const CustomerLoyaltyLookup = React.lazy(() =>
+  import('../components/customers/CustomerLoyaltyLookup').then((m) => ({
+    default: m.CustomerLoyaltyLookup,
+  }))
+);
+const CustomerLoyaltyOverview = React.lazy(() =>
+  import('../components/customers/CustomerLoyaltyOverview').then((m) => ({
+    default: m.CustomerLoyaltyOverview,
+  }))
+);
+const CustomerManagement = React.lazy(() =>
+  import('../components/customers/CustomerManagement').then((m) => ({
+    default: m.CustomerManagement,
+  }))
+);
+const CustomerOverview = React.lazy(() =>
+  import('../components/customers/CustomerOverview').then((m) => ({ default: m.CustomerOverview }))
+);
+const Dashboard = React.lazy(() =>
+  import('../components/dashboard/Dashboard').then((m) => ({ default: m.Dashboard }))
+);
+const RealTimeSalesMonitor = React.lazy(() =>
+  import('../components/dashboard/RealTimeSalesMonitor').then((m) => ({
+    default: m.RealTimeSalesMonitor,
+  }))
+);
+const AdvancedSmCard = React.lazy(() =>
+  import('../components/experiments/AdvancedSmCard').then((m) => ({ default: m.AdvancedSmCard }))
+);
+const DashboardExperiments = React.lazy(() =>
+  import('../components/experiments/DashboardExperiments').then((m) => ({
+    default: m.DashboardExperiments,
+  }))
+);
+const ExpenseTracker = React.lazy(() =>
+  import('../components/finance/ExpenseTracker').then((m) => ({ default: m.ExpenseTracker }))
+);
+const EmployeeList = React.lazy(() =>
+  import('../components/hr/EmployeeList').then((m) => ({ default: m.EmployeeList }))
+);
+const EmployeeProfile = React.lazy(() =>
+  import('../components/hr/EmployeeProfile').then((m) => ({ default: m.EmployeeProfile }))
+);
+const StaffOverview = React.lazy(() =>
+  import('../components/hr/StaffOverview').then((m) => ({ default: m.StaffOverview }))
+);
+const DrugApprovalQueue = React.lazy(() =>
+  import('../components/inventory').then((m) => ({ default: m.DrugApprovalQueue }))
+);
+const ExpiryManagement = React.lazy(() =>
+  import('../components/inventory').then((m) => ({ default: m.ExpiryManagement }))
+);
+const StockMovementReport = React.lazy(() =>
+  import('../components/inventory').then((m) => ({ default: m.StockMovementReport }))
+);
+const AddProduct = React.lazy(() =>
+  import('../components/inventory/AddProduct').then((m) => ({ default: m.AddProduct }))
+);
+const BarcodePrinter = React.lazy(() =>
+  import('../components/inventory/BarcodePrinter').then((m) => ({ default: m.BarcodePrinter }))
+);
+const BarcodeStudio = React.lazy(() =>
+  import('../components/inventory/BarcodeStudio').then((m) => ({ default: m.BarcodeStudio }))
+);
+const Inventory = React.lazy(() =>
+  import('../components/inventory/Inventory').then((m) => ({ default: m.Inventory }))
+);
+const InventoryManagement = React.lazy(() =>
+  import('../components/inventory/InventoryManagement').then((m) => ({
+    default: m.InventoryManagement,
+  }))
+);
+const StockAdjustment = React.lazy(() =>
+  import('../components/inventory/StockAdjustment').then((m) => ({ default: m.StockAdjustment }))
+);
+const LandingPage = React.lazy(() =>
+  import('../components/layout/LandingPage').then((m) => ({ default: m.LandingPage }))
+);
+const PendingApproval = React.lazy(() =>
+  import('../components/purchases/PendingApproval').then((m) => ({ default: m.PendingApproval }))
+);
+const PurchaseHistory = React.lazy(() =>
+  import('../components/purchases/PurchaseHistory').then((m) => ({ default: m.PurchaseHistory }))
+);
+const PurchaseReturns = React.lazy(() =>
+  import('../components/purchases/PurchaseReturns').then((m) => ({ default: m.PurchaseReturns }))
+);
+const Purchases = React.lazy(() =>
+  import('../components/purchases/Purchases').then((m) => ({ default: m.Purchases }))
+);
+const SuppliersList = React.lazy(() =>
+  import('../components/purchases/SuppliersList').then((m) => ({ default: m.SuppliersList }))
+);
+const LoginAuditList = React.lazy(() =>
+  import('../components/reports/LoginAuditList').then((m) => ({ default: m.LoginAuditList }))
+);
+const ProfitLossPage = React.lazy(() =>
+  import('../components/reports/ProfitLossPage').then((m) => ({ default: m.ProfitLossPage }))
+);
+const CashRegister = React.lazy(() =>
+  import('../components/sales/CashRegister').then((m) => ({ default: m.CashRegister }))
+);
+const POS = React.lazy(() =>
+  import('../components/sales/pos/POS').then((m) => ({ default: m.POS }))
+);
+const ReceiptDesigner = React.lazy(() =>
+  import('../components/sales/ReceiptDesigner').then((m) => ({ default: m.ReceiptDesigner }))
+);
+const ReturnHistory = React.lazy(() =>
+  import('../components/sales/ReturnHistory').then((m) => ({ default: m.ReturnHistory }))
+);
+const SalesHistory = React.lazy(() =>
+  import('../components/sales/SalesHistory').then((m) => ({ default: m.SalesHistory }))
+);
+const ShiftHistory = React.lazy(() =>
+  import('../components/sales/ShiftHistory').then((m) => ({ default: m.ShiftHistory }))
+);
+const BranchSettings = React.lazy(() =>
+  import('../components/settings/BranchSettings').then((m) => ({ default: m.BranchSettings }))
+);
+const BrowserPrintSettings = React.lazy(() =>
+  import('../components/settings/BrowserPrintSettings').then((m) => ({
+    default: m.BrowserPrintSettings,
+  }))
+);
+const DesktopSettings = React.lazy(() =>
+  import('../components/settings/DesktopSettings').then((m) => ({ default: m.DesktopSettings }))
+);
+const PricingPage = React.lazy(() =>
+  import('../components/settings/PricingPage').then((m) => ({ default: m.PricingPage }))
+);
+const A5InvoiceDesigner = React.lazy(() =>
+  import('../components/test/A5InvoiceDesigner').then((m) => ({ default: m.A5InvoiceDesigner }))
+);
+const AnimatedCounterLab = React.lazy(() =>
+  import('../components/test/AnimatedCounterLab').then((m) => ({ default: m.AnimatedCounterLab }))
+);
+const FilterDropdownTest = React.lazy(() =>
+  import('../components/test/FilterDropdownTest').then((m) => ({ default: m.FilterDropdownTest }))
+);
+const ModalTests = React.lazy(() =>
+  import('../components/test/ModalTests').then((m) => ({ default: m.ModalTests }))
+);
+const ScrollbarLab = React.lazy(() =>
+  import('../components/test/ScrollbarLab').then((m) => ({ default: m.ScrollbarLab }))
+);
+const CosmoceuticalPage = React.lazy(() =>
+  import('../components/cosmoceutical/CosmoceuticalPage').then((m) => ({
+    default: m.CosmoceuticalPage,
+  }))
+);
+const IntelligenceDashboard = React.lazy(() =>
+  import('../pages/IntelligenceDashboard').then((m) => ({ default: m.IntelligenceDashboard }))
+);
 
 export interface InjectedPageProps {
   color?: string;
@@ -678,7 +790,11 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'active-sessions': {
     id: 'active-sessions',
-    component: React.lazy(() => import('../components/settings/ActiveSessionsPage').then(m => ({ default: m.ActiveSessionsPage }))),
+    component: React.lazy(() =>
+      import('../components/settings/ActiveSessionsPage').then((m) => ({
+        default: m.ActiveSessionsPage,
+      }))
+    ),
     menuLabel: 'Active Sessions',
     menuLabelAr: 'الأجهزة المتصلة',
     icon: 'devices',

@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSettings } from '../../context/SettingsContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useTypography } from '../../context/TypographyContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
@@ -16,14 +17,23 @@ import { InlineBarcodeScanner } from '../mobile/InlineBarcodeScanner';
 import { type PrescriptionItem, usePrescriptionPricing } from './hooks/usePrescriptionPricing';
 
 const PrescriptionPricing: React.FC = () => {
-  const { language, textTransform, theme, darkMode } = useSettings();
+  const { theme, darkMode } = useTheme();
+  const { language, textTransform } = useTypography();
   const t = TRANSLATIONS[language];
   const { playSuccess } = usePosSounds();
 
   useAutoSystemBarColor(`prescription-pricing:${theme.hex}:${darkMode}`, '--bg-page-surface');
 
-  const { inventory, isLoading, prescriptionItems, addItem, updateQuantity, removeItem, clearAll, grandTotal } =
-    usePrescriptionPricing();
+  const {
+    inventory,
+    isLoading,
+    prescriptionItems,
+    addItem,
+    updateQuantity,
+    removeItem,
+    clearAll,
+    grandTotal,
+  } = usePrescriptionPricing();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -113,10 +123,7 @@ const PrescriptionPricing: React.FC = () => {
       while ((match = regex.exec(text)) !== null) {
         if (match.index > lastIndex) segments.push(text.slice(lastIndex, match.index));
         segments.push(
-          <span
-            key={match.index}
-            className='text-primary-600 dark:text-primary-400'
-          >
+          <span key={match.index} className='text-primary-600 dark:text-primary-400'>
             {match[0]}
           </span>
         );
@@ -130,7 +137,6 @@ const PrescriptionPricing: React.FC = () => {
       return text;
     }
   };
-
 
   return (
     <div className='w-full' dir='ltr'>
@@ -186,82 +192,82 @@ const PrescriptionPricing: React.FC = () => {
 
       {/* Main Content */}
       <div className='flex flex-col lg:flex-row gap-4 lg:gap-6 mt-4 max-w-6xl mx-auto'>
-          {/* Prescription Cart - mobile dock (bottom), desktop sidebar (right) */}
-          {prescriptionItems.length > 0 && (
-            <div 
-              ref={cartRef}
-              className='order-1 lg:order-2 lg:w-[360px] lg:shrink-0 lg:sticky lg:top-16 lg:z-10 max-lg:fixed max-lg:bottom-[68px] max-lg:left-0 max-lg:right-0 max-lg:z-40 max-lg:px-4 max-lg:flex max-lg:justify-center max-lg:pointer-events-none'
-            >
-              <div className='w-full max-lg:w-[90%] max-w-[360px] max-lg:pointer-events-auto'>
-                <PrescriptionSummary
-                  items={prescriptionItems}
-                  onUpdateQuantity={updateQuantity}
-                  onRemoveItem={removeItem}
-                  onClearAll={clearAll}
-                  grandTotal={grandTotal}
+        {/* Prescription Cart - mobile dock (bottom), desktop sidebar (right) */}
+        {prescriptionItems.length > 0 && (
+          <div
+            ref={cartRef}
+            className='order-1 lg:order-2 lg:w-[360px] lg:shrink-0 lg:sticky lg:top-16 lg:z-10 max-lg:fixed max-lg:bottom-[68px] max-lg:left-0 max-lg:right-0 max-lg:z-40 max-lg:px-4 max-lg:flex max-lg:justify-center max-lg:pointer-events-none'
+          >
+            <div className='w-full max-lg:w-[90%] max-w-[360px] max-lg:pointer-events-auto'>
+              <PrescriptionSummary
+                items={prescriptionItems}
+                onUpdateQuantity={updateQuantity}
+                onRemoveItem={removeItem}
+                onClearAll={clearAll}
+                grandTotal={grandTotal}
+                language={language}
+                expanded={isCartOpen}
+                onToggle={() => setIsCartOpen((v) => !v)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Search Results */}
+        <div className='flex-1 min-w-0 order-2 lg:order-1'>
+          {searchTerm && combinedSearchResults.length === 0 ? (
+            <div className='flex flex-col items-center justify-start pt-6 p-6 text-center animate-fade-in'>
+              <h3 className='text-lg font-bold text-gray-900 dark:text-gray-100 mb-2'>
+                {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
+              </h3>
+              <p className='text-sm text-gray-500 dark:text-gray-400 max-w-[200px]'>
+                {language === 'AR'
+                  ? 'جرب البحث بكلمات مختلفة أو كود آخر'
+                  : 'Try searching with different keywords or codes'}
+              </p>
+            </div>
+          ) : (
+            <div className='flex flex-col gap-[2px]'>
+              {combinedSearchResults.slice(0, 100).map((drug, index) => (
+                <SearchResultItem
+                  key={drug.id}
+                  drug={drug}
+                  index={index}
+                  totalResults={combinedSearchResults.length}
+                  highlightMatch={highlightMatch}
                   language={language}
-                  expanded={isCartOpen}
-                  onToggle={() => setIsCartOpen((v) => !v)}
+                  textTransform={textTransform}
+                  onAdd={handleAddItem}
+                  onLongPress={setViewingDrug}
                 />
-              </div>
+              ))}
             </div>
           )}
 
-          {/* Search Results */}
-          <div className='flex-1 min-w-0 order-2 lg:order-1'>
-            {searchTerm && combinedSearchResults.length === 0 ? (
-              <div className='flex flex-col items-center justify-start pt-6 p-6 text-center animate-fade-in'>
-                <h3 className='text-lg font-bold text-gray-900 dark:text-gray-100 mb-2'>
-                  {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
-                </h3>
-                <p className='text-sm text-gray-500 dark:text-gray-400 max-w-[200px]'>
-                  {language === 'AR'
-                    ? 'جرب البحث بكلمات مختلفة أو كود آخر'
-                    : 'Try searching with different keywords or codes'}
-                </p>
-              </div>
-            ) : (
-              <div className='flex flex-col gap-[2px]'>
-                {combinedSearchResults.slice(0, 100).map((drug, index) => (
-                  <SearchResultItem
-                    key={drug.id}
-                    drug={drug}
-                    index={index}
-                    totalResults={combinedSearchResults.length}
-                    highlightMatch={highlightMatch}
-                    language={language}
-                    textTransform={textTransform}
-                    onAdd={handleAddItem}
-                    onLongPress={setViewingDrug}
-                  />
-                ))}
-              </div>
-            )}
+          {!searchTerm && scannedDrugs.length === 0 && (
+            <div className='flex flex-col items-center justify-start pt-12 p-8 text-center animate-fade-in'>
+              <h3 className='text-xl font-black text-gray-900 dark:text-gray-100 mb-3 tracking-tight'>
+                {language === 'AR' ? 'ماذا تبحث عنه اليوم؟' : 'What are you looking for?'}
+              </h3>
+              <p className='text-gray-500 dark:text-gray-400 leading-relaxed text-sm'>
+                {language === 'AR'
+                  ? 'ابدأ البحث بالاسم أو الباركود أو المادة الفعالة'
+                  : 'Search by name, barcode, or generic name'}
+              </p>
+            </div>
+          )}
 
-            {!searchTerm && scannedDrugs.length === 0 && (
-              <div className='flex flex-col items-center justify-start pt-12 p-8 text-center animate-fade-in'>
-                <h3 className='text-xl font-black text-gray-900 dark:text-gray-100 mb-3 tracking-tight'>
-                  {language === 'AR' ? 'ماذا تبحث عنه اليوم؟' : 'What are you looking for?'}
-                </h3>
-                <p className='text-gray-500 dark:text-gray-400 leading-relaxed text-sm'>
-                  {language === 'AR'
-                    ? 'ابدأ البحث بالاسم أو الباركود أو المادة الفعالة'
-                    : 'Search by name, barcode, or generic name'}
-                </p>
-              </div>
-            )}
-
-            {/* Dynamic spacer prevents cart from overlapping the last items on mobile. 
+          {/* Dynamic spacer prevents cart from overlapping the last items on mobile. 
                 Parent container already has pb-28 (112px), so we subtract it from the required space (cartHeight + 68px bottom offset + 16px gap = cartHeight + 84px).
                 Required spacer = (cartHeight + 84px) - 112px = cartHeight - 28px. */}
-            {prescriptionItems.length > 0 && (
-              <div
-                className='lg:hidden w-full transition-[height] duration-400 ease-[cubic-bezier(0.2,0,0,1)]'
-                style={{ height: 'calc(var(--mobile-cart-height, 0px) - 28px)' }}
-              />
-            )}
-          </div>
+          {prescriptionItems.length > 0 && (
+            <div
+              className='lg:hidden w-full transition-[height] duration-400 ease-[cubic-bezier(0.2,0,0,1)]'
+              style={{ height: 'calc(var(--mobile-cart-height, 0px) - 28px)' }}
+            />
+          )}
         </div>
+      </div>
 
       {viewingDrug && (
         <Modal
@@ -285,9 +291,15 @@ const PrescriptionPricing: React.FC = () => {
                     : viewingDrug.genericName}
                 </p>
               </div>
-              
+
               <div className='flex flex-col gap-[2px] mt-2'>
-                <MaterialTabs index={0} total={3} interactive={false} className='justify-between !py-3.5 !min-h-[52px]' variant='compact'>
+                <MaterialTabs
+                  index={0}
+                  total={3}
+                  interactive={false}
+                  className='justify-between !py-3.5 !min-h-[52px]'
+                  variant='compact'
+                >
                   <span className='text-sm text-gray-500 dark:text-gray-400 font-medium'>
                     {language === 'AR' ? 'السعر' : 'Price'}
                   </span>
@@ -296,7 +308,13 @@ const PrescriptionPricing: React.FC = () => {
                   </span>
                 </MaterialTabs>
 
-                <MaterialTabs index={1} total={3} interactive={false} className='justify-between !py-3.5 !min-h-[52px]' variant='compact'>
+                <MaterialTabs
+                  index={1}
+                  total={3}
+                  interactive={false}
+                  className='justify-between !py-3.5 !min-h-[52px]'
+                  variant='compact'
+                >
                   <span className='text-sm text-gray-500 dark:text-gray-400 font-medium'>
                     {language === 'AR' ? 'الباركود' : 'Barcode'}
                   </span>
@@ -305,7 +323,13 @@ const PrescriptionPricing: React.FC = () => {
                   </span>
                 </MaterialTabs>
 
-                <MaterialTabs index={2} total={3} interactive={false} className='justify-between !py-3.5 !min-h-[52px]' variant='compact'>
+                <MaterialTabs
+                  index={2}
+                  total={3}
+                  interactive={false}
+                  className='justify-between !py-3.5 !min-h-[52px]'
+                  variant='compact'
+                >
                   <span className='text-sm text-gray-500 dark:text-gray-400 font-medium'>
                     {language === 'AR' ? 'الوحدات' : 'Units'}
                   </span>
@@ -319,8 +343,12 @@ const PrescriptionPricing: React.FC = () => {
             {viewingDrug.barcode && viewingDrug.barcode !== '-' && (
               <div className='flex flex-col items-center justify-center pt-8 pb-3 bg-white dark:bg-white/90 border-t border-gray-100 dark:border-white/10 mt-2 overflow-hidden w-full rounded-b-2xl'>
                 <style dangerouslySetInnerHTML={{ __html: getBarcodeFontsCSS() }} />
-                <div 
-                  style={{ fontFamily: "'Libre Barcode 128', monospace", fontSize: '4.5rem', lineHeight: 0.8 }} 
+                <div
+                  style={{
+                    fontFamily: "'Libre Barcode 128', monospace",
+                    fontSize: '4.5rem',
+                    lineHeight: 0.8,
+                  }}
                   className='text-black select-all'
                 >
                   {encodeCode128(viewingDrug.barcode)}
@@ -413,10 +441,7 @@ const SearchResultItem: React.FC<{
               >
                 {highlightMatch(displayName, 'brand')}
               </h3>
-              <p
-                className='flex items-center gap-1.5 text-xs mt-0.5 text-left truncate'
-                dir='ltr'
-              >
+              <p className='flex items-center gap-1.5 text-xs mt-0.5 text-left truncate' dir='ltr'>
                 <span className='font-bold text-gray-800 dark:text-gray-200 tabular-nums shrink-0'>
                   {parts.amount}
                 </span>
@@ -523,7 +548,8 @@ const PrescriptionSummary: React.FC<{
             </span>
           </div>
           <span className='text-xl font-black text-gray-900 dark:text-gray-100 tabular-nums shrink-0 tracking-tight'>
-            {grandTotalParts.amount} <span className='text-sm font-bold opacity-60'>{grandTotalParts.symbol}</span>
+            {grandTotalParts.amount}{' '}
+            <span className='text-sm font-bold opacity-60'>{grandTotalParts.symbol}</span>
           </span>
         </div>
         <div className='flex items-center gap-1.5'>
@@ -532,9 +558,7 @@ const PrescriptionSummary: React.FC<{
             className='p-1.5 rounded-xl text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-500/10 transition-colors'
             title={isArabic ? 'مسح السلة' : 'Clear Cart'}
           >
-            <span className='material-symbols-rounded text-[22px]'>
-              delete
-            </span>
+            <span className='material-symbols-rounded text-[22px]'>delete</span>
           </button>
           <button
             onClick={onToggle}
@@ -555,90 +579,97 @@ const PrescriptionSummary: React.FC<{
       >
         <div className='overflow-hidden w-full'>
           <div className='divide-y divide-gray-100 dark:divide-gray-800/30 max-h-[40vh] lg:max-h-[78vh] overflow-y-auto [direction:ltr]'>
-          {items.map((item) => {
-            const lineNet = item.drug.publicPrice * item.quantity;
-            return (
-              <div
-                key={item.drug.id}
-                className='px-3 sm:px-4 py-2 flex items-center gap-1.5 sm:gap-2'
-              >
-                <div className='flex-[2] sm:flex-1 min-w-0'>
-                  <p className='text-[11px] sm:text-xs font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight text-left' dir='ltr'>
-                    {getDisplayName(item.drug)}
-                  </p>
-                  <div className='flex items-center justify-start gap-1 mt-0.5'>
-                    {isArabic ? (
-                      <>
-                        <span className='text-[10px] sm:text-[11px] font-bold text-primary-600 dark:text-primary-400 tabular-nums'>
-                          {formatCurrency(lineNet)}
-                        </span>
-                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
-                          =
-                        </span>
-                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
-                          {item.quantity}
-                        </span>
-                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
-                          ×
-                        </span>
-                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
-                          {formatCurrency(item.drug.publicPrice)}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
-                          {formatCurrency(item.drug.publicPrice)}
-                        </span>
-                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
-                          ×
-                        </span>
-                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
-                          {item.quantity}
-                        </span>
-                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
-                          =
-                        </span>
-                        <span className='text-[10px] sm:text-[11px] font-bold text-primary-600 dark:text-primary-400 tabular-nums'>
-                          {formatCurrency(lineNet)}
-                        </span>
-                      </>
-                    )}
+            {items.map((item) => {
+              const lineNet = item.drug.publicPrice * item.quantity;
+              return (
+                <div
+                  key={item.drug.id}
+                  className='px-3 sm:px-4 py-2 flex items-center gap-1.5 sm:gap-2'
+                >
+                  <div className='flex-[2] sm:flex-1 min-w-0'>
+                    <p
+                      className='text-[11px] sm:text-xs font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight text-left'
+                      dir='ltr'
+                    >
+                      {getDisplayName(item.drug)}
+                    </p>
+                    <div className='flex items-center justify-start gap-1 mt-0.5'>
+                      {isArabic ? (
+                        <>
+                          <span className='text-[10px] sm:text-[11px] font-bold text-primary-600 dark:text-primary-400 tabular-nums'>
+                            {formatCurrency(lineNet)}
+                          </span>
+                          <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                            =
+                          </span>
+                          <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                            {item.quantity}
+                          </span>
+                          <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                            ×
+                          </span>
+                          <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                            {formatCurrency(item.drug.publicPrice)}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                            {formatCurrency(item.drug.publicPrice)}
+                          </span>
+                          <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                            ×
+                          </span>
+                          <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                            {item.quantity}
+                          </span>
+                          <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                            =
+                          </span>
+                          <span className='text-[10px] sm:text-[11px] font-bold text-primary-600 dark:text-primary-400 tabular-nums'>
+                            {formatCurrency(lineNet)}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div className='flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg p-0.5 shrink-0'>
+                  <div className='flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg p-0.5 shrink-0'>
+                    <button
+                      onClick={() => onUpdateQuantity(item.drug.id, -1)}
+                      disabled={item.quantity <= 1}
+                      className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100'
+                    >
+                      <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>
+                        remove
+                      </span>
+                    </button>
+                    <span className='w-5 sm:w-6 text-center text-[11px] sm:text-xs font-bold text-gray-900 dark:text-gray-100 tabular-nums'>
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => onUpdateQuantity(item.drug.id, 1)}
+                      className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90'
+                    >
+                      <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>
+                        add
+                      </span>
+                    </button>
+                  </div>
+
                   <button
-                    onClick={() => onUpdateQuantity(item.drug.id, -1)}
-                    disabled={item.quantity <= 1}
-                    className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100'
+                    onClick={() => onRemoveItem(item.drug.id)}
+                    className='text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors shrink-0 p-0.5'
                   >
                     <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>
-                      remove
+                      close
                     </span>
                   </button>
-                  <span className='w-5 sm:w-6 text-center text-[11px] sm:text-xs font-bold text-gray-900 dark:text-gray-100 tabular-nums'>
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => onUpdateQuantity(item.drug.id, 1)}
-                    className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90'
-                  >
-                    <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>add</span>
-                  </button>
                 </div>
-
-                <button
-                  onClick={() => onRemoveItem(item.drug.id)}
-                  className='text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors shrink-0 p-0.5'
-                >
-                  <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>close</span>
-                </button>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

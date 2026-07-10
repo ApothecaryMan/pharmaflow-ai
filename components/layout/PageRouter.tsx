@@ -1,23 +1,22 @@
-import React, { useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { useSettings } from '../../context';
+import { useComputedInventory } from '../../hooks/inventory/useComputedInventory';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useBatches, useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { usePurchaseReturns, useSalesReturns } from '../../hooks/queries/useReturnsQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
-import type { ViewState, Customer, Employee } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import type { Customer, Employee, ViewState } from '../../types';
+import { ErrorBoundary } from '../common/ErrorBoundary';
+import { PageLoader } from '../common/PageLoader';
 import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
 import { LandingPage } from '../layout/LandingPage';
 import { PendingBranchAssignment } from './PendingBranchAssignment';
-import { ErrorBoundary } from '../common/ErrorBoundary';
-import { PageLoader } from '../common/PageLoader';
-import { Suspense } from 'react';
-import { useAuthStore } from '../../stores/authStore';
-import { useInventory, useBatches, useSuppliers } from '../../hooks/queries/useInventoryQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useCustomers } from '../../hooks/queries/useCustomersQuery';
-import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
-import { useSalesReturns, usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
-import { useComputedInventory } from '../../hooks/inventory/useComputedInventory';
 
 interface PageRouterProps {
   view: ViewState;
@@ -50,11 +49,11 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
 }) => {
   const { language, theme, darkMode, textTransform, developerMode } = useSettings();
 
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
-  const branches = useAuthStore(s => s.branches);
-  const isLoadingAuth = useAuthStore(s => s.isLoading);
-  const switchBranch = useAuthStore(s => s.switchBranch);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const branches = useAuthStore((s) => s.branches);
+  const isLoadingAuth = useAuthStore((s) => s.isLoading);
+  const switchBranch = useAuthStore((s) => s.switchBranch);
 
   const { data: inventory = [] } = useInventory(activeBranchId);
   const { data: sales = [] } = useRecentSales(activeBranchId);

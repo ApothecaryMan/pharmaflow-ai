@@ -24,7 +24,11 @@ import {
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { money } from '../../utils/money';
 import { convertToPacks, resolveDisplayStock, resolveUnits } from '../../utils/stockUtils';
-import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import {
+  CARD_BASE,
+  MODAL_FOOTER_BTN_CANCEL,
+  MODAL_FOOTER_BTN_PRIMARY,
+} from '../../utils/themeStyles';
 import { HoverDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
@@ -99,9 +103,11 @@ export const Inventory: React.FC<InventoryProps> = ({
   const viewingDrugBatches = useMemo(() => {
     if (!viewingDrug) return [];
     if (viewingDrug.barcode) {
-      return inventory.filter(d => d.barcode === viewingDrug.barcode);
+      return inventory.filter((d) => d.barcode === viewingDrug.barcode);
     }
-    return inventory.filter(d => d.name === viewingDrug.name && d.dosageForm === viewingDrug.dosageForm);
+    return inventory.filter(
+      (d) => d.name === viewingDrug.name && d.dosageForm === viewingDrug.dosageForm
+    );
   }, [inventory, viewingDrug]);
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
@@ -258,25 +264,28 @@ export const Inventory: React.FC<InventoryProps> = ({
         : ['in_stock'];
 
     if (!stockVals.includes('all')) {
-      result = result.map((d) => {
-        if (d.batches && d.batches.length > 0) {
-          return {
-            ...d,
-            batches: d.batches.filter((b: any) => {
-              if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
-              if (stockVals.includes('in_stock')) return b.stock > 0;
-              if (stockVals.includes('out_of_stock')) return b.stock <= 0;
-              return true;
-            }),
-          };
-        }
-        return d;
-      }).filter((d) => {
-        if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
-        if (stockVals.includes('in_stock')) return d.stock > 0;
-        if (stockVals.includes('out_of_stock')) return d.stock <= 0;
-        return true;
-      });
+      result = result
+        .map((d) => {
+          if (d.batches && d.batches.length > 0) {
+            return {
+              ...d,
+              batches: d.batches.filter((b: any) => {
+                if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock'))
+                  return true;
+                if (stockVals.includes('in_stock')) return b.stock > 0;
+                if (stockVals.includes('out_of_stock')) return b.stock <= 0;
+                return true;
+              }),
+            };
+          }
+          return d;
+        })
+        .filter((d) => {
+          if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
+          if (stockVals.includes('in_stock')) return d.stock > 0;
+          if (stockVals.includes('out_of_stock')) return d.stock <= 0;
+          return true;
+        });
     }
 
     // Apply other Active Filters (Pills)
@@ -542,7 +551,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                 trigger={
                   <div className='flex items-center justify-center font-bold h-7 w-16 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) cursor-pointer text-xs'>
                     <span className='text-gray-700 dark:text-gray-300'>
-                      {displayValue} {mode === 'unit' ? unitLabel : (t.details?.packs || 'Packs')}
+                      {displayValue} {mode === 'unit' ? unitLabel : t.details?.packs || 'Packs'}
                     </span>
                   </div>
                 }
@@ -562,7 +571,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                           : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
                       }`}
                     >
-                      {opt === 'pack' ? (t.details?.packs || 'Packs') : unitLabel}
+                      {opt === 'pack' ? t.details?.packs || 'Packs' : unitLabel}
                     </div>
                   );
                 })}
@@ -828,10 +837,10 @@ export const Inventory: React.FC<InventoryProps> = ({
                   <span className='text-xl font-bold text-primary-900 dark:text-primary-900'>
                     {summaryStats.totalItems >= 1000
                       ? new Intl.NumberFormat('en-US', {
-                        notation: 'compact',
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }).format(summaryStats.totalItems)
+                          notation: 'compact',
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(summaryStats.totalItems)
                       : summaryStats.totalItems}
                   </span>
                 </div>
@@ -1003,7 +1012,11 @@ export const Inventory: React.FC<InventoryProps> = ({
           disabled={isLoading}
           tabs={[
             { label: t.generalInfo || 'معلومات عامة', value: 'general', icon: 'info' },
-            { label: t.pharmacyDetails || 'تفاصيل الصيدلية', value: 'pharmacy', icon: 'storefront' }
+            {
+              label: t.pharmacyDetails || 'تفاصيل الصيدلية',
+              value: 'pharmacy',
+              icon: 'storefront',
+            },
           ]}
           activeTab={activeDetailsTab}
           onTabChange={setActiveDetailsTab}
@@ -1029,10 +1042,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   {t.actionsMenu.edit}
                 </button>
               )}
-              <button
-                onClick={() => setViewingDrug(null)}
-                className={MODAL_FOOTER_BTN_CANCEL}
-              >
+              <button onClick={() => setViewingDrug(null)} className={MODAL_FOOTER_BTN_CANCEL}>
                 <span className='material-symbols-rounded'>close</span>
               </button>
             </div>
@@ -1103,7 +1113,9 @@ export const Inventory: React.FC<InventoryProps> = ({
                     {t.details?.description || 'Description'}
                   </label>
                   <p className='text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700'>
-                    {viewingDrug.description || t.details?.noDescription || 'No description available.'}
+                    {viewingDrug.description ||
+                      t.details?.noDescription ||
+                      'No description available.'}
                   </p>
                 </div>
               </div>
@@ -1114,7 +1126,8 @@ export const Inventory: React.FC<InventoryProps> = ({
                     <thead className='border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50'>
                       <tr>
                         <th className='px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-xs'>
-                          {t.modal?.expiry || (currentLang === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date')}
+                          {t.modal?.expiry ||
+                            (currentLang === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date')}
                         </th>
                         <th className='px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-xs'>
                           {t.details?.stockLevel || (currentLang === 'ar' ? 'الكمية' : 'Total Qty')}
@@ -1131,22 +1144,29 @@ export const Inventory: React.FC<InventoryProps> = ({
                       )
                         .sort(
                           ([dateA], [dateB]) =>
-                            parseExpiryEndOfMonth(dateA).getTime() - parseExpiryEndOfMonth(dateB).getTime()
+                            parseExpiryEndOfMonth(dateA).getTime() -
+                            parseExpiryEndOfMonth(dateB).getTime()
                         )
                         .map(([expiryDate, rawStock], idx) => {
                           const totalStock = rawStock as number;
-                          const stockParts = formatStockParts(totalStock, viewingDrug.unitsPerPack, {
-                            packs: t.details?.packs || 'Packs',
-                            outOfStock: t.outOfStock || 'Out of Stock',
-                          });
-                          
+                          const stockParts = formatStockParts(
+                            totalStock,
+                            viewingDrug.unitsPerPack,
+                            {
+                              packs: t.details?.packs || 'Packs',
+                              outOfStock: t.outOfStock || 'Out of Stock',
+                            }
+                          );
+
                           return (
                             <tr
                               key={idx}
                               className='hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors'
                             >
                               <td className='px-4 py-3'>
-                                <span className={`font-medium tabular-nums ${getExpiryColorClass(expiryDate)}`}>
+                                <span
+                                  className={`font-medium tabular-nums ${getExpiryColorClass(expiryDate)}`}
+                                >
                                   {formatExpiryDate(expiryDate)}
                                 </span>
                               </td>
@@ -1154,7 +1174,12 @@ export const Inventory: React.FC<InventoryProps> = ({
                                 <span
                                   className={`font-bold tabular-nums ${totalStock < (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-primary-600 dark:text-primary-400'}`}
                                 >
-                                  {stockParts.value} {stockParts.label && <span className='text-xs font-normal opacity-80'>{stockParts.label}</span>}
+                                  {stockParts.value}{' '}
+                                  {stockParts.label && (
+                                    <span className='text-xs font-normal opacity-80'>
+                                      {stockParts.label}
+                                    </span>
+                                  )}
                                 </span>
                               </td>
                             </tr>
@@ -1168,7 +1193,9 @@ export const Inventory: React.FC<InventoryProps> = ({
                   <div className='flex justify-between items-center'>
                     <div className='flex items-center gap-2 text-gray-500'>
                       <span className='material-symbols-rounded text-lg'>sell</span>
-                      <span className='text-sm font-medium'>{t.details?.sellingPrice || 'Selling Price'}</span>
+                      <span className='text-sm font-medium'>
+                        {t.details?.sellingPrice || 'Selling Price'}
+                      </span>
                     </div>
                     <span className='text-xl font-bold text-green-600 dark:text-green-400'>
                       {formatCurrency(viewingDrug.publicPrice)}
@@ -1178,7 +1205,9 @@ export const Inventory: React.FC<InventoryProps> = ({
                   <div className='flex justify-between items-center'>
                     <div className='flex items-center gap-2 text-gray-500'>
                       <span className='material-symbols-rounded text-lg'>shopping_cart</span>
-                      <span className='text-sm font-medium'>{t.details?.costPrice || 'Cost Price'}</span>
+                      <span className='text-sm font-medium'>
+                        {t.details?.costPrice || 'Cost Price'}
+                      </span>
                     </div>
                     <span className='text-lg font-bold text-gray-700 dark:text-gray-300'>
                       {formatCurrency(viewingDrug.costPrice || 0)}

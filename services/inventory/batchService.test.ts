@@ -96,6 +96,4 @@ describe('batchService edge cases', () => {
     expect(updateSpy).toHaveBeenNthCalledWith(2, 'later', -10, true);
     expect(updateSpy).toHaveBeenNthCalledWith(3, 'soon', 50, true);
   });
-
-
 });

@@ -123,12 +123,13 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
         cell: (info) => (
           <div className='flex items-center gap-2'>
             <span
-              className={`w-8 h-8 !flex items-center justify-center text-base font-black ${info.row.original.abc_class === 'A'
-                ? 'badge-success'
-                : info.row.original.abc_class === 'B'
-                  ? 'badge-info'
-                  : 'badge-neutral'
-                }`}
+              className={`w-8 h-8 !flex items-center justify-center text-base font-black ${
+                info.row.original.abc_class === 'A'
+                  ? 'badge-success'
+                  : info.row.original.abc_class === 'B'
+                    ? 'badge-info'
+                    : 'badge-neutral'
+              }`}
             >
               {info.row.original.abc_class}
             </span>

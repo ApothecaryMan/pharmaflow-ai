@@ -64,9 +64,7 @@ export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000
   }, [currentAlert, currentAdIndex]);
 
   return (
-    <div
-      className='relative flex items-center h-full px-2.5 opacity-85 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-150 cursor-default'
-    >
+    <div className='relative flex items-center h-full px-2.5 opacity-85 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-150 cursor-default'>
       <div
         key={content.key}
         className='flex items-center gap-1.5 text-[10px] font-bold tracking-wide uppercase whitespace-nowrap'

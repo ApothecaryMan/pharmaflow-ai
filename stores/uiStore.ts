@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { storage } from '../utils/storage';
 import { StorageKeys } from '../config/storageKeys';
+import { storage } from '../utils/storage';
 
 interface UIState {
   sidebarOpen: boolean;

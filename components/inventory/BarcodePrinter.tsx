@@ -54,8 +54,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playBeep, playError } = usePosSounds();
-  const branches = useAuthStore(s => s.branches);
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const branches = useAuthStore((s) => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeBranch = useMemo(
     () => branches?.find((b: any) => b.id === activeBranchId),
     [branches, activeBranchId]

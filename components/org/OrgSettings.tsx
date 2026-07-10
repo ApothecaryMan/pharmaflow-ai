@@ -1,12 +1,12 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { type AuditEntry, auditService } from '../../services/audit/auditService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
 import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Branch, Employee, Organization, OrgMember, Subscription } from '../../types';
 import { SmartInput } from '../common/SmartInputs';
 import { InviteModal } from './InviteModal';
@@ -18,7 +18,7 @@ interface OrgSettingsProps {
 
 export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => {
   const t = TRANSLATIONS[language];
-  const refreshAll = useAuthStore(s => s.refreshAll);
+  const refreshAll = useAuthStore((s) => s.refreshAll);
 
   const [org, setOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<OrgMember[]>([]);

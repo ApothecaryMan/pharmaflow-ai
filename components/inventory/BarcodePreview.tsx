@@ -104,8 +104,8 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
       labelsCount === 2 ? labelHeight * 2 + innerGap + outerGap : labelHeight + outerGap;
 
     // Use the SHARED generator to ensure identical output to the printer
-    // We intentionally pass {x: 0, y: 0} for offsets here because the print offset 
-    // is a hardware calibration setting for the physical printer and shouldn't 
+    // We intentionally pass {x: 0, y: 0} for offsets here because the print offset
+    // is a hardware calibration setting for the physical printer and shouldn't
     // break or shift the visual design canvas in the preview.
     return generatePageHTML(finalHTML, templateCSS, dims, pageHeight, {
       x: 0,

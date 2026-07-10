@@ -40,7 +40,9 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   isRTL,
 }) => (
   <div className='space-y-1.5'>
-    <p className='text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-(--text-tertiary)'>{label}</p>
+    <p className='text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-(--text-tertiary)'>
+      {label}
+    </p>
     <div className='flex items-center gap-2 overflow-x-auto flex-nowrap scrollbar-none py-2 -mx-4 sm:-mx-5 px-4 sm:px-5'>
       {colors.map((c) => (
         <button

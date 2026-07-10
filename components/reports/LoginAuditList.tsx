@@ -1,10 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { useSettings } from '../../context';
-import { TRANSLATIONS } from '../../i18n/translations';
-import { useAuthStore } from '../../stores/authStore';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
+import { useAuthStore } from '../../stores/authStore';
 import type { LoginAuditEntry } from '../../types';
 import { SearchInput } from '../common/SearchInput';
 import { Switch } from '../common/Switch';
@@ -16,8 +16,8 @@ import { TanStackTable } from '../common/TanStackTable';
  */
 export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }) => {
   const t = TRANSLATIONS[language];
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const branches = useAuthStore(s => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const branches = useAuthStore((s) => s.branches);
   const { data: employeesData } = useEmployees(activeBranchId);
   const employees = employeesData ?? [];
   const { theme: currentTheme } = useSettings();
@@ -128,14 +128,20 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           {parts.map((part, i) => {
             if (part === '{{from}}') {
               return (
-                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+                <span
+                  key={i}
+                  className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
+                >
                   {branchSwitchMatch[1]}
                 </span>
               );
             }
             if (part === '{{to}}') {
               return (
-                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+                <span
+                  key={i}
+                  className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
+                >
                   {branchSwitchMatch[2]}
                 </span>
               );
@@ -153,7 +159,9 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       return (
         <span className='text-gray-500 dark:text-gray-400'>
           {translated[0]}
-          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>{switchMatch[1]}</span>
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+            {switchMatch[1]}
+          </span>
           {translated[1]}
         </span>
       );
@@ -229,7 +237,9 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       return (
         <span className='text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-1.5'>
           {translated[0]}
-          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>{terminatedRemoteMatch[1]}</span>
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+            {terminatedRemoteMatch[1]}
+          </span>
           {translated[1]}
           <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50'>
             {t.loginAudit.detailPatterns.remotelyBadge}
@@ -245,7 +255,9 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       return (
         <span className='text-gray-500 dark:text-gray-400'>
           {translated[0]}
-          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>{terminatedMatch[1]}</span>
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+            {terminatedMatch[1]}
+          </span>
           {translated[1]}
         </span>
       );
@@ -254,7 +266,13 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
     // Pattern 8: Employee {name} logged out by {admin}
     const employeeLoggedOutMatch = details.match(/^Employee (.*) logged out by (.*)$/);
     if (employeeLoggedOutMatch) {
-      const translated = t.loginAudit.detailPatterns.employeeLoggedOutBy.split('{{name}}').join('{{temp}}').split('{{admin}}').join('{{name}}').split('{{temp}}').join('{{admin}}');
+      const translated = t.loginAudit.detailPatterns.employeeLoggedOutBy
+        .split('{{name}}')
+        .join('{{temp}}')
+        .split('{{admin}}')
+        .join('{{name}}')
+        .split('{{temp}}')
+        .join('{{admin}}');
       const parts = t.loginAudit.detailPatterns.employeeLoggedOutBy
         .split(/({{(?:name|admin)}})/)
         .filter(Boolean);
@@ -263,14 +281,20 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           {parts.map((part, i) => {
             if (part === '{{name}}') {
               return (
-                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+                <span
+                  key={i}
+                  className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
+                >
                   {employeeLoggedOutMatch[1]}
                 </span>
               );
             }
             if (part === '{{admin}}') {
               return (
-                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+                <span
+                  key={i}
+                  className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
+                >
                   {employeeLoggedOutMatch[2]}
                 </span>
               );
@@ -370,10 +394,11 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           return (
             <div className='flex items-center gap-2'>
               <div
-                className={`w-6 h-6 flex items-center justify-center shrink-0 ${isAdmin
+                className={`w-6 h-6 flex items-center justify-center shrink-0 ${
+                  isAdmin
                     ? ''
                     : 'rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 text-[10px] font-bold border border-gray-200 dark:border-gray-700 overflow-hidden'
-                  }`}
+                }`}
               >
                 {isAdmin ? (
                   <>
@@ -451,7 +476,10 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 flex-shrink-0'>
         <h2
           className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
-          style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+          style={{
+            fontFeatureSettings:
+              '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+          }}
         >
           {t.loginAudit.title}
         </h2>

@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { drugApprovalService } from '../../services/inventory/drugApprovalService';
 import type { DrugApproval } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { PageHeader, SearchInput, SegmentedControl } from '../common';
 import { Modal } from '../common/Modal';
 import { useStatusBar } from '../layout/StatusBar';
-import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface DrugApprovalQueueProps {
   color: string;
@@ -509,11 +509,7 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
           <div
             className={`flex items-center gap-2 justify-end ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}
           >
-            <button
-              type='button'
-              onClick={closeConfirmation}
-              className={MODAL_FOOTER_BTN_CANCEL}
-            >
+            <button type='button' onClick={closeConfirmation} className={MODAL_FOOTER_BTN_CANCEL}>
               {t.common?.cancel || 'Cancel'}
             </button>
             <button

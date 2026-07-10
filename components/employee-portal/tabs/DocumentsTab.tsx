@@ -6,10 +6,10 @@ import { employeeProfileRepository } from '../../../services/hr/repositories/emp
 import type { UserProfile } from '../../../types';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 
-const PROFILE_GLASS_CARD_NO_BORDER = PROFILE_GLASS_CARD_BASE
-  .split(' ')
-  .filter(c => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
-  .join(' ') + ' border border-transparent';
+const PROFILE_GLASS_CARD_NO_BORDER =
+  PROFILE_GLASS_CARD_BASE.split(' ')
+    .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+    .join(' ') + ' border border-transparent';
 
 const readFileAsBase64 = (file: File, t: Translations): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -56,7 +56,9 @@ const DocCard: React.FC<DocCardProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className={`${PROFILE_GLASS_CARD_NO_BORDER.replace('rounded-xl', '').trim()} ${className} p-3`}>
+    <div
+      className={`${PROFILE_GLASS_CARD_NO_BORDER.replace('rounded-xl', '').trim()} ${className} p-3`}
+    >
       <div className='flex items-center justify-between gap-3'>
         <div className='flex items-center gap-2.5 min-w-0'>
           {isLoadingDocs ? (
@@ -241,9 +243,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   return (
     <div className='animate-fade-in space-y-6'>
       <div className='space-y-2'>
-        <h4 
+        <h4
           className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-1.5 !font-["GraphicSansFont"]'
-          style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+          style={{
+            fontFeatureSettings:
+              '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+          }}
         >
           <FileText className='w-3.5 h-3.5' />
           {t.employeeProfile.officialDocuments}

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { dateRangeService, type FinancialPeriod } from '../../services/financials/dateRangeService';
 import {
   type FinancialSummary,
   financialService,
 } from '../../services/financials/financialService';
+import { useAuthStore } from '../../stores/authStore';
 import type {
   CategoryFinancialReport,
   DailyFinancialData,
@@ -25,7 +25,7 @@ interface UseFinancialDataResult {
 }
 
 export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFinancialDataResult {
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [kpis, setKpis] = useState<FinancialKPIs | null>(null);
   const [daily, setDaily] = useState<DailyFinancialData[]>([]);

@@ -1,22 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { purchaseService } from '../../services/purchases';
 import { transactionService } from '../../services/transactions/transactionService';
 import { useAuthStore } from '../../stores/authStore';
 import type { ActionContext } from '../../types';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useAddPurchase() {
   const queryClient = useQueryClient();
   const { activeBranchId, activeOrgId } = useAuthStore();
 
   return useMutation({
-    mutationFn: async ({
-      purchase,
-      context,
-    }: {
-      purchase: any;
-      context?: ActionContext;
-    }) => {
+    mutationFn: async ({ purchase, context }: { purchase: any; context?: ActionContext }) => {
       if (purchase.status === 'completed' && context) {
         const result = await transactionService.processDirectPurchaseTransaction(purchase, context);
         if (!result.success || !result.data) throw new Error(result.error || 'Purchase failed');

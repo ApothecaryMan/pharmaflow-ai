@@ -1,24 +1,29 @@
 import { startRegistration } from '@simplewebauthn/browser';
-import { Clock, Download, Menu } from 'lucide-react';
-import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '../../lib/queryKeys';
+import { Clock, Download, Menu } from 'lucide-react';
+import { lazy, Suspense, useCallback, useState } from 'react';
+import { useSettings } from '../../context';
 import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { queryKeys } from '../../lib/queryKeys';
 import { authService } from '../../services/auth/authService';
 import { employeeRepository } from '../../services/hr/repositories/employeeRepository';
-import { useSettings } from '../../context';
 import type { UserProfile } from '../../types';
 import { ContextMenuProvider } from '../common/ContextMenu';
+import { PageLoader } from '../common/PageLoader';
 import { EmployeeMobileDock } from './EmployeeMobileDock';
 import { EmployeeSideDrawer } from './EmployeeSideDrawer';
 import { useEmployeeDashboardData } from './hooks/useEmployeeDashboardData';
-import { lazy, Suspense } from 'react';
-import { PageLoader } from '../common/PageLoader';
 
-const EmployeePortalProfile = lazy(() => import('./EmployeePortalProfile').then(m => ({ default: m.EmployeePortalProfile })));
-const EmploymentRequestsList = lazy(() => import('./EmploymentRequestsList').then(m => ({ default: m.EmploymentRequestsList })));
-const PrescriptionPricing = lazy(() => import('./PrescriptionPricing').then(m => ({ default: m.default })));
+const EmployeePortalProfile = lazy(() =>
+  import('./EmployeePortalProfile').then((m) => ({ default: m.EmployeePortalProfile }))
+);
+const EmploymentRequestsList = lazy(() =>
+  import('./EmploymentRequestsList').then((m) => ({ default: m.EmploymentRequestsList }))
+);
+const PrescriptionPricing = lazy(() =>
+  import('./PrescriptionPricing').then((m) => ({ default: m.default }))
+);
 
 type EmployeeView = 'profile' | 'requests' | 'pricing';
 
@@ -28,11 +33,7 @@ interface Props {
   onLogout?: () => void;
 }
 
-export function EmployeeDashboard({
-  view = 'profile',
-  onViewChange,
-  onLogout,
-}: Props) {
+export function EmployeeDashboard({ view = 'profile', onViewChange, onLogout }: Props) {
   const { language } = useSettings();
   const queryClient = useQueryClient();
   const t = TRANSLATIONS[language];
@@ -50,7 +51,6 @@ export function EmployeeDashboard({
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
   const pendingRequestsCount = requests?.filter((r) => r.status === 'pending').length || 0;
-
 
   // Always delegate to the centralized logout handler (useAuth.handleLogout)
   // to ensure React state, storage, and Supabase session are all properly cleaned up
@@ -200,8 +200,12 @@ export function EmployeeDashboard({
               alt='Zinc'
             />
             <div>
-              <h1 className='text-sm font-bold text-(--text-primary) truncate leading-tight !font-["GraphicSansFont"]'
-                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              <h1
+                className='text-sm font-bold text-(--text-primary) truncate leading-tight !font-["GraphicSansFont"]'
+                style={{
+                  fontFeatureSettings:
+                    '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+                }}
               >
                 {t.login.employeePortal}
               </h1>
@@ -262,9 +266,13 @@ export function EmployeeDashboard({
               {activeView === 'requests' && (
                 <section className='space-y-3 sm:space-y-4'>
                   <div className='flex items-center justify-between'>
-                    <h3 className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-2 !font-["GraphicSansFont"]'
-                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
-              >
+                    <h3
+                      className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-2 !font-["GraphicSansFont"]'
+                      style={{
+                        fontFeatureSettings:
+                          '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+                      }}
+                    >
                       <Clock className='w-4 h-4 sm:w-5 sm:h-5 text-primary-500' />
                       <span className='truncate'>
                         {t.login?.pendingRequests || 'Pending Employment Requests'}

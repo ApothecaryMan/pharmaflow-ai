@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { getSmartDirection } from '../common/SmartInputs';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSettings } from '../../context';
 import type { ViewState } from '../../types';
+import { getSmartDirection } from '../common/SmartInputs';
 
 /* ──────────────────────────────────────────────
    DATA TYPES
@@ -99,7 +100,8 @@ const TRIX_DATA: TrixComparisonData = {
   quickSection: {
     titleEn: 'The Four Formulas — At a Glance',
     titleAr: 'الأربع تركيبات بسرعة',
-    noteEn: 'Each formula targets a different hair concern. All 200ml, suitable for all hair types.',
+    noteEn:
+      'Each formula targets a different hair concern. All 200ml, suitable for all hair types.',
     noteAr: 'كل نوع اتصمم لمشكلة شعر مختلفة، وكلهم بحجم 200 مل ومناسبين لكل أنواع الشعر',
   },
   matrixSection: {
@@ -126,13 +128,16 @@ const TRIX_DATA: TrixComparisonData = {
       bestForAr: 'ثعلبة ذكورية · تساقط انتقالي',
       indicationsEn: 'Androgenic alopecia · Telogen effluvium · Weak, brittle hair',
       indicationsAr: 'ثعلبة ذكورية · تساقط انتقالي · شعر ضعيف وهش',
-      usageEn: 'Apply to wet hair, massage until lather, rinse — suitable for daily use and sensitive scalps.',
-      usageAr: 'يوضع على الشعر المبلل، يُدلّك حتى الرغوة، ثم يُشطف — مناسب للاستخدام اليومي والفروة الحساسة',
+      usageEn:
+        'Apply to wet hair, massage until lather, rinse — suitable for daily use and sensitive scalps.',
+      usageAr:
+        'يوضع على الشعر المبلل، يُدلّك حتى الرغوة، ثم يُشطف — مناسب للاستخدام اليومي والفروة الحساسة',
       ingredients: ['Capauxein™ G2', 'Protectagen™', 'Panthenol', 'Glycerin'],
     },
     {
       id: 'dandruff',
-      iconSvg: 'M6 3 L6 9 M3.5 4.5 L8.5 7.5 M8.5 4.5 L3.5 7.5 M16.5 9 L16.5 14 M14.2 10.3 L18.8 12.7 M18.8 10.3 L14.2 12.7 M9.5 15 L9.5 20 M7.2 16.3 L11.8 18.7 M11.8 16.3 L7.2 18.7',
+      iconSvg:
+        'M6 3 L6 9 M3.5 4.5 L8.5 7.5 M8.5 4.5 L3.5 7.5 M16.5 9 L16.5 14 M14.2 10.3 L18.8 12.7 M18.8 10.3 L14.2 12.7 M9.5 15 L9.5 20 M7.2 16.3 L11.8 18.7 M11.8 16.3 L7.2 18.7',
       nameEn: 'Anti-Dandruff',
       nameAr: 'مضاد القشرة',
       priceEn: '~150 EGP / 200ml',
@@ -141,13 +146,23 @@ const TRIX_DATA: TrixComparisonData = {
       bestForAr: 'قشرة شديدة · فروة دهنية',
       indicationsEn: 'Severe dandruff · Oily scalp · Seborrheic dermatitis',
       indicationsAr: 'قشرة شديدة · فروة رأس دهنية والتهاب جلدي دهني',
-      usageEn: 'Apply to damp hair and scalp, gentle massage, leave 2-3 min, rinse with warm water — use 2-3 times weekly.',
-      usageAr: 'يوضع على الشعر والفروة المبللة، تدليك لطيف، يُترك 2-3 دقايق، شطف بمياه دافية — يُستخدم 2-3 مرات أسبوعيًا',
-      ingredients: ['Sclareance', 'Piroctone Olamine', 'Salicylic Acid', 'Biotin', 'Ginseng', 'Chamomile'],
+      usageEn:
+        'Apply to damp hair and scalp, gentle massage, leave 2-3 min, rinse with warm water — use 2-3 times weekly.',
+      usageAr:
+        'يوضع على الشعر والفروة المبللة، تدليك لطيف، يُترك 2-3 دقايق، شطف بمياه دافية — يُستخدم 2-3 مرات أسبوعيًا',
+      ingredients: [
+        'Sclareance',
+        'Piroctone Olamine',
+        'Salicylic Acid',
+        'Biotin',
+        'Ginseng',
+        'Chamomile',
+      ],
     },
     {
       id: 'revitalizing',
-      iconSvg: 'M7 2 C8 6 9.5 8 8.5 11 L11 12.5 M12.5 12 L10 13.5 L12.5 15 L11 17 C10.2 19 10.8 20.5 10 22',
+      iconSvg:
+        'M7 2 C8 6 9.5 8 8.5 11 L11 12.5 M12.5 12 L10 13.5 L12.5 15 L11 17 C10.2 19 10.8 20.5 10 22',
       nameEn: 'Revitalizing',
       nameAr: 'منعش',
       priceEn: '~150 EGP / 200ml',
@@ -162,7 +177,8 @@ const TRIX_DATA: TrixComparisonData = {
     },
     {
       id: 'volumizing',
-      iconSvg: 'M6 3 C8 7 4 11 6 15 C8 19 4 21 6 23 M12 3 C14 7 10 11 12 15 C14 19 10 21 12 23 M18 3 C20 7 16 11 18 15 C20 19 16 21 18 23',
+      iconSvg:
+        'M6 3 C8 7 4 11 6 15 C8 19 4 21 6 23 M12 3 C14 7 10 11 12 15 C14 19 10 21 12 23 M18 3 C20 7 16 11 18 15 C20 19 16 21 18 23',
       nameEn: 'Volumizing',
       nameAr: 'مكثف',
       priceEn: '~150 EGP / 200ml',
@@ -194,17 +210,31 @@ const TRIX_DATA: TrixComparisonData = {
     { name: 'Caffeine', present: [false, false, false, true] },
   ],
   matrixNotes: {
-    noteEn: 'Glycerin is the only ingredient shared across all four formulas. After that, each formula has its own unique "fingerprint" ingredients.',
-    noteAr: 'الجليسرين (Glycerin) هو المكوّن الوحيد المشترك في الأربع تركيبات — كل نوع بعد كده بياخد "بصمته" من مكوّنات خاصة بيه لوحده.',
+    noteEn:
+      'Glycerin is the only ingredient shared across all four formulas. After that, each formula has its own unique "fingerprint" ingredients.',
+    noteAr:
+      'الجليسرين (Glycerin) هو المكوّن الوحيد المشترك في الأربع تركيبات — كل نوع بعد كده بياخد "بصمته" من مكوّنات خاصة بيه لوحده.',
   },
   stats: [
     { icon: 'science', labelEn: 'Total Products', labelAr: 'إجمالي المنتجات', value: '48' },
-    { icon: 'branding_watermark', labelEn: 'Active Brands', labelAr: 'العلامات النشطة', value: '12' },
-    { icon: 'inventory_2', labelEn: 'Low Stock Items', labelAr: 'المنتجات منخفضة المخزون', value: '3' },
+    {
+      icon: 'branding_watermark',
+      labelEn: 'Active Brands',
+      labelAr: 'العلامات النشطة',
+      value: '12',
+    },
+    {
+      icon: 'inventory_2',
+      labelEn: 'Low Stock Items',
+      labelAr: 'المنتجات منخفضة المخزون',
+      value: '3',
+    },
     { icon: 'local_shipping', labelEn: 'Pending Orders', labelAr: 'الطلبات المعلقة', value: '7' },
   ],
-  footerEn: 'Source: hayahlaboratories.com — Prices and offers change. Check the official site before purchasing.',
-  footerAr: 'المصدر: hayahlaboratories.com — الأسعار والعروض بتتغيّر باستمرار، راجع الموقع الرسمي قبل الشراء',
+  footerEn:
+    'Source: hayahlaboratories.com — Prices and offers change. Check the official site before purchasing.',
+  footerAr:
+    'المصدر: hayahlaboratories.com — الأسعار والعروض بتتغيّر باستمرار، راجع الموقع الرسمي قبل الشراء',
   disclaimerEn: 'Comparison worksheet only, not medical advice.',
   disclaimerAr: 'ورقة للمقارنة فقط، مش استشارة طبية',
 };
@@ -223,7 +253,8 @@ interface TrixComparisonTemplateProps {
 const COLUMN_KEYS = ['Hair Loss', 'Dandruff', 'Revital.', 'Volume'] as const;
 
 const TITLE_FONT = '"GraphicSansFont"';
-const TITLE_FEATURES = '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1';
+const TITLE_FEATURES =
+  '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1';
 const TITLE_STYLE: React.CSSProperties = {
   fontFamily: TITLE_FONT,
   fontFeatureSettings: TITLE_FEATURES,
@@ -259,13 +290,21 @@ const DARK: ColorPalette = {
 
 const TickIcon: React.FC<{ stamp: string }> = ({ stamp }) => (
   <svg viewBox='0 0 20 20' className='inline-block align-middle' style={{ width: 18, height: 18 }}>
-    <path d='M3 10.3 C5 12.3 7 14.3 8.4 15.4 C11.4 11 14.5 6.4 17 3.4'
-      stroke={stamp} fill='none' strokeWidth={2.3} strokeLinecap='round' strokeLinejoin='round' />
+    <path
+      d='M3 10.3 C5 12.3 7 14.3 8.4 15.4 C11.4 11 14.5 6.4 17 3.4'
+      stroke={stamp}
+      fill='none'
+      strokeWidth={2.3}
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
   </svg>
 );
 
 const DirSpan: React.FC<{ text: string; className?: string; style?: React.CSSProperties }> = ({
-  text, className, style,
+  text,
+  className,
+  style,
 }) => {
   const dir = getSmartDirection(text);
   const isAr = dir === 'rtl';
@@ -285,7 +324,9 @@ const DirSpan: React.FC<{ text: string; className?: string; style?: React.CSSPro
 };
 
 const DirBlock: React.FC<{ text: string; className?: string; style?: React.CSSProperties }> = ({
-  text, className, style,
+  text,
+  className,
+  style,
 }) => {
   const dir = getSmartDirection(text);
   const isAr = dir === 'rtl';
@@ -316,15 +357,21 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
   useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Harmattan:wght@400;500;600;700&family=Patrick+Hand&display=swap';
+    link.href =
+      'https://fonts.googleapis.com/css2?family=Harmattan:wght@400;500;600;700&family=Patrick+Hand&display=swap';
     link.onload = () => setFontsLoaded(true);
     document.head.appendChild(link);
-    return () => { link.remove(); };
+    return () => {
+      link.remove();
+    };
   }, []);
 
   if (!fontsLoaded) {
     return (
-      <div className='h-full flex items-center justify-center' style={{ borderRadius: 0, background: C.paper }}>
+      <div
+        className='h-full flex items-center justify-center'
+        style={{ borderRadius: 0, background: C.paper }}
+      >
         <span style={{ color: C.ink, fontFamily: "'Patrick Hand', cursive", fontSize: 18 }}>
           Loading fonts…
         </span>
@@ -378,7 +425,8 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
       <div
         style={{
           position: 'fixed',
-          top: 0, bottom: 0,
+          top: 0,
+          bottom: 0,
           [isAr ? 'left' : 'right']: 46,
           width: 2,
           background: C.marginLine,
@@ -389,7 +437,6 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
 
       <div className='flex-1 overflow-y-auto' style={{ position: 'relative', zIndex: 1 }}>
         <div className='max-w-[1400px] mx-auto px-4 md:px-8 py-10 pb-[70px]'>
-
           {/* ═══ LETTERHEAD ═══ */}
           <header
             style={{
@@ -435,7 +482,8 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
             </div>
             <div
               style={{
-                width: 78, height: 78,
+                width: 78,
+                height: 78,
                 border: `2px solid ${C.stamp}`,
                 transform: 'rotate(45deg)',
                 display: 'flex',
@@ -466,9 +514,7 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
             <h2 style={sectionTitleStyle}>
               {isAr ? D.quickSection.titleAr : D.quickSection.titleEn}
             </h2>
-            <p style={sectionNoteStyle}>
-              {isAr ? D.quickSection.noteAr : D.quickSection.noteEn}
-            </p>
+            <p style={sectionNoteStyle}>{isAr ? D.quickSection.noteAr : D.quickSection.noteEn}</p>
 
             <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
               {products.map((p) => (
@@ -481,8 +527,18 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                     borderRadius: 0,
                   }}
                 >
-                  <svg width={34} height={34} viewBox='0 0 24 24'
-                    style={{ fill: 'none', stroke: C.ink, strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', marginBottom: 8 }}
+                  <svg
+                    width={34}
+                    height={34}
+                    viewBox='0 0 24 24'
+                    style={{
+                      fill: 'none',
+                      stroke: C.ink,
+                      strokeWidth: 1.6,
+                      strokeLinecap: 'round',
+                      strokeLinejoin: 'round',
+                      marginBottom: 8,
+                    }}
                   >
                     <path d={p.iconSvg} />
                   </svg>
@@ -498,12 +554,21 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                   >
                     {isAr ? p.nameAr : p.nameEn}
                   </div>
-                  <DirSpan text={isAr ? p.bestForAr : p.bestForEn}
+                  <DirSpan
+                    text={isAr ? p.bestForAr : p.bestForEn}
                     style={{ fontSize: 16, color: C.inkSoft, display: 'block' }}
                   />
                   <DirBlock
-                    text={(isAr ? 'الأفضل لـ: ' : 'Best for: ') + (isAr ? p.bestForAr : p.bestForEn)}
-                    style={{ marginTop: 10, fontSize: 13, color: C.tag, borderTop: `1px dashed ${C.rule}`, paddingTop: 8 }}
+                    text={
+                      (isAr ? 'الأفضل لـ: ' : 'Best for: ') + (isAr ? p.bestForAr : p.bestForEn)
+                    }
+                    style={{
+                      marginTop: 10,
+                      fontSize: 13,
+                      color: C.tag,
+                      borderTop: `1px dashed ${C.rule}`,
+                      paddingTop: 8,
+                    }}
                   />
                 </div>
               ))}
@@ -515,41 +580,57 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
             <h2 style={sectionTitleStyle}>
               {isAr ? D.matrixSection.titleAr : D.matrixSection.titleEn}
             </h2>
-            <p style={sectionNoteStyle}>
-              {isAr ? D.matrixSection.noteAr : D.matrixSection.noteEn}
-            </p>
+            <p style={sectionNoteStyle}>{isAr ? D.matrixSection.noteAr : D.matrixSection.noteEn}</p>
 
             <div style={{ overflowX: 'auto', border: `1.5px solid ${C.ink}`, borderRadius: 0 }}>
-              <table style={{
-                width: '100%', borderCollapse: 'collapse', minWidth: 620, background: C.card,
-              }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  minWidth: 620,
+                  background: C.card,
+                }}
+              >
                 <thead>
                   <tr>
-                    <th style={{
-                      textAlign: isAr ? 'right' : 'left',
-                      background: C.ink,
-                      color: C.paper,
-                      fontSize: 20,
-                      fontWeight: 700,
-                      padding: '9px 10px',
-                      border: `1px solid ${C.rule}`,
-                    }}>
-                      <span style={{ fontFamily: TITLE_FONT, fontFeatureSettings: TITLE_FEATURES, color: C.paper, fontSize: 20, fontWeight: 700 }}>
-                        {isAr ? 'المكوّن' : 'Ingredient'}
-                      </span>
-                    </th>
-                    {COLUMN_KEYS.map((col) => (
-                      <th key={col} style={{
+                    <th
+                      style={{
+                        textAlign: isAr ? 'right' : 'left',
                         background: C.ink,
                         color: C.paper,
-                        fontFamily: TITLE_FONT,
-                        fontFeatureSettings: TITLE_FEATURES,
                         fontSize: 20,
                         fontWeight: 700,
                         padding: '9px 10px',
                         border: `1px solid ${C.rule}`,
-                        textAlign: 'center',
-                      }}>
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: TITLE_FONT,
+                          fontFeatureSettings: TITLE_FEATURES,
+                          color: C.paper,
+                          fontSize: 20,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {isAr ? 'المكوّن' : 'Ingredient'}
+                      </span>
+                    </th>
+                    {COLUMN_KEYS.map((col) => (
+                      <th
+                        key={col}
+                        style={{
+                          background: C.ink,
+                          color: C.paper,
+                          fontFamily: TITLE_FONT,
+                          fontFeatureSettings: TITLE_FEATURES,
+                          fontSize: 20,
+                          fontWeight: 700,
+                          padding: '9px 10px',
+                          border: `1px solid ${C.rule}`,
+                          textAlign: 'center',
+                        }}
+                      >
                         {col}
                       </th>
                     ))}
@@ -557,29 +638,37 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                 </thead>
                 <tbody>
                   {D.ingredients.map((row, i) => (
-                    <tr key={row.name} style={{
-                      background: i % 2 === 0 ? C.tableRowEven : 'transparent',
-                    }}>
-                      <th style={{
-                        textAlign: isAr ? 'right' : 'left',
-                        fontFamily: "'Patrick Hand', cursive",
-                        fontSize: 15,
-                        background: C.tableHeaderBg,
-                        whiteSpace: 'nowrap',
-                        padding: '9px 10px',
-                        border: `1px solid ${C.rule}`,
-                        fontWeight: 400,
-                        color: C.ink,
-                      }}>
+                    <tr
+                      key={row.name}
+                      style={{
+                        background: i % 2 === 0 ? C.tableRowEven : 'transparent',
+                      }}
+                    >
+                      <th
+                        style={{
+                          textAlign: isAr ? 'right' : 'left',
+                          fontFamily: "'Patrick Hand', cursive",
+                          fontSize: 15,
+                          background: C.tableHeaderBg,
+                          whiteSpace: 'nowrap',
+                          padding: '9px 10px',
+                          border: `1px solid ${C.rule}`,
+                          fontWeight: 400,
+                          color: C.ink,
+                        }}
+                      >
                         {row.name}
                       </th>
                       {row.present.map((has, ci) => (
-                        <td key={ci} style={{
-                          padding: '9px 10px',
-                          border: `1px solid ${C.rule}`,
-                          textAlign: 'center',
-                          color: C.rule,
-                        }}>
+                        <td
+                          key={ci}
+                          style={{
+                            padding: '9px 10px',
+                            border: `1px solid ${C.rule}`,
+                            textAlign: 'center',
+                            color: C.rule,
+                          }}
+                        >
                           {has ? <TickIcon stamp={C.stamp} /> : '—'}
                         </td>
                       ))}
@@ -601,10 +690,21 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                 borderRadius: 0,
               }}
             >
-              <span style={{ ...TITLE_STYLE, fontSize: 18, color: C.tag, fontWeight: 700, marginInlineEnd: 4 }}>
+              <span
+                style={{
+                  ...TITLE_STYLE,
+                  fontSize: 18,
+                  color: C.tag,
+                  fontWeight: 700,
+                  marginInlineEnd: 4,
+                }}
+              >
                 {isAr ? 'ملحوظة: ' : 'Note: '}
               </span>
-              <DirSpan text={isAr ? matrixNotes.noteAr : matrixNotes.noteEn} style={{ color: C.tag }} />
+              <DirSpan
+                text={isAr ? matrixNotes.noteAr : matrixNotes.noteEn}
+                style={{ color: C.tag }}
+              />
             </div>
           </section>
 
@@ -613,9 +713,7 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
             <h2 style={sectionTitleStyle}>
               {isAr ? D.detailSection.titleAr : D.detailSection.titleEn}
             </h2>
-            <p style={sectionNoteStyle}>
-              {isAr ? D.detailSection.noteAr : D.detailSection.noteEn}
-            </p>
+            <p style={sectionNoteStyle}>{isAr ? D.detailSection.noteAr : D.detailSection.noteEn}</p>
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-[22px]'>
               {products.map((p) => (
@@ -629,12 +727,16 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                     position: 'relative',
                   }}
                 >
-                  <div style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                    borderBottom: `1.5px dashed ${C.rule}`,
-                    paddingBottom: 10,
-                    marginBottom: 12,
-                  }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      borderBottom: `1.5px dashed ${C.rule}`,
+                      paddingBottom: 10,
+                      marginBottom: 12,
+                    }}
+                  >
                     <div
                       style={{
                         ...TITLE_STYLE,
@@ -645,8 +747,14 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                     >
                       {isAr ? p.nameAr : p.nameEn}
                     </div>
-                    <DirSpan text={isAr ? p.priceAr : p.priceEn}
-                      style={{ fontSize: 14, color: C.stamp, whiteSpace: 'nowrap', textAlign: 'right' }}
+                    <DirSpan
+                      text={isAr ? p.priceAr : p.priceEn}
+                      style={{
+                        fontSize: 14,
+                        color: C.stamp,
+                        whiteSpace: 'nowrap',
+                        textAlign: 'right',
+                      }}
                     />
                   </div>
 
@@ -692,22 +800,23 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
           </section>
 
           {/* ═══ FOOTER ═══ */}
-          <footer style={{
-            marginTop: 50,
-            borderTop: `2px solid ${C.ink}`,
-            paddingTop: 14,
-            fontFamily: "'Patrick Hand', cursive",
-            fontSize: 14,
-            color: C.inkSoft,
-            display: 'flex',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 8,
-          }}>
+          <footer
+            style={{
+              marginTop: 50,
+              borderTop: `2px solid ${C.ink}`,
+              paddingTop: 14,
+              fontFamily: "'Patrick Hand', cursive",
+              fontSize: 14,
+              color: C.inkSoft,
+              display: 'flex',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
             <DirSpan text={isAr ? D.footerAr : D.footerEn} style={{ color: C.inkSoft }} />
             <DirSpan text={isAr ? D.disclaimerAr : D.disclaimerEn} style={{ color: C.inkSoft }} />
           </footer>
-
         </div>
       </div>
     </div>

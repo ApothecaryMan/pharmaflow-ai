@@ -34,24 +34,24 @@ const EmployeeSetupScreen = lazy(() =>
     default: m.EmployeeSetupScreen,
   }))
 );
+
 import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
 
 import { ROUTES } from './config/routes';
 import { CatalogProvider, LANGUAGES, THEMES, useAlert, useSettings } from './context';
-import { useAuthStore } from './stores/authStore';
 import { type AuthState, useAuth } from './hooks/auth/useAuth';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
 import { usePreventZoom } from './hooks/infrastructure/usePreventZoom';
+import { useSessionHeartbeat } from './hooks/infrastructure/useSessionHeartbeat';
 // App State Hooks
 import { type AppState, useAppState } from './hooks/layout/useAppState';
 import { useTheme } from './hooks/layout/useTheme';
 import { useUrlSync } from './hooks/layout/useUrlSync';
-import { useSessionHeartbeat } from './hooks/infrastructure/useSessionHeartbeat';
 import { ROOT_STRINGS } from './i18n/rootStrings';
 import { authService } from './services/auth/authService';
+import { useAuthStore } from './stores/authStore';
 import type { Supplier, ViewState } from './types';
 import { useAutoSystemBarColor } from './utils/systemBars';
-
 
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
 /**
@@ -187,21 +187,32 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       console.error('[Global Error Handler] Unhandled Promise Rejection:', event.reason);
-      
+
       const reason = event.reason;
-      
+
       // Don't show toast for intentional aborts
       if (reason?.name === 'AbortError') return;
 
       const title = language === 'AR' ? 'خطأ في النظام' : 'System Error';
-      let message = language === 'AR' ? 'حدث خطأ غير متوقع. جرب مرة أخرى.' : 'An unexpected error occurred. Please try again.';
+      let message =
+        language === 'AR'
+          ? 'حدث خطأ غير متوقع. جرب مرة أخرى.'
+          : 'An unexpected error occurred. Please try again.';
 
-      if (reason?.message?.includes('FetchError') || reason?.message?.includes('Network Error') || reason?.message?.includes('Failed to fetch')) {
-        message = language === 'AR' 
-          ? 'خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.' 
-          : 'Server connection error. Please check your internet connection.';
+      if (
+        reason?.message?.includes('FetchError') ||
+        reason?.message?.includes('Network Error') ||
+        reason?.message?.includes('Failed to fetch')
+      ) {
+        message =
+          language === 'AR'
+            ? 'خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.'
+            : 'Server connection error. Please check your internet connection.';
       } else if (reason?.code === '42501') {
-        message = language === 'AR' ? 'ليس لديك صلاحية لإتمام هذه العملية.' : 'You do not have permission to perform this action.';
+        message =
+          language === 'AR'
+            ? 'ليس لديك صلاحية لإتمام هذه العملية.'
+            : 'You do not have permission to perform this action.';
       } else if (reason instanceof Error && reason.message) {
         message = reason.message;
       }
@@ -245,7 +256,7 @@ const App: React.FC = () => {
   // 6. Stable Login Callbacks
   const { setIsAuthenticated } = authState;
   const { setActiveModule, setView } = appState;
-  const reinitialize = useAuthStore(s => s.reinitialize);
+  const reinitialize = useAuthStore((s) => s.reinitialize);
 
   // 6.1 Initialize auth data on mount (replaces old DataProvider.initData())
   const isInitializedRef = React.useRef(false);
@@ -296,12 +307,15 @@ const App: React.FC = () => {
         <div className='h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black'>
           <div className='flex flex-col items-center gap-4'>
             <LogoAsterisk />
-          <p 
-            className='py-2 text-2xl sm:text-3xl !font-["GraphicSansFont"] tracking-tight leading-normal text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-100 dark:via-zinc-500 dark:to-zinc-100 animate-wave-text text-center'
-            style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
-          >
-            {t.global?.loading}
-          </p>
+            <p
+              className='py-2 text-2xl sm:text-3xl !font-["GraphicSansFont"] tracking-tight leading-normal text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-100 dark:via-zinc-500 dark:to-zinc-100 animate-wave-text text-center'
+              style={{
+                fontFeatureSettings:
+                  '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+              }}
+            >
+              {t.global?.loading}
+            </p>
           </div>
         </div>
       }
@@ -329,9 +343,12 @@ const App: React.FC = () => {
       <div className='h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black'>
         <div className='flex flex-col items-center gap-4'>
           <LogoAsterisk />
-          <p 
+          <p
             className='py-2 text-2xl sm:text-3xl !font-["GraphicSansFont"] tracking-tight leading-normal text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-100 dark:via-zinc-500 dark:to-zinc-100 animate-wave-text text-center'
-            style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+            style={{
+              fontFeatureSettings:
+                '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+            }}
           >
             {t.global?.loading}
           </p>

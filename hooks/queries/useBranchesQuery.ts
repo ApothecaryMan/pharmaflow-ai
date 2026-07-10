@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { branchService } from '../../services/org/branchService';
 import type { Branch } from '../../types';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useBranches(orgId: string) {
   return useQuery({

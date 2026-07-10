@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import type { ViewState } from '../../types';
 import { TrixComparisonTemplate } from './TrixComparisonTemplate';
 
@@ -12,6 +12,4 @@ interface CosmoceuticalPageProps {
 export const CosmoceuticalPage: React.FC<CosmoceuticalPageProps> = ({
   language = 'EN',
   color = '#6366f1',
-}) => (
-  <TrixComparisonTemplate language={language} color={color} />
-);
+}) => <TrixComparisonTemplate language={language} color={color} />;

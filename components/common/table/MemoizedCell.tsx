@@ -41,11 +41,17 @@ export const MemoizedCell = React.memo(
       if (formatted) {
         const { isToday, dateLabel, formattedTime } = formatted;
         content = isToday ? (
-          <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>{formattedTime}</span>
+          <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>
+            {formattedTime}
+          </span>
         ) : (
           <div className='flex items-center gap-1.5 whitespace-nowrap'>
-            <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>{dateLabel}</span>
-            <span className='text-[10px] text-gray-400 font-medium opacity-60'>{formattedTime}</span>
+            <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>
+              {dateLabel}
+            </span>
+            <span className='text-[10px] text-gray-400 font-medium opacity-60'>
+              {formattedTime}
+            </span>
           </div>
         );
       }
@@ -91,7 +97,9 @@ export const MemoizedCell = React.memo(
             </span>
           )}
           <span
-            className={meta?.isFlex ? `min-w-0 w-full block ${meta.textAlignClass || ''}` : undefined}
+            className={
+              meta?.isFlex ? `min-w-0 w-full block ${meta.textAlignClass || ''}` : undefined
+            }
             dir={meta?.isId ? 'ltr' : undefined}
           >
             {content}

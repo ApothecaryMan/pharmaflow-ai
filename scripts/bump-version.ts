@@ -84,11 +84,11 @@ function bumpVersion() {
       if (tauriVersionParts.length === 2) {
         const minorAndPatch = tauriVersionParts[1];
         if (minorAndPatch.length >= 3) {
-            const minor = minorAndPatch.substring(0, 1);
-            const patch = minorAndPatch.substring(1);
-            tauriConf.version = `${tauriVersionParts[0]}.${minor}.${Number(patch)}`;
+          const minor = minorAndPatch.substring(0, 1);
+          const patch = minorAndPatch.substring(1);
+          tauriConf.version = `${tauriVersionParts[0]}.${minor}.${Number(patch)}`;
         } else {
-            tauriConf.version = `${tauriVersionParts[0]}.${minorAndPatch}.0`;
+          tauriConf.version = `${tauriVersionParts[0]}.${minorAndPatch}.0`;
         }
       } else {
         tauriConf.version = newVersion;

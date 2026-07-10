@@ -10,9 +10,9 @@ export function useUrlSync(
   userId?: string,
   isEmployeePortalUser?: boolean
 ) {
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const branches = useAuthStore(s => s.branches);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const branches = useAuthStore((s) => s.branches);
 
   useEffect(() => {
     // Helper to enforce pure HashRouter behavior (removes legacy pathnames like /login)

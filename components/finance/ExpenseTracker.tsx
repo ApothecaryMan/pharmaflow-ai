@@ -262,10 +262,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   ];
 
   return (
-    <div
-      className='h-full overflow-y-auto scrollbar-hide text-start'
-      dir={isRtl ? 'rtl' : 'ltr'}
-    >
+    <div className='h-full overflow-y-auto scrollbar-hide text-start' dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Header with Segmented Period Filters */}
       <PageHeader
         title={t.expenses.title}

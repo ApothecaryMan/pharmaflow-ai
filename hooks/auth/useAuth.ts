@@ -51,36 +51,37 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   const [terminatorName, setTerminatorName] = useState<string | null>(null);
 
   // Logout handler
-  const handleLogout = useCallback(async (reason: 'normal' | 'remote' = 'normal') => {
-    try {
-      setLogoutReason(reason);
-      setIsLoggingOut(true);
-      const startTime = Date.now();
-      
-      await authService.logout();
-      
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 2000) {
-        await new Promise(r => setTimeout(r, 2000 - elapsed));
+  const handleLogout = useCallback(
+    async (reason: 'normal' | 'remote' = 'normal') => {
+      try {
+        setLogoutReason(reason);
+        setIsLoggingOut(true);
+        const startTime = Date.now();
+
+        await authService.logout();
+
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 2000) {
+          await new Promise((r) => setTimeout(r, 2000 - elapsed));
+        }
+
+        setIsAuthenticated(false);
+        // Set view directly to skip route guard checks for this specific action
+        setView(ROUTES.LOGIN);
+      } catch (e) {
+        // Even if API fails, client should logout
+        setIsAuthenticated(false);
+        setView(ROUTES.LOGIN);
+      } finally {
+        setIsLoggingOut(false);
       }
-      
-      setIsAuthenticated(false);
-      // Set view directly to skip route guard checks for this specific action
-      setView(ROUTES.LOGIN);
-    } catch (e) {
-      // Even if API fails, client should logout
-      setIsAuthenticated(false);
-      setView(ROUTES.LOGIN);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  }, [setView]);
+    },
+    [setView]
+  );
 
   // Centralized Guard Function
   const resolveView = useCallback(
     (targetView: ViewState): ViewState => {
-
-
       // B. Auth Guard
       if (!isAuthenticated && targetView !== ROUTES.LOGIN) {
         return ROUTES.LOGIN;
@@ -171,7 +172,9 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
 
           // --- Broadcast subscription (primary) ---
           const bchannelName = `session-${sid}`;
-          const existingBc = supabase.getChannels().find(c => c.topic === `realtime:${bchannelName}`);
+          const existingBc = supabase
+            .getChannels()
+            .find((c) => c.topic === `realtime:${bchannelName}`);
           if (existingBc) supabase.removeChannel(existingBc);
 
           broadcastChannel = supabase
@@ -185,7 +188,12 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
             })
             .on(
               'postgres_changes',
-              { event: 'UPDATE', schema: 'public', table: 'user_active_sessions', filter: `id=eq.${sid}` },
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'user_active_sessions',
+                filter: `id=eq.${sid}`,
+              },
               (payload) => {
                 if (payload.new.is_active === false) {
                   console.warn('Session terminated remotely via DB update.');

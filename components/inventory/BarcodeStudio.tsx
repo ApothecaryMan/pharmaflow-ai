@@ -3,13 +3,17 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { useDebounce } from '../../hooks/common/useDebounce';
 import type { TRANSLATIONS } from '../../i18n/translations';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
-import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import {
+  CARD_BASE,
+  MODAL_FOOTER_BTN_CANCEL,
+  MODAL_FOOTER_BTN_PRIMARY,
+} from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -46,9 +50,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playError } = usePosSounds();
-  const branches = useAuthStore(s => s.branches);
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const updateBranch = useAuthStore(s => s.updateBranch);
+  const branches = useAuthStore((s) => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const updateBranch = useAuthStore((s) => s.updateBranch);
   const { developerMode } = useSettings();
   const activeBranch = useMemo(
     () => branches?.find((b: any) => b.id === activeBranchId),
@@ -591,17 +595,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     if (!tempTemplateName.trim() || !activeTemplateId) {
       setEditingTemplateName(false);
       return;
     }
 
-    const updatedTemplates = templates.map((t) => 
+    const updatedTemplates = templates.map((t) =>
       t.id === activeTemplateId ? { ...t, name: tempTemplateName.trim() } : t
     );
     setTemplates(updatedTemplates);
-    
+
     if (activeBranchId) {
       updateBranch(activeBranchId, {
         printSettings: {
@@ -628,7 +632,6 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       });
     }
   };
-
 
   const deleteTemplate = (id: string) => {
     const updated = templates.filter((t) => t.id !== id);
@@ -1118,7 +1121,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                   <span className='material-symbols-rounded text-[20px]'>check</span>
                 </button>
                 <button
-                  onClick={() => { setEditingTemplateName(false); setTempTemplateName(''); }}
+                  onClick={() => {
+                    setEditingTemplateName(false);
+                    setTempTemplateName('');
+                  }}
                   className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
                 >
                   <span className='material-symbols-rounded text-[20px]'>close</span>
@@ -1193,27 +1199,30 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                         <span className='material-symbols-rounded text-[18px]'>delete</span>
                       </button>
                     )}
-                    {templates.find(t => t.id === activeTemplateId) && defaultTemplateId !== activeTemplateId && (
-                      <button
-                        onClick={(e) => handleSetDefault(e, activeTemplateId)}
-                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
-                        title='Set Default'
-                      >
-                        <span className='material-symbols-rounded text-[18px]'>bookmark_add</span>
-                      </button>
-                    )}
+                    {templates.find((t) => t.id === activeTemplateId) &&
+                      defaultTemplateId !== activeTemplateId && (
+                        <button
+                          onClick={(e) => handleSetDefault(e, activeTemplateId)}
+                          className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
+                          title='Set Default'
+                        >
+                          <span className='material-symbols-rounded text-[18px]'>bookmark_add</span>
+                        </button>
+                      )}
                     <button
                       onClick={() => {
-                        const tpl = templates.find(t => t.id === activeTemplateId);
+                        const tpl = templates.find((t) => t.id === activeTemplateId);
                         if (tpl) {
-                           setEditingTemplateName(true);
-                           setTempTemplateName(tpl.name);
+                          setEditingTemplateName(true);
+                          setTempTemplateName(tpl.name);
                         }
                       }}
                       className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-accent transition-all group'
                       title='Rename'
                     >
-                      <span className='material-symbols-rounded text-[18px] transition-all duration-300 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>edit</span>
+                      <span className='material-symbols-rounded text-[18px] transition-all duration-300 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>
+                        edit
+                      </span>
                     </button>
                   </div>
                 )}
@@ -1603,4 +1612,3 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     </div>
   );
 };
-

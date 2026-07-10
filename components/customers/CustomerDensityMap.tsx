@@ -129,7 +129,7 @@ function DashboardOverlay({
 // Map Component
 // ----------------------------------------------------
 export default function CustomerDensityMap({ language = 'ar' }: { language?: any }) {
-  const activeBranch = useAuthStore(s => s.branches.find(b => b.id === s.activeBranchId));
+  const activeBranch = useAuthStore((s) => s.branches.find((b) => b.id === s.activeBranchId));
   const { darkMode } = useSettings();
   const [activeTab, setActiveTab] = useState('distribution');
   const isDeliveryView = activeTab === 'delivery';

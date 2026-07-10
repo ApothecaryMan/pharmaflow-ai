@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { supabase } from '../../lib/supabase';
 import type { Supplier } from '../../types';
 import { settingsService } from '../settings/settingsService';
-import { supplierService } from './supplierService';
 import { supplierRepository } from './repositories/supplierRepository';
-import { supabase } from '../../lib/supabase';
+import { supplierService } from './supplierService';
 
 // Mocks
 vi.mock('./repositories/supplierRepository', () => ({
@@ -60,17 +60,13 @@ describe('SupplierService', () => {
   it('should create supplier', async () => {
     const newSup = { name: 'New Supplier', phone: '123' };
     const createdSup = { id: 'S_NEW', ...newSup, branchId: branchUuid, orgId: orgUuid } as Supplier;
-    
+
     vi.mocked(supplierRepository.createWithRpc).mockResolvedValue(createdSup);
 
     const result = await supplierService.create(newSup as any);
 
     expect(result.id).toBe('S_NEW');
-    expect(supplierRepository.createWithRpc).toHaveBeenCalledWith(
-      newSup,
-      branchUuid,
-      orgUuid
-    );
+    expect(supplierRepository.createWithRpc).toHaveBeenCalledWith(newSup, branchUuid, orgUuid);
   });
 
   it('should search suppliers', async () => {
@@ -90,9 +86,11 @@ describe('SupplierService', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       or: vi.fn().mockReturnThis(),
-      then: vi.fn().mockImplementation((onfulfilled) =>
-        Promise.resolve({ data: mockDbSuppliers, error: null }).then(onfulfilled)
-      ),
+      then: vi
+        .fn()
+        .mockImplementation((onfulfilled) =>
+          Promise.resolve({ data: mockDbSuppliers, error: null }).then(onfulfilled)
+        ),
     } as any);
 
     const results = await supplierService.search('Pharma');

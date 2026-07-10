@@ -3,15 +3,22 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { purchaseService } from '../../services/purchases/purchaseService';
+import { returnService } from '../../services/returns/returnService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { storage } from '../../utils/storage';
-import { CARD_BASE, INPUT_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import {
+  CARD_BASE,
+  INPUT_BASE,
+  MODAL_FOOTER_BTN_CANCEL,
+  MODAL_FOOTER_BTN_PRIMARY,
+} from '../../utils/themeStyles';
 import {
   Modal,
   PriceDisplay,
@@ -24,8 +31,6 @@ import {
   useContextMenu,
   useSearchKeyboardNavigation,
 } from '../common';
-import { purchaseService } from '../../services/purchases/purchaseService';
-import { returnService } from '../../services/returns/returnService';
 
 interface PurchaseReturnsProps {
   purchases: Purchase[];
@@ -51,8 +56,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   onCreatePurchaseReturn,
 }) => {
   const { textTransform } = useSettings();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
@@ -86,7 +91,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       }
     };
     fetchPage();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [page, search, activeBranchId]);
 
   // Create Return state
@@ -158,9 +165,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         const result = await purchaseService.listPage({
           page: 1,
           pageSize: 20,
-          filters: { search: poSearch }
+          filters: { search: poSearch },
         });
-        
+
         if (isMounted) {
           // Filter to only completed/received that are not fully returned
           const available = result.rows.filter((p) => {
@@ -450,7 +457,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             </span>
             <button
               type='button'
-              onClick={() => setPage((p) => Math.min(Math.ceil(totalReturns / pageSize) || 1, p + 1))}
+              onClick={() =>
+                setPage((p) => Math.min(Math.ceil(totalReturns / pageSize) || 1, p + 1))
+              }
               disabled={page >= (Math.ceil(totalReturns / pageSize) || 1) || isPageLoading}
               className='h-full w-10 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
               title={language === 'AR' ? 'التالي' : 'Next'}
@@ -458,7 +467,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               <span className='material-symbols-rounded text-lg'>chevron_right</span>
             </button>
           </div>
-          
+
           {permissionsService.can('purchase.return') && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
@@ -872,10 +881,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           disabled={isPageLoading}
           footer={
             <div className='flex justify-end'>
-              <button
-                onClick={() => setViewingReturn(null)}
-                className={MODAL_FOOTER_BTN_CANCEL}
-              >
+              <button onClick={() => setViewingReturn(null)} className={MODAL_FOOTER_BTN_CANCEL}>
                 {t.modal?.close || 'Close'}
               </button>
             </div>

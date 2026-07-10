@@ -1,5 +1,5 @@
-import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 import type { PersistedClient } from '@tanstack/react-query-persist-client';
+import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
 interface CacheEntry {
   key: string;

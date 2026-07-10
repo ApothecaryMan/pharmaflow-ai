@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useRef } from 'react';
-import { useSettings } from '../../context/SettingsContext';
+import { useTypography } from '../../context/TypographyContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import {
   ContextMenuCheckboxItem,
@@ -41,7 +41,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
   collapsed = false,
   rounded = 'full',
 }) => {
-  const { language } = useSettings();
+  const { language } = useTypography();
   const t = TRANSLATIONS[language];
   const { showMenu, hideMenu, isMouseOverMenu } = useContextMenu();
   const pillRef = useRef<HTMLDivElement>(null);

@@ -4,9 +4,9 @@ import { ROUTES } from '../../config/routes';
 import { StorageKeys } from '../../config/storageKeys';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { sessionRepository } from '../../services/auth/repositories/sessionRepository';
 import type { Branch, Employee, UserSession, ViewState } from '../../types';
 import { storage } from '../../utils/storage';
-import { sessionRepository } from '../../services/auth/repositories/sessionRepository';
 
 interface ExtendedSession extends UserSession {
   _originalRole?: UserSession['role'];
@@ -80,7 +80,7 @@ export const useSessionHandlers = ({
             delete storedSession.employeeName;
             storage.set(StorageKeys.SESSION, storedSession);
           }
-          
+
           const activeSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
           if (activeSessionId) {
             sessionRepository.updateSessionEmployee(activeSessionId, null).catch(console.error);
@@ -192,7 +192,9 @@ export const useSessionHandlers = ({
             if (activeSessionId) {
               const currentOrgId = session?.orgId || null;
               const currentBranchId = session?.branchId || null;
-              sessionRepository.updateSessionWorkspace(activeSessionId, currentOrgId, currentBranchId, id).catch(console.error);
+              sessionRepository
+                .updateSessionWorkspace(activeSessionId, currentOrgId, currentBranchId, id)
+                .catch(console.error);
             }
           });
         });

@@ -12,7 +12,6 @@ vi.mock('../../utils/storage', () => ({
 }));
 
 describe('SettingsService', () => {
-
   beforeEach(() => {
     vi.clearAllMocks();
   });

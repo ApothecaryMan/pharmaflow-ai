@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { customerService } from '../../services/customers';
 import { useAuthStore } from '../../stores/authStore';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useAddCustomer() {
   const queryClient = useQueryClient();

@@ -1,11 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
 import { orgService } from '../../services/org/orgService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Branch, Employee, UserSession } from '../../types';
 import type { FilterConfig } from '../common/FilterPill';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -45,7 +45,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   onViewChange,
 }) => {
   // --- Data Context ---
-  const branches = useAuthStore(s => s.branches);
+  const branches = useAuthStore((s) => s.branches);
 
   // --- State ---
   const [isModalOpen, setIsModalOpen] = useState(false);

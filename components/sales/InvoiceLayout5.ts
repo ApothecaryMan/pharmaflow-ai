@@ -1,8 +1,13 @@
-import { Sale } from '../../types';
-import { InvoiceTemplateOptions, INVOICE_DEFAULTS } from './InvoiceTemplate';
+import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 
-export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
+export function generateLayout5HTML(
+  sale: Sale,
+  opts: InvoiceTemplateOptions,
+  _lang?: string,
+  _defaults?: any
+): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
   const currentDefaults = INVOICE_DEFAULTS[lang];
@@ -75,13 +80,13 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         ${
-          !opts.hideLogo ? (
-            opts.logoSvgCode
+          !opts.hideLogo
+            ? opts.logoSvgCode
               ? `<div class="store-logo" style="width: 22mm; overflow: hidden; margin: 0 auto 6px auto;">${opts.logoSvgCode}</div>`
               : opts.logoBase64
                 ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" />`
                 : ``
-          ) : ''
+            : ''
         }
         <div class="store-name bold ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         ${opts.storeSubtitle ? `<div class="store-info bold ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle}</div>` : ''}
@@ -103,10 +108,12 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         </div>
         <div class="meta-row">
           <span class="meta-label">${lang === 'AR' ? 'العميل' : 'Customer'}</span>
-          <span class="meta-value">${sale.customerName ? sale.customerName : (lang === 'AR' ? 'عميل نقدي' : 'GUEST')}</span>
+          <span class="meta-value">${sale.customerName ? sale.customerName : lang === 'AR' ? 'عميل نقدي' : 'GUEST'}</span>
         </div>
         
-        ${sale.saleType === 'delivery' ? `
+        ${
+          sale.saleType === 'delivery'
+            ? `
         <div class="delivery-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
             <div class="meta-label" style="margin-bottom: 0;">${lang === 'AR' ? 'توصيل' : 'Delivery'}</div>
@@ -115,7 +122,9 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           ${sale.customerAddress ? `<div class="delivery-text" dir="rtl">${sale.customerAddress.replace(/\n/g, ' - ')}</div>` : ''}
           ${sale.customerStreetAddress ? `<div class="delivery-text" dir="rtl">${sale.customerStreetAddress.replace(/\n/g, ' - ')}</div>` : ''}
         </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
 
       <table>
@@ -123,16 +132,20 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           ${(() => {
             let grossSubtotal = 0;
             let totalItemDiscounts = 0;
-            
-            const rows = (sale.items || []).map((item) => {
-              const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
-              const lineGross = effectivePrice * item.quantity;
-              const lineNet = lineGross * (1 - (item.discount || 0) / 100);
-              
-              grossSubtotal += lineGross;
-              totalItemDiscounts += (lineGross - lineNet);
-              
-              return `
+
+            const rows = (sale.items || [])
+              .map((item) => {
+                const effectivePrice =
+                  item.isUnit && item.unitsPerPack
+                    ? item.publicPrice / item.unitsPerPack
+                    : item.publicPrice;
+                const lineGross = effectivePrice * item.quantity;
+                const lineNet = lineGross * (1 - (item.discount || 0) / 100);
+
+                grossSubtotal += lineGross;
+                totalItemDiscounts += lineGross - lineNet;
+
+                return `
             <tr class="${item.isUnit ? 'unit-row' : ''}">
               <td class="left" dir="ltr">
                 <span class="item-name">${getDisplayName(item)}</span>
@@ -140,12 +153,17 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
               <td class="center bold" style="font-size: 12px; vertical-align: middle;">${item.quantity}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
               <td class="left bold" style="vertical-align: middle;">${lineGross.toFixed(2)}</td>
             </tr>`;
-            }).join('');
-            
-            const globalDiscountAmt = sale.globalDiscount ? ((sale.subtotal || 0) * sale.globalDiscount / 100) : 0;
+              })
+              .join('');
+
+            const globalDiscountAmt = sale.globalDiscount
+              ? ((sale.subtotal || 0) * sale.globalDiscount) / 100
+              : 0;
             const totalDiscount = totalItemDiscounts + globalDiscountAmt;
-            
-            return rows + `
+
+            return (
+              rows +
+              `
         </tbody>
       </table>
       
@@ -154,22 +172,32 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           <span class="meta-label">${lang === 'AR' ? 'المجموع الفرعي' : 'Subtotal'}</span>
           <span class="meta-value">${grossSubtotal.toFixed(2)}</span>
         </div>
-        ${totalDiscount > 0 ? `
+        ${
+          totalDiscount > 0
+            ? `
         <div class="total-row">
           <span class="meta-label">${lang === 'AR' ? 'إجمالي الخصم' : 'Total Discount'}</span>
           <span class="meta-value">-${totalDiscount.toFixed(2)}</span>
-        </div>` : ''}
-        ${sale.deliveryFee && sale.deliveryFee > 0 ? `
+        </div>`
+            : ''
+        }
+        ${
+          sale.deliveryFee && sale.deliveryFee > 0
+            ? `
         <div class="total-row">
           <span class="meta-label">${lang === 'AR' ? 'خدمة التوصيل' : 'Delivery Fee'}</span>
           <span class="meta-value">${sale.deliveryFee.toFixed(2)}</span>
-        </div>` : ''}
+        </div>`
+            : ''
+        }
         ${
-          sale.tax && sale.tax > 0 ? `
+          sale.tax && sale.tax > 0
+            ? `
         <div class="total-row">
           <span class="meta-label">${lang === 'AR' ? 'الضريبة' : 'Tax'}</span>
           <span class="meta-value">${sale.tax.toFixed(2)}</span>
-        </div>` : ''
+        </div>`
+            : ''
         }
         
         <div class="total-row final-row">
@@ -177,7 +205,9 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           <span>${sale.total.toFixed(2)} EGP</span>
         </div>
         
-        ${sale.hasReturns && sale.itemReturnedQuantities ? `
+        ${
+          sale.hasReturns && sale.itemReturnedQuantities
+            ? `
         <div style="margin-top: 4px;">
           <div style="font-weight: 700; margin-bottom: 4px; text-align: center; font-size: 11px;">
             ${lang === 'AR' ? 'المرتجعات' : 'RETURNS'}
@@ -185,30 +215,35 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           <table>
             <tbody>
               ${Object.entries(sale.itemReturnedQuantities)
-                  .filter(([_, qty]) => (qty as number) > 0)
-                  .map(([lineKey, qty]) => {
-                    const parts = lineKey.split('_');
-                    const drugId = parts[0];
-                    const suffix = parts.length > 1 ? parts[1] : null;
+                .filter(([_, qty]) => (qty as number) > 0)
+                .map(([lineKey, qty]) => {
+                  const parts = lineKey.split('_');
+                  const drugId = parts[0];
+                  const suffix = parts.length > 1 ? parts[1] : null;
 
-                    const item = (sale.items || []).find((it) => {
-                      const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
-                      if (itDrugId !== drugId) return false;
-                      if (!suffix) return true;
-                      if (suffix === 'unit') return !!it.isUnit;
-                      if (suffix === 'pack') return !it.isUnit;
-                      return true;
-                    });
-                    if (!item) return '';
-                    const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
-                    const returnedAmount = effectivePrice * (qty as number) * (1 - (item.discount || 0) / 100);
-                    return `
+                  const item = (sale.items || []).find((it) => {
+                    const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
+                    if (itDrugId !== drugId) return false;
+                    if (!suffix) return true;
+                    if (suffix === 'unit') return !!it.isUnit;
+                    if (suffix === 'pack') return !it.isUnit;
+                    return true;
+                  });
+                  if (!item) return '';
+                  const effectivePrice =
+                    item.isUnit && item.unitsPerPack
+                      ? item.publicPrice / item.unitsPerPack
+                      : item.publicPrice;
+                  const returnedAmount =
+                    effectivePrice * (qty as number) * (1 - (item.discount || 0) / 100);
+                  return `
                 <tr class="${item.isUnit ? 'unit-row' : ''}">
                   <td class="left" dir="ltr"><span class="item-name">${getDisplayName(item)}</span></td>
                   <td class="center bold" style="font-size: 12px; vertical-align: middle;">${qty}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
                   <td class="left bold" style="vertical-align: middle;">${returnedAmount.toFixed(2)}</td>
                 </tr>`;
-                  }).join('')}
+                })
+                .join('')}
             </tbody>
           </table>
           <div class="total-row">
@@ -220,8 +255,9 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>
-        ` : sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
-            ? `
+        `
+            : sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
+              ? `
         <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #000;">
           <div class="total-row">
             <span class="meta-label">${lang === 'AR' ? 'المرتجعات' : 'Returns'}</span>
@@ -232,9 +268,10 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>`
-            : ''
+              : ''
         }
-      </div>`;
+      </div>`
+            );
           })()}
       
       <div class="footer">

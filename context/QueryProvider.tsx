@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { queryClient } from '../lib/queryClient';
+import type { ReactNode } from 'react';
 import { queryPersister } from '../lib/queryCache';
+import { queryClient } from '../lib/queryClient';
 
 export { queryClient, STALE_TIMES } from '../lib/queryClient';
 

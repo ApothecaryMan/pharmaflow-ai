@@ -4,9 +4,9 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { dateRangeService } from '../../services/financials/dateRangeService';
 import { financialService } from '../../services/financials/financialService';
+import { useAuthStore } from '../../stores/authStore';
 import type {
   CategoryFinancialReport,
   DailyFinancialData,
@@ -40,7 +40,7 @@ export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = 
   language = 'ar',
 }) => {
   const { theme } = useSettings();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const [report, setReport] = useState<FinancialReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'this_month' | 'last_month' | 'last_3_months' | 'this_year'>(

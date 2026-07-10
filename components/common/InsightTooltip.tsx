@@ -114,7 +114,9 @@ export const CurrencyValue: React.FC<{
     return (
       <span className='inline-flex items-baseline gap-0.5'>
         <span className='leading-none'>{amount}</span>
-        <span className='text-[0.7em] opacity-50 font-medium whitespace-nowrap leading-none'>{suffix}</span>
+        <span className='text-[0.7em] opacity-50 font-medium whitespace-nowrap leading-none'>
+          {suffix}
+        </span>
       </span>
     );
   }
@@ -123,8 +125,14 @@ export const CurrencyValue: React.FC<{
   return (
     <span className='inline-flex items-baseline gap-1'>
       <span className='leading-none'>{amount}</span>
-      {suffix && <span className='text-[0.7em] opacity-50 font-medium whitespace-nowrap leading-none'>{suffix}</span>}
-      <span className={`${isHeader ? 'text-[0.55em]' : 'text-[0.7em]'} opacity-50 font-medium whitespace-nowrap leading-none`}>
+      {suffix && (
+        <span className='text-[0.7em] opacity-50 font-medium whitespace-nowrap leading-none'>
+          {suffix}
+        </span>
+      )}
+      <span
+        className={`${isHeader ? 'text-[0.55em]' : 'text-[0.7em]'} opacity-50 font-medium whitespace-nowrap leading-none`}
+      >
         {symbol}
       </span>
     </span>

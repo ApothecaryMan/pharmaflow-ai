@@ -1,15 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { employeeService } from '../../services/hr';
 import { useAuthStore } from '../../stores/authStore';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useAddEmployee() {
   const queryClient = useQueryClient();
   const { activeBranchId, activeOrgId } = useAuthStore();
 
   return useMutation({
-    mutationFn: (employee: any) =>
-      employeeService.create(employee, activeBranchId, activeOrgId),
+    mutationFn: (employee: any) => employeeService.create(employee, activeBranchId, activeOrgId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
     },

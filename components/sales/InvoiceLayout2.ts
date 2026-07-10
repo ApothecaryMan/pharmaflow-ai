@@ -1,8 +1,13 @@
-import { Sale } from '../../types';
-import { InvoiceTemplateOptions, INVOICE_DEFAULTS } from './InvoiceTemplate';
+import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 
-export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
+export function generateLayout2HTML(
+  sale: Sale,
+  opts: InvoiceTemplateOptions,
+  _lang?: string,
+  _defaults?: any
+): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
   const currentDefaults = INVOICE_DEFAULTS[lang];
@@ -90,13 +95,13 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         ${
-          !opts.hideLogo ? (
-            opts.logoSvgCode
+          !opts.hideLogo
+            ? opts.logoSvgCode
               ? `<div class="store-logo" style="width: 30mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>`
               : opts.logoBase64
                 ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" />`
                 : `<img src="/app_icon.svg" alt="Logo" class="store-logo" />`
-          ) : ''
+            : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
@@ -115,7 +120,7 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           <span>${new Date(sale.date).toLocaleDateString('en-GB')} ${new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
         </div>
         ${
-          sale.saleType !== 'delivery' 
+          sale.saleType !== 'delivery'
             ? `
         <div style="text-align: center; margin-top: 4px; font-weight: bold; border-top: 1px solid #000; padding-top: 4px;">
           WALK-IN
@@ -147,7 +152,10 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         <tbody>
           ${(sale.items || [])
             .map((item) => {
-              const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
+              const effectivePrice =
+                item.isUnit && item.unitsPerPack
+                  ? item.publicPrice / item.unitsPerPack
+                  : item.publicPrice;
               const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
 
               return `
@@ -224,7 +232,10 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
                       return true;
                     });
                     if (!item) return '';
-                    const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
+                    const effectivePrice =
+                      item.isUnit && item.unitsPerPack
+                        ? item.publicPrice / item.unitsPerPack
+                        : item.publicPrice;
                     const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
                     return `
           <div style="display: flex; justify-content: space-between; font-size: 10px; margin: 2px 0;">

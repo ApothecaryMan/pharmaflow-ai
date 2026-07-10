@@ -1,8 +1,13 @@
-import { Sale } from '../../types';
-import { InvoiceTemplateOptions, INVOICE_DEFAULTS } from './InvoiceTemplate';
+import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 
-export function generateLayout6HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
+export function generateLayout6HTML(
+  sale: Sale,
+  opts: InvoiceTemplateOptions,
+  _lang?: string,
+  _defaults?: any
+): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
   const currentDefaults = INVOICE_DEFAULTS[lang];
@@ -79,10 +84,11 @@ export function generateLayout6HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       ${
         (opts.logoSvgCode || opts.logoBase64) && !opts.hideLogo
-        ? `
+          ? `
         <div class="header" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; text-align: ${isRTL ? 'right' : 'left'};" dir="${isRTL ? 'rtl' : 'ltr'}">
-          ${opts.logoSvgCode 
-              ? `<div class="store-logo" style="width: 15mm; height: auto; margin: 0; flex-shrink: 0;">${opts.logoSvgCode}</div>` 
+          ${
+            opts.logoSvgCode
+              ? `<div class="store-logo" style="width: 15mm; height: auto; margin: 0; flex-shrink: 0;">${opts.logoSvgCode}</div>`
               : `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 15mm; height: auto; margin: 0; flex-shrink: 0;" />`
           }
           <div style="flex-grow: 1;">
@@ -92,7 +98,7 @@ export function generateLayout6HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           </div>
         </div>
         `
-        : `
+          : `
         <div class="header" style="text-align: center; margin-bottom: 8px;">
           <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}" style="margin-bottom: 2px;">${opts.storeName ?? (isRTL ? 'ZINC' : 'ZINC')}</div>
           ${opts.storeSubtitle ? `<div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}" style="margin-bottom: 2px; font-weight: bold;">${opts.storeSubtitle}</div>` : ''}
@@ -112,13 +118,17 @@ export function generateLayout6HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         <span>${new Date(sale.date).toLocaleDateString('en-GB')} ${new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
       </div>
       
-      ${sale.saleType === 'delivery' ? `
+      ${
+        sale.saleType === 'delivery'
+          ? `
       <div class="spacer"></div>
       <div style="text-align: center; margin: 4px 0;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block; font-weight: bold;">${lang === 'AR' ? 'توصيل' : 'DELIVERY'}</span></div>
       ${sale.customerPhone ? `<div dir="ltr" style="text-align: center; font-weight: bold;">${sale.customerPhone}</div>` : ''}
       ${sale.customerAddress ? `<div dir="rtl" style="text-align: center; font-size: 9px;">${sale.customerAddress.replace(/\n/g, ' ')}</div>` : ''}
       ${sale.customerStreetAddress ? `<div dir="rtl" style="text-align: center; font-size: 9px;">${sale.customerStreetAddress.replace(/\n/g, ' ')}</div>` : ''}
-      ` : ''}
+      `
+          : ''
+      }
       
       <div class="spacer"></div>
 
@@ -127,7 +137,10 @@ export function generateLayout6HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         <tbody>
           ${(sale.items || [])
             .map((item) => {
-              const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
+              const effectivePrice =
+                item.isUnit && item.unitsPerPack
+                  ? item.publicPrice / item.unitsPerPack
+                  : item.publicPrice;
               const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
               return `
             <tr>
@@ -137,7 +150,8 @@ export function generateLayout6HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
               </td>
               <td class="right" style="font-weight: bold;">${lineTotal.toFixed(2)}</td>
             </tr>`;
-            }).join('')}
+            })
+            .join('')}
         </tbody>
       </table>
       
@@ -175,7 +189,10 @@ export function generateLayout6HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
                     return true;
                   });
                   if (!item) return '';
-                  const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
+                  const effectivePrice =
+                    item.isUnit && item.unitsPerPack
+                      ? item.publicPrice / item.unitsPerPack
+                      : item.publicPrice;
                   const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
                   return `
         <div style="display: flex; justify-content: space-between; font-size: 9px; margin: 2px 0;">

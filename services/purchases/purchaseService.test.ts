@@ -52,7 +52,10 @@ describe('PurchaseService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(settingsService.getAll).mockResolvedValue({ branchCode: 'MAIN', orgId: 'ORG_1' } as any);
+    vi.mocked(settingsService.getAll).mockResolvedValue({
+      branchCode: 'MAIN',
+      orgId: 'ORG_1',
+    } as any);
     vi.mocked(purchaseRepository.getAll).mockResolvedValue([...mockPurchases]);
     vi.mocked(purchaseRepository.getById).mockImplementation(async (id) => {
       return mockPurchases.find((p) => p.id === id) || null;

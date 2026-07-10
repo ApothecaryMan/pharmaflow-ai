@@ -146,7 +146,7 @@ class StockMovementServiceImpl
       } else if (filters.orgId) {
         query = query.eq('org_id', filters.orgId);
       }
-      
+
       if (filters.startDate) query = query.gte('timestamp', filters.startDate);
       if (filters.endDate) query = query.lte('timestamp', filters.endDate);
 

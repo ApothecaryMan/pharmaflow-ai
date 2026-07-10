@@ -50,9 +50,11 @@ vi.mock('../lib/supabase', () => {
     single: vi.fn().mockImplementation(() => Promise.resolve({ data: {}, error: null })),
     maybeSingle: vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: null })),
     // biome-ignore lint/suspicious/noThenProperty: mock query builder is a thenable
-    then: vi.fn().mockImplementation((onfulfilled) =>
-      Promise.resolve({ data: [], error: null }).then(onfulfilled)
-    ),
+    then: vi
+      .fn()
+      .mockImplementation((onfulfilled) =>
+        Promise.resolve({ data: [], error: null }).then(onfulfilled)
+      ),
   };
 
   return {
@@ -63,7 +65,9 @@ vi.mock('../lib/supabase', () => {
         getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
         getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
         signOut: vi.fn().mockResolvedValue({ error: null }),
-        onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: () => {} } } }),
+        onAuthStateChange: vi
+          .fn()
+          .mockReturnValue({ data: { subscription: { unsubscribe: () => {} } } }),
       },
     },
     isSupabaseConfigured: true,

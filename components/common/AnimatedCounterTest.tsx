@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useSettings } from '../../context';
-import { useMotionValue, useSpring, motion, useTransform } from 'framer-motion';
 
 interface AnimatedCounterTestProps {
   value: number;
@@ -16,21 +16,22 @@ const NUMBERS_EN = '0123456789'.split('');
 const NUMBERS_AR = '٠١٢٣٤٥٦٧٨٩'.split('');
 
 // Pre-compute the static JSX tracks to prevent creating thousands of spans every second
-const createTrackJSX = (track: string[]) => track.map((digit) => (
-  <span 
-    key={digit} 
-    style={{ 
-      height: '1.2em', 
-      lineHeight: '1.2em', 
-      textAlign: 'center',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}
-  >
-    {digit}
-  </span>
-));
+const createTrackJSX = (track: string[]) =>
+  track.map((digit) => (
+    <span
+      key={digit}
+      style={{
+        height: '1.2em',
+        lineHeight: '1.2em',
+        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {digit}
+    </span>
+  ));
 
 const TRACK_JSX_EN = createTrackJSX(NUMBERS_EN);
 const TRACK_JSX_AR = createTrackJSX(NUMBERS_AR);
@@ -38,7 +39,7 @@ const TRACK_JSX_AR = createTrackJSX(NUMBERS_AR);
 const RollingDigit = React.memo(({ char }: { char: string }) => {
   let val = NUMBERS_EN.indexOf(char);
   let trackJSX = TRACK_JSX_EN;
-  
+
   if (val === -1) {
     val = NUMBERS_AR.indexOf(char);
     trackJSX = TRACK_JSX_AR;
@@ -64,12 +65,12 @@ const RollingDigit = React.memo(({ char }: { char: string }) => {
   }
 
   return (
-    <span 
-      style={{ 
-        display: 'inline-flex', 
-        width: '1ch', 
-        height: '1.2em', 
-        overflow: 'hidden', 
+    <span
+      style={{
+        display: 'inline-flex',
+        width: '1ch',
+        height: '1.2em',
+        overflow: 'hidden',
         position: 'relative',
         verticalAlign: 'bottom',
       }}
@@ -109,27 +110,33 @@ export const AnimatedCounterTest = ({
 }: AnimatedCounterTestProps) => {
   const ref = useRef<HTMLSpanElement>(null);
   const { numeralLocale } = useSettings();
-  
+
   // PERFORMANCE: Cache the boolean instead of raw value to prevent 60fps re-evaluations
   const isCompactLarge = notation === 'compact' && value >= 1000;
 
   // DRY & PERFORMANCE: Centralize and heavily memoize format options
-  const formatOptions = useMemo<Intl.NumberFormatOptions>(() => ({
-    notation,
-    minimumFractionDigits: notation === 'compact' ? (isCompactLarge ? 1 : 0) : fractionDigits,
-    maximumFractionDigits: notation === 'compact' ? (isCompactLarge ? 1 : 0) : fractionDigits,
-    minimumIntegerDigits,
-  }), [notation, isCompactLarge, fractionDigits, minimumIntegerDigits]);
-  
+  const formatOptions = useMemo<Intl.NumberFormatOptions>(
+    () => ({
+      notation,
+      minimumFractionDigits: notation === 'compact' ? (isCompactLarge ? 1 : 0) : fractionDigits,
+      maximumFractionDigits: notation === 'compact' ? (isCompactLarge ? 1 : 0) : fractionDigits,
+      minimumIntegerDigits,
+    }),
+    [notation, isCompactLarge, fractionDigits, minimumIntegerDigits]
+  );
+
   // PERFORMANCE: Re-use a single formatter instance instead of calling toLocaleString repeatedly
-  const formatter = useMemo(() => new Intl.NumberFormat(numeralLocale, formatOptions), [numeralLocale, formatOptions]);
+  const formatter = useMemo(
+    () => new Intl.NumberFormat(numeralLocale, formatOptions),
+    [numeralLocale, formatOptions]
+  );
 
   // --- ROLLING MODE HOOKS ---
-  const formattedRollingValue = useMemo(() => 
-    mode === 'rolling' ? formatter.format(value) : '',
+  const formattedRollingValue = useMemo(
+    () => (mode === 'rolling' ? formatter.format(value) : ''),
     [mode, formatter, value]
   );
-  
+
   // --- COUNTUP MODE HOOKS ---
   const displayValue = useMemo(() => formatter.format(value), [value, formatter]);
 
@@ -142,8 +149,8 @@ export const AnimatedCounterTest = ({
 
   useEffect(() => {
     if (mode === 'rolling') return;
-    
-    const unsubscribe = springValue.on("change", (latest) => {
+
+    const unsubscribe = springValue.on('change', (latest) => {
       if (ref.current) {
         ref.current.textContent = formatter.format(+latest.toFixed(fractionDigits));
       }
@@ -178,19 +185,16 @@ export const AnimatedCounterTest = ({
         direction: 'ltr',
       }}
     >
-      {mode === 'rolling' ? (
-        formattedRollingValue.split('').reverse().map((char, revIndex) => {
-          // biome-ignore lint/suspicious/noArrayIndexKey: keying by positional index ensures individual digit slots stay mounted during value change so their spring can animate
-          return (
-            <RollingDigit 
-              key={revIndex} 
-              char={char} 
-            />
-          );
-        }).reverse()
-      ) : (
-        displayValue
-      )}
+      {mode === 'rolling'
+        ? formattedRollingValue
+            .split('')
+            .reverse()
+            .map((char, revIndex) => {
+              // biome-ignore lint/suspicious/noArrayIndexKey: keying by positional index ensures individual digit slots stay mounted during value change so their spring can animate
+              return <RollingDigit key={revIndex} char={char} />;
+            })
+            .reverse()
+        : displayValue}
     </span>
   );
 };

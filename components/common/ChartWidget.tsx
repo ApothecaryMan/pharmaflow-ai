@@ -117,11 +117,11 @@ CustomTooltipContent.displayName = 'CustomTooltipContent';
 const MultiLineTick = (props: any) => {
   const { x, y, payload, tickFormatter, fill, fontSize, dy = 10 } = props;
   const formattedValue = tickFormatter ? tickFormatter(payload.value) : payload.value;
-  
+
   if (typeof formattedValue === 'string' && formattedValue.includes('\n')) {
     const lines = formattedValue.split('\n');
     return (
-      <text x={x} y={y} dy={dy} textAnchor="middle" fill={fill} fontSize={fontSize}>
+      <text x={x} y={y} dy={dy} textAnchor='middle' fill={fill} fontSize={fontSize}>
         {lines.map((line: string, i: number) => (
           <tspan x={x} dy={i === 0 ? 0 : 14} key={i}>
             {line}
@@ -132,7 +132,7 @@ const MultiLineTick = (props: any) => {
   }
 
   return (
-    <text x={x} y={y} dy={dy} textAnchor="middle" fill={fill} fontSize={fontSize}>
+    <text x={x} y={y} dy={dy} textAnchor='middle' fill={fill} fontSize={fontSize}>
       {formattedValue}
     </text>
   );
@@ -355,7 +355,14 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={xAxisFormatter}
-                tick={(props: any) => <MultiLineTick {...props} tickFormatter={xAxisFormatter} fill="var(--text-secondary)" fontSize={10} />}
+                tick={(props: any) => (
+                  <MultiLineTick
+                    {...props}
+                    tickFormatter={xAxisFormatter}
+                    fill='var(--text-secondary)'
+                    fontSize={10}
+                  />
+                )}
                 interval={xAxisInterval ?? 0}
                 padding={{ left: 20, right: 20 }}
                 dy={10}

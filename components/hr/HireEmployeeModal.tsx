@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { DEPARTMENT_ROLES } from '../../config/employeeRoles';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores/authStore';
 import { authService } from '../../services/auth/authService';
 import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
 import { orgService } from '../../services/org/orgService';
+import { useAuthStore } from '../../stores/authStore';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -34,7 +34,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const branches = useAuthStore(s => s.branches);
+  const branches = useAuthStore((s) => s.branches);
   const { playSuccess, playError } = usePosSounds();
 
   const t = TRANSLATIONS[language as 'EN' | 'AR'].employeeList as any;
@@ -153,11 +153,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
               'Send Request'
             )}
           </button>
-          <button
-            type='button'
-            onClick={handleClose}
-            className={MODAL_FOOTER_BTN_CANCEL}
-          >
+          <button type='button' onClick={handleClose} className={MODAL_FOOTER_BTN_CANCEL}>
             {language === 'AR' ? 'إلغاء' : 'Cancel'}
           </button>
         </div>

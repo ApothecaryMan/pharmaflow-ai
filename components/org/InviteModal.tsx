@@ -5,9 +5,9 @@ import { ORG_ROLES } from '../../config/permissions';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { orgMembersService } from '../../services/org/orgMembersService';
 import type { OrgRole } from '../../types';
+import { MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
 import { SmartInput } from '../common/SmartInputs';
-import { MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface InviteModalProps {
   isOpen: boolean;

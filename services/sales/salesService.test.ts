@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
-import { salesService } from './salesService';
 import { salesRepository } from './repositories/salesRepository';
+import { salesService } from './salesService';
 
 // Mocks
 vi.mock('./repositories/salesRepository', () => ({
@@ -64,7 +64,10 @@ describe('SalesService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(settingsService.getAll).mockResolvedValue({ branchCode: 'MAIN', orgId: 'ORG_1' } as any);
+    vi.mocked(settingsService.getAll).mockResolvedValue({
+      branchCode: 'MAIN',
+      orgId: 'ORG_1',
+    } as any);
     vi.mocked(idGenerator.generate).mockResolvedValue('SALE_NEW');
     vi.mocked(salesRepository.getAll).mockResolvedValue([...mockSales]);
     vi.mocked(salesRepository.insert).mockImplementation(async (s) => {

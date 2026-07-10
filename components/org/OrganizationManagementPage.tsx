@@ -2,15 +2,15 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
+import { usePageHelp } from '../../context/HelpContext';
 import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
 import { type OrgData, orgAggregationService } from '../../services/org/orgAggregationService';
 import { orgService } from '../../services/org/orgService';
+import { useAuthStore } from '../../stores/authStore';
 import { PageHeader } from '../common/PageHeader';
-import { usePageHelp } from '../../context/HelpContext';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { BranchMasterMonitor } from './BranchMasterMonitor';
 import { MemberPermissionMatrix } from './MemberPermissionMatrix';
@@ -35,7 +35,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   const [data, setData] = useState<OrgData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const currentEmployee = useAuthStore(s => s.currentEmployee);
+  const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const [activeMatrixTab, setActiveMatrixTab] = useState<'managers' | 'staff'>('managers');
 
   // Upgrade Transition State
@@ -44,7 +44,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
 
   const t = TRANSLATIONS[language].orgManagement;
   const normalizedLang = language.toLowerCase() as 'en' | 'ar';
-  
+
   usePageHelp(ORG_MANAGEMENT_HELP[language] || ORG_MANAGEMENT_HELP.EN);
 
   const fetchData = async () => {
@@ -119,7 +119,6 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
             useGraphicFont={true}
           />
         }
-
         dir={language === 'AR' ? 'rtl' : 'ltr'}
         mb='mb-0'
       />

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { salesService } from '../../services/sales';
 import type { Sale } from '../../types';
-import { queryKeys } from '../../lib/queryKeys';
 
 export function useRecentSales(branchId: string, limit = 100) {
   return useQuery({

@@ -1,13 +1,13 @@
+import { startAuthentication } from '@simplewebauthn/browser';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { Modal } from './Modal';
-import { useAuthStore } from '../../stores/authStore';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { startAuthentication } from '@simplewebauthn/browser';
-import { isWebAuthnSupported } from '../../utils/webAuthnUtils';
-import { hashPassword } from '../../services/auth/hashUtils';
 import { supabase } from '../../lib/supabase';
+import { hashPassword } from '../../services/auth/hashUtils';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
+import { isWebAuthnSupported } from '../../utils/webAuthnUtils';
+import { Modal } from './Modal';
 import { SmartInput } from './SmartInputs';
 
 // --- CONFIGURATION CONSTANTS ---
@@ -34,7 +34,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
   standalone = false,
 }) => {
   const t = TRANSLATIONS[language];
-  const currentEmployee = useAuthStore(s => s.currentEmployee);
+  const currentEmployee = useAuthStore((s) => s.currentEmployee);
 
   const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem(storageKey) === 'true');
   const [internalIsOpen, setInternalIsOpen] = useState(true);
@@ -244,7 +244,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
     const handleSubmit = (e?: React.FormEvent) => {
       e?.preventDefault();
       if (isDisplayingPasswordForm) {
-        handlePasswordUnlock(e || new Event('submit') as any);
+        handlePasswordUnlock(e || (new Event('submit') as any));
       } else {
         handleBiometricUnlock();
       }
@@ -262,16 +262,16 @@ export const SecureGate: React.FC<SecureGateProps> = ({
           <div className='text-center py-1'>
             <div className='flex flex-col items-center gap-1.5'>
               {isDisplayingPasswordForm ? (
-                <span className='material-symbols-rounded text-primary-500 text-2xl'>
-                  vpn_key
-                </span>
+                <span className='material-symbols-rounded text-primary-500 text-2xl'>vpn_key</span>
               ) : (
                 <span className='material-symbols-rounded text-primary-500 text-3xl animate-pulse'>
                   fingerprint
                 </span>
               )}
               <span className='text-zinc-900 dark:text-zinc-100 font-bold text-xs tracking-wide'>
-                {isDisplayingPasswordForm ? t.secureGate.passwordRequired : t.secureGate.biometricRequired}
+                {isDisplayingPasswordForm
+                  ? t.secureGate.passwordRequired
+                  : t.secureGate.biometricRequired}
               </span>
               <span className='text-zinc-500 dark:text-zinc-400 text-[11px] mt-0.5 font-medium'>
                 {currentEmployee
@@ -336,7 +336,9 @@ export const SecureGate: React.FC<SecureGateProps> = ({
                   }}
                   className='w-full py-1.5 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1'
                 >
-                  <span className='material-symbols-rounded text-base animate-pulse'>fingerprint</span>
+                  <span className='material-symbols-rounded text-base animate-pulse'>
+                    fingerprint
+                  </span>
                   {t.secureGate.useBiometrics}
                 </button>
               )}
@@ -398,11 +400,9 @@ export const SecureGate: React.FC<SecureGateProps> = ({
         <div className='flex flex-col items-center text-center p-3'>
           {!isAuthorized && (
             <>
-              <div
-                className="mb-6 w-16 h-16 rounded-2xl border flex items-center justify-center transition-colors bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30"
-              >
+              <div className='mb-6 w-16 h-16 rounded-2xl border flex items-center justify-center transition-colors bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30'>
                 <span
-                  className="material-symbols-rounded text-red-500"
+                  className='material-symbols-rounded text-red-500'
                   style={{ fontSize: '32px' }}
                 >
                   gpp_bad
@@ -469,11 +469,9 @@ export const SecureGate: React.FC<SecureGateProps> = ({
           <div className='flex flex-col items-center text-center p-3'>
             {!isAuthorized && (
               <>
-                <div
-                  className="mb-6 w-16 h-16 rounded-2xl border flex items-center justify-center transition-colors bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30"
-                >
+                <div className='mb-6 w-16 h-16 rounded-2xl border flex items-center justify-center transition-colors bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30'>
                   <span
-                    className="material-symbols-rounded text-red-500"
+                    className='material-symbols-rounded text-red-500'
                     style={{ fontSize: '32px' }}
                   >
                     gpp_bad

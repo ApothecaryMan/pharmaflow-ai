@@ -2,8 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug, Employee, Purchase, PurchaseReturn, Shift, Supplier } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
@@ -53,7 +53,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   employees,
   isLoading,
 }) => {
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { textTransform } = useSettings();
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
@@ -409,36 +409,36 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               color='gray'
               locale={language === 'AR' ? 'ar-EG' : 'en-US'}
             />
-              <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
-                <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
-                  {t.globalView || 'Global'}
-                </span>
-                <Switch checked={showAllBranches} onChange={setShowAllBranches} activeColor={color} />
-              </label>
+            <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
+              <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
+                {t.globalView || 'Global'}
+              </span>
+              <Switch checked={showAllBranches} onChange={setShowAllBranches} activeColor={color} />
+            </label>
 
-              <div className='h-9 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
-                <button
-                  type='button'
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1 || isPageLoading}
-                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  title={language === 'AR' ? 'السابق' : 'Previous'}
-                >
-                  <span className='material-symbols-rounded text-lg'>chevron_left</span>
-                </button>
-                <span className='px-2 text-xs font-bold tabular-nums text-gray-600 dark:text-gray-300'>
-                  {page} / {totalPages}
-                </span>
-                <button
-                  type='button'
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages || isPageLoading}
-                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  title={language === 'AR' ? 'التالي' : 'Next'}
-                >
-                  <span className='material-symbols-rounded text-lg'>chevron_right</span>
-                </button>
-              </div>
+            <div className='h-9 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
+              <button
+                type='button'
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || isPageLoading}
+                className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+                title={language === 'AR' ? 'السابق' : 'Previous'}
+              >
+                <span className='material-symbols-rounded text-lg'>chevron_left</span>
+              </button>
+              <span className='px-2 text-xs font-bold tabular-nums text-gray-600 dark:text-gray-300'>
+                {page} / {totalPages}
+              </span>
+              <button
+                type='button'
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || isPageLoading}
+                className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+                title={language === 'AR' ? 'التالي' : 'Next'}
+              >
+                <span className='material-symbols-rounded text-lg'>chevron_right</span>
+              </button>
+            </div>
           </div>
         }
       />

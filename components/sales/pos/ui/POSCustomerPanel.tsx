@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { getLocationName } from '../../../../data/locations';
 import type { Customer, Language } from '../../../../types';
 import { CARD_MD } from '../../../../utils/themeStyles';
+import { Modal } from '../../../common/Modal';
 import { SearchDropdown, type SearchDropdownColumn } from '../../../common/SearchDropdown';
 import { SearchInput } from '../../../common/SearchInput';
 import { SegmentedControl } from '../../../common/SegmentedControl';
-import { Modal } from '../../../common/Modal';
 
 export interface POSCustomerPanelProps {
   t: Translations;
@@ -307,7 +307,10 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
                       <span className='font-bold text-sm text-gray-900 dark:text-gray-100 truncate'>
                         {customer.name}
                       </span>
-                      <span className='font-bold text-sm text-gray-900 dark:text-gray-100 font-mono shrink-0' dir='ltr'>
+                      <span
+                        className='font-bold text-sm text-gray-900 dark:text-gray-100 font-mono shrink-0'
+                        dir='ltr'
+                      >
                         {customer.phone}
                       </span>
                     </div>

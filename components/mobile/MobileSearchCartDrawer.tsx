@@ -1,9 +1,9 @@
 import type React from 'react';
 import { useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
+import { useTypography } from '../../context/TypographyContext';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useSettings } from '../../context/SettingsContext';
 import { pricingService } from '../../services/sales/pricingService';
+import { useAuthStore } from '../../stores/authStore';
 import type { CartItem, Drug } from '../../types';
 import { POSCartSidebar, type POSCartSidebarProps } from '../sales/pos/ui/POSCartSidebar';
 
@@ -53,9 +53,9 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   onClearCart,
   t,
 }) => {
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
-  const { language } = useSettings();
+  const { language } = useTypography();
 
   // --- Local checkout state ---
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);

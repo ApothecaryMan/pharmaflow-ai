@@ -71,7 +71,11 @@ export const purchaseRepository = {
     return (data || []).map((item) => this.mapFromDb(item));
   },
 
-  async getRecent(effectiveBranchId: string, orgId?: string, limit: number = 100): Promise<Purchase[]> {
+  async getRecent(
+    effectiveBranchId: string,
+    orgId?: string,
+    limit: number = 100
+  ): Promise<Purchase[]> {
     let query = supabase.from(this.tableName).select('*');
     if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
@@ -84,7 +88,11 @@ export const purchaseRepository = {
   },
 
   async getById(id: string): Promise<Purchase | null> {
-    const { data, error } = await supabase.from(this.tableName).select('*').eq('id', id).maybeSingle();
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },
@@ -111,14 +119,17 @@ export const purchaseRepository = {
     return (data || []).map((item) => this.mapFromDb(item));
   },
 
-  async listPage(options: PurchasesPageOptions): Promise<{ rows: Purchase[]; total: number; page: number; pageSize: number }> {
+  async listPage(
+    options: PurchasesPageOptions
+  ): Promise<{ rows: Purchase[]; total: number; page: number; pageSize: number }> {
     const page = Math.max(1, options.page || 1);
     const pageSize = Math.min(Math.max(1, options.pageSize || 50), 200);
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     const filters = options.filters || {};
     const effectiveBranchId = options.branchId || '';
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
     let query = supabase.from(this.tableName).select('*', { count: 'exact' });
 
@@ -148,9 +159,7 @@ export const purchaseRepository = {
     const sortColumn = options.sort?.column || 'date';
     const ascending = options.sort?.ascending ?? false;
 
-    const { data, error, count } = await query
-      .order(sortColumn, { ascending })
-      .range(from, to);
+    const { data, error, count } = await query.order(sortColumn, { ascending }).range(from, to);
 
     if (error) throw error;
 

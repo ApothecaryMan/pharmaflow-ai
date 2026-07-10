@@ -5,10 +5,10 @@
 import React, { useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
 import type { UserRole } from '../../config/permissions';
-import { useAuthStore } from '../../stores/authStore';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
 import type { CartItem, Drug, Employee, ViewState } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
 import { resolvePrice } from '../../utils/stockUtils';
@@ -560,7 +560,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     if (dynamicTab) handleViewChange(dynamicTab.id);
   }, [dynamicTab, handleViewChange]);
 
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventory = [] } = useInventory(activeBranchId);
   const { playSuccess } = usePosSounds();
   const { showMenu } = useContextMenu();

@@ -8,9 +8,9 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabase';
 import { cashService } from '../../services/cash/cashService';
+import { useAuthStore } from '../../stores/authStore';
 import type { CashTransaction, Shift } from '../../types';
 
 /**
@@ -40,7 +40,7 @@ const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
 export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
 
   // --- Derived: Current Open Shift ---
   const currentShift = useMemo(() => {

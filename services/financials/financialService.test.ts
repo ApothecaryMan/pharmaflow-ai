@@ -175,15 +175,17 @@ describe('financialService', () => {
 
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('Database Connection Error'));
 
-      await expect(
-        financialService.getFinancialSummary('this_month', 'BR1')
-      ).rejects.toThrow('Database Connection Error');
+      await expect(financialService.getFinancialSummary('this_month', 'BR1')).rejects.toThrow(
+        'Database Connection Error'
+      );
     });
   });
 
   describe('getDailyBreakdown', () => {
     it('uses the get_daily_financial_breakdown RPC', async () => {
-      const mockData = [{ day: '2026-06-01', revenue: 100, refund: 10, net: 90, sale_count: 5, return_count: 1 }];
+      const mockData = [
+        { day: '2026-06-01', revenue: 100, refund: 10, net: 90, sale_count: 5, return_count: 1 },
+      ];
       vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: mockData, error: null });
 
       const result = await financialService.getDailyBreakdown('2026-06-01', '2026-06-02', 'BR1');
@@ -198,7 +200,9 @@ describe('financialService', () => {
     it('falls back to client-side calculations in dev when RPC fails', async () => {
       vi.spyOn(financialService, 'isDev').mockReturnValue(true);
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('RPC failed'));
-      const spyFallback = vi.spyOn(financialService, 'fallbackDailyBreakdown').mockResolvedValueOnce([]);
+      const spyFallback = vi
+        .spyOn(financialService, 'fallbackDailyBreakdown')
+        .mockResolvedValueOnce([]);
 
       await financialService.getDailyBreakdown('2026-06-01', '2026-06-02', 'BR1');
       expect(spyFallback).toHaveBeenCalled();
@@ -216,7 +220,19 @@ describe('financialService', () => {
 
   describe('getTopProducts', () => {
     it('uses the get_top_products_financial RPC', async () => {
-      const mockData = [{ id: 'p1', product_id: 'p1', product_name: 'Product A', abc_class: 'A' as const, quantity_sold: 10, revenue: 100, cogs: 50, gross_profit: 50, margin_percent: 50 }];
+      const mockData = [
+        {
+          id: 'p1',
+          product_id: 'p1',
+          product_name: 'Product A',
+          abc_class: 'A' as const,
+          quantity_sold: 10,
+          revenue: 100,
+          cogs: 50,
+          gross_profit: 50,
+          margin_percent: 50,
+        },
+      ];
       vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: mockData, error: null });
 
       const result = await financialService.getTopProducts('this_month', 'BR1', 5);
@@ -232,7 +248,9 @@ describe('financialService', () => {
     it('falls back to client-side calculations in dev when RPC fails', async () => {
       vi.spyOn(financialService, 'isDev').mockReturnValue(true);
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('RPC failed'));
-      const spyFallback = vi.spyOn(financialService, 'fallbackTopProducts').mockResolvedValueOnce([]);
+      const spyFallback = vi
+        .spyOn(financialService, 'fallbackTopProducts')
+        .mockResolvedValueOnce([]);
 
       await financialService.getTopProducts('this_month', 'BR1', 5);
       expect(spyFallback).toHaveBeenCalled();
@@ -242,9 +260,9 @@ describe('financialService', () => {
       vi.spyOn(financialService, 'isDev').mockReturnValue(false);
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('Database Connection Error'));
 
-      await expect(
-        financialService.getTopProducts('this_month', 'BR1', 5)
-      ).rejects.toThrow('Database Connection Error');
+      await expect(financialService.getTopProducts('this_month', 'BR1', 5)).rejects.toThrow(
+        'Database Connection Error'
+      );
     });
   });
 
@@ -253,7 +271,11 @@ describe('financialService', () => {
       const mockData = [{ category: 'GENERAL', revenue: 100, cogs: 50, profit: 50 }];
       vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: mockData, error: null });
 
-      const result = await financialService.getCategoryBreakdownByDates('2026-06-01', '2026-06-02', 'BR1');
+      const result = await financialService.getCategoryBreakdownByDates(
+        '2026-06-01',
+        '2026-06-02',
+        'BR1'
+      );
       expect(supabase.rpc).toHaveBeenCalledWith('get_category_financial_breakdown', {
         p_branch_id: 'BR1',
         p_date_from: '2026-06-01',
@@ -265,7 +287,9 @@ describe('financialService', () => {
     it('falls back to client-side calculations in dev when RPC fails', async () => {
       vi.spyOn(financialService, 'isDev').mockReturnValue(true);
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('RPC failed'));
-      const spyFallback = vi.spyOn(financialService, 'fallbackCategoryBreakdown').mockResolvedValueOnce([]);
+      const spyFallback = vi
+        .spyOn(financialService, 'fallbackCategoryBreakdown')
+        .mockResolvedValueOnce([]);
 
       await financialService.getCategoryBreakdownByDates('2026-06-01', '2026-06-02', 'BR1');
       expect(spyFallback).toHaveBeenCalled();

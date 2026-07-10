@@ -1,7 +1,7 @@
 import type React from 'react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useCatalog } from '../../context/CatalogContext';
-import { useSettings } from '../../context/SettingsContext';
+import { useTypography } from '../../context/TypographyContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { DrugSearchEngine, inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
@@ -65,7 +65,7 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
     },
     ref
   ) => {
-    const { language } = useSettings();
+    const { language } = useTypography();
     const t = TRANSLATIONS[language];
     const { engine, isLoading: catalogLoading } = useCatalog();
 
@@ -93,7 +93,9 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
         setInternalResultsCount(results.length);
         onResultsChangeRef.current?.(results);
 
-        const topSuggestions = results.slice(0, 5).map((d) => `${d.name} ${d.dosageForm || ''}`.trim());
+        const topSuggestions = results
+          .slice(0, 5)
+          .map((d) => `${d.name} ${d.dosageForm || ''}`.trim());
         setInternalSuggestions(topSuggestions);
       }
 
@@ -103,14 +105,17 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
         setInternalResultsCount(results.length);
         onResultsChangeRef.current?.(results);
 
-        const topSuggestions = results.slice(0, 5).map((d) => `${d.name} ${d.dosageForm || ''}`.trim());
+        const topSuggestions = results
+          .slice(0, 5)
+          .map((d) => `${d.name} ${d.dosageForm || ''}`.trim());
         setInternalSuggestions(topSuggestions);
       }
     }, [value, engine, activeFilters, inventory]);
 
     // Determine which data to use (Internal vs External)
     // Priority: If externalSuggestions are explicitly passed, use them.
-    const suggestions = externalSuggestions !== undefined ? externalSuggestions : internalSuggestions;
+    const suggestions =
+      externalSuggestions !== undefined ? externalSuggestions : internalSuggestions;
 
     // PRIORITY: If an explicit resultsCount is passed via props (externalResultsCount), use it.
     // Otherwise, fallback to internal engine count if available.

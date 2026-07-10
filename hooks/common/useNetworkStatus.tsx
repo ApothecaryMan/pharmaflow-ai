@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { checkRealConnectivity, type NetworkResult, type ConnectionStatus } from '@/utils/network';
+import { type ConnectionStatus, checkRealConnectivity, type NetworkResult } from '@/utils/network';
 
 export function useNetworkStatus(): {
   isOnline: boolean;

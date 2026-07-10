@@ -2,10 +2,10 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { ExpenseCategory, ExpensePaymentMethod, Shift } from '../../types';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
 import { SmartInput, SmartTextarea } from '../common/SmartInputs';
-import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface RecordExpenseModalProps {
   isOpen: boolean;
@@ -146,24 +146,21 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
       disabled={isSubmitting}
       footer={
         <div className='flex justify-end gap-2' dir={isRtl ? 'rtl' : 'ltr'}>
-          <button
-            type='button'
-            onClick={onClose}
-            className={MODAL_FOOTER_BTN_CANCEL}
-          >
+          <button type='button' onClick={onClose} className={MODAL_FOOTER_BTN_CANCEL}>
             {t.expenses.modal.cancel}
           </button>
-          <button
-            type='submit'
-            form='record-expense-form'
-            className={MODAL_FOOTER_BTN_PRIMARY}
-          >
+          <button type='submit' form='record-expense-form' className={MODAL_FOOTER_BTN_PRIMARY}>
             {isSubmitting ? t.common.loading : t.expenses.modal.confirm}
           </button>
         </div>
       }
     >
-      <form id='record-expense-form' onSubmit={handleSubmit} className='space-y-4 text-start' dir={isRtl ? 'rtl' : 'ltr'}>
+      <form
+        id='record-expense-form'
+        onSubmit={handleSubmit}
+        className='space-y-4 text-start'
+        dir={isRtl ? 'rtl' : 'ltr'}
+      >
         {validationError && (
           <div className='p-3 text-xs bg-red-500/10 border border-red-500/30 text-red-500 rounded-lg flex items-center gap-2'>
             <span className='material-symbols-rounded text-sm'>warning</span>
@@ -287,7 +284,6 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
             required
           />
         </div>
-
       </form>
     </Modal>
   );

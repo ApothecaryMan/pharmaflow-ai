@@ -23,13 +23,13 @@ import { useStatusBar } from '../../components/layout/StatusBar';
 import { TabBar } from '../../components/layout/TabBar';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useAuthStore } from '../../stores/authStore';
 import { useLongPress } from '../../hooks/common/useLongPress';
 import { usePurchaseTabs } from '../../hooks/purchases/usePurchaseTabs';
 import { settingsService } from '../../services';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
+import { useAuthStore } from '../../stores/authStore';
 import type {
   Drug,
   Purchase,
@@ -71,8 +71,8 @@ import {
   useSearchKeyboardNavigation,
   useSmartDirection,
 } from '../common';
-import { usePosSounds } from '../common/hooks/usePosSounds';
 import { AnimatedCounter } from '../common/AnimatedCounter';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 import { SupplierDirectoryModal } from './SupplierDirectoryModal';
 
 interface PurchasesProps {
@@ -523,8 +523,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const {
     tabs,
     activeTab,
@@ -805,7 +805,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
         if (!isCancelled) setInvoiceId(nextId);
       });
     });
-    return () => { isCancelled = true; };
+    return () => {
+      isCancelled = true;
+    };
   }, [purchases]); // Keep listening to purchases prop changes to bump ID when new ones arrive via realtime
 
   const externalInvoiceIdDir = useSmartDirection(
@@ -1681,11 +1683,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                   {t.tableHeaders?.orderId || 'Order #'}
                 </label>
-                <div dir="ltr" className='relative h-10 flex items-center px-2 py-0.5 select-none text-xl font-mono font-bold text-gray-600 dark:text-gray-300'>
+                <div
+                  dir='ltr'
+                  className='relative h-10 flex items-center px-2 py-0.5 select-none text-xl font-mono font-bold text-gray-600 dark:text-gray-300'
+                >
                   <span>{invoicePrefix}</span>
                   <AnimatedCounter
                     value={invoiceNum}
-                    mode="rolling"
+                    mode='rolling'
                     minimumIntegerDigits={invoicePadLength}
                   />
                 </div>

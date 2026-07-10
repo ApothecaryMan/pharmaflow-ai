@@ -230,7 +230,6 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
       },
     });
 
-
     return (
       <div
         ref={setNodeRef}

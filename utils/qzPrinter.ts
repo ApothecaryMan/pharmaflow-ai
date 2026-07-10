@@ -124,7 +124,7 @@ export const loadQzTray = (): Promise<void> => {
 
           qzGlobal.security.setSignatureAlgorithm('SHA512');
           qzGlobal.security.setSignaturePromise((toSign: string) => {
-            return function (resolve: any, reject: any) {
+            return (resolve: any, reject: any) => {
               signQZData(toSign)
                 .then((signature) => resolve(signature))
                 .catch((err) => {
@@ -134,7 +134,9 @@ export const loadQzTray = (): Promise<void> => {
             };
           });
         } else {
-          console.warn('[QZ] WebCrypto not available (HTTP connection). Falling back to manual permission prompts.');
+          console.warn(
+            '[QZ] WebCrypto not available (HTTP connection). Falling back to manual permission prompts.'
+          );
         }
       }
 

@@ -1,6 +1,6 @@
-import React from 'react';
-import { Modal } from './Modal';
+import type React from 'react';
 import type { MarketplaceTemplate } from '../../types/templates';
+import { Modal } from './Modal';
 
 interface TemplateMarketplaceModalProps {
   isOpen: boolean;
@@ -24,7 +24,12 @@ export const TemplateMarketplaceModal: React.FC<TemplateMarketplaceModalProps> =
   color,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t.gallery?.title || 'Template Marketplace'} size='6xl'>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t.gallery?.title || 'Template Marketplace'}
+      size='6xl'
+    >
       <div className='h-[85vh] flex flex-col'>
         <div className='flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar flex items-start gap-6 p-4 w-full'>
           {templates.map((template) => {
@@ -41,7 +46,9 @@ export const TemplateMarketplaceModal: React.FC<TemplateMarketplaceModalProps> =
               >
                 {/* Selected Badge */}
                 {isSelected && (
-                  <div className={`absolute top-3 right-3 z-10 bg-${color}-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md`}>
+                  <div
+                    className={`absolute top-3 right-3 z-10 bg-${color}-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md`}
+                  >
                     <span className='material-symbols-rounded text-[14px]'>check</span>
                   </div>
                 )}
@@ -74,11 +81,12 @@ export const TemplateMarketplaceModal: React.FC<TemplateMarketplaceModalProps> =
                 </div>
 
                 {/* Template Info */}
-                <div className='p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10' dir='ltr'>
+                <div
+                  className='p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10'
+                  dir='ltr'
+                >
                   <div className='flex items-center justify-between'>
-                    <h3 className='font-bold text-gray-800 dark:text-gray-200'>
-                      {template.name}
-                    </h3>
+                    <h3 className='font-bold text-gray-800 dark:text-gray-200'>{template.name}</h3>
                     <div className='flex items-center gap-1.5'>
                       {template.isPremium ? (
                         <>

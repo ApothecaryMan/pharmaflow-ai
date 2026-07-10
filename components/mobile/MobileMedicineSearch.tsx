@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { useSettings } from '../../context/SettingsContext';
+import { useTypography } from '../../context/TypographyContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { CartItem, Drug } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
@@ -34,7 +34,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   onRemoveFromCart,
   onUpdateQuantity,
 }) => {
-  const { language, textTransform } = useSettings();
+  const { language, textTransform } = useTypography();
   const t = TRANSLATIONS[language];
   const { playSuccess } = usePosSounds();
 
@@ -98,7 +98,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
     // If we have a price range, allow empty text (just price filtering)
     // Otherwise require at least 2 chars
     if (!priceRange && searchTerm.trim().length < 2) return [];
-    
+
     const textToSearch = priceRange ? priceRange.searchTerm : searchTerm;
     // Don't allow @ with price range
     const { mode, regex } = parseSearchTerm(
@@ -268,9 +268,9 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
               value={searchTerm}
               onSearchChange={setSearchTerm}
               onClear={() => {
-            setSearchTerm('');
-            setScannedDrugs([]);
-          }}
+                setSearchTerm('');
+                setScannedDrugs([]);
+              }}
               placeholder={t.pos.searchPlaceholder}
               color={color}
               rounded='full'
@@ -304,7 +304,9 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
             >
               <h2 className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2'>
                 {language === 'AR' ? 'نتائج البحث' : 'Search Results'}{' '}
-                <span className='dark:text-gray-100 text-gray-500'>({combinedFilteredDrugs.length})</span>
+                <span className='dark:text-gray-100 text-gray-500'>
+                  ({combinedFilteredDrugs.length})
+                </span>
                 {priceRange && (
                   <span className='normal-case tracking-normal text-primary-500 dark:text-primary-400 font-semibold'>
                     ({priceRange.minPrice}–{priceRange.maxPrice})

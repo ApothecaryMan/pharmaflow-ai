@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { useSettings } from '../../../context';
 import { useDynamicTickerData } from '../../../hooks/layout/useDynamicTickerData';
+import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
 import { useShift } from '../../../hooks/sales/useShift';
 import packageJson from '../../../package.json';
 import { useAuthStore } from '../../../stores/authStore';
-import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
 import { AlertsAndAds } from '../../features/alerts/AlertsAndAds';
 import { ConnectionStatus } from './items/ConnectionStatus';
 import { DateTime } from './items/DateTime';
@@ -137,9 +137,9 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     } = useSettings();
 
     const tickerData = useDynamicTickerData();
-    const activeBranchId = useAuthStore(s => s.activeBranchId);
-    const activeOrgId = useAuthStore(s => s.activeOrgId);
-    const isLoading = useAuthStore(s => s.isLoading);
+    const activeBranchId = useAuthStore((s) => s.activeBranchId);
+    const activeOrgId = useAuthStore((s) => s.activeOrgId);
+    const isLoading = useAuthStore((s) => s.isLoading);
     const { data: employees = [] } = useEmployees(activeBranchId);
     const { currentShift, isLoading: isShiftLoading } = useShift();
 
@@ -225,10 +225,10 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           <VersionInfo version={t.version} />
           {currentEmployeeId && <ToolsMenu />}
           {currentEmployeeId && <SettingsMenu />}
-          <ConnectionStatus 
-            onlineText={t.online} 
-            offlineText={t.offline} 
-            noInternetText={t.noInternet} 
+          <ConnectionStatus
+            onlineText={t.online}
+            offlineText={t.offline}
+            noInternetText={t.noInternet}
             checkingText={t.checkingConnection}
             goodText={t.goodConnection}
             fairText={t.fairConnection}

@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Drug } from '../../types';
 import { settingsService } from '../settings/settingsService';
+import { batchService } from './batchService';
 import { inventoryService } from './inventoryService';
 import { inventoryRepository } from './repositories/inventoryRepository';
-import { batchService } from './batchService';
 
 // Mocks
 vi.mock('./repositories/inventoryRepository', () => ({
@@ -60,7 +60,10 @@ describe('InventoryService', () => {
 
     vi.clearAllMocks();
     vi.mocked(inventoryRepository.getAll).mockResolvedValue(mockInventory);
-    vi.mocked(settingsService.getAll).mockResolvedValue({ branchCode: 'B1', orgId: 'ORG_1' } as any);
+    vi.mocked(settingsService.getAll).mockResolvedValue({
+      branchCode: 'B1',
+      orgId: 'ORG_1',
+    } as any);
   });
 
   it('should filter low stock', async () => {

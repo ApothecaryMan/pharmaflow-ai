@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useSettings } from '../../../../context/SettingsContext';
+import { useTypography } from '../../../../context/TypographyContext';
 import {
   DATE_OPTS_SHORT,
   formatLocalizedDateTime,
@@ -25,7 +25,7 @@ export const DateTime: React.FC<DateTimeProps> = ({
   locale: manualLocale,
   hideIcon = false,
 }) => {
-  const { numeralLocale } = useSettings();
+  const { numeralLocale } = useTypography();
   const locale = manualLocale || numeralLocale;
   const { getVerifiedDate, state } = useStatusBar();
   const [now, setNow] = useState(getVerifiedDate());

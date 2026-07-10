@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 export interface PositionState {
   side: 'left' | 'right';
@@ -8,44 +8,65 @@ export interface PositionState {
 interface UseSmartPositionOptions {
   defaultSide?: 'left' | 'right';
   defaultAlign?: 'top' | 'bottom';
-  requiredWidth?: number; // Width needed for the element to fit
+  requiredWidth?: number;
 }
 
 export const useSmartPosition = (options: UseSmartPositionOptions = {}) => {
   const { defaultSide = 'right', defaultAlign = 'bottom', requiredWidth = 220 } = options;
 
-  const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<PositionState>({
     side: defaultSide,
     align: defaultAlign,
   });
 
-  const checkPosition = useCallback(() => {
-    if (ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      const spaceRight = window.innerWidth - rect.right;
+  const rafId = useRef(0);
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<ResizeObserver | null>(null);
 
-      // Horizontal: If tight on right, go left.
-      // check if spaceRight is less than required. Also check if we HAVE space on left.
-      // If we are 'right' aligned (opening to right), we need space on right. if not enough, try left.
-      // Logic from before:
-      const side = spaceRight < requiredWidth && rect.left > requiredWidth ? 'left' : 'right';
+  const calculatePosition = useCallback(() => {
+    const el = nodeRef.current;
+    if (!el) return;
 
-      // Vertical: If in top half, align top (grow down). If bottom half, align bottom (grow up).
-      const align = rect.top < window.innerHeight / 2 ? 'top' : 'bottom';
+    const rect = el.getBoundingClientRect();
+    const spaceRight = window.innerWidth - rect.right;
 
-      setPosition({ side, align });
-    }
+    const side = spaceRight < requiredWidth && rect.left > requiredWidth ? 'left' : 'right';
+    const align = rect.top < window.innerHeight / 2 ? 'top' : 'bottom';
+
+    setPosition({ side, align });
   }, [requiredWidth]);
 
+  const checkPosition = useCallback(() => {
+    cancelAnimationFrame(rafId.current);
+    rafId.current = requestAnimationFrame(calculatePosition);
+  }, [calculatePosition]);
+
   const resetPosition = useCallback(() => {
+    cancelAnimationFrame(rafId.current);
     setPosition({ side: defaultSide, align: defaultAlign });
   }, [defaultSide, defaultAlign]);
 
-  return {
-    ref,
-    position,
-    checkPosition,
-    resetPosition,
-  };
+  const ref = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+
+      nodeRef.current = node;
+
+      if (node) {
+        observerRef.current = new ResizeObserver(() => {
+          cancelAnimationFrame(rafId.current);
+          rafId.current = requestAnimationFrame(calculatePosition);
+        });
+        observerRef.current.observe(node);
+      }
+    },
+    [calculatePosition]
+  );
+
+  return useMemo(
+    () => ({ ref, position, checkPosition, resetPosition }),
+    [position, checkPosition, resetPosition, ref]
+  );
 };

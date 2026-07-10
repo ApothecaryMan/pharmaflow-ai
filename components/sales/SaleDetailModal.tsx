@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Return, Sale, Shift } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -221,8 +221,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   currentDailyRefunds = 0,
   onProcessReturn,
 }) => {
-  const branches = useAuthStore(s => s.branches);
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const branches = useAuthStore((s) => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventory = [] } = useInventory(activeBranchId);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'items' | 'history'>('items');

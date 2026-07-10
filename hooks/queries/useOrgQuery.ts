@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import type { Organization } from '../../types';
 import { queryKeys } from '../../lib/queryKeys';
+import type { Organization } from '../../types';
 
 export function useActiveOrg(orgId: string) {
   return useQuery({

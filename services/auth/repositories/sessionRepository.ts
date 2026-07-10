@@ -36,8 +36,8 @@ export const sessionRepository = {
       // Best-effort IP fetch with a hard 3s timeout — never blocks session registration
       let ipAddress: string | undefined;
       try {
-        const res = await fetch('https://api.ipify.org?format=json', { 
-          signal: AbortSignal.timeout(3000) 
+        const res = await fetch('https://api.ipify.org?format=json', {
+          signal: AbortSignal.timeout(3000),
         });
         if (res.ok) {
           const data = await res.json();
@@ -49,13 +49,13 @@ export const sessionRepository = {
 
       // Single atomic RPC: INSERT ON CONFLICT UPDATE
       const { data, error } = await supabase.rpc('upsert_active_session', {
-        p_user_id:     payload.userId,
-        p_org_id:      payload.orgId || null,
-        p_branch_id:   payload.branchId || null,
+        p_user_id: payload.userId,
+        p_org_id: payload.orgId || null,
+        p_branch_id: payload.branchId || null,
         p_employee_id: payload.employeeId || null,
         p_device_info: payload.deviceInfo,
-        p_user_agent:  payload.userAgent,
-        p_ip_address:  ipAddress || null,
+        p_user_agent: payload.userAgent,
+        p_ip_address: ipAddress || null,
       });
 
       if (error) {
@@ -75,10 +75,7 @@ export const sessionRepository = {
    * Optionally filter by userId for owner views (faster query path).
    */
   async getActiveSessions(userId?: string): Promise<UserActiveSession[]> {
-    let query = supabase
-      .from('user_active_sessions')
-      .select('*')
-      .eq('is_active', true);
+    let query = supabase.from('user_active_sessions').select('*').eq('is_active', true);
 
     // Scope to specific user for faster indexed lookups (owner view)
     if (userId) {
@@ -91,7 +88,7 @@ export const sessionRepository = {
       console.error('Failed to fetch active sessions:', error);
       return [];
     }
-    
+
     return data || [];
   },
 
@@ -137,7 +134,10 @@ export const sessionRepository = {
    */
   async logoutSession(sessionId: string, terminatorName?: string): Promise<boolean> {
     const name = terminatorName || 'Admin';
-    await this._broadcastEvent(sessionId, 'remote-logout-named', { sessionId, terminatorName: name });
+    await this._broadcastEvent(sessionId, 'remote-logout-named', {
+      sessionId,
+      terminatorName: name,
+    });
 
     const { error } = await supabase
       .from('user_active_sessions')
@@ -159,11 +159,14 @@ export const sessionRepository = {
    */
   async logoutEmployeeFromSession(sessionId: string, terminatorName?: string): Promise<boolean> {
     if (terminatorName) {
-      await this._broadcastEvent(sessionId, 'remote-employee-logout', { sessionId, terminatorName });
+      await this._broadcastEvent(sessionId, 'remote-employee-logout', {
+        sessionId,
+        terminatorName,
+      });
     }
 
     const { error } = await supabase.rpc('logout_employee_from_session', {
-      p_session_id: sessionId
+      p_session_id: sessionId,
     });
 
     if (error) {
@@ -202,8 +205,8 @@ export const sessionRepository = {
    * Update the workspace tied to the session
    */
   async updateSessionWorkspace(
-    sessionId: string, 
-    orgId: string | null, 
+    sessionId: string,
+    orgId: string | null,
     branchId: string | null,
     employeeId?: string | null
   ): Promise<void> {
@@ -224,5 +227,5 @@ export const sessionRepository = {
     if (error) {
       console.error('Failed to update session workspace:', error);
     }
-  }
+  },
 };

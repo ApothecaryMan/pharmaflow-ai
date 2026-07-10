@@ -35,7 +35,8 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useRef, useState } from 'react';
 
-import { useSettings } from '../../context/SettingsContext';
+import { useTypography } from '../../context/TypographyContext';
+import { useUI } from '../../context/UIContext';
 import { useLongPress } from '../../hooks/common/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { storage } from '../../utils/storage';
@@ -360,7 +361,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   enableNewRowAnimation = true,
   onVisibleRowsChange,
 }: TanStackTableProps<TData, TValue>) {
-  const { language, numeralLocale, textLocale, developerMode } = useSettings();
+  const { language, numeralLocale, textLocale } = useTypography();
+  const { developerMode } = useUI();
   const isAR = language === 'AR';
   const isRtl = isAR; // Source of truth from state, not DOM, to prevent sync lag
   const languageLocale = textLocale;

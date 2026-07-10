@@ -108,7 +108,13 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
   },
 };
 
-export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean = false, hex?: string, vividBg: 'muted' | 'subtle' | 'vivid' = 'subtle') => {
+export const useTheme = (
+  color: string,
+  darkMode: boolean,
+  isLoginView: boolean = false,
+  hex?: string,
+  vividBg: 'muted' | 'subtle' | 'vivid' = 'subtle'
+) => {
   useEffect(() => {
     const palette = COLOR_PALETTES[color] || COLOR_PALETTES.blue;
     const root = document.documentElement;
@@ -122,8 +128,14 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     if (!darkMode && hex) {
       const surfacePct = vividBg === 'muted' ? 0 : vividBg === 'vivid' ? 18 : 6;
       const statusPct = vividBg === 'muted' ? 0 : vividBg === 'vivid' ? 30 : 12;
-      root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} ${surfacePct}%, #f1f3f5)`);
-      root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} ${statusPct}%, var(--bg-secondary))`);
+      root.style.setProperty(
+        '--bg-page-surface',
+        `color-mix(in srgb, ${hex} ${surfacePct}%, #f1f3f5)`
+      );
+      root.style.setProperty(
+        '--bg-statusbar',
+        `color-mix(in srgb, ${hex} ${statusPct}%, var(--bg-secondary))`
+      );
     } else {
       root.style.setProperty('--bg-page-surface', '');
       root.style.setProperty('--bg-statusbar', '');
@@ -144,4 +156,3 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     }
   }, []);
 };
-

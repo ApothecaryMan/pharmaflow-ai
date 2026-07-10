@@ -25,11 +25,11 @@
 import { startAuthentication } from '@simplewebauthn/browser';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { TRANSLATIONS } from '../../../i18n/translations';
-import { useAuthStore } from '../../../stores/authStore';
 import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
+import { TRANSLATIONS } from '../../../i18n/translations';
 import { permissionsService } from '../../../services/auth/permissionsService';
 import { attendanceService } from '../../../services/hr/attendanceService';
+import { useAuthStore } from '../../../stores/authStore';
 import type { AttendanceEvent, AttendanceEventType, Employee } from '../../../types/hr';
 import { isWebAuthnSupported } from '../../../utils/webAuthnUtils';
 import { SearchInput } from '../../common/SearchInput';
@@ -58,8 +58,8 @@ const SESSION_TOKEN_KEY = 'attendance_terminal_token';
 
 export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language }) => {
   const t = TRANSLATIONS[language];
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const { data: employeesData } = useEmployees(activeBranchId);
   const employees = employeesData ?? [];
 

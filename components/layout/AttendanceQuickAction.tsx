@@ -1,10 +1,10 @@
 import { startAuthentication } from '@simplewebauthn/browser';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { attendanceService } from '../../services/hr/attendanceService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Employee } from '../../types/hr';
 import { isWebAuthnSupported } from '../../utils/webAuthnUtils';
 import { Icons } from '../common/Icons';
@@ -26,8 +26,8 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const { data: employees = [] } = useEmployees(activeBranchId);
   const inputRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];

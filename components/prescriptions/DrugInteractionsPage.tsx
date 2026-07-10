@@ -4,11 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { type FdaDrugLabel, openFdaService } from '../../services/inventory/openFdaService';
 import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
-import { PageHeader } from '../common/PageHeader';
-import { SearchEngineInput } from '../common/SearchEngineInput';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FDA } from '../common/Icons';
+import { PageHeader } from '../common/PageHeader';
+import { SearchEngineInput } from '../common/SearchEngineInput';
 
 interface DrugInteractionsPageProps {
   t: Translations;
@@ -94,10 +94,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
     });
   };
 
-  const hasAnyData = useMemo(
-    () => [...fdaData.values()].some((data) => data !== null),
-    [fdaData]
-  );
+  const hasAnyData = useMemo(() => [...fdaData.values()].some((data) => data !== null), [fdaData]);
 
   const ingredientResults = useMemo(
     () => [...fdaData.entries()].map(([name, data]) => ({ name, data })),
@@ -136,7 +133,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
 
     const renderWithSources = (content: string) => {
       if (!content) return null;
-      const regex = /(\[[^\]]+\]|\(see\s+[^)]+\)|\(\s*\d+(?:\.\d+)?(?:\s*,\s*\d+(?:\.\d+)?)*\s*\)|\b(?:Tables?|Figures?|Sections?)\s+\d+(?:\.\d+)?(?:\s*(?:,|and|or|to|-)\s*\d+(?:\.\d+)?)*\b|\(\s*e\.?g\.?,?\s+[^)]+\)|\bSee\s+(?:the\s+)?prescribing\s+information\b)/gi;
+      const regex =
+        /(\[[^\]]+\]|\(see\s+[^)]+\)|\(\s*\d+(?:\.\d+)?(?:\s*,\s*\d+(?:\.\d+)?)*\s*\)|\b(?:Tables?|Figures?|Sections?)\s+\d+(?:\.\d+)?(?:\s*(?:,|and|or|to|-)\s*\d+(?:\.\d+)?)*\b|\(\s*e\.?g\.?,?\s+[^)]+\)|\bSee\s+(?:the\s+)?prescribing\s+information\b)/gi;
       return content.split(regex).map((part, i) => {
         if (i % 2 !== 0) {
           const isCrossReference = /^(?:Table|Figure|Section)s?\s/i.test(part);
@@ -144,7 +142,10 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
 
           if (isCrossReference) {
             return (
-              <span key={i} className='font-bold text-(--text-primary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-md mx-0.5'>
+              <span
+                key={i}
+                className='font-bold text-(--text-primary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-md mx-0.5'
+              >
                 {part}
               </span>
             );
@@ -157,7 +158,10 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
             );
           }
           return (
-             <span key={i} className='text-[10px] font-bold text-(--text-tertiary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-sm mx-1 tracking-tight inline-block leading-none translate-y-[-1px]'>
+            <span
+              key={i}
+              className='text-[10px] font-bold text-(--text-tertiary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-sm mx-1 tracking-tight inline-block leading-none translate-y-[-1px]'
+            >
               {part}
             </span>
           );
@@ -166,29 +170,35 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
       });
     };
 
-    const renderStructuredText = (rawText: string, textClassName: string = 'font-medium text-(--text-secondary)') => {
+    const renderStructuredText = (
+      rawText: string,
+      textClassName: string = 'font-medium text-(--text-secondary)'
+    ) => {
       const trueParagraphs = rawText.split(/(?:\n\s*){2,}/);
       const paragraphs: string[] = [];
-      
-      trueParagraphs.forEach(trueP => {
+
+      trueParagraphs.forEach((trueP) => {
         const units = trueP.split(/\s+(?=\d+\.\d+\s+[A-Z])|(?<=[.!?\])])\s+(?=[A-Z])/);
         let currentPara = '';
-        
-        units.forEach(unit => {
+
+        units.forEach((unit) => {
           const trimmed = unit.trim();
           if (!trimmed) return;
-          
+
           const isHeader = /^(\d+\.\d+)\s+/.test(trimmed);
           const isBullet = /^[•\-*]/.test(trimmed);
           const endsWithRef = /[\])]$/.test(trimmed);
-          
+
           const colonSubtitle = /^[^:.!?]{3,60}\s*:/s.test(trimmed);
-          const titleSubtitle = /^(?!The\s|This\s|These\s|In\s|A\s|An\s|For\s|See\s|Use\s|Avoid\s|Consult\s|Monitor\s|Consider\s|Evaluate\s|Do\snot\s|If\s|Take\s|Administer\s|Discontinue\s|Reduce\s|Increase\s|Adjust\s|Initiate\s|Stop\s|Advise\s|Instruct\s|Counsel\s|Start\s|Give\s|Ensure\s|Maintain\s|Hold\s|Interrupt\s|Resume\s|When\s)([A-Z][A-Za-z0-9/-]+(?:\s+(?:and|or|with|in|of)\s+[A-Z][A-Za-z0-9/-]+|\s+[A-Z][A-Za-z0-9/-]+){0,3})\s+(?=[A-Z][a-z])/s.test(trimmed);
-          
+          const titleSubtitle =
+            /^(?!The\s|This\s|These\s|In\s|A\s|An\s|For\s|See\s|Use\s|Avoid\s|Consult\s|Monitor\s|Consider\s|Evaluate\s|Do\snot\s|If\s|Take\s|Administer\s|Discontinue\s|Reduce\s|Increase\s|Adjust\s|Initiate\s|Stop\s|Advise\s|Instruct\s|Counsel\s|Start\s|Give\s|Ensure\s|Maintain\s|Hold\s|Interrupt\s|Resume\s|When\s)([A-Z][A-Za-z0-9/-]+(?:\s+(?:and|or|with|in|of)\s+[A-Z][A-Za-z0-9/-]+|\s+[A-Z][A-Za-z0-9/-]+){0,3})\s+(?=[A-Z][a-z])/s.test(
+              trimmed
+            );
+
           if (isHeader || isBullet || endsWithRef || colonSubtitle || titleSubtitle) {
             if (currentPara) paragraphs.push(currentPara.trim());
             currentPara = '';
-            
+
             if (isHeader || isBullet || endsWithRef) {
               paragraphs.push(trimmed);
             } else {
@@ -196,7 +206,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
             }
             return;
           }
-          
+
           if (currentPara.length + trimmed.length > 400 && currentPara.length > 0) {
             paragraphs.push(currentPara.trim());
             currentPara = trimmed + ' ';
@@ -226,13 +236,15 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
 
             let subtitle = '';
             let contentToRender = p;
-            
+
             const colonMatch = p.match(/^([^:.!?]{3,60})\s*:\s*(.*)/s);
             if (colonMatch) {
               subtitle = colonMatch[1].trim();
               contentToRender = colonMatch[2].trim();
             } else {
-              const titleMatch = p.match(/^(?!The\s|This\s|These\s|In\s|A\s|An\s|For\s|See\s|Use\s|Avoid\s|Consult\s|Monitor\s|Consider\s|Evaluate\s|Do\snot\s|If\s|Take\s|Administer\s|Discontinue\s|Reduce\s|Increase\s|Adjust\s|Initiate\s|Stop\s|Advise\s|Instruct\s|Counsel\s|Start\s|Give\s|Ensure\s|Maintain\s|Hold\s|Interrupt\s|Resume\s|When\s)([A-Z][A-Za-z0-9/-]+(?:\s+(?:and|or|with|in|of)\s+[A-Z][A-Za-z0-9/-]+|\s+[A-Z][A-Za-z0-9/-]+){0,3})\s+(?=[A-Z][a-z])/s);
+              const titleMatch = p.match(
+                /^(?!The\s|This\s|These\s|In\s|A\s|An\s|For\s|See\s|Use\s|Avoid\s|Consult\s|Monitor\s|Consider\s|Evaluate\s|Do\snot\s|If\s|Take\s|Administer\s|Discontinue\s|Reduce\s|Increase\s|Adjust\s|Initiate\s|Stop\s|Advise\s|Instruct\s|Counsel\s|Start\s|Give\s|Ensure\s|Maintain\s|Hold\s|Interrupt\s|Resume\s|When\s)([A-Z][A-Za-z0-9/-]+(?:\s+(?:and|or|with|in|of)\s+[A-Z][A-Za-z0-9/-]+|\s+[A-Z][A-Za-z0-9/-]+){0,3})\s+(?=[A-Z][a-z])/s
+              );
               if (titleMatch && titleMatch[1].length < 60) {
                 subtitle = titleMatch[1].trim();
                 contentToRender = p.substring(titleMatch[1].length).trim();
@@ -245,7 +257,11 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                 className={`text-sm leading-[1.75] text-left ${p.startsWith('•') || p.startsWith('-') ? 'ps-4' : ''} ${textClassName}`}
                 dir='auto'
               >
-                {subtitle && <strong className='text-(--text-primary) font-bold block mb-0.5'>{subtitle}</strong>}
+                {subtitle && (
+                  <strong className='text-(--text-primary) font-bold block mb-0.5'>
+                    {subtitle}
+                  </strong>
+                )}
                 {renderWithSources(contentToRender)}
               </p>
             );
@@ -301,9 +317,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                       <span className='w-1 h-1 rounded-full bg-red-500/60' />
                       Clinical Impact
                     </span>
-                    <div className='max-w-4xl'>
-                      {renderStructuredText(impact)}
-                    </div>
+                    <div className='max-w-4xl'>{renderStructuredText(impact)}</div>
                   </div>
                 )}
                 {intervention && (
@@ -312,9 +326,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                       <span className='w-1 h-1 rounded-full bg-blue-500/60' />
                       Intervention
                     </span>
-                    <div className='max-w-4xl'>
-                      {renderStructuredText(intervention)}
-                    </div>
+                    <div className='max-w-4xl'>{renderStructuredText(intervention)}</div>
                   </div>
                 )}
               </div>
@@ -362,10 +374,16 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
             medication
           </span>
         </div>
-        <p className='text-sm font-black text-(--text-tertiary) uppercase tracking-[0.12em] leading-relaxed' dir='auto'>
+        <p
+          className='text-sm font-black text-(--text-tertiary) uppercase tracking-[0.12em] leading-relaxed'
+          dir='auto'
+        >
           {t.selectMultipleDrugs}
         </p>
-        <p className='mt-3 text-[11px] font-medium text-(--text-tertiary) opacity-60 leading-relaxed' dir='auto'>
+        <p
+          className='mt-3 text-[11px] font-medium text-(--text-tertiary) opacity-60 leading-relaxed'
+          dir='auto'
+        >
           {t.searchAndAddDrugs}
         </p>
       </div>
@@ -373,17 +391,19 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
   );
 
   const renderNoDataState = () => (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className='py-20 text-center'
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='py-20 text-center'>
       <div className='inline-flex items-center justify-center w-14 h-14 rounded-full bg-(--border-divider) mb-5'>
-        <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: '24px' }}>
+        <span
+          className='material-symbols-rounded text-(--text-tertiary)'
+          style={{ fontSize: '24px' }}
+        >
           description
         </span>
       </div>
-      <h4 className='text-sm font-black text-(--text-primary) uppercase tracking-[0.06em] mb-2' dir='auto'>
+      <h4
+        className='text-sm font-black text-(--text-primary) uppercase tracking-[0.06em] mb-2'
+        dir='auto'
+      >
         No FDA data available for this drug
       </h4>
       <p className='text-xs font-medium text-(--text-tertiary)' dir='auto'>
@@ -437,7 +457,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                     Direct Clinical Conflict Detected
                   </h3>
                   <p className='text-[10px] font-medium text-(--text-tertiary) mt-0.5'>
-                    {detectedIssues.length} conflict{detectedIssues.length > 1 ? 's' : ''} found across selected ingredients
+                    {detectedIssues.length} conflict{detectedIssues.length > 1 ? 's' : ''} found
+                    across selected ingredients
                   </p>
                 </div>
               </div>
@@ -446,19 +467,28 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                   <div key={i} className='flex flex-col gap-1.5'>
                     <div className='flex items-center gap-2 text-xs font-black uppercase tracking-[0.04em] text-(--text-primary)'>
                       <span>{issue.source}</span>
-                      <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: '14px' }}>
+                      <span
+                        className='material-symbols-rounded text-(--text-tertiary)'
+                        style={{ fontSize: '14px' }}
+                      >
                         arrow_forward
                       </span>
                       <span className='text-red-500'>{issue.target}</span>
                     </div>
-                    <p className='text-[13px] font-medium leading-relaxed text-(--text-secondary) italic text-left' dir='auto'>
+                    <p
+                      className='text-[13px] font-medium leading-relaxed text-(--text-secondary) italic text-left'
+                      dir='auto'
+                    >
                       {issue.snippet}
                     </p>
                   </div>
                 ))}
               </div>
               <div className='flex items-center gap-2 pt-4 border-t border-(--border-divider)'>
-                <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: '12px' }}>
+                <span
+                  className='material-symbols-rounded text-(--text-tertiary)'
+                  style={{ fontSize: '12px' }}
+                >
                   database
                 </span>
                 <span className='text-[10px] font-bold text-(--text-tertiary) uppercase tracking-[0.1em]'>
@@ -500,7 +530,10 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                     formatClinicalText(data.indications_and_usage?.[0] || 'No usage data.')}
                 </div>
               ) : (
-                <div className='text-xs font-medium text-(--text-tertiary) italic flex items-center gap-2 text-left' dir='auto'>
+                <div
+                  className='text-xs font-medium text-(--text-tertiary) italic flex items-center gap-2 text-left'
+                  dir='auto'
+                >
                   <span className='w-1 h-1 rounded-full bg-(--text-tertiary)' />
                   No FDA data available for this drug
                 </div>
@@ -517,9 +550,17 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
       <PageHeader
         leftContent={
           <div className='flex flex-col items-start'>
-            <h1 className={"text-2xl !font-['GraphicSansFont'] tracking-tight text-(--text-primary) flex items-center gap-2 truncate"} style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}>
-              <span className="flex items-center justify-center shrink-0 text-[#002D72] dark:text-blue-300 translate-y-[1px]">
-                <FDA size={22} className="opacity-95" />
+            <h1
+              className={
+                "text-2xl !font-['GraphicSansFont'] tracking-tight text-(--text-primary) flex items-center gap-2 truncate"
+              }
+              style={{
+                fontFeatureSettings:
+                  '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+              }}
+            >
+              <span className='flex items-center justify-center shrink-0 text-[#002D72] dark:text-blue-300 translate-y-[1px]'>
+                <FDA size={22} className='opacity-95' />
               </span>
               {t.interactionAnalysis}
             </h1>
@@ -535,7 +576,9 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
               onResultsChange={setResults}
               placeholder={t.searchPlaceholder}
               autoFocus
-              className={"!font-['GraphicSansFont'] bg-transparent border-0 focus:ring-0 text-sm font-normal tracking-tight"}
+              className={
+                "!font-['GraphicSansFont'] bg-transparent border-0 focus:ring-0 text-sm font-normal tracking-tight"
+              }
             />
           </div>
         }
@@ -547,7 +590,9 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
                 onClick={() => setSelectedDrugs([])}
-                className={"!font-['GraphicSansFont'] text-[10px] font-normal uppercase tracking-[0.12em] text-red-500 px-3 py-1.5 border border-red-500/30"}
+                className={
+                  "!font-['GraphicSansFont'] text-[10px] font-normal uppercase tracking-[0.12em] text-red-500 px-3 py-1.5 border border-red-500/30"
+                }
               >
                 {t.clearCocktail}
               </motion.button>
@@ -557,10 +602,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
       />
 
       <div className='flex-1 flex overflow-hidden gap-3'>
-        <div
-          className={`w-[360px] hidden lg:flex flex-col ${CARD_BASE} rounded-xl`}
-          dir='ltr'
-        >
+        <div className={`w-[360px] hidden lg:flex flex-col ${CARD_BASE} rounded-xl`} dir='ltr'>
           <div className='flex-1 overflow-y-auto scrollbar-hide p-3 space-y-1.5'>
             {results.length === 0 && searchQuery.length > 0 && (
               <motion.div
@@ -568,9 +610,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                 animate={{ opacity: 1 }}
                 className='px-4 py-12 text-center'
               >
-                <p className='text-xs font-medium text-(--text-tertiary) italic'>
-                  {t.noResults}
-                </p>
+                <p className='text-xs font-medium text-(--text-tertiary) italic'>{t.noResults}</p>
               </motion.div>
             )}
             {searchQuery.length === 0 && (
@@ -588,7 +628,10 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                     search
                   </span>
                 </div>
-                <p className='text-xs font-medium text-(--text-tertiary) italic text-center' dir='auto'>
+                <p
+                  className='text-xs font-medium text-(--text-tertiary) italic text-center'
+                  dir='auto'
+                >
                   {t.sidebarPlaceholder}
                 </p>
               </motion.div>
@@ -616,7 +659,9 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                         ? 'border-transparent bg-(--bg-page-surface)'
                         : '!border-[--accent-color]/40 !bg-[--accent-color]/8'
                     }`}
-                    style={!isSelected ? ({ '--accent-color': color } as React.CSSProperties) : undefined}
+                    style={
+                      !isSelected ? ({ '--accent-color': color } as React.CSSProperties) : undefined
+                    }
                   >
                     <div className='px-4 h-[48px] flex flex-col justify-center'>
                       <div
@@ -624,10 +669,15 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
                         dir='ltr'
                       >
                         <span className='truncate text-(--text-primary) uppercase'>
-                          {(Array.isArray(drug.genericName) ? drug.genericName[0] : drug.genericName) || drug.name}
+                          {(Array.isArray(drug.genericName)
+                            ? drug.genericName[0]
+                            : drug.genericName) || drug.name}
                         </span>
                       </div>
-                      <span className='text-[11px] font-medium text-(--text-tertiary) truncate mt-0.5' dir='ltr'>
+                      <span
+                        className='text-[11px] font-medium text-(--text-tertiary) truncate mt-0.5'
+                        dir='ltr'
+                      >
                         {getDisplayName(drug)}
                       </span>
                     </div>
@@ -638,7 +688,11 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
           </div>
         </div>
 
-        <div data-no-convert='true' className={`flex-1 flex flex-col overflow-hidden ${CARD_BASE} rounded-xl`} dir='ltr'>
+        <div
+          data-no-convert='true'
+          className={`flex-1 flex flex-col overflow-hidden ${CARD_BASE} rounded-xl`}
+          dir='ltr'
+        >
           <AnimatePresence mode='wait'>
             {selectedDrugs.length > 0 ? (
               <motion.div
@@ -650,113 +704,124 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
               >
                 <div className='shrink-0 z-20 bg-(--bg-card) border-b border-(--border-divider)'>
                   <div className='flex flex-wrap gap-2 px-4 pt-3 pb-0' dir='ltr'>
-                      {(
-                        Array.from(
-                          new Map(
-                            selectedDrugs.map((drug) => {
-                              const gen = (Array.isArray(drug.genericName) ? drug.genericName[0] : drug.genericName) || drug.name;
-                              return [gen, drug];
-                            })
-                          ).values()
-                        ) as Drug[]
-                      ).map((drug) => {
-                        const gen = (Array.isArray(drug.genericName) ? drug.genericName[0] : drug.genericName) || drug.name;
-                        return (
-                          <motion.div
-                            key={gen}
-                            layout
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                            className='group flex items-center gap-2 px-3 py-1.5 text-xs font-bold tracking-tight rounded-lg border border-(--border-divider) bg-(--bg-page-surface) text-(--text-primary) cursor-default select-none'
-                          >
-                            <span className='truncate max-w-[120px]'>{gen}</span>
-                            <button
-                              type='button'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedDrugs((prev: Drug[]) => prev.filter((d: Drug) => {
-                                  const g = (Array.isArray(d.genericName) ? d.genericName[0] : d.genericName) || d.name;
+                    {(
+                      Array.from(
+                        new Map(
+                          selectedDrugs.map((drug) => {
+                            const gen =
+                              (Array.isArray(drug.genericName)
+                                ? drug.genericName[0]
+                                : drug.genericName) || drug.name;
+                            return [gen, drug];
+                          })
+                        ).values()
+                      ) as Drug[]
+                    ).map((drug) => {
+                      const gen =
+                        (Array.isArray(drug.genericName)
+                          ? drug.genericName[0]
+                          : drug.genericName) || drug.name;
+                      return (
+                        <motion.div
+                          key={gen}
+                          layout
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                          className='group flex items-center gap-2 px-3 py-1.5 text-xs font-bold tracking-tight rounded-lg border border-(--border-divider) bg-(--bg-page-surface) text-(--text-primary) cursor-default select-none'
+                        >
+                          <span className='truncate max-w-[120px]'>{gen}</span>
+                          <button
+                            type='button'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDrugs((prev: Drug[]) =>
+                                prev.filter((d: Drug) => {
+                                  const g =
+                                    (Array.isArray(d.genericName)
+                                      ? d.genericName[0]
+                                      : d.genericName) || d.name;
                                   return g !== gen;
-                                }));
-                              }}
-                              className='material-symbols-rounded text-(--text-tertiary) opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all duration-200 shrink-0'
-                              style={{ fontSize: '12px' }}
+                                })
+                              );
+                            }}
+                            className='material-symbols-rounded text-(--text-tertiary) opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all duration-200 shrink-0'
+                            style={{ fontSize: '12px' }}
+                          >
+                            close
+                          </button>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  {hasAnyData && (
+                    <div className='flex gap-0 px-3 justify-center'>
+                      {tabs.map((tab) => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                          <button
+                            type='button'
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`relative px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] transition-colors duration-200 flex items-center gap-1.5 ${
+                              isActive
+                                ? 'text-(--text-primary)'
+                                : 'text-(--text-tertiary) hover:text-(--text-secondary)'
+                            }`}
+                          >
+                            <span
+                              className='material-symbols-rounded'
+                              style={{ fontSize: '14px', fontWeight: 200 }}
                             >
-                              close
-                            </button>
-                          </motion.div>
+                              {TAB_ICONS[tab.id]}
+                            </span>
+                            {tab.label}
+                            {isActive && (
+                              <motion.div
+                                layoutId='tab-indicator'
+                                className='absolute bottom-0 inset-x-0 h-[2px] bg-(--text-primary)'
+                                transition={{
+                                  type: 'spring',
+                                  stiffness: 500,
+                                  damping: 35,
+                                }}
+                              />
+                            )}
+                          </button>
                         );
                       })}
                     </div>
+                  )}
+                </div>
 
-                    {hasAnyData && (
-                      <div className='flex gap-0 px-3 justify-center'>
-                        {tabs.map((tab) => {
-                          const isActive = activeTab === tab.id;
-                          return (
-                            <button
-                              type='button'
-                              key={tab.id}
-                              onClick={() => setActiveTab(tab.id)}
-                              className={`relative px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] transition-colors duration-200 flex items-center gap-1.5 ${
-                                isActive
-                                  ? 'text-(--text-primary)'
-                                  : 'text-(--text-tertiary) hover:text-(--text-secondary)'
-                              }`}
-                            >
-                              <span
-                                className='material-symbols-rounded'
-                                style={{ fontSize: '14px', fontWeight: 200 }}
-                              >
-                                {TAB_ICONS[tab.id]}
-                              </span>
-                              {tab.label}
-                              {isActive && (
-                                <motion.div
-                                  layoutId='tab-indicator'
-                                  className='absolute bottom-0 inset-x-0 h-[2px] bg-(--text-primary)'
-                                  transition={{
-                                    type: 'spring',
-                                    stiffness: 500,
-                                    damping: 35,
-                                  }}
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='flex-1 overflow-y-auto scrollbar-hide px-8 pb-16' ref={contentRef}>
-                    <AnimatePresence mode='wait'>
-                      <motion.div
-                        key={`${selectedDrugs.map((d) => d.id).join('-')}-${activeTab}`}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                      >
-                        {renderFdaContent()}
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key='empty-content'
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className='flex-1 flex flex-col'
-                >
-                  {renderEmptyState()}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                <div className='flex-1 overflow-y-auto scrollbar-hide px-8 pb-16' ref={contentRef}>
+                  <AnimatePresence mode='wait'>
+                    <motion.div
+                      key={`${selectedDrugs.map((d) => d.id).join('-')}-${activeTab}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                    >
+                      {renderFdaContent()}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key='empty-content'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className='flex-1 flex flex-col'
+              >
+                {renderEmptyState()}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

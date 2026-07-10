@@ -1,6 +1,6 @@
 import type React from 'react';
-import { Modal } from '../../common/Modal';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../../utils/themeStyles';
+import { Modal } from '../../common/Modal';
 
 // Using a standard Modal interface if available, otherwise a simple implementation
 interface GeneratePOModalProps {
@@ -54,10 +54,7 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
         </div>
 
         <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto'>
-          <button
-            onClick={onClose}
-            className={MODAL_FOOTER_BTN_CANCEL}
-          >
+          <button onClick={onClose} className={MODAL_FOOTER_BTN_CANCEL}>
             {t?.common?.cancel || 'Cancel'}
           </button>
           <button

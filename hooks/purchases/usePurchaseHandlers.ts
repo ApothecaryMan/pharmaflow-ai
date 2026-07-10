@@ -18,7 +18,12 @@ export interface UsePurchaseHandlersParams {
   currentShift: Shift | null;
   addPurchase?: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase?: (id: string, context: ActionContext) => Promise<void>;
-  markAsReceived?: (id: string, receiverId: string, receiverName: string, shiftId?: string) => Promise<void>;
+  markAsReceived?: (
+    id: string,
+    receiverId: string,
+    receiverName: string,
+    shiftId?: string
+  ) => Promise<void>;
   createPurchaseReturn: (
     ret: Omit<PurchaseReturn, 'id'>,
     context: ActionContext
@@ -190,7 +195,16 @@ export function usePurchaseHandlers({
         error(`Failed to mark as received: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [purchases, markAsReceived, success, currentEmployeeId, employees, error, activeBranchId, currentShift]
+    [
+      purchases,
+      markAsReceived,
+      success,
+      currentEmployeeId,
+      employees,
+      error,
+      activeBranchId,
+      currentShift,
+    ]
   );
 
   const handleRejectPurchase = useCallback(

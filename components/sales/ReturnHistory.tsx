@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { useSettings } from '../../context';
+import { usePageHelp } from '../../context/HelpContext';
 import { RETURN_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { CartItem, type Return, type Sale } from '../../types';
@@ -11,7 +12,6 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { MaterialTabs } from '../common/MaterialTabs';
-import { usePageHelp } from '../../context/HelpContext';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
@@ -358,7 +358,10 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
               icon: 'help',
               mode: 'multiple' as const,
               options: [
-                { label: t.reasons?.customer_request || 'Customer Request', value: 'customer_request' },
+                {
+                  label: t.reasons?.customer_request || 'Customer Request',
+                  value: 'customer_request',
+                },
                 { label: t.reasons?.damaged || 'Damaged', value: 'damaged' },
                 { label: t.reasons?.defective || 'Defective', value: 'defective' },
                 { label: t.reasons?.expired || 'Expired', value: 'expired' },
@@ -368,7 +371,10 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
             },
           ]}
           initialFilters={activeFilters}
-          onFilterChange={(f) => { setActiveFilters(f); setPage(1); }}
+          onFilterChange={(f) => {
+            setActiveFilters(f);
+            setPage(1);
+          }}
           enableTopToolbar={true}
           enableSearch={true}
           searchPlaceholder={t.searchPlaceholder}
@@ -582,7 +588,6 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         color={color}
         textTransform={textTransform}
       />
-
     </div>
   );
 };

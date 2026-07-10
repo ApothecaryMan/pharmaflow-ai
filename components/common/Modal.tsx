@@ -1,8 +1,8 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { SegmentedControl, type SegmentedControlOption } from './SegmentedControl';
 import { SearchInput } from './SearchInput';
+import { SegmentedControl, type SegmentedControlOption } from './SegmentedControl';
 
 export const BUTTON_CLOSE_BASE = 'border border-transparent hover:border-(--border-divider)';
 
@@ -279,7 +279,13 @@ export const Modal: React.FC<ModalProps> = ({
   }, [isOpen, zIndex]);
 
   const ContextMenuContent: React.FC<{ preventSidebar: boolean }> = ({ preventSidebar }) => {
-    const { modalPresentationMode, sidebarModalWidth, setModalPresentationMode, setSidebarModalWidth, language } = useSettings();
+    const {
+      modalPresentationMode,
+      sidebarModalWidth,
+      setModalPresentationMode,
+      setSidebarModalWidth,
+      language,
+    } = useSettings();
     const { hideMenu } = useContextMenu();
     const isSidebar = modalPresentationMode === 'sidebar' && !preventSidebar;
     const tSettings = TRANSLATIONS[language].settings;
@@ -305,20 +311,33 @@ export const Modal: React.FC<ModalProps> = ({
 
         <div className='border-t border-(--border-divider)' />
 
-        {([
-          { key: 'sm' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthNarrow})` },
-          { key: 'md' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthStandard})` },
-          { key: 'lg' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthWide})` },
-          { key: 'xl' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthExtraWide})` },
-        ]).map((item) => (
+        {[
+          {
+            key: 'sm' as const,
+            label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthNarrow})`,
+          },
+          {
+            key: 'md' as const,
+            label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthStandard})`,
+          },
+          {
+            key: 'lg' as const,
+            label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthWide})`,
+          },
+          {
+            key: 'xl' as const,
+            label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthExtraWide})`,
+          },
+        ].map((item) => (
           <button
             key={item.key}
             onClick={() => setSidebarModalWidth?.(item.key)}
             disabled={!isSidebar}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${!isSidebar
-              ? 'opacity-30 cursor-not-allowed'
-              : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-              }`}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+              !isSidebar
+                ? 'opacity-30 cursor-not-allowed'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}
           >
             <span className='material-symbols-rounded text-lg'>
               {sidebarModalWidth === item.key ? 'check_circle' : 'circle'}
@@ -467,9 +486,7 @@ export const Modal: React.FC<ModalProps> = ({
                           />
                         </div>
                       )}
-                      <div data-disabled={disabled || undefined}>
-                        {headerActions}
-                      </div>
+                      <div data-disabled={disabled || undefined}>{headerActions}</div>
                       {!hideCloseButton ? (
                         <button
                           onClick={onClose}
@@ -510,9 +527,7 @@ export const Modal: React.FC<ModalProps> = ({
                   ) : null}
                 </div>
               ) : (
-                <div data-modal-body-disabled={disabled || undefined}>
-                  {children}
-                </div>
+                <div data-modal-body-disabled={disabled || undefined}>{children}</div>
               )}
             </motion.div>
           </>

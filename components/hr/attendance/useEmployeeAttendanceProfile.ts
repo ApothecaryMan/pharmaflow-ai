@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuthStore } from '../../../stores/authStore';
-import { useSettings } from '../../../context/SettingsContext';
+import { useTypography } from '../../../context/TypographyContext';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import {
   attendanceReportService,
   type MonthlyEmployeeReport,
 } from '../../../services/hr/attendanceReportService';
+import { useAuthStore } from '../../../stores/authStore';
 import { formatDuration } from '../../../utils/attendanceUtils';
 
 /**
@@ -14,8 +14,8 @@ import { formatDuration } from '../../../utils/attendanceUtils';
  * @param employeeId The ID of the employee to fetch the report for.
  */
 export const useEmployeeAttendanceProfile = (employeeId?: string) => {
-  const { language } = useSettings();
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const { language } = useTypography();
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const isRTL = language === 'AR';
   const t = TRANSLATIONS[language];
 

@@ -124,8 +124,6 @@ export const usePrinter = (): UsePrinterResult => {
     }
   }, []);
 
-
-
   /**
    * Connect to QZ Tray
    */
@@ -268,7 +266,6 @@ export const usePrinter = (): UsePrinterResult => {
       handleRefreshPrinters();
     }
   }, [settings.enabled, handleRefreshPrinters]);
-
 
   /**
    * Print label (with fallback to browser)

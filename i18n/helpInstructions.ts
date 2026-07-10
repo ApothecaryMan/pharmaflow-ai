@@ -330,10 +330,7 @@ export const SALES_HISTORY_HELP = {
       },
       sorting: {
         title: 'الفرز وإعادة الترتيب',
-        steps: [
-          'انقر نقراً مزدوجاً على رأس العمود للفرز',
-          'اسحب وأفلت رؤوس الأعمدة لإعادة ترتيبها',
-        ],
+        steps: ['انقر نقراً مزدوجاً على رأس العمود للفرز', 'اسحب وأفلت رؤوس الأعمدة لإعادة ترتيبها'],
       },
       details: {
         title: 'عرض التفاصيل',
@@ -753,9 +750,7 @@ export const ORG_MANAGEMENT_HELP = {
     },
     visualCues: {
       title: 'Color Codes & Icons',
-      items: [
-        'Quota Warnings: Visual indicators when approaching license limits',
-      ],
+      items: ['Quota Warnings: Visual indicators when approaching license limits'],
     },
     troubleshooting: {
       title: 'Troubleshooting & Rules',
@@ -804,9 +799,7 @@ export const ORG_MANAGEMENT_HELP = {
     },
     visualCues: {
       title: 'دلالات الألوان والرموز',
-      items: [
-        'تحذيرات الحصص: مؤشرات مرئية تظهر عند الاقتراب من حدود الترخيص',
-      ],
+      items: ['تحذيرات الحصص: مؤشرات مرئية تظهر عند الاقتراب من حدود الترخيص'],
     },
     troubleshooting: {
       title: 'حل المشاكل والصلاحيات',

@@ -10,7 +10,7 @@ import type { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate } from '../../utils/expiryUtils';
-import { escapeHtml, deriveOrientation, wrapPrintHTML, printDocument } from '../../utils/printing';
+import { deriveOrientation, escapeHtml, printDocument, wrapPrintHTML } from '../../utils/printing';
 import { getBarcodeFontsCSS } from './barcodeFonts';
 import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 
@@ -529,7 +529,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
 /**
  * Builds label-specific CSS + container HTML (body content only, no shell).
  * The caller wraps this with `wrapPrintHTML` to get a complete document.
- */const buildLabelPageContent = (
+ */ const buildLabelPageContent = (
   contentHTML: string,
   templateCSS: string,
   dims: { w: number; h: number },
@@ -582,8 +582,14 @@ const buildLabelDocument = (
   autoPrint: boolean,
   hardwarePageHeight?: number
 ): string => {
-  const { css, bodyHTML } = buildLabelPageContent(contentHTML, templateCSS, dims, pageHeight, offsets);
-  
+  const { css, bodyHTML } = buildLabelPageContent(
+    contentHTML,
+    templateCSS,
+    dims,
+    pageHeight,
+    offsets
+  );
+
   const physicalHeight = hardwarePageHeight || pageHeight;
   const pageW = dims.w;
   const pageH = physicalHeight;
@@ -623,7 +629,7 @@ export const generatePageHTML = (
     false,
     hardwarePageHeight
   );
-};;
+};
 
 export const printLabels = async (
   items: PrintLabelItem[],
@@ -699,13 +705,9 @@ export const printLabels = async (
     const innerGap = isDouble ? 1 : 0; // Add 1mm gap to push the 2nd label down from the split
     const outerGap = isDouble ? 2 : design.labelGap || 0; // According to diagram: 2mm
 
-    const pageHeight = isDouble
-      ? labelHeight * 2 + innerGap + outerGap
-      : labelHeight + outerGap;
+    const pageHeight = isDouble ? labelHeight * 2 + innerGap + outerGap : labelHeight + outerGap;
 
-    const printablePageHeight = isDouble
-      ? labelHeight * 2 + innerGap
-      : labelHeight;
+    const printablePageHeight = isDouble ? labelHeight * 2 + innerGap : labelHeight;
 
     const renderDims = { w: dims.w, h: labelHeight };
 
@@ -777,21 +779,27 @@ export const printLabels = async (
     }
 
     const allPagesHTML = pages.join('');
-    
+
     let rawCommands: string[] | undefined;
     const printerLanguage = design.printerLanguage || 'html';
-    
+
     if (printerLanguage !== 'html') {
       try {
-        const { generateTSPL, generateZPL } = await import('../../utils/printing/rawLabelGenerators');
+        const { generateTSPL, generateZPL } = await import(
+          '../../utils/printing/rawLabelGenerators'
+        );
         rawCommands = [];
         for (let i = 0; i < validItems.length; i++) {
           const item = validItems[i];
           for (let j = 0; j < item.quantity; j++) {
             if (printerLanguage === 'tspl') {
-              rawCommands.push(...generateTSPL(design, item.drug, receiptSettings, item.expiryDateOverride));
+              rawCommands.push(
+                ...generateTSPL(design, item.drug, receiptSettings, item.expiryDateOverride)
+              );
             } else if (printerLanguage === 'zpl') {
-              rawCommands.push(...generateZPL(design, item.drug, receiptSettings, item.expiryDateOverride));
+              rawCommands.push(
+                ...generateZPL(design, item.drug, receiptSettings, item.expiryDateOverride)
+              );
             }
           }
         }

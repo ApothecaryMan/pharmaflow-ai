@@ -10,10 +10,10 @@ import {
 import type { Drug } from '../../types';
 import { validateStock } from '../../utils/inventory';
 import { resolveUnits } from '../../utils/stockUtils';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common';
 import { Modal } from '../common/Modal';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
-import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -157,18 +157,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       onTabChange={(val) => setActiveTab(val as 'general' | 'inventoryPricing')}
       footer={
         <div className='flex gap-3 w-full'>
-          <button
-            type='button'
-            onClick={onClose}
-            className={MODAL_FOOTER_BTN_CANCEL}
-          >
+          <button type='button' onClick={onClose} className={MODAL_FOOTER_BTN_CANCEL}>
             {t.modal.cancel}
           </button>
-          <button
-            type='submit'
-            form='edit-drug-form'
-            className={MODAL_FOOTER_BTN_PRIMARY}
-          >
+          <button type='submit' form='edit-drug-form' className={MODAL_FOOTER_BTN_PRIMARY}>
             {t.modal.save}
           </button>
         </div>

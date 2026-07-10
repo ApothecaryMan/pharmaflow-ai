@@ -6,11 +6,9 @@
  * The shell + window helpers are exposed for the content generators and tests.
  */
 
-export { escapeHtml, deriveOrientation, wrapPrintHTML } from './printShell';
-export type { PrintOrientation, PrintShellOptions } from './printShell';
-
-export { mmToPopupSize, openPrintWindow, printViaIframe } from './printWindow';
-export type { OpenPrintWindowOptions } from './printWindow';
-
-export { printDocument } from './printEngine';
 export type { PrintDocumentOptions, PrintKind } from './printEngine';
+export { printDocument } from './printEngine';
+export type { PrintOrientation, PrintShellOptions } from './printShell';
+export { deriveOrientation, escapeHtml, wrapPrintHTML } from './printShell';
+export type { OpenPrintWindowOptions } from './printWindow';
+export { mmToPopupSize, openPrintWindow, printViaIframe } from './printWindow';

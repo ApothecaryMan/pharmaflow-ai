@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { type AlertData, useAlert } from '../../../features/alerts/AlertContext';
 import { getRelativeTime } from '../../../../utils/dateFormatter';
+import { type AlertData, useAlert } from '../../../features/alerts/AlertContext';
 import { StatusBarItem } from '../StatusBarItem';
 
 interface NotificationBellProps {
@@ -68,7 +68,10 @@ const NotificationItem: React.FC<{
     </span>
     <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : ''}`}>
       {notification.title && (
-        <p className='text-[10px] font-bold text-(--text-primary) uppercase tracking-wider mb-0.5' dir='auto'>
+        <p
+          className='text-[10px] font-bold text-(--text-primary) uppercase tracking-wider mb-0.5'
+          dir='auto'
+        >
           {notification.title}
         </p>
       )}
@@ -101,7 +104,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notificationHistory.length - lastSeenCount;
-  const displayedNotifications = useMemo(() => notificationHistory.slice().reverse().slice(0, 50), [notificationHistory]);
+  const displayedNotifications = useMemo(
+    () => notificationHistory.slice().reverse().slice(0, 50),
+    [notificationHistory]
+  );
   const isRTL = language === 'AR';
 
   // Close dropdown when clicking outside
@@ -142,7 +148,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
           {/* Dropdown Header */}
           <div className='flex items-center justify-between px-3 py-2 border-b border-(--border-divider)'>
-            <span className={`text-sm font-semibold text-(--text-primary) ${isRTL ? 'text-right w-full' : ''}`} dir='auto'>{t.notifications}</span>
+            <span
+              className={`text-sm font-semibold text-(--text-primary) ${isRTL ? 'text-right w-full' : ''}`}
+              dir='auto'
+            >
+              {t.notifications}
+            </span>
           </div>
 
           {/* Notifications Scroll Area */}

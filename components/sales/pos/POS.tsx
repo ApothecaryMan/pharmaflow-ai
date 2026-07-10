@@ -3,7 +3,6 @@ import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { UserRole } from '../../../config/permissions';
 import { useAlert, useSettings } from '../../../context';
-import { useAuthStore } from '../../../stores/authStore';
 import { getLocationName } from '../../../data/locations';
 import { useInventorySearch } from '../../../hooks/inventory/useInventorySearch';
 import { useFilterDropdown } from '../../../hooks/layout/useFilterDropdown';
@@ -14,6 +13,7 @@ import { permissionsService } from '../../../services/auth/permissionsService';
 import { batchService, getGroupingKey } from '../../../services/inventory/batchService';
 import { pricingService } from '../../../services/sales/pricingService';
 import { inventorySearchEngine } from '../../../services/search/drugSearchService';
+import { useAuthStore } from '../../../stores/authStore';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
 import { formatExpiryDate, getExpiryColorClass } from '../../../utils/expiryUtils';
@@ -25,13 +25,13 @@ import { resolveDisplayStock } from '../../../utils/stockUtils';
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
 import type { FilterConfig } from '../../common/FilterPill';
+import { HoverDropdown } from '../../common/HoverDropdown';
 import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
 import { usePosSounds } from '../../common/hooks/usePosSounds';
 import { Modal } from '../../common/Modal';
 import { SearchEngineInput } from '../../common/SearchEngineInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { SmartAutocomplete } from '../../common/SmartInputs';
-import { HoverDropdown } from '../../common/HoverDropdown';
 import { PriceDisplay, TanStackTable } from '../../common/TanStackTable';
 import { useStatusBar } from '../../layout/StatusBar';
 import { DeliveryOrdersModal } from './DeliveryOrdersModal';
@@ -103,8 +103,8 @@ export const POS: React.FC<POSProps> = ({
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
 
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const isLoading = useAuthStore(s => s.isLoading);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const isLoading = useAuthStore((s) => s.isLoading);
 
   const {
     tabs,
@@ -207,9 +207,12 @@ export const POS: React.FC<POSProps> = ({
 
   // Initialize Smart Barcode Scanner (Background Detection)
   // Callback to trim leaked characters from React state when scanner is detected
-  const handleLeakedChars = useCallback((leakedCount: number) => {
-    setSearch((prev: string) => prev.slice(0, -leakedCount));
-  }, [setSearch]);
+  const handleLeakedChars = useCallback(
+    (leakedCount: number) => {
+      setSearch((prev: string) => prev.slice(0, -leakedCount));
+    },
+    [setSearch]
+  );
 
   const { isScanningRef } = useBarcodeScanner({
     inventory,
@@ -883,16 +886,7 @@ export const POS: React.FC<POSProps> = ({
         },
       }),
     ],
-    [
-      color,
-      t,
-      language,
-      selectedUnits,
-      selectedBatches,
-      textTransform,
-      highlightMatch,
-      search,
-    ]
+    [color, t, language, selectedUnits, selectedBatches, textTransform, highlightMatch, search]
   );
 
   return (

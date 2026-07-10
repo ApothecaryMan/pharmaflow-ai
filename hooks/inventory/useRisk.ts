@@ -5,9 +5,9 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
+import { useAuthStore } from '../../stores/authStore';
 import type { ExpiryRiskItem, RiskSummary } from '../../types/intelligence';
 
 interface UseRiskResult {
@@ -19,7 +19,7 @@ interface UseRiskResult {
 }
 
 export function useRisk(): UseRiskResult {
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const [summary, setSummary] = useState<RiskSummary | null>(null);
   const [items, setItems] = useState<ExpiryRiskItem[]>([]);
   const [loading, setLoading] = useState(true);
