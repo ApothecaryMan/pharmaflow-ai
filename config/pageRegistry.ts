@@ -62,6 +62,7 @@ const AnimatedCounterLab = React.lazy(() => import('../components/test/AnimatedC
 const FilterDropdownTest = React.lazy(() => import('../components/test/FilterDropdownTest').then(m => ({ default: m.FilterDropdownTest })));
 const ModalTests = React.lazy(() => import('../components/test/ModalTests').then(m => ({ default: m.ModalTests })));
 const ScrollbarLab = React.lazy(() => import('../components/test/ScrollbarLab').then(m => ({ default: m.ScrollbarLab })));
+const CosmoceuticalPage = React.lazy(() => import('../components/cosmoceutical/CosmoceuticalPage').then(m => ({ default: m.CosmoceuticalPage })));
 const IntelligenceDashboard = React.lazy(() => import('../pages/IntelligenceDashboard').then(m => ({ default: m.IntelligenceDashboard })));
 
 export interface InjectedPageProps {
@@ -519,6 +520,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'sales',
     requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['cash-register'],
+  },
+  cosmoceutical: {
+    id: 'cosmoceutical',
+    component: CosmoceuticalPage,
+    menuLabel: 'Cosmoceutical',
+    menuLabelAr: 'المستحضرات التجميلية الطبية',
+    icon: 'science',
+    category: 'cosmoceutical',
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
+    permission: PERMISSIONS_MAPPING['inventory'],
+    layout: 'full-screen',
   },
   expenses: {
     id: 'expenses',

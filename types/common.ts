@@ -77,7 +77,8 @@ export type ViewState =
   | 'scrollbar-lab'
   | 'a5-invoice-designer'
   | 'filter-dropdown-test'
-  | 'expenses';
+  | 'expenses'
+  | 'cosmoceutical';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

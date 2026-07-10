@@ -31,6 +31,7 @@ export const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
   customers: 'customers',
   'customer-overview': 'customer-overview',
   prescriptions: 'drug-interactions',
+  cosmoceutical: 'cosmoceutical',
   finance: 'expenses',
   reports: 'intelligence',
   hr: 'staff-overview',
@@ -718,11 +719,53 @@ export const PHARMACY_MENU: MenuItem[] = [
     ],
   },
   {
+    id: 'cosmoceutical',
+    label: 'Cosmoceutical',
+    icon: 'science',
+    permission: 'inventory.view',
+    order: 7,
+    hasPage: true,
+    submenus: [
+      {
+        id: 'cosmoceutical-products',
+        label: 'Cosmoceutical Products',
+        items: [
+          { label: 'Product Catalog', view: 'cosmoceutical', icon: 'package_2' },
+          { label: 'Skincare', icon: 'sparkles' },
+          { label: 'Haircare', icon: 'spa' },
+          { label: 'Sun Protection', icon: 'wb_sunny' },
+          { label: 'Anti-Aging', icon: 'hourglass_top' },
+          { label: 'Body Care', icon: 'self_improvement' },
+        ],
+      },
+      {
+        id: 'cosmoceutical-brands',
+        label: 'Brands & Suppliers',
+        items: [
+          { label: 'Brand Directory', icon: 'branding_watermark' },
+          { label: 'Supplier Catalog', icon: 'inventory_2' },
+          { label: 'New Arrivals', icon: 'new_releases' },
+          { label: 'Promotions', icon: 'local_offer' },
+        ],
+      },
+      {
+        id: 'cosmoceutical-analytics',
+        label: 'Analytics',
+        items: [
+          { label: 'Sales by Category', icon: 'bar_chart' },
+          { label: 'Top Brands', icon: 'star' },
+          { label: 'Slow Movers', icon: 'trending_down' },
+          { label: 'Stock Valuation', icon: 'attach_money' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'finance',
     label: 'Finance',
     icon: 'payments',
     permission: 'reports.view_financial',
-    order: 7,
+    order: 8,
     hasPage: false,
     submenus: [
       {
@@ -813,7 +856,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     label: 'Reports',
     icon: 'bar_chart',
     permission: 'reports.view_inventory',
-    order: 8,
+    order: 9,
     hasPage: false,
     submenus: [
       {
@@ -940,7 +983,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     label: 'HR',
     icon: 'badge',
     permission: 'users.view',
-    order: 9,
+    order: 10,
     hasPage: false,
     submenus: [
       {
@@ -1026,7 +1069,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     label: 'Compliance',
     icon: 'verified',
     permission: 'inventory.view',
-    order: 10,
+    order: 11,
     hasPage: false,
     submenus: [
       {
@@ -1094,7 +1137,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     label: 'Settings',
     icon: 'settings',
     permission: 'settings.view',
-    order: 11,
+    order: 12,
     hasPage: false,
     submenus: [
       {
@@ -1206,7 +1249,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     label: 'Test',
     icon: 'science',
     permission: 'system.debug',
-    order: 12,
+    order: 13,
     hasPage: true,
     submenus: [
       {

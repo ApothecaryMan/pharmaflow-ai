@@ -19,6 +19,7 @@ export const ROUTES = {
   INTELLIGENCE: 'intelligence' as ViewState,
   STOCK_MOVEMENT: 'stock-movement' as ViewState,
   EXPIRY_CALENDAR: 'expiry-calendar' as ViewState,
+  COSMOCEUTICAL: 'cosmoceutical',
   PORTAL: 'employee-portal',
 } as const;
 
