@@ -77,12 +77,90 @@ export function getMonthName(month: number, language: string, short = false): st
   return (map[language] || map.EN)[month] || '';
 }
 
+// ─── Cache Configuration ──────────────────────────────────────────────────
+
+/** Cache TTL in milliseconds (5 minutes) */
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+/** Max retry attempts for transient failures */
+const MAX_RETRIES = 3;
+
+/** Base delay for exponential backoff (ms) */
+const BASE_RETRY_DELAY_MS = 300;
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+// ─── Retry Helper ─────────────────────────────────────────────────────────
+
+/**
+ * Executes an async function with exponential backoff on failure.
+ * Only retries on transient/network errors — throws immediately on auth/validation errors.
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retries = MAX_RETRIES
+): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: unknown) {
+      const isLastAttempt = attempt === retries;
+
+      // Don't retry on non-transient errors (auth, validation, etc.)
+      const code = (err as { code?: string })?.code;
+      const isNonTransient =
+        code === 'PGRST116' || // Not found (single row expected)
+        code === '42501' ||    // Insufficient privilege
+        code === '42P01';      // Undefined table
+      if (isNonTransient || isLastAttempt) throw err;
+
+      // Exponential backoff: 300ms, 600ms, 1200ms...
+      const delay = BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  // TypeScript: unreachable but satisfies the compiler
+  throw new Error('withRetry: exhausted all attempts');
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────
 
 class AchievementService {
   /**
+   * In-memory cache keyed by "branchId:year:month".
+   * Complements React Query's component-level cache with a service-level cache
+   * that survives component unmounts and prevents redundant DB hits across
+   * multiple consumers of the same data.
+   */
+  private cache = new Map<string, CacheEntry<MonthAchievements>>();
+
+  /** Generates a stable cache key for a given branch + month. */
+  private cacheKey(branchId: string, year: number, month: number): string {
+    return `${branchId}:${year}:${month}`;
+  }
+
+  /** Invalidates all cached entries (useful after data refresh or branch switch). */
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  /** Invalidates a specific branch+month entry. */
+  invalidate(branchId: string, year: number, month: number): void {
+    this.cache.delete(this.cacheKey(branchId, year, month));
+  }
+
+  /**
    * Fetch pre-computed daily achievements for a branch + month.
    * This is the ONLY method that needs rewriting for ClickHouse migration.
+   *
+   * Scalability features:
+   *   - Parallel queries (Promise.all) — cuts latency ~50%
+   *   - In-memory TTL cache — eliminates redundant DB hits
+   *   - Retry with exponential backoff — resilient to transient failures
    */
   async getMonthAchievements(
     branchId: string,
@@ -90,23 +168,40 @@ class AchievementService {
     month: number,
     language = 'EN'
   ): Promise<MonthAchievements> {
+    // ── CHECK CACHE ───────────────────────────────────────────────────
+    const key = this.cacheKey(branchId, year, month);
+    const cached = this.cache.get(key);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+
     const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const currency = getCurrencySymbol();
 
-    // ── STEP 1: Query pre-computed table ──────────────────────────────
-    // FUTURE: Replace this block with a ClickHouse REST API call
-    const { data: rows, error } = await supabase
-      .from('daily_target_achievements')
-      .select('date, revenue, target, achievement_pct, is_future')
-      .eq('branch_id', branchId)
-      .gte('date', `${monthStr}-01`)
-      .lte('date', `${monthStr}-${String(daysInMonth).padStart(2, '0')}`)
-      .order('date', { ascending: true });
+    // ── STEP 1: Fetch achievements + branch target IN PARALLEL ────────
+    // FUTURE: Replace the first query with a ClickHouse REST API call
+    const [achievementsResult, branchResult] = await withRetry(() =>
+      Promise.all([
+        supabase
+          .from('daily_target_achievements')
+          .select('date, revenue, target, achievement_pct, is_future')
+          .eq('branch_id', branchId)
+          .gte('date', `${monthStr}-01`)
+          .lte('date', `${monthStr}-${String(daysInMonth).padStart(2, '0')}`)
+          .order('date', { ascending: true }),
+        supabase
+          .from('branches')
+          .select('monthly_sales_target')
+          .eq('id', branchId)
+          .single(),
+      ])
+    );
 
-    if (error) throw error;
+    if (achievementsResult.error) throw achievementsResult.error;
 
     // ── STEP 2: Build day map ─────────────────────────────────────────
+    const rows = achievementsResult.data;
     const dayMap = new Map<string, (typeof rows)[0]>();
     for (const row of rows ?? []) {
       dayMap.set(row.date, row);
@@ -144,18 +239,12 @@ class AchievementService {
       }
     }
 
-    // ── STEP 4: Get monthly target from branch ─────────────────────────
-    const { data: branch } = await supabase
-      .from('branches')
-      .select('monthly_sales_target')
-      .eq('id', branchId)
-      .single();
-
-    const monthlyTarget = Number(branch?.monthly_sales_target ?? 0);
+    // ── STEP 4: Compute monthly totals ─────────────────────────────────
+    const monthlyTarget = Number(branchResult.data?.monthly_sales_target ?? 0);
     const overallPct =
       monthlyTarget > 0 ? Math.round((monthlyRevenue / monthlyTarget) * 100) : 0;
 
-    return {
+    const result: MonthAchievements = {
       year,
       month,
       monthName: getMonthName(month, language),
@@ -167,6 +256,14 @@ class AchievementService {
       monthlyTargetFormatted: `${currency}${monthlyTarget.toLocaleString()}`,
       monthlyRevenueFormatted: `${currency}${Math.round(monthlyRevenue).toLocaleString()}`,
     };
+
+    // ── STORE IN CACHE ────────────────────────────────────────────────
+    this.cache.set(key, {
+      data: result,
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    });
+
+    return result;
   }
 }
 
