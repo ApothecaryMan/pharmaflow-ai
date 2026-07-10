@@ -7,6 +7,7 @@ import {
 } from '../../services/dashboard/achievementService';
 import { formatCurrency } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { Tooltip } from './Tooltip';
 
 interface MonthlyHeatmapProps {
   days: DayAchievement[];
@@ -115,32 +116,35 @@ export const MonthlyHeatmap: React.FC<MonthlyHeatmapProps> = ({
       {/* Dot grid — one dot per day of the month, color fills by achievement */}
       <div className='grid grid-cols-7 gap-2'>
         {days.map((cell) => (
-          <div key={cell.day} className='relative group/dot flex items-center justify-center'>
-            <div
-              className={`w-5 h-5 rounded-[5px] cursor-pointer transition-all hover:scale-150 ${getColorForPct(cell.achievementPct, cell.isFuture)}`}
-              title={`${monthName} ${cell.day}: ${cell.achievementPct}%`}
-            />
-            <div className='absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/dot:block z-30 pointer-events-none'>
-              <div className='bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap'>
-                <p className='font-bold'>
+          <Tooltip
+            key={cell.day}
+            position='top'
+            className='flex items-center justify-center'
+            content={
+              <div className='flex flex-col text-start gap-0.5 text-[11px] leading-tight'>
+                <p className='font-bold mb-0.5'>
                   {monthName} {cell.day}
                 </p>
                 {!cell.isFuture ? (
                   <>
                     <p>
-                      {isAR ? 'الإيرادات' : 'Revenue'}: {cell.revenue.toLocaleString()}
+                      {isAR ? 'الإيرادات' : 'Revenue'}: {formatCurrency(cell.revenue, undefined, language, 0)}
                     </p>
                     <p>
-                      {isAR ? 'الهدف' : 'Target'}: {cell.target.toLocaleString()}
+                      {isAR ? 'الهدف' : 'Target'}: {formatCurrency(cell.target, undefined, language, 0)}
                     </p>
-                    <p className='font-bold'>{cell.achievementPct}%</p>
+                    <p className='font-bold mt-0.5'>{cell.achievementPct}%</p>
                   </>
                 ) : (
                   <p className='opacity-60'>{isAR ? 'لم يأت بعد' : 'Upcoming'}</p>
                 )}
               </div>
-            </div>
-          </div>
+            }
+          >
+            <div
+              className={`w-5 h-5 rounded-[5px] cursor-pointer transition-all hover:scale-150 ${getColorForPct(cell.achievementPct, cell.isFuture)}`}
+            />
+          </Tooltip>
         ))}
       </div>
 
@@ -151,21 +155,21 @@ export const MonthlyHeatmap: React.FC<MonthlyHeatmapProps> = ({
             {isAR ? 'الهدف اليومي' : 'Daily target'}:
           </span>
           <div className='flex items-center gap-1.5'>
-            <div className='w-3 h-3 rounded-[3px] bg-yellow-400' />
+            <div className='w-4 h-4 rounded-[4px] bg-yellow-400' />
             <span className='text-[10px] text-(--text-tertiary)'>
               {isAR ? 'تجاوز' : 'Over'}
             </span>
           </div>
           <div className='flex items-center gap-1.5'>
-            <div className='w-3 h-3 rounded-[3px] bg-emerald-500' />
+            <div className='w-4 h-4 rounded-[4px] bg-emerald-500' />
             <span className='text-[10px] text-(--text-tertiary)'>≥80%</span>
           </div>
           <div className='flex items-center gap-1.5'>
-            <div className='w-3 h-3 rounded-[3px] bg-amber-500' />
+            <div className='w-4 h-4 rounded-[4px] bg-amber-500' />
             <span className='text-[10px] text-(--text-tertiary)'>≥50%</span>
           </div>
           <div className='flex items-center gap-1.5'>
-            <div className='w-3 h-3 rounded-[3px] bg-red-500' />
+            <div className='w-4 h-4 rounded-[4px] bg-red-500' />
             <span className='text-[10px] text-(--text-tertiary)'>
               {isAR ? '<50%' : '<50%'}
             </span>

@@ -11,7 +11,7 @@
  */
 
 import { supabase } from '../../lib/supabase';
-import { getCurrencySymbol } from '../../utils/currency';
+import { formatCurrency } from '../../utils/currency';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -139,8 +139,8 @@ class AchievementService {
   private cache = new Map<string, CacheEntry<MonthAchievements>>();
 
   /** Generates a stable cache key for a given branch + month. */
-  private cacheKey(branchId: string, year: number, month: number): string {
-    return `${branchId}:${year}:${month}`;
+  private cacheKey(branchId: string, year: number, month: number, language: string): string {
+    return `${branchId}:${year}:${month}:${language}`;
   }
 
   /** Invalidates all cached entries (useful after data refresh or branch switch). */
@@ -149,8 +149,8 @@ class AchievementService {
   }
 
   /** Invalidates a specific branch+month entry. */
-  invalidate(branchId: string, year: number, month: number): void {
-    this.cache.delete(this.cacheKey(branchId, year, month));
+  invalidate(branchId: string, year: number, month: number, language: string): void {
+    this.cache.delete(this.cacheKey(branchId, year, month, language));
   }
 
   /**
@@ -169,7 +169,7 @@ class AchievementService {
     language = 'EN'
   ): Promise<MonthAchievements> {
     // ── CHECK CACHE ───────────────────────────────────────────────────
-    const key = this.cacheKey(branchId, year, month);
+    const key = this.cacheKey(branchId, year, month, language);
     const cached = this.cache.get(key);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.data;
@@ -177,7 +177,6 @@ class AchievementService {
 
     const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const currency = getCurrencySymbol();
 
     // ── STEP 1: Fetch achievements + branch target IN PARALLEL ────────
     // FUTURE: Replace the first query with a ClickHouse REST API call
@@ -253,8 +252,8 @@ class AchievementService {
       monthlyTarget,
       monthlyRevenue: Math.round(monthlyRevenue * 100) / 100,
       overallPct,
-      monthlyTargetFormatted: `${currency}${monthlyTarget.toLocaleString()}`,
-      monthlyRevenueFormatted: `${currency}${Math.round(monthlyRevenue).toLocaleString()}`,
+      monthlyTargetFormatted: formatCurrency(monthlyTarget, undefined, language, 0),
+      monthlyRevenueFormatted: formatCurrency(Math.round(monthlyRevenue), undefined, language, 0),
     };
 
     // ── STORE IN CACHE ────────────────────────────────────────────────
