@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useSettings } from '../../../context/SettingsContext';
+import { useTypography } from '../../../context/TypographyContext';
 import { formatCompactCurrencyParts, formatCurrencyParts } from '../../../utils/currency';
 
 export const PriceDisplay: React.FC<{
@@ -8,7 +8,7 @@ export const PriceDisplay: React.FC<{
   compact?: boolean;
   showSign?: boolean;
 }> = ({ value, size = 'base', compact = false, showSign = false }) => {
-  const { language } = useSettings();
+  const { language } = useTypography();
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
 
   const absoluteValue = showSign ? Math.abs(value) : value;

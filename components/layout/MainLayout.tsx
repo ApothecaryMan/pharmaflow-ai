@@ -5,16 +5,18 @@ import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutCo
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
+import { useGlobalHelp } from '../../context/HelpContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useUI } from '../../context/UIContext';
 import type { ViewState } from '../../types';
 import { useAutoSystemBarColor } from '../../utils/systemBars';
 import { ContextMenuProvider, useContextMenu } from '../common/ContextMenu';
+import { HelpModal } from '../common/HelpModal';
 import { DynamicEventLayer } from './DynamicEventLayer';
 import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
 import { SidebarContent } from './SidebarContent';
 import { StatusBar } from './StatusBar';
-import { useGlobalHelp } from '../../context/HelpContext';
-import { HelpModal } from '../common/HelpModal';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -61,7 +63,11 @@ const GlobalContextMenuWrapper: React.FC<{
 
         // Allow default context menu on inputs and textareas
         const target = e.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        if (
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable
+        ) {
           return;
         }
 
@@ -81,12 +87,12 @@ const GlobalContextMenuWrapper: React.FC<{
           },
           ...(helpContent
             ? [
-              {
-                label: t.global?.actions?.instructions || 'التعليمات',
-                icon: 'menu_book',
-                action: () => setIsHelpOpen(true),
-              },
-            ]
+                {
+                  label: t.global?.actions?.instructions || 'التعليمات',
+                  icon: 'menu_book',
+                  action: () => setIsHelpOpen(true),
+                },
+              ]
             : []),
         ]);
       }}
@@ -118,18 +124,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const {
     theme,
     setTheme,
-    language,
     darkMode,
     setDarkMode,
-    sidebarVisible,
-    setSidebarVisible,
-    navStyle,
-    hideInactiveModules,
-    sidebarStyle,
     backgroundPattern,
     backgroundPatternOpacity,
     backgroundPatternUseThemeColor,
-  } = useSettings();
+  } = useTheme();
+
+  const { sidebarVisible, setSidebarVisible, navStyle, hideInactiveModules, sidebarStyle } =
+    useUI();
+
+  const { language } = useSettings();
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
   useAutoSystemBarColor(
@@ -144,7 +149,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const isActuallyCollapsed = sidebarStyle === 2 || (sidebarStyle === 3 && !isSidebarHovered);
 
   const { isHelpOpen, setIsHelpOpen, helpContent } = useGlobalHelp();
-
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -270,10 +274,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               {/* Actual Page Surface */}
               <main
                 className={`flex-1 h-full overflow-hidden relative main-layout-content${backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) ? ' bg-pattern-' + backgroundPattern : ''}${backgroundPattern === 'mandala' && !backgroundPatternUseThemeColor ? ' bg-pattern-mandala-accent-theme' : ''}`}
-                style={{
-                  '--bg-pattern-opacity': backgroundPatternOpacity / 100,
-                  '--bg-pattern-color': backgroundPatternUseThemeColor ? 'var(--primary-500)' : 'var(--text-tertiary)',
-                } as React.CSSProperties}
+                style={
+                  {
+                    '--bg-pattern-opacity': backgroundPatternOpacity / 100,
+                    '--bg-pattern-color': backgroundPatternUseThemeColor
+                      ? 'var(--primary-500)'
+                      : 'var(--text-tertiary)',
+                  } as React.CSSProperties
+                }
               >
                 <div
                   className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}

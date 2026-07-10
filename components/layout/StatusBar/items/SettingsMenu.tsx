@@ -1,35 +1,44 @@
-import type React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
-import { useSettings } from '../../../../context';
-import { useAuthStore } from '../../../../stores/authStore';
+import { useNotification } from '../../../../context/NotificationContext';
+import { useTheme } from '../../../../context/ThemeContext';
+import { useTypography } from '../../../../context/TypographyContext';
+import { useUI } from '../../../../context/UIContext';
 import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import { permissionsService } from '../../../../services/auth/permissionsService';
+import { useAuthStore } from '../../../../stores/authStore';
 import type { Language } from '../../../../types';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { Tooltip } from '../../../common/Tooltip';
 import { StatusBarItem } from '../StatusBarItem';
 
+// --- Module-level Style Constants ---
+
+const iconFontSizeStyle: React.CSSProperties = { fontSize: 'var(--icon-settings)' };
+const dirRtlStyle: React.CSSProperties = { direction: 'rtl' };
+const dirLtrStyle: React.CSSProperties = { direction: 'ltr' };
+
 // --- Utility Components & Helpers ---
 
-const SettingsRow: React.FC<{
+const SettingsRow = React.memo<{
   icon: string;
   label: string;
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
-}> = ({ icon, label, children, className = '', onClick }) => (
+}>(({ icon, label, children, className = '', onClick }) => (
   <div
-    className={`flex items-center justify-between transition-colors px-2 ${onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
-      } ${className}`}
+    className={`flex items-center justify-between transition-colors px-2 ${
+      onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
+    } ${className}`}
     onClick={onClick}
   >
     <div className='flex items-center gap-2'>
       <span
         className={`material-symbols-rounded text-(--text-secondary) transition-colors ${onClick ? 'group-hover:text-(--text-primary)' : ''}`}
-        style={{ fontSize: 'var(--icon-settings)' }}
+        style={iconFontSizeStyle}
       >
         {icon}
       </span>
@@ -37,9 +46,9 @@ const SettingsRow: React.FC<{
     </div>
     <div className='flex items-center gap-2'>{children}</div>
   </div>
-);
+));
 
-const SubmenuWrapper: React.FC<{
+const SubmenuWrapper = React.memo<{
   isOpen: boolean;
   isMobile: boolean;
   children: React.ReactNode;
@@ -47,16 +56,13 @@ const SubmenuWrapper: React.FC<{
   side?: 'left' | 'right';
   align?: 'top' | 'bottom';
   isRTL?: boolean;
-}> = ({ isOpen, isMobile, children, title, side = 'left', align = 'top', isRTL = false }) => {
+}>(({ isOpen, isMobile, children, title, side = 'left', align = 'top', isRTL = false }) => {
   if (!isOpen) return null;
 
-  const mobileClasses =
-    'relative w-full mt-2 p-2.5 space-y-2 rounded-xl bg-(--border-divider)';
+  const mobileClasses = 'relative w-full mt-2 p-2.5 space-y-2 rounded-xl bg-(--border-divider)';
 
   const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-72 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)`;
 
-  // In LTR: side 'left' → end (opens left), side 'right' → start (opens right)
-  // In RTL: side 'left' → start (opens left),  side 'right' → end (opens right)
   const useInlineStart = (side === 'right') !== isRTL;
   const desktopStyle: React.CSSProperties = useInlineStart
     ? { insetInlineStart: 'calc(100% + 12px)' }
@@ -75,9 +81,9 @@ const SubmenuWrapper: React.FC<{
       {children}
     </div>
   );
-};
+});
 
-const SubmenuSection: React.FC<{
+const SubmenuSection = React.memo<{
   id: string;
   icon: string;
   label: string;
@@ -88,18 +94,19 @@ const SubmenuSection: React.FC<{
   rowExtra?: React.ReactNode;
   isRTL?: boolean;
   children: React.ReactNode;
-}> = ({
-  id,
-  icon,
-  label,
-  expandedSubmenu,
-  onToggle,
-  isMobile,
-  title,
-  rowExtra,
-  isRTL = false,
-  children,
-}) => {
+}>(
+  ({
+    id,
+    icon,
+    label,
+    expandedSubmenu,
+    onToggle,
+    isMobile,
+    title,
+    rowExtra,
+    isRTL = false,
+    children,
+  }) => {
     const isOpen = expandedSubmenu === id;
     const { ref, position, checkPosition } = useSmartPosition({ requiredWidth: 256 });
 
@@ -113,7 +120,7 @@ const SubmenuSection: React.FC<{
           {rowExtra}
           <span
             className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${isOpen ? 'rotate-180' : ''}`}
-            style={{ fontSize: 'var(--icon-settings)' }}
+            style={iconFontSizeStyle}
           >
             chevron_left
           </span>
@@ -130,7 +137,8 @@ const SubmenuSection: React.FC<{
         </SubmenuWrapper>
       </div>
     );
-  };
+  }
+);
 
 export interface SettingsMenuProps {
   dropDirection?: 'up' | 'down';
@@ -151,26 +159,73 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   defaultOpen = false,
   onClose,
 }) => {
-  const settings = useSettings();
   const {
-    language,
+    theme: currentTheme,
     darkMode,
     setDarkMode,
     setTheme,
     availableThemes,
-    theme: currentTheme,
+    vividBg,
+    setVividBg,
+    backgroundPattern,
+    setBackgroundPattern,
+    backgroundPatternOpacity,
+    setBackgroundPatternOpacity,
+    backgroundPatternUseThemeColor,
+    setBackgroundPatternUseThemeColor,
+  } = useTheme();
+
+  const {
+    navStyle,
+    setNavStyle,
+    sidebarStyle,
+    setSidebarStyle,
+    switchVariant,
+    setSwitchVariant,
+    badgeStyle,
+    setBadgeStyle,
+    borderRadius,
+    setBorderRadius,
+    cardBorderLight,
+    setCardBorderLight,
+    modalPresentationMode,
+    setModalPresentationMode,
+    sidebarModalWidth,
+    setSidebarModalWidth,
+    customCardCss,
+    setCustomCardCss,
+    enableCustomCardCss,
+    setEnableCustomCardCss,
+    hideInactiveModules,
+    setHideInactiveModules,
+    developerMode,
+    setDeveloperMode,
+    reducedMotion,
+    setReducedMotion,
+    disableCSSTransitions,
+    setDisableCSSTransitions,
+    navbarMenuLayout,
+    setNavbarMenuLayout,
+  } = useUI();
+
+  const {
+    language,
     fontFamilyEN,
     setFontFamilyEN,
     fontFamilyAR,
     setFontFamilyAR,
     textTransform,
     setTextTransform,
-    hideInactiveModules,
-    setHideInactiveModules,
-    navStyle,
-    setNavStyle,
-    developerMode,
-    setDeveloperMode,
+    numeralSystem,
+    setNumeralSystem,
+    graphicStyle,
+    setGraphicStyle,
+    graphicFontVariant,
+    setGraphicFontVariant,
+    setLanguage,
+  } = useTypography();
+
+  const {
     showTicker,
     setShowTicker,
     showNotificationBell,
@@ -185,56 +240,44 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setShowTickerCustomers,
     showTickerTopSeller,
     setShowTickerTopSeller,
-    borderRadius,
-    setBorderRadius,
-    sidebarStyle,
-    setSidebarStyle,
-    graphicStyle,
-    setGraphicStyle,
-    graphicFontVariant,
-    setGraphicFontVariant,
-    cardBorderLight,
-    setCardBorderLight,
-    enableCustomCardCss,
-    setEnableCustomCardCss,
-    customCardCss,
-    setCustomCardCss,
-    numeralSystem,
-    setNumeralSystem,
-    switchVariant,
-    setSwitchVariant,
-    badgeStyle,
-    setBadgeStyle,
-    modalPresentationMode,
-    setModalPresentationMode,
-    sidebarModalWidth,
-    setSidebarModalWidth,
-    navbarMenuLayout,
-    setNavbarMenuLayout,
-    reducedMotion,
-    setReducedMotion,
-    disableCSSTransitions,
-    setDisableCSSTransitions,
-    vividBg,
-    setVividBg,
-    backgroundPattern,
-    setBackgroundPattern,
-    backgroundPatternOpacity,
-    setBackgroundPatternOpacity,
-    backgroundPatternUseThemeColor,
-    setBackgroundPatternUseThemeColor,
-  } = settings;
+  } = useNotification();
 
-  const branches = useAuthStore(s => s.branches);
-  const activeBranchId = useAuthStore(s => s.activeBranchId);
-  const updateBranch = useAuthStore(s => s.updateBranch);
-  const activeBranch = useMemo(() => branches.find(b => b.id === activeBranchId), [branches, activeBranchId]);
+  const branches = useAuthStore((s) => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const updateBranch = useAuthStore((s) => s.updateBranch);
+  const activeBranch = useMemo(
+    () => branches.find((b) => b.id === activeBranchId),
+    [branches, activeBranchId]
+  );
   const deliveryFee = activeBranch?.deliveryFee ?? 5;
-  const daysInMonth = useMemo(() => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(), []);
-  const dailyTarget = useMemo(() => (activeBranch?.monthlySalesTarget || 0) > 0 ? Math.round((activeBranch?.monthlySalesTarget || 0) / daysInMonth) : 0, [activeBranch?.monthlySalesTarget, daysInMonth]);
+  const daysInMonth = useMemo(
+    () => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(),
+    []
+  );
+  const dailyTarget = useMemo(
+    () =>
+      (activeBranch?.monthlySalesTarget || 0) > 0
+        ? Math.round((activeBranch?.monthlySalesTarget || 0) / daysInMonth)
+        : 0,
+    [activeBranch?.monthlySalesTarget, daysInMonth]
+  );
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [localTarget, setLocalTarget] = useState(activeBranch?.monthlySalesTarget || 0);
-  useEffect(() => { setLocalTarget(activeBranch?.monthlySalesTarget || 0); }, [activeBranch?.monthlySalesTarget]);
+  const localTargetRef = useRef(localTarget);
+  const prevBranchIdRef = useRef(activeBranchId);
+
+  useEffect(() => {
+    if (prevBranchIdRef.current !== activeBranchId) {
+      clearTimeout(saveTimerRef.current);
+      if (prevBranchIdRef.current) {
+        updateBranch?.(prevBranchIdRef.current, { monthlySalesTarget: localTargetRef.current });
+      }
+      prevBranchIdRef.current = activeBranchId;
+      const newTarget = activeBranch?.monthlySalesTarget || 0;
+      setLocalTarget(newTarget);
+      localTargetRef.current = newTarget;
+    }
+  }, [activeBranchId, activeBranch?.monthlySalesTarget, updateBranch]);
 
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
@@ -248,10 +291,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
   );
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.matchMedia('(max-width: 768px)').matches);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const mq = window.matchMedia('(max-width: 768px)');
+    const checkMobile = (e: MediaQueryListEvent | MediaQueryList) => setIsMobile(e.matches);
+    checkMobile(mq);
+    mq.addEventListener('change', checkMobile);
+    return () => mq.removeEventListener('change', checkMobile);
   }, []);
 
   const closeAllSubmenus = useCallback(() => {
@@ -279,9 +323,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleSubmenu = (name: string) => {
+  const toggleSubmenu = useCallback((name: string) => {
     setExpandedSubmenu((prev) => (prev === name ? null : name));
-  };
+  }, []);
 
   const menuContainerClasses = useMemo(() => {
     if (isMobile) {
@@ -317,7 +361,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             onClick={() => setIsOpen(!isOpen)}
             className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-primary) opacity-85 hover:opacity-100'}`}
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-settings)' }}>
+            <span className='material-symbols-rounded' style={iconFontSizeStyle}>
               settings
             </span>
           </button>
@@ -328,7 +372,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           {isMobile && (
             <div
               className='fixed inset-0 bg-black/40 z-140 animate-fade-in'
-              onClick={() => { setIsOpen(false); onClose?.(); }}
+              onClick={() => {
+                setIsOpen(false);
+                onClose?.();
+              }}
             />
           )}
           <div className={menuContainerClasses}>
@@ -336,7 +383,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <span className='text-xs font-bold text-(--text-primary)'>{t.settings}</span>
             </div>
 
-            <div className='p-2 space-y-1.5' style={{ direction: isAR ? 'rtl' : 'ltr' }}>
+            <div className='p-2 space-y-1.5' style={isAR ? dirRtlStyle : dirLtrStyle}>
               {/* --- Appearance Section --- */}
               <SubmenuSection
                 isRTL={isAR}
@@ -350,7 +397,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <div className='flex items-center gap-1.5 px-2'>
                   <span
                     className='material-symbols-rounded text-(--text-secondary)'
-                    style={{ fontSize: 'var(--icon-settings)' }}
+                    style={iconFontSizeStyle}
                   >
                     palette
                   </span>
@@ -428,7 +475,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <div className='flex items-center gap-1.5 py-1'>
                       <span
                         className='material-symbols-rounded text-(--text-secondary)'
-                        style={{ fontSize: 'var(--icon-settings)' }}
+                        style={iconFontSizeStyle}
                       >
                         toggle_on
                       </span>
@@ -488,7 +535,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 {/* --- Background Pattern --- */}
                 <div className='border-t border-(--border-divider) my-1 opacity-50' />
                 <div className='flex items-center justify-between px-2 py-1'>
-                  <span className='text-xs font-semibold text-(--text-primary)'>{t.backgroundPattern}</span>
+                  <span className='text-xs font-semibold text-(--text-primary)'>
+                    {t.backgroundPattern}
+                  </span>
                   {backgroundPattern !== 'none' && (
                     <Switch
                       checked={backgroundPatternUseThemeColor ?? true}
@@ -499,48 +548,87 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   )}
                 </div>
                 <div className='flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none px-2'>
-                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise', 'mandala', 'diamond', 'corners', 'cross', 'stars', 'bricks', 'polka', 'abstract', 'circuit', 'ornate'] as const)
+                  {(
+                    [
+                      'none',
+                      'dots',
+                      'grid',
+                      'mesh',
+                      'crosshatch',
+                      'stripes',
+                      'noise',
+                      'mandala',
+                      'diamond',
+                      'corners',
+                      'cross',
+                      'stars',
+                      'bricks',
+                      'polka',
+                      'abstract',
+                      'circuit',
+                      'ornate',
+                    ] as const
+                  )
                     .filter((p) => p !== 'mesh' || (backgroundPatternUseThemeColor && darkMode))
                     .map((p) => (
                       <button
                         key={p}
                         onClick={() => setBackgroundPattern(p)}
-                        className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${backgroundPattern === p
-                          ? 'border-(--primary-500) bg-(--primary-500)/10'
-                          : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
-                          }`}
+                        className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${
+                          backgroundPattern === p
+                            ? 'border-(--primary-500) bg-(--primary-500)/10'
+                            : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
+                        }`}
                       >
                         <div
                           className={`w-10 h-10 rounded-md overflow-hidden ${p !== 'none' ? `bg-pattern-${p}` : 'border border-dashed border-(--border-divider)'}`}
-                          style={p !== 'none' ? {
-                            backgroundImage: 'var(--bg-pattern-image)',
-                            backgroundSize: ({
-                              dots: '10px 10px',
-                              grid: '10px 10px',
-                              crosshatch: '12px 12px',
-                              mesh: '100% 100%',
-                              stripes: '8px 8px',
-                              noise: '24px 24px',
-                              mandala: '18px 18px',
-                              diamond: '40px 40px',
-                              corners: '20px 20px',
-                              cross: '30px 30px',
-                              stars: '35px 35px',
-                            } as Record<string, string>)[p],
-                            backgroundRepeat: 'var(--bg-pattern-repeat)',
-                            backgroundPosition: 'var(--bg-pattern-position)',
-                            '--bg-pattern-color': 'var(--text-tertiary)',
-                          } as React.CSSProperties : undefined}
+                          style={
+                            p !== 'none'
+                              ? ({
+                                  backgroundImage: 'var(--bg-pattern-image)',
+                                  backgroundSize: (
+                                    {
+                                      dots: '10px 10px',
+                                      grid: '10px 10px',
+                                      crosshatch: '12px 12px',
+                                      mesh: '100% 100%',
+                                      stripes: '8px 8px',
+                                      noise: '24px 24px',
+                                      mandala: '18px 18px',
+                                      diamond: '40px 40px',
+                                      corners: '20px 20px',
+                                      cross: '30px 30px',
+                                      stars: '35px 35px',
+                                    } as Record<string, string>
+                                  )[p],
+                                  backgroundRepeat: 'var(--bg-pattern-repeat)',
+                                  backgroundPosition: 'var(--bg-pattern-position)',
+                                  '--bg-pattern-color': 'var(--text-tertiary)',
+                                } as React.CSSProperties)
+                              : undefined
+                          }
                         />
                         <span className='text-[9px] text-(--text-secondary) leading-none whitespace-nowrap'>
-                          {({
-                            none: t.patternNone, dots: t.patternDots, grid: t.patternGrid,
-                            mesh: t.patternMesh, crosshatch: t.patternCrosshatch, stripes: t.patternStripes,
-                            noise: t.patternNoise, diamond: t.patternDiamond, corners: t.patternCorners,
-                            cross: t.patternCross, stars: t.patternStars, bricks: t.patternBricks,
-                            polka: t.patternPolka, abstract: t.patternAbstract, circuit: t.patternCircuit,
-                            ornate: t.patternOrnate,
-                          } as Record<string, string>)[p] ?? t.patternMandala}
+                          {(
+                            {
+                              none: t.patternNone,
+                              dots: t.patternDots,
+                              grid: t.patternGrid,
+                              mesh: t.patternMesh,
+                              crosshatch: t.patternCrosshatch,
+                              stripes: t.patternStripes,
+                              noise: t.patternNoise,
+                              diamond: t.patternDiamond,
+                              corners: t.patternCorners,
+                              cross: t.patternCross,
+                              stars: t.patternStars,
+                              bricks: t.patternBricks,
+                              polka: t.patternPolka,
+                              abstract: t.patternAbstract,
+                              circuit: t.patternCircuit,
+                              ornate: t.patternOrnate,
+                            } as Record<string, string>
+                          )[p] ?? t.patternMandala}
                         </span>
                       </button>
                     ))}
@@ -550,11 +638,13 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <div className='flex items-center gap-2'>
                       <span
                         className='material-symbols-rounded text-(--text-secondary)'
-                        style={{ fontSize: 'var(--icon-settings)' }}
+                        style={iconFontSizeStyle}
                       >
                         opacity
                       </span>
-                      <span className='text-xs font-medium text-(--text-primary)'>{t.patternOpacity}</span>
+                      <span className='text-xs font-medium text-(--text-primary)'>
+                        {t.patternOpacity}
+                      </span>
                     </div>
                     <div className='flex items-center gap-2'>
                       <input
@@ -569,7 +659,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           background: `linear-gradient(90deg, var(--primary-500) ${backgroundPatternOpacity}%, var(--border-divider) ${backgroundPatternOpacity}%)`,
                         }}
                       />
-                      <span className='text-xs text-(--text-secondary) w-8 text-right tabular-nums'>{backgroundPatternOpacity}%</span>
+                      <span className='text-xs text-(--text-secondary) w-8 text-right tabular-nums'>
+                        {backgroundPatternOpacity}%
+                      </span>
                     </div>
                   </div>
                 )}
@@ -660,7 +752,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <SettingsRow icon='translate' label={t.language}>
                 <SegmentedControl
                   value={language}
-                  onChange={(v) => settings.setLanguage(v as any)}
+                  onChange={(v) => setLanguage(v as any)}
                   size='xs'
                   shape='pill'
                   options={[
@@ -733,10 +825,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               >
                 <div className='space-y-1'>
                   <label className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
-                    <span
-                      className='material-symbols-rounded'
-                      style={{ fontSize: 'var(--icon-settings)' }}
-                    >
+                    <span className='material-symbols-rounded' style={iconFontSizeStyle}>
                       text_fields
                     </span>
                     {t.fontEN}
@@ -756,10 +845,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 </div>
                 <div className='space-y-1'>
                   <label className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
-                    <span
-                      className='material-symbols-rounded'
-                      style={{ fontSize: 'var(--icon-settings)' }}
-                    >
+                    <span className='material-symbols-rounded' style={iconFontSizeStyle}>
                       translate
                     </span>
                     {t.fontAR}
@@ -913,12 +999,23 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       delay={0}
                       content={
                         <div className='flex flex-col gap-0.5 text-xs whitespace-nowrap'>
-                          <span>{language === 'AR' ? 'الهدف اليومي:' : 'Daily Target:'} <strong>{dailyTarget.toLocaleString()}</strong></span>
-                          <span>{language === 'AR' ? 'أيام الشهر:' : 'Days in month:'} <strong>{daysInMonth}</strong></span>
+                          <span>
+                            {language === 'AR' ? 'الهدف اليومي:' : 'Daily Target:'}{' '}
+                            <strong>{dailyTarget.toLocaleString()}</strong>
+                          </span>
+                          <span>
+                            {language === 'AR' ? 'أيام الشهر:' : 'Days in month:'}{' '}
+                            <strong>{daysInMonth}</strong>
+                          </span>
                         </div>
                       }
                     >
-                      <span className='material-symbols-rounded text-(--text-secondary)' style={{ fontSize: 'var(--icon-settings)' }}>track_changes</span>
+                      <span
+                        className='material-symbols-rounded text-(--text-secondary)'
+                        style={iconFontSizeStyle}
+                      >
+                        track_changes
+                      </span>
                     </Tooltip>
                     <span className='text-xs font-medium text-(--text-primary)'>
                       {language === 'AR' ? 'المستهدف الشهري' : 'Monthly Target'}
@@ -932,6 +1029,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       onChange={(e) => {
                         const val = Number(e.target.value);
                         setLocalTarget(val);
+                        localTargetRef.current = val;
                         clearTimeout(saveTimerRef.current);
                         saveTimerRef.current = setTimeout(() => {
                           updateBranch?.(activeBranchId, { monthlySalesTarget: val });
@@ -939,7 +1037,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       }}
                       onBlur={() => {
                         clearTimeout(saveTimerRef.current);
-                        updateBranch?.(activeBranchId, { monthlySalesTarget: localTarget });
+                        updateBranch?.(activeBranchId, {
+                          monthlySalesTarget: localTargetRef.current,
+                        });
                       }}
                       className='w-28 h-7 bg-black/5 dark:bg-white/5 border-none rounded-md px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 text-left'
                       dir='ltr'
@@ -988,7 +1088,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       </div>
                       <span
                         className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}
-                        style={{ fontSize: 'var(--icon-settings)' }}
+                        style={iconFontSizeStyle}
                       >
                         chevron_left
                       </span>

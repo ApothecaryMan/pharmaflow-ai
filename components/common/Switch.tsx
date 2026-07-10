@@ -1,7 +1,8 @@
-import { useLayoutEffect, useRef } from 'react';
 import type * as React from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import './Switch.css';
-import { useSettings } from '../../context/SettingsContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useUI } from '../../context/UIContext';
 import type { SwitchVariant } from '../../types';
 
 interface SwitchProps {
@@ -30,7 +31,8 @@ export const Switch: React.FC<SwitchProps> = ({
   activeColor,
   animate = true,
 }) => {
-  const { switchVariant: globalVariant, theme: currentTheme } = useSettings();
+  const { switchVariant: globalVariant } = useUI();
+  const { theme: currentTheme } = useTheme();
   const variant = propVariant || globalVariant || 'default';
 
   const ref = useRef<any>(null);

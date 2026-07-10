@@ -1,5 +1,11 @@
 /* Scrollbar utilities moved to scrollbars.css */
 
+/* --- CSS Containment for scrollable containers --- */
+.main-content-scroll {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+
 /* --- Theme Utility Classes (from index.html) --- */
 .bg-theme-primary {
   background-color: var(--color-primary) !important;

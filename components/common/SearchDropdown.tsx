@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSettings } from '../../context/SettingsContext';
+import { useTypography } from '../../context/TypographyContext';
 
 export interface SearchDropdownColumn<T> {
   header: string;
@@ -27,7 +27,7 @@ export function SearchDropdown<T extends { id: string | number }>({
   highlightedIndex = -1,
   className = 'left-0 right-0',
 }: SearchDropdownProps<T>) {
-  const { language } = useSettings();
+  const { language } = useTypography();
   const isAR = language === 'AR';
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const rowRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
