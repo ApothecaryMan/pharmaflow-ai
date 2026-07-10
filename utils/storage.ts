@@ -421,8 +421,8 @@ export const storage = {
 
     try {
       const now = Date.now();
+      const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
       const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-      const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
       // 1. Maintain access registry
       const ACCESS_REGISTRY_KEY = 'pharma_branch_last_access';
@@ -440,7 +440,7 @@ export const storage = {
 
       storage.set(ACCESS_REGISTRY_KEY, accessRegistry);
 
-      // 2. Scan and prune closed tabs older than 7 days
+      // 2. Scan and prune closed tabs older than 2 days (Reduced from 7 days to save space)
       const allKeys = Object.keys(localStorage);
       allKeys.forEach((key) => {
         if (
@@ -454,7 +454,7 @@ export const storage = {
               if (Array.isArray(closedTabs)) {
                 const activeClosed = closedTabs.filter((tab: { closedAt?: number } | null) => {
                   return (
-                    tab && (typeof tab.closedAt !== 'number' || now - tab.closedAt <= SEVEN_DAYS_MS)
+                    tab && (typeof tab.closedAt !== 'number' || now - tab.closedAt <= TWO_DAYS_MS)
                   );
                 });
                 if (activeClosed.length !== closedTabs.length) {
@@ -468,14 +468,14 @@ export const storage = {
         }
       });
 
-      // 3. Identify and delete stale branches (inactive for >30 days or no longer exists)
+      // 3. Identify and delete stale branches (inactive for >7 days or no longer exists)
       const registryBranchIds = Object.keys(accessRegistry);
       const branchesToDelete: string[] = [];
 
       registryBranchIds.forEach((branchId) => {
         const lastAccess = accessRegistry[branchId];
         const isNotAvailable = !availableBranchIds.includes(branchId);
-        const isStale = now - lastAccess > THIRTY_DAYS_MS;
+        const isStale = now - lastAccess > SEVEN_DAYS_MS; // Reduced from 30 days
 
         if (branchId !== activeBranchId && (isNotAvailable || isStale)) {
           branchesToDelete.push(branchId);
