@@ -13,6 +13,9 @@ import {
   YAxis,
 } from 'recharts';
 import { getLocationName } from '../../data/locations';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import type { Customer, Sale } from '../../types';
 import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -22,8 +25,6 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 
 interface CustomerOverviewProps {
-  customers: Customer[];
-  sales: Sale[];
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
@@ -58,14 +59,15 @@ const COLORS = [
 ];
 
 export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
-  customers,
-  sales,
   color,
   t,
   language,
   isLoading,
   onViewChange,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
 
   // --- STATS CALCULATIONS ---

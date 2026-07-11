@@ -12,6 +12,9 @@ import {
   YAxis,
 } from 'recharts';
 import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import type { Customer, Sale } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -20,8 +23,6 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 
 interface CustomerLoyaltyOverviewProps {
-  customers: Customer[];
-  sales: Sale[];
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
@@ -29,13 +30,14 @@ interface CustomerLoyaltyOverviewProps {
 }
 
 export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = ({
-  customers,
-  sales,
   color,
   t,
   language,
   onViewChange,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
   const [timeRange, setTimeRange] = useState('30');
   const isRTL = language === 'AR';
 

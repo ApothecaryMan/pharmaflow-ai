@@ -2,6 +2,9 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import type { Customer, Sale } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { CARD_BASE, CONTAINER_BASE } from '../../utils/themeStyles';
@@ -17,8 +20,6 @@ import { SmallCard } from '../common/SmallCard';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 
 interface CustomerLoyaltyLookupProps {
-  customers: Customer[];
-  sales: Sale[];
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
@@ -26,13 +27,14 @@ interface CustomerLoyaltyLookupProps {
 }
 
 export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
-  customers,
-  sales,
   color,
   t,
   language,
   onViewChange,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);

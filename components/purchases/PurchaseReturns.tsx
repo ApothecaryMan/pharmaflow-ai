@@ -6,8 +6,13 @@ import { useSettings } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { purchaseService } from '../../services/purchases/purchaseService';
 import { returnService } from '../../services/returns/returnService';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { idGenerator } from '../../utils/idGenerator';
@@ -33,11 +38,6 @@ import {
 } from '../common';
 
 interface PurchaseReturnsProps {
-  purchases: Purchase[];
-  purchaseReturns: PurchaseReturn[];
-  setPurchaseReturns: (returns: PurchaseReturn[]) => void;
-  drugs: Drug[];
-  setDrugs: (drugs: Drug[]) => void;
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
@@ -45,11 +45,6 @@ interface PurchaseReturnsProps {
 }
 
 export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
-  purchases,
-  purchaseReturns,
-  setPurchaseReturns,
-  drugs,
-  setDrugs,
   color,
   t,
   language,
@@ -57,6 +52,10 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
 }) => {
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: purchases = [] } = usePurchases(activeBranchId);
+  const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
+  const { data: drugs = [] } = useInventory(activeBranchId);
+  const queryClient = useQueryClient();
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
@@ -400,8 +399,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       await onCreatePurchaseReturn(newReturn);
     } else {
       console.error('onCreatePurchaseReturn prop likely missing');
-      setPurchaseReturns([...purchaseReturns, newReturn]);
     }
+    queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns });
+    queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
 
     // Reset form
     setSelectedPurchase(null);

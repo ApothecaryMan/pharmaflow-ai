@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockBatch } from '../../types';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import {
   checkExpiryStatus,
   formatExpiryDate,
@@ -34,7 +35,6 @@ import {
 import type { LabelDesign, LabelElement } from './studio/types';
 
 interface BarcodePrinterProps {
-  inventory: Drug[];
   color: string;
   t: Translations;
   language: string;
@@ -46,7 +46,6 @@ interface QueueItem extends PrintLabelItem {
 }
 
 export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
-  inventory,
   color,
   t,
   language,
@@ -57,6 +56,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const { playBeep, playError } = usePosSounds();
   const branches = useAuthStore((s) => s.branches);
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
   const activeBranch = useMemo(
     () => branches?.find((b: any) => b.id === activeBranchId),
     [branches, activeBranchId]

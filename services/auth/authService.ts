@@ -136,7 +136,7 @@ export const authService = {
             ...existingSession!,
             accountType,
             destination: accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal',
-            orgRole: (memberData?.role || existingSession!.orgRole || 'unassigned') as OrgRole,
+            orgRole: (existingSession!.orgRole || 'unassigned') as OrgRole,
             orgId: memberData?.orgId || existingSession!.orgId,
           }
         : {

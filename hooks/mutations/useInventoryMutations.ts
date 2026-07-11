@@ -27,3 +27,18 @@ export function useUpdateProduct() {
     },
   });
 }
+
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  const branchId = useAuthStore((s) => s.activeBranchId);
+
+  return useMutation({
+    mutationFn: (id: string) => inventoryService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+    },
+    onError: (err) => {
+      console.error('Failed to delete product:', err);
+    },
+  });
+}

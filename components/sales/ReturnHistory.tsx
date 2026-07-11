@@ -9,6 +9,9 @@ import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate } from '../../utils/expiryUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { useAuthStore } from '../../stores/authStore';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
 import { useContextMenu } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { MaterialTabs } from '../common/MaterialTabs';
@@ -83,24 +86,21 @@ const ReturnQuantityBadge: React.FC<{
 );
 
 interface ReturnHistoryProps {
-  returns: Return[];
-  sales: Sale[];
   color: string;
   t: Translations;
   language: string;
-  datePickerTranslations: any;
   navigationParams?: any;
 }
 
 export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
-  returns,
-  sales,
   color,
   t,
   language,
-  datePickerTranslations,
   navigationParams,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: returns = [] } = useSalesReturns(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
 

@@ -5,6 +5,12 @@ import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Supplier } from '../../types';
+import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
+import {
+  useAddSupplier,
+  useUpdateSupplier,
+  useDeleteSupplier,
+} from '../../hooks/mutations/useSupplierMutations';
 import { idGenerator } from '../../utils/idGenerator';
 import {
   CARD_BASE,
@@ -29,11 +35,6 @@ import {
 import { TanStackTable } from '../common/TanStackTable';
 
 interface SuppliersListProps {
-  suppliers: Supplier[];
-  setSuppliers: (suppliers: Supplier[]) => void;
-  onAddSupplier: (supplier: Supplier) => Promise<void>;
-  onUpdateSupplier: (supplier: Supplier) => Promise<void>;
-  onDeleteSupplier: (id: string) => Promise<void>;
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
@@ -70,17 +71,16 @@ const ListItem: React.FC<{
 };
 
 export const SuppliersList: React.FC<SuppliersListProps> = ({
-  suppliers,
-  setSuppliers,
-  onAddSupplier,
-  onUpdateSupplier,
-  onDeleteSupplier,
   color,
   t,
   language,
 }) => {
   const { showMenu } = useContextMenu();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: suppliers = [] } = useSuppliers(activeBranchId);
+  const addSupplier = useAddSupplier();
+  const updateSupplier = useUpdateSupplier();
+  const deleteSupplier = useDeleteSupplier();
   const [search, setSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
@@ -173,7 +173,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
     setIsSaving(true);
     try {
-      await onUpdateSupplier(editForm);
+      await updateSupplier.mutateAsync(editForm);
       setEditingSupplier(null);
     } catch (error) {
       console.error('Error updating supplier:', error);
@@ -189,7 +189,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
   const confirmDelete = () => {
     if (deleteConfirm) {
-      onDeleteSupplier(deleteConfirm.id);
+      deleteSupplier.mutateAsync(deleteConfirm.id);
       setDeleteConfirm(null);
     }
   };
@@ -224,7 +224,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     try {
       // Remove empty ID so service can generate a real one
       const { id, ...supplierData } = editForm;
-      await onAddSupplier(supplierData as any);
+      await addSupplier.mutateAsync(supplierData as any);
       setMode('list');
     } catch (error) {
       console.error('Error saving supplier:', error);

@@ -9,8 +9,10 @@ import {
 } from '../../data/productCategories';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { validationService } from '../../services/validation/validationService';
+import { useAuthStore } from '../../stores/authStore';
 import type { Drug } from '../../types';
 import { validateStock } from '../../utils/inventory';
+import { useAddProduct } from '../../hooks/mutations/useInventoryMutations';
 import { pricing } from '../../utils/money';
 import { resolveUnits } from '../../utils/stockUtils';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
@@ -21,8 +23,6 @@ import { usePageShortcuts } from '../../hooks/keyboard';
 import { Tooltip } from '../common/Tooltip';
 
 interface AddProductProps {
-  inventory: Drug[];
-  onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
   color: string;
   t: Translations;
   language?: string;
@@ -31,8 +31,6 @@ interface AddProductProps {
 }
 
 export const AddProduct: React.FC<AddProductProps> = ({
-  inventory,
-  onAddDrug,
   color,
   t,
   language = 'EN',
@@ -40,6 +38,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   onCancel,
 }) => {
   const { getVerifiedDate } = useStatusBar();
+  const addProduct = useAddProduct();
   const currentLang = language.toLowerCase() as 'en' | 'ar';
   const isRTL = currentLang === 'ar';
 
@@ -147,7 +146,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     };
 
     try {
-      await onAddDrug(newDrug as Drug);
+      await addProduct.mutateAsync(newDrug as Drug);
 
       if (addAnother) {
         handleClear();

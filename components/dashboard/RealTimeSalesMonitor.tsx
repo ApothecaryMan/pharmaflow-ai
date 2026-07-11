@@ -16,6 +16,9 @@ import {
 } from 'recharts';
 import { useAlert, useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useShift } from '../../hooks/sales/useShift';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
 import { useAuthStore } from '../../stores/authStore';
@@ -127,9 +130,6 @@ const GenericListItem = ({
 );
 
 interface RealTimeSalesMonitorProps {
-  sales: Sale[];
-  customers: Customer[];
-  products: Drug[];
   color: ThemeColor;
   t: Translations;
   language: 'AR' | 'EN';
@@ -137,9 +137,6 @@ interface RealTimeSalesMonitorProps {
 }
 
 export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
-  sales = [],
-  customers = [],
-  products = [],
   color,
   t,
   language,
@@ -153,6 +150,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const isLoading = useAuthStore((s) => s.isLoading);
   const branches = useAuthStore((s) => s.branches);
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: products = [] } = useInventory(activeBranchId);
   const activeBranch = useMemo(
     () => branches.find((b) => b.id === activeBranchId),
     [branches, activeBranchId]

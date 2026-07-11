@@ -3,6 +3,8 @@ import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { type ExpenseFilterType, useExpenses } from '../../hooks/finance/useExpenses';
 import { useShift } from '../../hooks/sales/useShift';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import type { Employee, Expense, ExpenseCategory } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { PageHeader } from '../common/PageHeader';
@@ -15,7 +17,6 @@ import { RecordExpenseModal } from './RecordExpenseModal';
 interface ExpenseTrackerProps {
   t: Translations;
   language: 'EN' | 'AR';
-  employees: Employee[];
   currentEmployeeId: string;
   onViewChange: (view: string) => void;
 }
@@ -25,10 +26,11 @@ const columnHelper = createColumnHelper<Expense>();
 export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   t,
   language,
-  employees,
   currentEmployeeId,
   onViewChange,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   const { currentShift } = useShift();
   const {
     expenses,

@@ -5,6 +5,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import { authService } from '../../services/auth/authService';
 import type { ViewState } from '../../types';
 import { usePersistedState } from '../common/usePersistedState';
+import { storage } from '../../utils/storage';
 
 export interface ToastState {
   message: string;
@@ -66,6 +67,17 @@ export function useAppState(): AppState {
     null
   );
   const [windowedView, setWindowedView] = useState<ViewState | null>(null);
+
+  // Validate persisted employeeId against session on rehydration
+  useEffect(() => {
+    if (currentEmployeeId) {
+      const session = authService.getCurrentUserSync();
+      if (session && session.employeeId !== currentEmployeeId) {
+        setCurrentEmployeeId(null);
+        storage.remove(StorageKeys.CURRENT_EMPLOYEE_ID);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     // View state

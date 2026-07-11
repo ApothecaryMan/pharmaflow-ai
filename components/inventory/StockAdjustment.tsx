@@ -7,6 +7,9 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
 import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
+import { useBatches } from '../../hooks/queries/useInventoryQuery';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockBatch } from '../../types';
 import { formatCurrency } from '../../utils/currency';
@@ -31,11 +34,8 @@ import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { StockAdjustmentPrint } from './StockAdjustmentPrint';
 
 interface StockAdjustmentProps {
-  onUpdateInventory: (drugs: Drug[]) => void;
   color?: string;
   t: Translations;
-  inventory: Drug[];
-  batches: StockBatch[];
 }
 
 interface AdjustmentItem {
@@ -60,8 +60,6 @@ interface BatchSelectionModalProps {
 }
 
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
-  batches,
-  onUpdateInventory,
   color = 'blue',
   t,
 }) => {
@@ -71,6 +69,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const branches = useAuthStore((s) => s.branches);
   const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: batches = [] } = useBatches(activeBranchId);
+  const queryClient = useQueryClient();
 
   // Try to get pharmacy name from active branch, then storage/organization fallbacks
   const activeBranch = branches.find((b) => b.id === activeBranchId);
@@ -166,7 +166,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       const drug = inventory.find((d) => d.id === movement.drugId);
       if (drug) {
         const updatedDrug = { ...drug, stock: movement.newStock };
-        onUpdateInventory(inventory.map((d) => (d.id === drug.id ? updatedDrug : d)));
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
       }
 
       // 5. Refresh
@@ -619,7 +619,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           return drug;
         });
 
-        onUpdateInventory(updatedInventory);
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
       }
 
       setAdjustments([]);

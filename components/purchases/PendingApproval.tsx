@@ -10,6 +10,9 @@ import { getDisplayName } from '../../utils/drugDisplayName';
 import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
 import { money, pricing, tax } from '../../utils/money';
 import { Modal, PageHeader, SearchInput, SegmentedControl, useSmartDirection } from '../common';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useAuthStore } from '../../stores/authStore';
 
 // --- Sub-components (SalesHistory Style) ---
 
@@ -29,14 +32,12 @@ const CurrencyDisplay: React.FC<{ amount: number; className?: string }> = ({
 interface PendingApprovalProps {
   color: string;
   t: Translations;
-  purchases: Purchase[];
   onApprovePurchase: (id: string) => void;
   onMarkAsReceived?: (id: string) => void;
   onRejectPurchase: (id: string, reason?: string) => void;
   language: string;
   currentShift: Shift | null;
   currentEmployeeId: string | null;
-  employees: Employee[];
   hideHeader?: boolean;
   externalSearch?: string;
   onViewChange?: (view: string, params?: any) => void;
@@ -46,20 +47,21 @@ interface PendingApprovalProps {
 export const PendingApproval: React.FC<PendingApprovalProps> = ({
   color,
   t,
-  purchases,
   onApprovePurchase,
   onMarkAsReceived,
   onRejectPurchase,
   language,
   currentShift,
   currentEmployeeId,
-  employees,
   hideHeader = false,
   externalSearch = '',
   onViewChange,
   isLoading,
 }) => {
   const { textTransform } = useSettings();
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: purchases = [] } = usePurchases(activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
 
   // Reject State

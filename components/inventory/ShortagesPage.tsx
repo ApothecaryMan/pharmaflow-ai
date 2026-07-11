@@ -6,6 +6,7 @@ import { useAlert } from '../../context';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import { useAuthStore } from '../../stores/authStore';
 import type { ViewState } from '../../types';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import type { ProcurementItem } from '../../types/intelligence';
 import type { Drug } from '../../types/inventory';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -19,9 +20,8 @@ import { TanStackTable } from '../common/TanStackTable';
 import { useInventoryHeader } from './InventoryHeaderContext';
 
 interface ShortagesPageProps {
-  t: Record<string, string>; // Mapped to t.shortages
+  t: Record<string, string>;
   language: 'AR' | 'EN';
-  inventory: Drug[];
   onViewChange?: (view: ViewState, params?: Record<string, unknown>) => void;
   navigationParams?: Record<string, unknown>;
 }
@@ -55,12 +55,12 @@ type FilterAlertType =
 export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   t,
   language = 'AR',
-  inventory = [],
   onViewChange,
   navigationParams: _navigationParams,
 }) => {
   const isAR = language === 'AR';
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
   const { success, warning } = useAlert();
 
   // Async states for loading live intelligence calculations

@@ -1,6 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import type { TRANSLATIONS } from '../../i18n/translations';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
+import { useAuthStore } from '../../stores/authStore';
 import type { Customer, Return, Sale } from '../../types';
 import { DateRangePicker } from '../common/DatePicker';
 import { PageHeader } from '../common/PageHeader';
@@ -12,9 +16,6 @@ interface CustomerHistoryProps {
   color: string;
   t: typeof TRANSLATIONS.EN.customers;
   language: 'EN' | 'AR';
-  customers: Customer[];
-  sales: Sale[];
-  returns: Return[];
   navigationParams?: Record<string, any> | null;
   isLoading?: boolean;
   onViewChange?: (view: string, params?: Record<string, any>) => void;
@@ -25,14 +26,15 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
   color,
   t,
   language,
-  customers,
-  sales,
-  returns,
   navigationParams,
   isLoading,
   onViewChange,
   datePickerTranslations,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: returns = [] } = useSalesReturns(activeBranchId);
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');

@@ -318,8 +318,6 @@ const AIPerformanceSummary: React.FC<{
 // Moved to top imports
 
 interface EmployeeProfileProps {
-  sales: Sale[];
-  employees?: Employee[];
   color: ThemeColor;
   t: Translations;
   language: 'EN' | 'AR';
@@ -341,8 +339,6 @@ const formatCompactCurrency = (value: number) => {
 };
 
 export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
-  sales: propsSales,
-  employees: propsEmployees,
   color,
   t,
   language,
@@ -353,12 +349,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   // --- Data Context ---
   const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const branchId = useAuthStore((s) => s.activeBranchId);
-  const { data: contextEmployees } = useEmployees(branchId);
-  const { data: contextSales } = useRecentSales(branchId);
-
-  // Prioritize props, but fallback to context
-  const employees = propsEmployees || contextEmployees || [];
-  const sales = propsSales || contextSales || [];
+  const { data: employees = [] } = useEmployees(branchId);
+  const { data: sales = [] } = useRecentSales(branchId);
   const currentEmployeeId = initialEmployeeId || currentEmployee?.id || null;
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(currentEmployeeId || '');

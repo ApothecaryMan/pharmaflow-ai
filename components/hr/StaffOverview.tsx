@@ -1,5 +1,10 @@
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useAuthStore } from '../../stores/authStore';
+import { useStatusBar } from '../layout/StatusBar';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -13,16 +18,17 @@ import type { StaffOverviewProps } from './types/staffOverview.types';
  * Features: Staff Spotlight Ticker, Performance Leaderboard
  */
 const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
-  sales,
-  employees,
-  customers,
   color,
   t,
   language,
-  getVerifiedDate,
   isLoading = false,
   onViewChange,
 }) => {
+  const { getVerifiedDate } = useStatusBar();
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
   const isRTL = language === 'AR';
 
   // Helper for initials - Memoized to prevent hook recomputations

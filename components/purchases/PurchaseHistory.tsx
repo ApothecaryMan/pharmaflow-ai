@@ -9,6 +9,11 @@ import { getDisplayName } from '../../utils/drugDisplayName';
 import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
 import { money, tax } from '../../utils/money';
 import { parseSearchTerm } from '../../utils/searchUtils';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import {
   DateRangePicker,
   type FilterConfig,
@@ -25,36 +30,31 @@ import {
 } from '../common';
 
 interface PurchaseHistoryProps {
-  purchases: Purchase[];
-  purchaseReturns: PurchaseReturn[];
-  inventory: Drug[];
-  suppliers: Supplier[];
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
   navigationParams?: any;
   onViewChange?: (view: string, params?: any) => void;
   onMarkAsReceived?: (id: string) => Promise<void>;
-  employees: Employee[];
   isLoading?: boolean;
 }
 
 export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
-  purchases,
-  purchaseReturns,
-  inventory,
-  suppliers,
   color,
   t,
   language,
   navigationParams,
   onViewChange,
   onMarkAsReceived,
-  employees,
   isLoading,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { textTransform } = useSettings();
+  const { data: purchases = [] } = usePurchases(activeBranchId);
+  const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: suppliers = [] } = useSuppliers(activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });

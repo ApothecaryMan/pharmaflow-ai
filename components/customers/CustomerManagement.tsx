@@ -11,6 +11,12 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { branchService } from '../../services/org/branchService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Customer } from '../../types';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import {
+  useAddCustomer,
+  useUpdateCustomer,
+  useDeleteCustomer,
+} from '../../hooks/mutations/useCustomerMutations';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
@@ -35,38 +41,27 @@ import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { Tooltip } from '../common/Tooltip';
 
 interface CustomerManagementProps {
-  customers: Customer[];
-  onAddCustomer: (
-    customer: Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>
-  ) => void;
-  onUpdateCustomer: (customer: Customer) => void;
-  onDeleteCustomer: (id: string) => void;
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
-  darkMode?: boolean;
-  isLoading?: boolean;
   onViewChange?: (view: string, params?: Record<string, unknown>) => void;
-  currentEmployeeId?: string;
   navigationParams?: Record<string, unknown> | null;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
-  customers,
-  onAddCustomer,
-  onUpdateCustomer,
-  onDeleteCustomer,
   color,
   t,
   language,
-  darkMode,
-  isLoading,
   onViewChange,
-  currentEmployeeId,
   navigationParams,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const canViewStats = permissionsService.can('reports.view_intelligence');
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: customers = [], isLoading } = useCustomers(activeBranchId);
+  const addCustomer = useAddCustomer();
+  const updateCustomer = useUpdateCustomer();
+  const deleteCustomer = useDeleteCustomer();
 
   useEffect(() => {
     if (navigationParams?.mode === 'add') {
@@ -85,7 +80,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     }
   }, [navigationParams]);
 
-  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const branches = useAuthStore((s) => s.branches);
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
@@ -234,13 +228,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     if (!formData.name || !formData.phone) return;
 
     if (editingCustomer) {
-      onUpdateCustomer({ ...editingCustomer, ...formData } as Customer);
+      updateCustomer.mutateAsync({ id: editingCustomer.id, updates: { ...editingCustomer, ...formData } });
       handleCloseModal();
     } else {
-      // Logic for ID, serialId, and code is centralized in the service layer.
-      onAddCustomer(
-        formData as Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>
-      );
+      addCustomer.mutateAsync(formData);
 
       if (isKioskMode) {
         handleCloseModal();
@@ -286,7 +277,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     {
       label: t.modal.delete,
       icon: 'delete',
-      action: () => onDeleteCustomer(customer.id),
+      action: () => deleteCustomer.mutateAsync(customer.id),
       danger: true,
       disabled: !permissionsService.can('customer.delete'),
     },
@@ -508,7 +499,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDeleteCustomer(c.id);
+                    deleteCustomer.mutateAsync(c.id);
                   }}
                   className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors'
                 >
@@ -520,7 +511,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         },
       },
     ],
-    [language, t, color, onDeleteCustomer, handleOpenEdit, branches]
+    [language, t, color, deleteCustomer, handleOpenEdit, branches]
   );
 
   const tableColumns = useMemo(() => {

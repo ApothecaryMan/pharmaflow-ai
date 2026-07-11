@@ -15,6 +15,10 @@ import { pricingService } from '../../../services/sales/pricingService';
 import { inventorySearchEngine } from '../../../services/search/drugSearchService';
 import { useAuthStore } from '../../../stores/authStore';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
+import { useInventory } from '../../../hooks/queries/useInventoryQuery';
+import { useCustomers } from '../../../hooks/queries/useCustomersQuery';
+import { useRecentSales } from '../../../hooks/queries/useSalesQuery';
+import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
 import { formatExpiryDate, getExpiryColorClass } from '../../../utils/expiryUtils';
 import { formatStock } from '../../../utils/inventory';
@@ -53,7 +57,6 @@ import { POSPageHeader } from './ui/POSPageHeader';
 
 // --- Main POS Component ---
 interface POSProps {
-  inventory: Drug[];
   onCompleteSale: (saleData: {
     items: CartItem[];
     customerName: string;
@@ -74,28 +77,26 @@ interface POSProps {
   }) => Promise<{ success: boolean; sale?: Sale }>;
   color: string;
   t: typeof TRANSLATIONS.EN.pos;
-  customers: Customer[];
   language?: Language;
   darkMode: boolean;
-  employees?: Employee[];
-  sales?: Sale[];
   onUpdateSale?: (saleId: string, updates: Partial<Sale>) => void;
   currentEmployeeId?: string;
 }
 
 export const POS: React.FC<POSProps> = ({
-  inventory,
   onCompleteSale,
   color,
   t,
-  customers,
   language = 'EN',
   darkMode,
-  employees = [],
-  sales = [],
   onUpdateSale,
   currentEmployeeId,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
   const { success, error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
@@ -103,7 +104,6 @@ export const POS: React.FC<POSProps> = ({
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
 
-  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const isLoading = useAuthStore((s) => s.isLoading);
 
   const {

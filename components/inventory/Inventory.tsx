@@ -14,6 +14,13 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import type { Drug, GroupedDrug, GroupingKey } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import {
+  useAddProduct,
+  useUpdateProduct,
+  useDeleteProduct,
+} from '../../hooks/mutations/useInventoryMutations';
 import { formatCompactCurrency, formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
@@ -63,26 +70,21 @@ const getCategoryBadgeClass = (category: string): string => {
 };
 
 interface InventoryProps {
-  inventory: Drug[];
-  onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
-  onUpdateDrug: (drug: Drug) => void;
-  onDeleteDrug: (id: string) => void;
   color: string;
   t: Translations;
-  isLoading?: boolean;
   onViewChange?: (view: string) => void;
 }
 
 export const Inventory: React.FC<InventoryProps> = ({
-  inventory,
-  onAddDrug,
-  onUpdateDrug,
-  onDeleteDrug,
   color,
   t,
-  isLoading = false,
   onViewChange,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [], isLoading } = useInventory(activeBranchId);
+  const addProduct = useAddProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
@@ -250,10 +252,9 @@ export const Inventory: React.FC<InventoryProps> = ({
     if (newStock !== null) {
       const val = parseFloat(newStock);
       if (!isNaN(val)) {
-        // Save as Total Units
-        onUpdateDrug({
-          ...drug,
-          stock: validateStock(resolveUnits(val, false, drug.unitsPerPack)),
+        updateProduct.mutateAsync({
+          id: drug.id,
+          updates: { stock: validateStock(resolveUnits(val, false, drug.unitsPerPack)) },
         });
       }
     }
@@ -261,7 +262,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   };
 
   const handleDelete = (id: string) => {
-    onDeleteDrug(id);
+    deleteProduct.mutateAsync(id);
     setActiveMenuId(null);
   };
 
@@ -1002,10 +1003,6 @@ export const Inventory: React.FC<InventoryProps> = ({
         /* ADD PRODUCT FORM VIEW - COMPACT LAYOUT */
         <div className='flex-1 overflow-y-auto'>
           <AddProduct
-            inventory={inventory}
-            onAddDrug={(drug) => {
-              onAddDrug(drug);
-            }}
             color={color}
             t={t.addProduct || {}}
             language={currentLang.toUpperCase()}
@@ -1245,8 +1242,8 @@ export const Inventory: React.FC<InventoryProps> = ({
         editingDrug={editingDrug}
         initialData={initialData}
         inventory={inventory}
-        onAddDrug={onAddDrug}
-        onUpdateDrug={onUpdateDrug}
+        onAddDrug={(drug) => addProduct.mutateAsync(drug)}
+        onUpdateDrug={(drug) => updateProduct.mutateAsync({ id: drug.id, updates: drug })}
         color={color}
         t={t}
       />

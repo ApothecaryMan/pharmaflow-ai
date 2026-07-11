@@ -35,9 +35,9 @@ import {
 } from './LabelPrinter';
 import { PropertyInspector } from './studio/PropertyInspector';
 import { TemplateGalleryModal } from './studio/TemplateGalleryModal';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 
 interface BarcodeStudioProps {
-  inventory: Drug[];
   color: string;
   t: typeof TRANSLATIONS.EN.barcodeStudio;
 }
@@ -47,12 +47,13 @@ const DEFAULT_MM_TO_PX = 3.78;
 
 import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 
-export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, t }) => {
+export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playError } = usePosSounds();
   const branches = useAuthStore((s) => s.branches);
-  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const updateBranch = useAuthStore((s) => s.updateBranch);
   const { developerMode } = useSettings();
   const activeBranch = useMemo(

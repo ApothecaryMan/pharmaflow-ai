@@ -3,6 +3,8 @@ import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { usePageHelp } from '../../context/HelpContext';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import type { CashTransaction, CashTransactionType, Employee, Language } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
 import {
@@ -24,7 +26,6 @@ interface CashRegisterProps {
   color: string;
   t: Translations;
   language?: Language;
-  employees?: Employee[];
   currentEmployeeId?: string;
   onViewChange?: (view: string) => void;
 }
@@ -70,10 +71,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   color,
   t,
   language = 'EN',
-  employees,
   currentEmployeeId,
   onViewChange,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   const helpContent = CASH_REGISTER_HELP[language];
   usePageHelp(helpContent);
 

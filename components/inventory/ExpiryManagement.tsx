@@ -6,6 +6,9 @@ import { useAlert, useSettings } from '../../context';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockBatch } from '../../types';
+import { useInventory, useBatches } from '../../hooks/queries/useInventoryQuery';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
@@ -24,13 +27,9 @@ import { TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
 
 interface ExpiryManagementProps {
-  inventory: Drug[];
-  batches?: StockBatch[];
   color: string;
   t: Translations;
   language?: string;
-  onUpdateInventory?: (drug: Drug, batch?: StockBatch, action?: string) => void;
-  onBatchesChanged?: () => void;
 }
 
 interface BatchWithDrug extends StockBatch {
@@ -38,16 +37,15 @@ interface BatchWithDrug extends StockBatch {
 }
 
 export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
-  inventory,
-  batches = [], // Default to empty if not passed
   color,
   t,
   language,
-  onUpdateInventory,
-  onBatchesChanged,
 }) => {
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: batches = [] } = useBatches(activeBranchId);
+  const queryClient = useQueryClient();
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const [loading, setLoading] = useState(true);
@@ -125,12 +123,8 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           `Successfully ${activeModal === 'damage' ? 'damaged' : 'returned'} stock`
       );
 
-      if (onUpdateInventory) {
-        onUpdateInventory(updatedDrug, updatedBatch);
-      }
-      if (onBatchesChanged) {
-        onBatchesChanged();
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
 
       setActiveModal(null);
     } catch (err) {

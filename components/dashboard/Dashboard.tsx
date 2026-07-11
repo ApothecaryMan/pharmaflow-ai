@@ -3,7 +3,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
-import { useBatches } from '../../hooks/queries/useInventoryQuery';
+import { useBatches, useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { batchService } from '../../services/inventory/batchService';
 import { useAuthStore } from '../../stores/authStore';
@@ -30,12 +32,9 @@ import { useDailyAchievements } from '../../hooks/dashboard/useDailyAchievements
 import { MonthlyHeatmap } from '../common/MonthlyHeatmap';
 
 interface DashboardProps {
-  inventory: Drug[];
-  sales: Sale[];
-  purchases: Purchase[];
   color: string;
   t: Translations;
-  onRestock: (id: string, qty: number, isUnit?: boolean) => void;
+  onRestock?: (id: string, qty: number, isUnit?: boolean) => void;
   onViewChange?: (view: string) => void;
   subView?: string;
   language: string;
@@ -203,9 +202,6 @@ const GenericListItem: React.FC<{
 );
 
 export const Dashboard: React.FC<DashboardProps> = ({
-  inventory,
-  sales,
-  purchases,
   color,
   t,
   onRestock,
@@ -220,6 +216,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: purchases = [] } = usePurchases(activeBranchId);
   const { data: batches = [] } = useBatches(activeBranchId);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [timeRange, setTimeRange] = useState('7');

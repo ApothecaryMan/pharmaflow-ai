@@ -1,10 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Drug } from '../../types';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useAuthStore } from '../../stores/authStore';
 import { TanStackTable } from '../common/TanStackTable';
 
 interface InventoryManagementProps {
-  inventory: Drug[];
   color: string;
   t: Translations;
   language: string;
@@ -13,12 +14,13 @@ interface InventoryManagementProps {
 }
 
 export const InventoryManagement: React.FC<InventoryManagementProps> = ({
-  inventory,
   color,
   t,
   language,
   isLoading = false,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
   const [isDataSettled, setIsDataSettled] = useState(false);
 
   // Synchronization Buffer: Ensures skeleton stays until data is actually available

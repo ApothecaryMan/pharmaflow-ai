@@ -9,6 +9,11 @@ import type { Customer, Employee, Return, Sale, Shift } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { money } from '../../utils/money';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import { DateRangePicker } from '../common/DatePicker';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
@@ -17,8 +22,6 @@ import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { SaleDetailModal } from './SaleDetailModal';
 
 interface SalesHistoryProps {
-  sales: Sale[];
-  returns: Return[];
   onProcessReturn: (returnData: Return) => void;
   color: string;
   t: Translations;
@@ -27,16 +30,10 @@ interface SalesHistoryProps {
   currentEmployeeId?: string;
   currentShift: Shift | null;
   navigationParams?: any;
-  customers: Customer[];
-  employees: Employee[];
   isLoading?: boolean;
-  activeBranchId?: string;
-  activeOrgId?: string;
 }
 
 export const SalesHistory: React.FC<SalesHistoryProps> = ({
-  sales,
-  returns,
   onProcessReturn,
   color,
   t,
@@ -45,12 +42,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   currentEmployeeId,
   currentShift,
   navigationParams,
-  customers = [],
-  employees = [],
   isLoading = false,
-  activeBranchId,
-  activeOrgId,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: returns = [] } = useSalesReturns(activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');

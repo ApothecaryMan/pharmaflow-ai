@@ -179,10 +179,14 @@ export const useSessionHandlers = ({
             setNavigationParams(null); // Ensure no residual data from previous user
             setView(targetView);
             setActiveModule(targetModule);
+
+            setCurrentEmployeeId(id);
           }
         }
       }
-      setCurrentEmployeeId(id);
+      if (!id) {
+        setCurrentEmployeeId(null);
+      }
 
       // Sync employee_id to the active backend session
       import('../../services/auth/repositories/sessionRepository').then(({ sessionRepository }) => {

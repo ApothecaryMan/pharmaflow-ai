@@ -72,13 +72,9 @@ export interface StaffSpotlightTickerProps {
  * Props for StaffOverview component
  */
 export interface StaffOverviewProps {
-  sales: Sale[];
-  employees: Employee[];
-  customers: Customer[];
   color: ThemeColor;
   t: TranslationFunction;
   language: 'AR' | 'EN';
-  getVerifiedDate: () => Date;
   isLoading?: boolean;
   onViewChange?: (view: string) => void;
 }

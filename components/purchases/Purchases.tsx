@@ -54,6 +54,9 @@ import { formatStock } from '../../utils/inventory';
 import { money, pricing, tax } from '../../utils/money';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
 import {
   DatePicker,
   DateRangePicker,
@@ -77,10 +80,6 @@ import { usePosSounds } from '../common/hooks/usePosSounds';
 import { SupplierDirectoryModal } from './SupplierDirectoryModal';
 
 interface PurchasesProps {
-  inventory: Drug[];
-  suppliers: Supplier[];
-  purchases: Purchase[];
-  purchaseReturns: PurchaseReturn[];
   onPurchaseComplete: (purchase: Purchase) => Promise<boolean>;
   color: string;
   t: Translations;
@@ -504,10 +503,6 @@ const SortableCartItem = React.memo(
 );
 
 export const Purchases: React.FC<PurchasesProps> = ({
-  inventory,
-  suppliers,
-  purchases,
-  purchaseReturns,
   onPurchaseComplete,
   color,
   t,
@@ -525,6 +520,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: suppliers = [] } = useSuppliers(activeBranchId);
+  const { data: purchases = [] } = usePurchases(activeBranchId);
+  const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const {
     tabs,

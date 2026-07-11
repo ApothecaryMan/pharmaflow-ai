@@ -2,6 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useShift } from '../../hooks/sales/useShift';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import { auditService } from '../../services/audit/auditService';
 import type { Employee, Shift } from '../../types';
 import { printDocument } from '../../utils/printing';
@@ -21,7 +23,6 @@ interface ShiftHistoryProps {
   t: Translations;
   language: string;
   datePickerTranslations: any;
-  employees?: Employee[];
   onViewChange?: (view: string) => void;
 }
 
@@ -58,9 +59,10 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   t,
   language,
   datePickerTranslations,
-  employees,
   onViewChange,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { type FdaDrugLabel, openFdaService } from '../../services/inventory/openFdaService';
 import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FDA } from '../common/Icons';
@@ -13,7 +15,6 @@ import { SearchEngineInput } from '../common/SearchEngineInput';
 interface DrugInteractionsPageProps {
   t: Translations;
   language?: string;
-  inventory?: Drug[];
   color?: string;
 }
 
@@ -29,9 +30,10 @@ const TAB_ICONS: Record<TabType, string> = {
 
 export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
   t,
-  inventory = [],
   color = '#3b82f6',
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDrugs, setSelectedDrugs] = useState<Drug[]>([]);
   const [fdaData, setFdaData] = useState<Map<string, FdaDrugLabel | null>>(new Map());
