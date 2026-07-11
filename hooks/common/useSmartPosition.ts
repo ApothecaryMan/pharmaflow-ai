@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 export interface PositionState {
   side: 'left' | 'right';
   align: 'top' | 'bottom';
+  maxHeight?: number;
 }
 
 interface UseSmartPositionOptions {
@@ -33,7 +34,16 @@ export const useSmartPosition = (options: UseSmartPositionOptions = {}) => {
     const side = spaceRight < requiredWidth && rect.left > requiredWidth ? 'left' : 'right';
     const align = rect.top < window.innerHeight / 2 ? 'top' : 'bottom';
 
-    setPosition({ side, align });
+    const spaceBelow = window.innerHeight - rect.top - 24;
+    const spaceAbove = rect.bottom - 24;
+    const maxHeight = align === 'top' ? spaceBelow : spaceAbove;
+
+    setPosition((prev) => {
+      if (prev.side === side && prev.align === align && prev.maxHeight === maxHeight) {
+        return prev;
+      }
+      return { side, align, maxHeight };
+    });
   }, [requiredWidth]);
 
   const checkPosition = useCallback(() => {

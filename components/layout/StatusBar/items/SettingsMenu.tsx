@@ -55,18 +55,22 @@ const SubmenuWrapper = React.memo<{
   title?: string;
   side?: 'left' | 'right';
   align?: 'top' | 'bottom';
+  maxHeight?: number;
   isRTL?: boolean;
-}>(({ isOpen, isMobile, children, title, side = 'left', align = 'top', isRTL = false }) => {
+}>(({ isOpen, isMobile, children, title, side = 'left', align = 'top', maxHeight, isRTL = false }) => {
   if (!isOpen) return null;
 
   const mobileClasses = 'relative w-full mt-2 p-2.5 space-y-2 rounded-xl bg-(--border-divider)';
 
-  const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-72 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)`;
+  const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-72 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu) overflow-y-auto`;
 
   const useInlineStart = (side === 'right') !== isRTL;
-  const desktopStyle: React.CSSProperties = useInlineStart
-    ? { insetInlineStart: 'calc(100% + 12px)' }
-    : { insetInlineEnd: 'calc(100% + 12px)' };
+  const desktopStyle: React.CSSProperties = {
+    ...(useInlineStart
+      ? { insetInlineStart: 'calc(100% + 12px)' }
+      : { insetInlineEnd: 'calc(100% + 12px)' }),
+    ...(maxHeight ? { maxHeight } : {}),
+  };
 
   return (
     <div
@@ -131,6 +135,7 @@ const SubmenuSection = React.memo<{
           title={title}
           side={position.side}
           align={position.align}
+          maxHeight={position.maxHeight}
           isRTL={isRTL}
         >
           {children}
@@ -261,7 +266,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         : 0,
     [activeBranch?.monthlySalesTarget, daysInMonth]
   );
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [localTarget, setLocalTarget] = useState(activeBranch?.monthlySalesTarget || 0);
   const localTargetRef = useRef(localTarget);
   const prevBranchIdRef = useRef(activeBranchId);
