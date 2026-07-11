@@ -16,7 +16,7 @@ export const HoverDropdown: React.FC<HoverDropdownProps> = ({
   return (
     <div className='group relative inline-block'>
       {trigger}
-      <div className='absolute right-0 rtl:left-0 rtl:right-auto top-full z-60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200'>
+      <div className='absolute right-0 rtl:left-0 rtl:right-auto top-full z-60 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200'>
         <div className='h-1.5' />
         <div
           className={`bg-(--bg-card) border border-(--border-divider) rounded-lg shadow-xl p-1 ${panelWidth || 'min-w-[80px]'} ${panelClassName}`}

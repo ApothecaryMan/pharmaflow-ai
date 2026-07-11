@@ -101,7 +101,6 @@ export interface DeliveryOrdersModalProps {
   onUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
   language?: Language;
   t: Translations;
-  slations;
   color?: string;
   currentEmployeeId?: string;
   customers?: Customer[];

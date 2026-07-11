@@ -727,23 +727,69 @@ export const POS: React.FC<POSProps> = ({
             <div className='w-full h-full flex items-center justify-center overflow-visible'>
               <HoverDropdown
                 trigger={
-                  <div className='flex items-center justify-center font-bold h-7 w-20 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer'>
+                  <div
+                    id={`unit-dropdown-${row.id}`}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const batchEl = document.getElementById(`batch-dropdown-${row.id}`);
+                        if (batchEl) {
+                          batchEl.focus();
+                        } else {
+                          searchInputRef.current?.focus();
+                        }
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const firstOpt = document.getElementById(`unit-opt-${row.id}-0`);
+                        if (firstOpt) firstOpt.focus();
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addGroupToCart(row.batches);
+                        searchInputRef.current?.focus();
+                      }
+                    }}
+                    className='flex items-center justify-center font-bold h-7 w-20 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer focus:ring-2 focus:ring-primary-500 focus:outline-none'
+                  >
                     <span className='text-sm text-gray-700 dark:text-gray-300'>
                       {selectedUnits[row.id] === 'unit' ? t.unit : t.pack}
                     </span>
                   </div>
                 }
               >
-                {(['pack', 'unit'] as const).map((opt) => {
+                {(['pack', 'unit'] as const).map((opt, index) => {
                   const isSelected = (selectedUnits[row.id] || 'pack') === opt;
                   return (
                     <div
                       key={opt}
+                      id={`unit-opt-${row.id}-${index}`}
+                      tabIndex={-1}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          const next = document.getElementById(`unit-opt-${row.id}-${index + 1}`);
+                          if (next) next.focus();
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          const prev = document.getElementById(`unit-opt-${row.id}-${index - 1}`);
+                          if (prev) prev.focus();
+                          else {
+                            document.getElementById(`unit-dropdown-${row.id}`)?.focus();
+                          }
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedUnits((prev) => ({ ...prev, [row.id]: opt }));
+                          document.getElementById(`unit-dropdown-${row.id}`)?.focus();
+                        }
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedUnits((prev) => ({ ...prev, [row.id]: opt }));
                       }}
-                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center ${
+                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${
                         isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                           : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
@@ -813,7 +859,30 @@ export const POS: React.FC<POSProps> = ({
                 panelClassName='space-y-0.5 p-1.5'
                 trigger={
                   <div
-                    className={`flex items-center justify-center font-bold ${colorClass} h-7 w-28 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer`}
+                    id={`batch-dropdown-${row.id}`}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const unitEl = document.getElementById(`unit-dropdown-${row.id}`);
+                        if (unitEl) {
+                          unitEl.focus();
+                        } else {
+                          searchInputRef.current?.focus();
+                        }
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const firstOpt = document.getElementById(`batch-opt-${row.id}-0`);
+                        if (firstOpt) firstOpt.focus();
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addGroupToCart(row.batches);
+                        searchInputRef.current?.focus();
+                      }
+                    }}
+                    className={`flex items-center justify-center font-bold ${colorClass} h-7 w-28 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                   >
                     <span className='flex-1 text-center text-sm'>
                       {formatExpiryDate(displayBatch.expiryDate)}
@@ -822,7 +891,7 @@ export const POS: React.FC<POSProps> = ({
                     <span className='flex-1 text-center text-sm tabular-nums'>
                       {formatStock(displayBatch.stock, displayBatch.unitsPerPack, {
                         packs: '',
-                        outOfStock: t.outOfStockShort || 'Out',
+                        outOfStock: t.outOfStock || 'Out',
                       }).trim()}
                     </span>
                   </div>
@@ -831,17 +900,38 @@ export const POS: React.FC<POSProps> = ({
                 <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 py-1'>
                   {availableBatches.length} {t.batches || 'batches'}
                 </div>
-                {availableBatches.map((batch) => {
+                {availableBatches.map((batch, index) => {
                   const isSelected = (selectedBatchWithInventory || defaultBatch)?.id === batch.id;
                   const c = getExpiryColorClass(batch.expiryDate);
                   return (
                     <div
                       key={batch.id}
+                      id={`batch-opt-${row.id}-${index}`}
+                      tabIndex={-1}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          const next = document.getElementById(`batch-opt-${row.id}-${index + 1}`);
+                          if (next) next.focus();
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          const prev = document.getElementById(`batch-opt-${row.id}-${index - 1}`);
+                          if (prev) prev.focus();
+                          else {
+                            document.getElementById(`batch-dropdown-${row.id}`)?.focus();
+                          }
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedBatches((prev) => ({ ...prev, [row.id]: batch.id }));
+                          document.getElementById(`batch-dropdown-${row.id}`)?.focus();
+                        }
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedBatches((prev) => ({ ...prev, [row.id]: batch.id }));
                       }}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${
                         isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                           : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
@@ -853,7 +943,7 @@ export const POS: React.FC<POSProps> = ({
                       <span className='ml-auto rtl:mr-auto rtl:ml-0 tabular-nums font-bold'>
                         {formatStock(batch.stock, batch.unitsPerPack, {
                           packs: '',
-                          outOfStock: t.outOfStockShort || 'Out',
+                          outOfStock: t.outOfStock || 'Out',
                         }).trim()}
                       </span>
                     </div>
@@ -977,6 +1067,26 @@ export const POS: React.FC<POSProps> = ({
                       setActiveIndex((prev) => (prev - 1 + tableData.length) % tableData.length);
                     }
                     return;
+                  }
+
+                  // --- Tab Navigation for Unit/Batch ---
+                  if (e.key === 'Tab') {
+                    if (tableData.length > 0) {
+                      const activeRow = tableData[activeIndex];
+                      if (activeRow) {
+                        const unitEl = document.getElementById(`unit-dropdown-${activeRow.id}`);
+                        const batchEl = document.getElementById(`batch-dropdown-${activeRow.id}`);
+                        if (unitEl) {
+                          e.preventDefault();
+                          unitEl.focus();
+                          return;
+                        } else if (batchEl) {
+                          e.preventDefault();
+                          batchEl.focus();
+                          return;
+                        }
+                      }
+                    }
                   }
 
                   // --- Execution (Enter) ---
