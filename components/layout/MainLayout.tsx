@@ -10,8 +10,10 @@ import { useTheme } from '../../context/ThemeContext';
 import { useUI } from '../../context/UIContext';
 import type { ViewState } from '../../types';
 import { useAutoSystemBarColor } from '../../utils/systemBars';
+import { CommandPalette } from '../common/CommandPalette';
 import { ContextMenuProvider, useContextMenu } from '../common/ContextMenu';
 import { HelpModal } from '../common/HelpModal';
+import { ShortcutsOverlay } from '../common/ShortcutsOverlay';
 import { ThemeStudio } from '../common/ThemeStudio';
 import { DynamicEventLayer } from './DynamicEventLayer';
 import { MobileNavigation } from './MobileNavigation';
@@ -316,6 +318,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             />
           )}
         </div>
+        <CommandPalette language={language} handleNavigate={handleNavigate} />
+        <ShortcutsOverlay language={language} />
         {isHelpOpen && helpContent && (
           <HelpModal
             show={isHelpOpen}

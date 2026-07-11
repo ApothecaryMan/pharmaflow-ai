@@ -15,6 +15,7 @@ import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { usePageShortcuts } from '../../hooks/keyboard';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
@@ -128,56 +129,25 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Global Keydown (Simple Alphanumeric for Search Focus + Shortcuts)
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // 1. Shortcuts (Highest Priority)
-      // Alt+P or Ctrl+P: Print
-      if (
-        (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) ||
-        (e.ctrlKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح'))
-      ) {
-        e.preventDefault();
-        if (printButtonRef.current?.disabled) {
-          playError();
-        } else {
-          printButtonRef.current?.click();
-        }
-        return;
+  usePageShortcuts('barcode-printer', {
+    'ctrl+p': () => {
+      if (printButtonRef.current?.disabled) {
+        playError();
+      } else {
+        printButtonRef.current?.click();
       }
-
-      // 2. Ignore other alphanumeric logic if already in an input
-      if (
-        document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA'
-      ) {
-        // Handle Escape to blur
-        if (e.key === 'Escape') {
-          (document.activeElement as HTMLElement).blur();
-          setShowSuggestions(false);
-        }
-        return;
+    },
+    'alt+p': () => {
+      if (printButtonRef.current?.disabled) {
+        playError();
+      } else {
+        printButtonRef.current?.click();
       }
-
-      // 3. Capture Alphanumeric for search focus
-      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setSearch((prev) => prev + e.key);
-        setShowSuggestions(true);
-        return;
-      }
-
-      // Alt+C: Clear
-      if (e.altKey && (e.key === 'c' || e.key === 'C' || e.key === 'ؤ')) {
-        e.preventDefault();
-        if (queue.length > 0) clearQueue();
-        return;
-      }
-    };
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [queue.length]); // Re-bind when queue length changes for shortcuts
+    },
+    'alt+c': () => {
+      if (queue.length > 0) clearQueue();
+    },
+  });
 
   // Auto-fill on exact barcode match
   useEffect(() => {

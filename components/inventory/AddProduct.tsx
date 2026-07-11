@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import {
   getCategories,
@@ -17,6 +17,7 @@ import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
+import { usePageShortcuts } from '../../hooks/keyboard';
 import { Tooltip } from '../common/Tooltip';
 
 interface AddProductProps {
@@ -75,61 +76,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   const fastKeyCount = useRef<number>(0);
   const scannerTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) return;
-
-      const now = Date.now();
-      const isFast = lastKeyTime.current > 0 && now - lastKeyTime.current < 40;
-      lastKeyTime.current = now;
-
-      if (!isFast && e.key !== 'Enter') {
-        if (fastKeyCount.current < 2) scannerBuffer.current = '';
-        fastKeyCount.current = 0;
-      }
-
-      if (e.key === 'Enter') {
-        const barcode = scannerBuffer.current.trim();
-        if (barcode.length >= 3 && fastKeyCount.current >= 2) {
-          e.preventDefault();
-          setFormData((prev) => {
-            if (!prev.barcode) return { ...prev, barcode };
-            if (prev.barcode !== barcode && !prev.additionalBarcodes?.includes(barcode)) {
-              return { ...prev, additionalBarcodes: [...(prev.additionalBarcodes || []), barcode] };
-            }
-            return prev;
-          });
-          if (barcodeInputRef.current) barcodeInputRef.current.value = '';
-        }
-        scannerBuffer.current = '';
-        fastKeyCount.current = 0;
-        return;
-      }
-
-      if (e.key.length === 1) {
-        scannerBuffer.current += e.key;
-        if (isFast) fastKeyCount.current++;
-
-        if (fastKeyCount.current >= 2) {
-          e.preventDefault();
-          const el = document.activeElement;
-          if (el instanceof HTMLInputElement && fastKeyCount.current === 2) {
-            el.value = el.value.slice(0, -2);
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-        }
-      }
-
-      if (scannerTimeout.current) clearTimeout(scannerTimeout.current);
-      scannerTimeout.current = setTimeout(() => {
-        scannerBuffer.current = '';
-        fastKeyCount.current = 0;
-      }, 300);
-    };
-
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [formData.barcode]);
+  usePageShortcuts('add-product', {});
 
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);

@@ -16,6 +16,7 @@
     "core:event:default",
     "shell:allow-open",
     "updater:default",
-    "thermal-printer:default"
+    "thermal-printer:default",
+    "global-shortcut:default"
   ]
 }

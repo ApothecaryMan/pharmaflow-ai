@@ -4,7 +4,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
 import type { AuthState } from '../../hooks/auth/useAuth';
 import { useSessionHandlers } from '../../hooks/auth/useSessionHandlers';
-import { useGlobalEventHandlers } from '../../hooks/infrastructure/useGlobalEventHandlers';
+
 import type { AppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
 import {
@@ -26,6 +26,7 @@ import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useRealtimeSync } from '../../hooks/realtime/useRealtimeSync';
 import { useShift } from '../../hooks/sales/useShift';
 import { useEntityHandlers } from '../../hooks/useEntityHandlers';
+import { KeyboardProvider } from '../../hooks/keyboard';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { queryClient } from '../../lib/queryClient';
 import { queryKeys } from '../../lib/queryKeys';
@@ -429,14 +430,10 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     };
   }, [setCurrentEmployeeId]);
 
-  // --- Global Event Handlers ---
-  useGlobalEventHandlers({
-    language,
-    inventory,
-    isLoading,
-    onToggleSidebar: () => setSidebarVisible(!sidebarVisible),
-    onNavigate: (targetView) => handleViewChange(targetView),
-  });
+  useEffect(() => {
+    document.documentElement.lang = language.toLowerCase();
+    document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
+  }, [language]);
 
   // --- Global Navigation Event Listener ---
   React.useEffect(() => {
@@ -537,99 +534,102 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   }
 
   return (
-    <MainLayout
-      view={view}
-      activeModule={activeModule}
-      t={t}
-      onLogout={onLogoutClick}
-      mobileMenuOpen={mobileMenuOpen}
-      setMobileMenuOpen={setMobileMenuOpen}
-      filteredMenuItems={filteredMenuItems}
-      handleModuleChange={handleModuleChange}
-      handleNavigate={handleNavigate}
-      handleViewChange={handleViewChange}
-      currentEmployeeId={currentEmployeeId}
-      setCurrentEmployeeId={handleSelectEmployee}
-      employees={employees}
-      dashboardSubView={dashboardSubView}
-      onOpenInWindow={setWindowedView}
-      isRecoveringPassword={isRecoveringPassword}
-    >
-      <PageRouter
+    <KeyboardProvider onNavigate={handleViewChange} currentScope={view}>
+      <MainLayout
         view={view}
-        currentEmployeeId={currentEmployeeId}
-        isLoading={isLoading}
+        activeModule={activeModule}
         t={t}
-        setView={setView}
-        handleNavigate={handleNavigate}
-        handleLoginSuccess={handleLoginSuccess}
-        navigationParams={navigationParams}
-        currentShift={currentShift}
-        handlers={handlers}
-        onSelectEmployee={handleSelectEmployee}
         onLogout={onLogoutClick}
-      />
-
-      <WidgetUpdateEmitter />
-
-      {/* Windowed Mode Modal */}
-      <Modal
-        isOpen={!!windowedView}
-        onClose={() => setWindowedView(null)}
-        size='full'
-        disabled={isLoading}
-        title={
-          windowedView
-            ? (t.nav as any)[windowedView.replace(/-/, '_')] ||
-              t.nav[windowedView as keyof typeof t.nav] ||
-              windowedView
-            : ''
-        }
-        icon={windowedView ? PAGE_REGISTRY[windowedView]?.icon : 'window'}
-        className='bg-[#f3f4f6]! dark:bg-black!'
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+        filteredMenuItems={filteredMenuItems}
+        handleModuleChange={handleModuleChange}
+        handleNavigate={handleNavigate}
+        handleViewChange={handleViewChange}
+        currentEmployeeId={currentEmployeeId}
+        setCurrentEmployeeId={handleSelectEmployee}
+        employees={employees}
+        dashboardSubView={dashboardSubView}
+        onOpenInWindow={setWindowedView}
+        isRecoveringPassword={isRecoveringPassword}
       >
-        <div className='h-[80vh]'>
-          {windowedView && (
-            <PageRouter
-              view={windowedView}
-              currentEmployeeId={currentEmployeeId}
-              isLoading={false} // No skeleton for windowed
-              t={t}
-              setView={(v) => {
-                setWindowedView(null);
-                setView(v);
-              }}
-              handleNavigate={(v) => {
-                setWindowedView(null);
-                handleNavigate(v);
-              }}
-              handleLoginSuccess={handleLoginSuccess}
-              navigationParams={null}
-              currentShift={currentShift}
-              handlers={handlers}
-              onSelectEmployee={handleSelectEmployee}
-              onLogout={onLogoutClick}
-            />
-          )}
-        </div>
-      </Modal>
+        <PageRouter
+          view={view}
+          currentEmployeeId={currentEmployeeId}
+          isLoading={isLoading}
+          t={t}
+          setView={setView}
+          handleNavigate={handleNavigate}
+          handleLoginSuccess={handleLoginSuccess}
+          navigationParams={navigationParams}
+          currentShift={currentShift}
+          handlers={handlers}
+          onSelectEmployee={handleSelectEmployee}
+          onLogout={onLogoutClick}
+        />
 
-      {/* Global Secure Gate */}
-      <SecureGate
-        standalone={true}
-        isOpen={!!pendingNavigation}
-        language={language}
-        storageKey={
-          pendingNavigation ? PAGE_REGISTRY[pendingNavigation.viewId]?.storageKey : 'area_unlocked'
-        }
-        onUnlock={() => {
-          if (pendingNavigation) {
-            handleViewChange(pendingNavigation.viewId, pendingNavigation.params);
-            setPendingNavigation(null);
+        <WidgetUpdateEmitter />
+
+        {/* Windowed Mode Modal */}
+        <Modal
+          isOpen={!!windowedView}
+          onClose={() => setWindowedView(null)}
+          size='full'
+          disabled={isLoading}
+          title={
+            windowedView
+              ? (t.nav as any)[windowedView.replace(/-/, '_')] ||
+                t.nav[windowedView as keyof typeof t.nav] ||
+                windowedView
+              : ''
           }
-        }}
-        onClose={() => setPendingNavigation(null)}
-      />
-    </MainLayout>
+          icon={windowedView ? PAGE_REGISTRY[windowedView]?.icon : 'window'}
+          className='bg-[#f3f4f6]! dark:bg-black!'
+        >
+          <div className='h-[80vh]'>
+            {windowedView && (
+              <PageRouter
+                view={windowedView}
+                currentEmployeeId={currentEmployeeId}
+                isLoading={false}
+                t={t}
+                setView={(v) => {
+                  setWindowedView(null);
+                  setView(v);
+                }}
+                handleNavigate={(v) => {
+                  setWindowedView(null);
+                  handleNavigate(v);
+                }}
+                handleLoginSuccess={handleLoginSuccess}
+                navigationParams={null}
+                currentShift={currentShift}
+                handlers={handlers}
+                onSelectEmployee={handleSelectEmployee}
+                onLogout={onLogoutClick}
+              />
+            )}
+          </div>
+        </Modal>
+
+        {/* Global Secure Gate */}
+        <SecureGate
+          standalone={true}
+          isOpen={!!pendingNavigation}
+          language={language}
+          storageKey={
+            pendingNavigation ? PAGE_REGISTRY[pendingNavigation.viewId]?.storageKey : 'area_unlocked'
+          }
+          onUnlock={() => {
+            if (pendingNavigation) {
+              handleViewChange(pendingNavigation.viewId, pendingNavigation.params);
+              setPendingNavigation(null);
+            }
+          }}
+          onClose={() => setPendingNavigation(null)}
+        />
+      </MainLayout>
+
+    </KeyboardProvider>
   );
 };

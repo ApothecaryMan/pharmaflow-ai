@@ -26,7 +26,7 @@ import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
 import type { FilterConfig } from '../../common/FilterPill';
 import { HoverDropdown } from '../../common/HoverDropdown';
-import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
+import { usePageShortcuts } from '../../../hooks/keyboard';
 import { usePosSounds } from '../../common/hooks/usePosSounds';
 import { Modal } from '../../common/Modal';
 import { SearchEngineInput } from '../../common/SearchEngineInput';
@@ -241,25 +241,6 @@ export const POS: React.FC<POSProps> = ({
       );
     }
   }, [mergedCartItems, highlightedItemId]);
-
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Skip when barcode scanner is actively scanning (fast-key burst detected)
-      if (isScanningRef.current) return;
-      if (
-        document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA'
-      )
-        return;
-      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setSearch((prev: string) => prev + e.key);
-      }
-    };
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [setSearch]);
 
   const { grossSubtotal, cartTotal, subtotal, taxAmount } = useMemo(() => {
     const totals = pricingService.calculateOrderTotals(cart, globalDiscount || 0);
@@ -548,82 +529,106 @@ export const POS: React.FC<POSProps> = ({
     prevIsTableFocusedRef.current = isTableFocused;
   }, [isTableFocused, mergedCartItems, highlightedItemId]);
 
-  usePosShortcuts({
-    enabled: true,
-    focusMode: isTableFocused ? 'table' : 'cart',
-    onTableNavigate: (direction) => {
-      setActiveIndex((prev) => {
-        const next = direction === 'up' ? prev - 1 : prev + 1;
-        const clamped = Math.max(0, Math.min(next, tableData.length - 1));
-        return clamped;
-      });
+  const focusMode = isTableFocused ? 'table' : 'cart';
+
+  usePageShortcuts(
+    'pos',
+    {
+      f9: () => {
+        searchInputRef.current?.focus();
+      },
+      f2: () => {
+        addTab();
+      },
+      'ctrl+d': () => {
+        setShowDeliveryModal(true);
+      },
+      'ctrl+p': () => {
+        // Fallback or generic print command. A proper implementation would use InvoicePrinter
+        window.print();
+      },
+      'ctrl+enter': () => {
+        if (cart.length > 0) {
+          playSuccess();
+          handleCheckout('walk-in');
+        } else {
+          playError();
+        }
+      },
+      arrowup: () => {
+      if (focusMode === 'table') {
+        setActiveIndex((prev) => {
+          const next = prev - 1;
+          return Math.max(0, Math.min(next, tableData.length - 1));
+        });
+      } else if (mergedCartItems.length > 0) {
+        setHighlightedItemId((prevId) => {
+          const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
+          const nextIndex = currentIndex - 1;
+          const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
+          const newItem = mergedCartItems[clamped];
+          if (newItem && newItem.id !== prevId) {
+            playClick();
+            return newItem.id;
+          }
+          return prevId;
+        });
+      }
     },
-    onAddFromTable: () => {
-      if (tableData[activeIndex]) {
+    arrowdown: () => {
+      if (focusMode === 'table') {
+        setActiveIndex((prev) => {
+          const next = prev + 1;
+          return Math.max(0, Math.min(next, tableData.length - 1));
+        });
+      } else if (mergedCartItems.length > 0) {
+        setHighlightedItemId((prevId) => {
+          const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
+          const nextIndex = currentIndex + 1;
+          const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
+          const newItem = mergedCartItems[clamped];
+          if (newItem && newItem.id !== prevId) {
+            playClick();
+            return newItem.id;
+          }
+          return prevId;
+        });
+      }
+    },
+    enter: () => {
+      if (focusMode === 'table' && tableData[activeIndex]) {
         addGroupToCart(tableData[activeIndex].batches);
-        // Replicate existing behavior on selection: clear search and reset focus
         setSearch('');
         setActiveIndex(0);
         searchInputRef.current?.focus();
       }
     },
-    onTab: () => {
-      // Find the active cart item row and focus its first input
-      if (highlightedItemId) {
-        const row = document.getElementById(`cart-item-${highlightedItemId}`);
-        if (row) {
-          const firstInput = row.querySelector('input, button');
-          if (firstInput) {
-            (firstInput as HTMLElement).focus();
-          }
-        }
-      }
-    },
-    onNavigate: (direction) => {
-      if (mergedCartItems.length === 0) return;
-      setHighlightedItemId((prevId) => {
-        const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
-        const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-        const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
-        const newItem = mergedCartItems[clamped];
-        if (newItem && newItem.id !== prevId) {
-          playClick();
-          return newItem.id;
-        }
-        return prevId;
-      });
-    },
-    onQuantityChange: (delta) => {
+    '+': () => {
       const item = mergedCartItems.find((i) => i.id === highlightedItemId);
       if (!highlightedItemId || !item) {
         playError();
         return;
       }
-      const targetId = item.common.id;
-      const useUnit = !item.pack;
-
       playBeep();
-      updateQuantity(targetId, useUnit, delta);
+      updateQuantity(item.common.id, !item.pack, 1);
     },
-    onDelete: () => {
+    '-': () => {
+      const item = mergedCartItems.find((i) => i.id === highlightedItemId);
+      if (!highlightedItemId || !item) {
+        playError();
+        return;
+      }
+      playBeep();
+      updateQuantity(item.common.id, !item.pack, -1);
+    },
+    delete: () => {
       const item = mergedCartItems.find((i) => i.id === highlightedItemId);
       if (!highlightedItemId || !item) return;
       if (item.pack) removeFromCart(item.pack.id, false);
       if (item.unit) removeFromCart(item.unit.id, true);
       playClick();
     },
-    onCheckout: () => {
-      if (cart.length > 0) {
-        playSuccess();
-        handleCheckout('walk-in');
-      } else {
-        playError();
-      }
-    },
-    onFocusSearch: () => {
-      searchInputRef.current?.focus();
-    },
-  });
+  }, [focusMode, isTableFocused, activeIndex, highlightedItemId, mergedCartItems, cart.length, tableData]);
 
   // --- TanStack Table Configuration ---
   const columnHelper = createColumnHelper<(typeof tableData)[0]>();

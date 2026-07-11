@@ -11,7 +11,6 @@ export { useExpenses } from './finance/useExpenses';
 export { useEmployeeHandlers } from './hr/useEmployeeHandlers';
 // Infrastructure Hooks
 export { useAudit } from './infrastructure/useAudit';
-export { useGlobalEventHandlers } from './infrastructure/useGlobalEventHandlers';
 export { usePrinter } from './infrastructure/usePrinter';
 export { useInventoryHandlers } from './inventory/useInventoryHandlers';
 export { useInventorySearch } from './inventory/useInventorySearch';

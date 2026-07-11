@@ -20,6 +20,7 @@ import { CARD_BASE, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { usePageShortcuts } from '../../hooks/keyboard';
 import { Modal } from '../common/Modal';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
@@ -255,41 +256,15 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     }
   };
 
-  // Global Keydown Listener (Matches POS.tsx)
-  // Capture simple alphanumeric for search focus
-  React.useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (
-        document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA' ||
-        activeView === 'history' ||
-        batchSelectionDrug
-      ) {
-        return;
+  usePageShortcuts('stock-adjustment', {
+    'ctrl+p': () => {
+      if (printButtonRef.current?.disabled) {
+        playError();
+      } else {
+        printButtonRef.current?.click();
       }
-
-      // 0. Print Shortcut
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
-        e.preventDefault();
-        if (printButtonRef.current?.disabled) {
-          playError();
-        } else {
-          printButtonRef.current?.click();
-        }
-        return;
-      }
-
-      // Capture simple alphanumeric for search focus
-      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        // Only focus if we are in adjustment view
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setSearchTerm((prev) => prev + e.key);
-      }
-    };
-    window.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
-  }, [activeView, batchSelectionDrug]);
+    },
+  });
 
   const handleScan = (barcode: string) => {
     if (!barcode) return;

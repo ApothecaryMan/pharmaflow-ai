@@ -219,10 +219,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   // Calculate Pending Value Insights
   const pendingStats = useMemo(() => {
-    const pendingSales = sales.filter(
+    const activeDeliverySales = sales.filter(
       (s) =>
-        s.status === 'pending' &&
         s.saleType === 'delivery' &&
+        s.status !== 'completed' &&
+        s.status !== 'cancelled' &&
         (!activeBranchId || s.branchId === activeBranchId)
     );
     const now = new Date();
@@ -235,7 +236,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       older: { value: 0, count: 0 },
     };
 
-    pendingSales.forEach((s) => {
+    activeDeliverySales.forEach((s) => {
       const saleDate = parseISO(s.date);
       stats.total = money.add(stats.total, s.total);
 

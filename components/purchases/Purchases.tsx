@@ -23,6 +23,7 @@ import { useStatusBar } from '../../components/layout/StatusBar';
 import { TabBar } from '../../components/layout/TabBar';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
+import { usePageShortcuts } from '../../hooks/keyboard';
 import { useLongPress } from '../../hooks/common/useLongPress';
 import { usePurchaseTabs } from '../../hooks/purchases/usePurchaseTabs';
 import { settingsService } from '../../services';
@@ -670,44 +671,30 @@ export const Purchases: React.FC<PurchasesProps> = ({
   // Refs for keyboard navigation
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
-  // Global Keydown - Focus search on alphanumeric key press + Arrow navigation
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Ignore if already in an input
+  usePageShortcuts('purchases', {
+    'ctrl+n': () => {
+      handleAddTab();
+    },
+    arrowdown: () => {
+      if (cart.length > 0) {
+        setSelectedCartIndex((prev) => (prev + 1) % cart.length);
+      }
+    },
+    arrowup: () => {
+      if (cart.length > 0) {
+        setSelectedCartIndex((prev) => (prev - 1 + cart.length) % cart.length);
+      }
+    },
+    escape: () => {
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA'
       ) {
-        if (e.key === 'Escape') {
-          (document.activeElement as HTMLElement).blur();
-          setShowSuggestions(false);
-        }
-        return;
+        (document.activeElement as HTMLElement).blur();
+        setShowSuggestions(false);
       }
-
-      // Arrow navigation for cart items
-      if (e.key === 'ArrowDown' && cart.length > 0) {
-        e.preventDefault();
-        setSelectedCartIndex((prev) => (prev + 1) % cart.length);
-        return;
-      }
-      if (e.key === 'ArrowUp' && cart.length > 0) {
-        e.preventDefault();
-        setSelectedCartIndex((prev) => (prev - 1 + cart.length) % cart.length);
-        return;
-      }
-
-      // Capture Alphanumeric for search focus
-      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setSearch((prev) => prev + e.key);
-        setShowSuggestions(true);
-      }
-    };
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [cart.length]);
+    },
+  }, [cart.length, tabs.length]);
 
   // Auto-add on barcode match
   useEffect(() => {

@@ -42,6 +42,7 @@ import { useStatusBar } from '../layout/StatusBar';
 import { AddProduct } from './AddProduct';
 import { EditProductModal } from './EditProductModal';
 import { useInventoryHeader } from './InventoryHeaderContext';
+import { usePageShortcuts } from '../../hooks/keyboard';
 
 /**
  * Maps a product category to a premium static status badge style,
@@ -170,6 +171,20 @@ export const Inventory: React.FC<InventoryProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
+
+  usePageShortcuts('inventory', {
+    'ctrl+n': () => {
+      if (permissionsService.can('inventory.add')) {
+        handleOpenAdd();
+      }
+    },
+    'ctrl+f': () => {
+      const searchInput = document.querySelector<HTMLInputElement>('input[type="text"][placeholder*="Search"], input[type="text"][placeholder*="بحث"]');
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }
   }, []);
 
   const handleViewDetails = (drug: Drug) => {

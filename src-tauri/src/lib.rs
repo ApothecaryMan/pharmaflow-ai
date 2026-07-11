@@ -19,17 +19,17 @@ use windows::Win32::Graphics::Printing::{
 use windows::core::{PCWSTR, PWSTR};
 
 #[tauri::command]
-fn set_titlebar_color(window: tauri::Window, color: String) {
+fn set_titlebar_color(_window: tauri::Window, _color: String) {
     #[cfg(target_os = "windows")]
     {
-        if color.len() == 7 && color.starts_with('#') {
-            let r = u8::from_str_radix(&color[1..3], 16).unwrap_or(0);
-            let g = u8::from_str_radix(&color[3..5], 16).unwrap_or(0);
-            let b = u8::from_str_radix(&color[5..7], 16).unwrap_or(0);
+        if _color.len() == 7 && _color.starts_with('#') {
+            let r = u8::from_str_radix(&_color[1..3], 16).unwrap_or(0);
+            let g = u8::from_str_radix(&_color[3..5], 16).unwrap_or(0);
+            let b = u8::from_str_radix(&_color[5..7], 16).unwrap_or(0);
             
             let color_ref = COLORREF((b as u32) << 16 | (g as u32) << 8 | (r as u32));
             
-            if let Ok(hwnd) = window.hwnd() {
+            if let Ok(hwnd) = _window.hwnd() {
                 let hwnd_val = hwnd.0 as *mut core::ffi::c_void;
                 let hwnd_win32 = HWND(hwnd_val);
                 unsafe {
@@ -46,11 +46,11 @@ fn set_titlebar_color(window: tauri::Window, color: String) {
 }
 
 #[tauri::command]
-fn print_raw_data(printer_name: String, data: String) -> Result<(), String> {
+fn print_raw_data(_printer_name: String, _data: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         unsafe {
-            let mut printer_name_wide: Vec<u16> = std::ffi::OsStr::new(&printer_name)
+            let mut printer_name_wide: Vec<u16> = std::ffi::OsStr::new(&_printer_name)
                 .encode_wide()
                 .chain(std::iter::once(0))
                 .collect();
@@ -70,7 +70,7 @@ fn print_raw_data(printer_name: String, data: String) -> Result<(), String> {
             );
 
             if res.is_err() {
-                return Err(format!("Failed to open printer: {}", printer_name));
+                return Err(format!("Failed to open printer: {}", _printer_name));
             }
 
             let mut doc_name: Vec<u16> = std::ffi::OsStr::new("ZINC Raw Print Job")
@@ -101,7 +101,7 @@ fn print_raw_data(printer_name: String, data: String) -> Result<(), String> {
                 return Err("Failed to start page".to_string());
             }
 
-            let bytes = data.as_bytes();
+            let bytes = _data.as_bytes();
             let mut bytes_written = 0;
             
             let write_res = WritePrinter(
@@ -155,6 +155,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_thermal_printer::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![set_titlebar_color, print_raw_data, update_tray_language])
         .setup(|app| {
             // Debug-only logging

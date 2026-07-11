@@ -241,19 +241,6 @@ export const usePOSCheckout = ({
     ]
   );
 
-  useEffect(() => {
-    const handleAltS = (e: KeyboardEvent) => {
-      if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
-        e.preventDefault();
-        if (isValidOrder) {
-          handleCheckout('walk-in');
-        }
-      }
-    };
-    window.addEventListener('keydown', handleAltS);
-    return () => window.removeEventListener('keydown', handleAltS);
-  }, [isValidOrder, handleCheckout]);
-
   return {
     paymentMethod,
     setPaymentMethod,

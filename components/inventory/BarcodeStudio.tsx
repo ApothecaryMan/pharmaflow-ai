@@ -17,6 +17,7 @@ import {
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { usePageShortcuts } from '../../hooks/keyboard';
 import { Modal } from '../common/Modal';
 import { ScreenCalibration } from '../common/ScreenCalibration';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
@@ -312,81 +313,83 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   // Autosave current workspace
 
-  // Keyboard shortcuts and Nudging
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // 0. Print Shortcut (Highest Priority)
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
-        e.preventDefault();
-        if (printButtonRef.current?.disabled) {
-          playError();
-        } else {
-          printButtonRef.current?.click();
-        }
-        return;
+  usePageShortcuts('barcode-studio', {
+    'ctrl+p': () => {
+      if (printButtonRef.current?.disabled) {
+        playError();
+      } else {
+        printButtonRef.current?.click();
       }
-
-      // 1. Undo / Redo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.shiftKey ? handleRedo() : handleUndo();
-        e.preventDefault();
-        return;
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        handleRedo();
-        e.preventDefault();
-        return;
-      }
-
-      // 2. Element Nudging via Arrow Keys
-      if (selectedElementId) {
-        // Ignore if focus is inside an input, textarea, or select
-        const activeTag = document.activeElement?.tagName;
-        if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
-          return;
-        }
-
-        const step = e.shiftKey ? 0.1 : 0.5; // Fine nudge with Shift
-        let dx = 0;
-        let dy = 0;
-
-        switch (e.key) {
-          case 'ArrowUp':
-            dy = -step;
-            break;
-          case 'ArrowDown':
-            dy = step;
-            break;
-          case 'ArrowLeft':
-            dx = -step;
-            break;
-          case 'ArrowRight':
-            dx = step;
-            break;
-          default:
-            return; // Not an arrow key
-        }
-
-        if (dx !== 0 || dy !== 0) {
-          e.preventDefault(); // Prevent page scrolling
-
-          setElements((prev) =>
-            prev.map((el) => {
-              if (el.id === selectedElementId) {
-                return {
-                  ...el,
-                  x: Number(Math.max(0, el.x + dx).toFixed(1)),
-                  y: Number(Math.max(0, el.y + dy).toFixed(1)),
-                };
-              }
-              return el;
-            })
-          );
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown, { capture: true });
-    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+    },
+    'ctrl+z': () => {
+      handleUndo();
+    },
+    'ctrl+shift+z': () => {
+      handleRedo();
+    },
+    'ctrl+y': () => {
+      handleRedo();
+    },
+    'ArrowUp': (e) => {
+      if (!selectedElementId) return;
+      const step = e?.shiftKey ? 0.1 : 0.5;
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id === selectedElementId) {
+            return {
+              ...el,
+              y: Number(Math.max(0, el.y - step).toFixed(1)),
+            };
+          }
+          return el;
+        })
+      );
+    },
+    'ArrowDown': (e) => {
+      if (!selectedElementId) return;
+      const step = e?.shiftKey ? 0.1 : 0.5;
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id === selectedElementId) {
+            return {
+              ...el,
+              y: Number(Math.max(0, el.y + step).toFixed(1)),
+            };
+          }
+          return el;
+        })
+      );
+    },
+    'ArrowLeft': (e) => {
+      if (!selectedElementId) return;
+      const step = e?.shiftKey ? 0.1 : 0.5;
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id === selectedElementId) {
+            return {
+              ...el,
+              x: Number(Math.max(0, el.x - step).toFixed(1)),
+            };
+          }
+          return el;
+        })
+      );
+    },
+    'ArrowRight': (e) => {
+      if (!selectedElementId) return;
+      const step = e?.shiftKey ? 0.1 : 0.5;
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id === selectedElementId) {
+            return {
+              ...el,
+              x: Number(Math.max(0, el.x + step).toFixed(1)),
+            };
+          }
+          return el;
+        })
+      );
+    },
   }, [history, redoStack, elements, selectedElementId]);
 
   const getDesignState = () => ({
