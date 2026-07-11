@@ -1729,6 +1729,11 @@ export const TRANSLATIONS = {
         allItems: 'All Items',
         configureThreshold: 'Configure Threshold',
         supplierInfo: 'Supplier Info',
+        date: 'Date',
+        target: 'Target',
+        revenue: 'Revenue',
+        achievement: 'Achievement',
+        upcoming: 'Upcoming',
       },
     },
     barcodeStudio: {
@@ -5322,6 +5327,11 @@ export const TRANSLATIONS = {
         allItems: 'جميع العناصر',
         configureThreshold: 'تكوين الحد',
         supplierInfo: 'معلومات المورد',
+        date: 'التاريخ',
+        target: 'الهدف',
+        revenue: 'الإيرادات',
+        achievement: 'الإنجاز',
+        upcoming: 'قادم',
       },
     },
     barcodeStudio: {

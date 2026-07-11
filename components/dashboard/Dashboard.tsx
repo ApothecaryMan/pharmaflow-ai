@@ -753,6 +753,49 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   language={language}
                   isLoading={achievementsLoading}
                 />
+
+                <div className='overflow-x-auto rounded-2xl border border-(--border-primary)'>
+                  <table className='w-full text-sm text-start'>
+                    <thead className='bg-(--bg-secondary) text-(--text-tertiary) text-xs uppercase'>
+                      <tr>
+                        <th className='px-4 py-3 font-medium text-start'>{t.expand.date}</th>
+                        <th className='px-4 py-3 font-medium text-end'>{t.expand.target}</th>
+                        <th className='px-4 py-3 font-medium text-end'>{t.expand.revenue}</th>
+                        <th className='px-4 py-3 font-medium text-end'>{t.expand.achievement}</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-(--border-primary) bg-(--bg-panel)'>
+                      {achievements.days.map(day => (
+                        <tr key={day.date} className={day.isFuture ? 'opacity-50 bg-gray-50 dark:bg-gray-800/20' : 'hover:bg-(--bg-menu-hover)'}>
+                          <td className='px-4 py-3 font-medium text-(--text-primary)'>
+                            {day.day} {achievements.monthName}
+                            {day.isFuture && <span className='text-[10px] text-(--text-tertiary) ms-2'>({t.expand.upcoming})</span>}
+                          </td>
+                          <td className='px-4 py-3 text-end text-(--text-tertiary)'>
+                            {formatCurrency(day.target, undefined, language, 0)}
+                          </td>
+                          <td className='px-4 py-3 text-end font-semibold text-(--text-primary)'>
+                            {!day.isFuture ? formatCurrency(day.revenue, undefined, language, 0) : '-'}
+                          </td>
+                          <td className='px-4 py-3 text-end'>
+                            {!day.isFuture ? (
+                              <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${
+                                day.achievementPct >= 100 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400' :
+                                day.achievementPct >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                                day.achievementPct >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
+                                'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                              }`}>
+                                {day.achievementPct}%
+                              </span>
+                            ) : (
+                              <span className='text-(--text-tertiary)'>-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ),
           }
