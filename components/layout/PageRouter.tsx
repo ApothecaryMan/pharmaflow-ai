@@ -3,6 +3,8 @@ import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { useSettings } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
+import { useShift } from '../../hooks/sales/useShift';
+import { usePageHandlers } from '../../hooks/usePageHandlers';
 import type { ViewState } from '../../types';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { PageLoader } from '../common/PageLoader';
@@ -19,8 +21,6 @@ interface PageRouterProps {
   handleNavigate: (view: ViewState) => void;
   handleLoginSuccess: () => void;
   navigationParams?: any;
-  handlers: Record<string, any>;
-  currentShift: any;
   onSelectEmployee?: (id: string | null) => void;
   onLogout?: () => Promise<void>;
 }
@@ -34,8 +34,6 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   handleNavigate,
   handleLoginSuccess,
   navigationParams,
-  handlers,
-  currentShift,
   onSelectEmployee,
   onLogout,
 }) => {
@@ -46,6 +44,9 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   const branches = useAuthStore((s) => s.branches);
   const isLoadingAuth = useAuthStore((s) => s.isLoading);
   const switchBranch = useAuthStore((s) => s.switchBranch);
+
+  const { currentShift } = useShift();
+  const handlers = usePageHandlers();
 
   if (!currentEmployeeId) {
     return <LandingPage language={language} darkMode={darkMode} />;

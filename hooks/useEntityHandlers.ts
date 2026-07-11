@@ -1,7 +1,6 @@
 import type React from 'react';
 import type {
   ActionContext,
-  CartItem,
   Customer,
   Drug,
   Employee,
@@ -10,55 +9,23 @@ import type {
   Return,
   Sale,
   StockBatch,
-  Supplier,
 } from '../types';
-import { useCustomerHandlers } from './customers/useCustomerHandlers';
-import { useEmployeeHandlers } from './hr/useEmployeeHandlers';
-import { useInventoryHandlers } from './inventory/useInventoryHandlers';
 import { usePurchaseHandlers } from './purchases/usePurchaseHandlers';
+import type { SaleData } from './sales/useSalesHandlers';
 import { useSalesHandlers } from './sales/useSalesHandlers';
 import { useShift } from './sales/useShift';
-import { useSupplierHandlers } from './suppliers/useSupplierHandlers';
 
-export interface SaleData {
-  items: CartItem[];
-  customerName: string;
-  customerCode?: string;
-  customerPhone?: string;
-  customerAddress?: string;
-  customerStreetAddress?: string;
-  paymentMethod: 'cash' | 'visa';
-  saleType?: 'walk-in' | 'delivery';
-  deliveryFee?: number;
-  globalDiscount: number;
-  subtotal: number;
-  total: number;
-  processingTimeMinutes?: number;
-}
+export type { SaleData };
 
 export interface EntityHandlers {
-  handleAddDrug: (drug: Drug) => Promise<void>;
-  handleUpdateDrug: (drug: Drug) => Promise<void>;
-  handleDeleteDrug: (id: string) => Promise<void>;
-  handleRestock: (id: string, qty: number, isUnit?: boolean) => void;
-  handleAddSupplier: (supplier: Supplier) => void;
-  handleUpdateSupplier: (supplier: Supplier) => void;
-  handleDeleteSupplier: (id: string) => void;
-  handleAddCustomer: (customer: Customer) => void;
-  handleUpdateCustomer: (customer: Customer) => void;
-  handleDeleteCustomer: (id: string) => void;
+  handleCompleteSale: (saleData: SaleData) => Promise<boolean>;
+  handleUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
+  handleProcessReturn: (returnData: Return) => void;
   handlePurchaseComplete: (purchase: Purchase) => Promise<boolean>;
   handleApprovePurchase: (purchaseId: string) => Promise<void>;
   handleMarkAsReceived: (purchaseId: string) => Promise<void>;
   handleRejectPurchase: (purchaseId: string, reason?: string) => void;
-  handleCompleteSale: (saleData: SaleData) => Promise<boolean>;
-  handleUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
-  handleProcessReturn: (returnData: Return) => void;
   handleCreatePurchaseReturn: (returnData: PurchaseReturn) => Promise<void>;
-  handleAddEmployee: (employee: Employee) => Promise<void>;
-  handleUpdateEmployee: (id: string, updates: Partial<Employee>) => Promise<void>;
-  handleDeleteEmployee: (id: string) => Promise<void>;
-  enrichedCustomers: Customer[];
 }
 
 export interface UseEntityHandlersParams {
@@ -66,8 +33,6 @@ export interface UseEntityHandlersParams {
   setInventory: React.Dispatch<React.SetStateAction<Drug[]>>;
   sales: Sale[];
   setSales: React.Dispatch<React.SetStateAction<Sale[]>>;
-  suppliers: Supplier[];
-  setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
   purchases: Purchase[];
   setPurchases: React.Dispatch<React.SetStateAction<Purchase[]>>;
   purchaseReturns: PurchaseReturn[];
@@ -77,7 +42,6 @@ export interface UseEntityHandlersParams {
   customers: Customer[];
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
   employees: Employee[];
-  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
   batches: StockBatch[];
   setBatches: (batches: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => void;
   currentEmployeeId: string | null;
@@ -103,21 +67,8 @@ export interface UseEntityHandlersParams {
   updateLastTransactionTime: (time: number) => void;
 }
 
-/**
- * Hook for managing all entity CRUD operations.
- * Thin wrapper that composes domain hooks to maintain backward compatibility.
- */
-export function useEntityHandlers(params: UseEntityHandlersParams): EntityHandlers {
+export function useEntityHandlers(params: UseEntityHandlersParams) {
   const { currentShift, addTransaction } = useShift();
-
-  const inventoryHandlers = useInventoryHandlers({
-    inventory: params.inventory,
-    setInventory: params.setInventory,
-    setBatches: params.setBatches,
-    currentEmployeeId: params.currentEmployeeId,
-    employees: params.employees,
-    activeBranchId: params.activeBranchId,
-  });
 
   const salesHandlers = useSalesHandlers({
     currentEmployeeId: params.currentEmployeeId,
@@ -156,41 +107,8 @@ export function useEntityHandlers(params: UseEntityHandlersParams): EntityHandle
     createPurchaseReturn: params.createPurchaseReturn,
   });
 
-  const customerHandlers = useCustomerHandlers({
-    currentEmployeeId: params.currentEmployeeId,
-    employees: params.employees,
-    activeBranchId: params.activeBranchId,
-    customers: params.customers,
-    setCustomers: params.setCustomers,
-    sales: params.sales,
-    getVerifiedDate: params.getVerifiedDate,
-  });
-
-  const supplierHandlers = useSupplierHandlers({
-    currentEmployeeId: params.currentEmployeeId,
-    activeBranchId: params.activeBranchId,
-    suppliers: params.suppliers,
-    setSuppliers: params.setSuppliers,
-    purchases: params.purchases,
-  });
-
-  const employeeHandlers = useEmployeeHandlers({
-    currentEmployeeId: params.currentEmployeeId,
-    employees: params.employees,
-    setEmployees: params.setEmployees,
-    activeBranchId: params.activeBranchId,
-    activeOrgId: params.activeOrgId,
-    sales: params.sales,
-    purchases: params.purchases,
-    customers: params.customers,
-  });
-
   return {
-    ...inventoryHandlers,
     ...salesHandlers,
     ...purchaseHandlers,
-    ...customerHandlers,
-    ...supplierHandlers,
-    ...employeeHandlers,
   };
 }

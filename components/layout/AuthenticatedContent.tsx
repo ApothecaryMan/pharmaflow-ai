@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
@@ -7,44 +7,15 @@ import { useSessionHandlers } from '../../hooks/auth/useSessionHandlers';
 
 import type { AppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
-import {
-  useAddPurchase,
-  useApprovePurchase,
-  useMarkPurchaseReceived,
-} from '../../hooks/mutations/usePurchaseMutations';
-import {
-  useCreatePurchaseReturn,
-  useProcessSalesReturn,
-} from '../../hooks/mutations/useReturnsMutations';
-import { useCompleteSale } from '../../hooks/mutations/useSalesMutations';
-import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useBatches, useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
-import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
-import { usePurchaseReturns, useSalesReturns } from '../../hooks/queries/useReturnsQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useRealtimeSync } from '../../hooks/realtime/useRealtimeSync';
-import { useShift } from '../../hooks/sales/useShift';
-import { useEntityHandlers } from '../../hooks/useEntityHandlers';
 import { KeyboardProvider } from '../../hooks/keyboard';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { queryClient } from '../../lib/queryClient';
-import { queryKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
-import type {
-  ActionContext,
-  Customer,
-  Drug,
-  Employee,
-  Purchase,
-  PurchaseReturn,
-  Return,
-  Sale,
-  StockBatch,
-  Supplier,
-  ViewState,
-} from '../../types';
+import type { ViewState } from '../../types';
 import { storage } from '../../utils/storage';
 import { Modal } from '../common/Modal';
 import { SecureGate } from '../common/SecureGate';
@@ -52,7 +23,6 @@ import { WidgetUpdateEmitter } from '../dashboard/WidgetUpdateEmitter';
 import { LogoutOverlay } from './LogoutOverlay';
 import { MainLayout } from './MainLayout';
 import { PageRouter } from './PageRouter';
-import { useStatusBar } from './StatusBar';
 
 export interface AuthenticatedContentProps extends AppState, AuthState {}
 
@@ -85,9 +55,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   setIsAuthenticated,
   user,
 }) => {
-  // --- Shifts ---
-  const { currentShift } = useShift();
-
   // --- Global Secure Gate State ---
   const [pendingNavigation, setPendingNavigation] = useState<{
     viewId: string;
@@ -112,9 +79,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setNavStyle,
   } = useSettings();
 
-  // --- StatusBar Utilities ---
-  const { getVerifiedDate, validateTransactionTime, updateLastTransactionTime } = useStatusBar();
-
   // --- Auth State ---
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
@@ -126,185 +90,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   const { data: inventory = [] } = useInventory(activeBranchId);
   const { data: sales = [] } = useRecentSales(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
-  const { data: customers = [] } = useCustomers(activeBranchId);
-  const { data: suppliers = [] } = useSuppliers(activeBranchId);
-  const { data: purchases = [] } = usePurchases(activeBranchId);
-  const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
-  const { data: returns = [] } = useSalesReturns(activeBranchId);
-  const { data: batches = [] } = useBatches(activeBranchId);
-
-  // --- Mutation Hooks ---
-  const completeSaleMut = useCompleteSale();
-  const addPurchaseMut = useAddPurchase();
-  const approvePurchaseMut = useApprovePurchase();
-  const markAsReceivedMut = useMarkPurchaseReceived();
-  const processSalesReturnMut = useProcessSalesReturn();
-  const createPurchaseReturnMut = useCreatePurchaseReturn();
-
-  // --- Adapter functions to match UseEntityHandlersParams signatures ---
-  const addPurchaseAction = useCallback(
-    (purchase: Omit<Purchase, 'id'>, context?: ActionContext) =>
-      addPurchaseMut.mutateAsync({ purchase, context }),
-    [addPurchaseMut]
-  );
-
-  const approvePurchaseAction = useCallback(
-    (id: string, context: ActionContext) => approvePurchaseMut.mutateAsync({ id, context }),
-    [approvePurchaseMut]
-  );
-
-  const markAsReceivedAction = useCallback(
-    async (id: string, receiverId: string, receiverName: string, shiftId?: string) => {
-      await markAsReceivedMut.mutateAsync({ id, receiverId, receiverName, shiftId });
-    },
-    [markAsReceivedMut]
-  );
-
-  const completeSale = useCallback(
-    async (saleData: any, context: ActionContext) => {
-      const result = await completeSaleMut.mutateAsync({ saleData, context });
-      if (!result.success) throw new Error(result.error || 'Checkout failed');
-      return result.sale as Sale;
-    },
-    [completeSaleMut]
-  );
-
-  const processSalesReturnAction = useCallback(
-    (returnData: any, sale: Sale, context: ActionContext) =>
-      processSalesReturnMut.mutateAsync({ returnData, sale, context }),
-    [processSalesReturnMut]
-  );
-
-  const createPurchaseReturnAction = useCallback(
-    async (ret: Omit<PurchaseReturn, 'id'>, context: ActionContext) => {
-      const result = await createPurchaseReturnMut.mutateAsync({ ret, context });
-      return result.data as PurchaseReturn;
-    },
-    [createPurchaseReturnMut]
-  );
-
-  // --- Setter Functions (queryClient.setQueryData wrappers) ---
-  // TRANSITIONAL: These adapters exist for backward compatibility with components
-  // that still use imperative setState patterns. Each setter bakes in the query
-  // key parameters (e.g., limit=100). If any consumer uses a non-default limit,
-  // the setter will miss the correct cache entry. Prefer invalidateQueries()
-  // when the old setter pattern is fully removed.
-  const setInventory = useCallback(
-    (updater: Drug[] | ((prev: Drug[]) => Drug[])) => {
-      queryClient.setQueryData(
-        queryKeys.inventory.all(activeBranchId),
-        (old: Drug[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setSales = useCallback(
-    (updater: Sale[] | ((prev: Sale[]) => Sale[])) => {
-      queryClient.setQueryData(
-        queryKeys.sales.recent(activeBranchId, 100),
-        (old: Sale[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setSuppliersState = useCallback(
-    (updater: Supplier[] | ((prev: Supplier[]) => Supplier[])) => {
-      queryClient.setQueryData(
-        queryKeys.suppliers.all(activeBranchId),
-        (old: Supplier[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setPurchasesState = useCallback(
-    (updater: Purchase[] | ((prev: Purchase[]) => Purchase[])) => {
-      queryClient.setQueryData(
-        queryKeys.purchases.all(activeBranchId, 100),
-        (old: Purchase[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setPurchaseReturnsState = useCallback(
-    (updater: PurchaseReturn[] | ((prev: PurchaseReturn[]) => PurchaseReturn[])) => {
-      queryClient.setQueryData(
-        queryKeys.returns.purchases(activeBranchId, 100),
-        (old: PurchaseReturn[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setReturnsState = useCallback(
-    (updater: Return[] | ((prev: Return[]) => Return[])) => {
-      queryClient.setQueryData(
-        queryKeys.returns.sales(activeBranchId, 100),
-        (old: Return[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setCustomersState = useCallback(
-    (updater: Customer[] | ((prev: Customer[]) => Customer[])) => {
-      queryClient.setQueryData(
-        queryKeys.customers.all(activeBranchId),
-        (old: Customer[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setEmployeesState = useCallback(
-    (updater: Employee[] | ((prev: Employee[]) => Employee[])) => {
-      queryClient.setQueryData(
-        queryKeys.employees.all(activeBranchId),
-        (old: Employee[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
-
-  const setBatchesState = useCallback(
-    (updater: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => {
-      queryClient.setQueryData(
-        queryKeys.batches.all(activeBranchId),
-        (old: StockBatch[] | undefined) => {
-          const prev = old || [];
-          return typeof updater === 'function' ? updater(prev) : updater;
-        }
-      );
-    },
-    [queryClient, activeBranchId]
-  );
 
   // --- Realtime Sync ---
   useRealtimeSync({ activeBranchId });
@@ -330,50 +115,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       activeOrgId,
     }
   );
-
-  // --- Entity Handlers Hook ---
-  const {
-    handlePurchaseComplete,
-    handleApprovePurchase,
-    handleMarkAsReceived,
-    handleRejectPurchase,
-    handleCreatePurchaseReturn,
-    handleCompleteSale,
-    handleUpdateSale,
-    handleProcessReturn,
-  } = useEntityHandlers({
-    inventory,
-    setInventory,
-    sales,
-    setSales,
-    suppliers,
-    setSuppliers: setSuppliersState,
-    purchases,
-    setPurchases: setPurchasesState,
-    returns,
-    setReturns: setReturnsState,
-    customers,
-    setCustomers: setCustomersState,
-    purchaseReturns,
-    setPurchaseReturns: setPurchaseReturnsState,
-    currentEmployeeId,
-    activeBranchId,
-    activeOrgId,
-    employees,
-    setEmployees: setEmployeesState,
-    isLoading,
-    batches,
-    setBatches: setBatchesState,
-    approvePurchase: approvePurchaseAction,
-    addPurchase: addPurchaseAction,
-    completeSale,
-    processSalesReturn: processSalesReturnAction,
-    createPurchaseReturn: createPurchaseReturnAction,
-    markAsReceived: markAsReceivedAction,
-    getVerifiedDate,
-    validateTransactionTime,
-    updateLastTransactionTime,
-  });
 
   // --- Translations ---
   const t = TRANSLATIONS[language];
@@ -441,30 +182,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setActiveModule('');
   }, [setIsAuthenticated, setActiveModule, setView]);
 
-  // --- Memoized Props for PageRouter ---
-  const handlers = React.useMemo(
-    () => ({
-      handleCompleteSale,
-      handleUpdateSale,
-      handleProcessReturn,
-      handlePurchaseComplete,
-      handleApprovePurchase,
-      handleMarkAsReceived,
-      handleRejectPurchase,
-      handleCreatePurchaseReturn,
-    }),
-    [
-      handleCompleteSale,
-      handleUpdateSale,
-      handleProcessReturn,
-      handlePurchaseComplete,
-      handleApprovePurchase,
-      handleMarkAsReceived,
-      handleRejectPurchase,
-      handleCreatePurchaseReturn,
-    ]
-  );
-
   // --- TRANSITION SKELETON STATE ---
   if (isLoggingOut) {
     return (
@@ -511,8 +228,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
           handleNavigate={handleNavigate}
           handleLoginSuccess={handleLoginSuccess}
           navigationParams={navigationParams}
-          currentShift={currentShift}
-          handlers={handlers}
           onSelectEmployee={handleSelectEmployee}
           onLogout={onLogoutClick}
         />
@@ -552,8 +267,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                 }}
                 handleLoginSuccess={handleLoginSuccess}
                 navigationParams={null}
-                currentShift={currentShift}
-                handlers={handlers}
                 onSelectEmployee={handleSelectEmployee}
                 onLogout={onLogoutClick}
               />
