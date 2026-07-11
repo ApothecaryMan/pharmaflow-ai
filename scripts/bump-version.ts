@@ -7,11 +7,15 @@ import path from 'path';
  * - package.json
  * - package-lock.json
  * - public/version.json
+ * - src-tauri/tauri.conf.json
+ * - src-tauri/Cargo.toml
+ * - public/preflight.js
  */
 
 const packagePath = path.resolve(process.cwd(), 'package.json');
 const packageLockPath = path.resolve(process.cwd(), 'package-lock.json');
 const versionJsonPath = path.resolve(process.cwd(), 'public/version.json');
+const cargoTomlPath = path.resolve(process.cwd(), 'src-tauri/Cargo.toml');
 
 function bumpVersion() {
   try {
@@ -96,7 +100,18 @@ function bumpVersion() {
       fs.writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + '\n');
       console.log(`✅ Updated src-tauri/tauri.conf.json (Version: ${tauriConf.version})`);
     }
-    // 5. Update public/preflight.js (New!)
+    // 5. Update src-tauri/Cargo.toml
+    if (fs.existsSync(cargoTomlPath)) {
+      let content = fs.readFileSync(cargoTomlPath, 'utf8');
+      const cargoVersionRegex = /^version = ".*?"/m;
+      if (cargoVersionRegex.test(content)) {
+        content = content.replace(cargoVersionRegex, `version = "${newVersion}"`);
+        fs.writeFileSync(cargoTomlPath, content, 'utf8');
+        console.log(`✅ Updated src-tauri/Cargo.toml (Version: ${newVersion})`);
+      }
+    }
+
+    // 6. Update public/preflight.js
     const preflightPath = path.resolve(process.cwd(), 'public/preflight.js');
     if (fs.existsSync(preflightPath)) {
       let content = fs.readFileSync(preflightPath, 'utf8');
