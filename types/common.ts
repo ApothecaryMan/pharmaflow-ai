@@ -78,7 +78,8 @@ export type ViewState =
   | 'a5-invoice-designer'
   | 'filter-dropdown-test'
   | 'expenses'
-  | 'cosmoceutical';
+  | 'cosmoceutical'
+  | 'theme-studio';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

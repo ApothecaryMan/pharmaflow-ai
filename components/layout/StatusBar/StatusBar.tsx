@@ -71,6 +71,7 @@ export interface StatusBarProps {
   onSelectEmployee?: (id: string | null) => void;
   iconSize?: number | string;
   isRecoveringPassword?: boolean;
+  onNavigate?: (view: string) => void;
 }
 
 const defaultTranslations: StatusBarTranslations = {
@@ -124,6 +125,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     onSelectEmployee,
     iconSize = 'var(--icon-base)',
     isRecoveringPassword,
+    onNavigate,
   }) => {
     // 1. Precise destructuring: Only listen to what we actually use
     const {
@@ -224,7 +226,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
         <StatusBarSection>
           <VersionInfo version={t.version} />
           {currentEmployeeId && <ToolsMenu />}
-          {currentEmployeeId && <SettingsMenu />}
+          {currentEmployeeId && <SettingsMenu onNavigate={onNavigate} />}
           <ConnectionStatus
             onlineText={t.online}
             offlineText={t.offline}

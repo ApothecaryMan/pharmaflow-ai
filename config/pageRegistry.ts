@@ -153,6 +153,9 @@ const DesktopSettings = React.lazy(() =>
 const PricingPage = React.lazy(() =>
   import('../components/settings/PricingPage').then((m) => ({ default: m.PricingPage }))
 );
+const ThemeStudioPage = React.lazy(() =>
+  import('../components/settings/ThemeStudio').then((m) => ({ default: m.ThemeStudio }))
+);
 const A5InvoiceDesigner = React.lazy(() =>
   import('../components/test/A5InvoiceDesigner').then((m) => ({ default: m.A5InvoiceDesigner }))
 );
@@ -735,6 +738,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['scrollbar-lab'],
     layout: 'standard',
+  },
+  'theme-studio': {
+    id: 'theme-studio',
+    component: ThemeStudioPage,
+    menuLabel: 'Theme Studio',
+    menuLabelAr: 'استوديو المظهر',
+    icon: 'palette',
+    category: 'settings',
+    requiredProps: ['color', 't', 'language'],
+    permission: PERMISSIONS_MAPPING['theme-studio'],
+    layout: 'full-screen',
   },
   'a5-invoice-designer': {
     id: 'a5-invoice-designer',

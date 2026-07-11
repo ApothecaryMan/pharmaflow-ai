@@ -9,7 +9,6 @@ import { TRANSLATIONS } from '../../../../i18n/translations';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useAuthStore } from '../../../../stores/authStore';
 import type { Language } from '../../../../types';
-import { CustomCssEditor } from '../../../common/CustomCssEditor';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { Tooltip } from '../../../common/Tooltip';
@@ -155,6 +154,7 @@ export interface SettingsMenuProps {
   triggerSize?: number;
   defaultOpen?: boolean;
   onClose?: () => void;
+  onNavigate?: (view: string) => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -165,6 +165,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   triggerSize = 24,
   defaultOpen = false,
   onClose,
+  onNavigate,
 }) => {
   const {
     theme: currentTheme,
@@ -193,8 +194,6 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setBadgeStyle,
     borderRadius,
     setBorderRadius,
-    cardBorderLight,
-    setCardBorderLight,
     modalPresentationMode,
     setModalPresentationMode,
     sidebarModalWidth,
@@ -504,37 +503,25 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     </div>
                   </>
                 )}
-                {developerMode && (
-                  <>
-                    <SettingsRow icon='border_style' label={t.borderStyle || t.cardStyle}>
-                      <SegmentedControl
-                        value={cardBorderLight || 'default'}
-                        onChange={(v) => setCardBorderLight?.(v as any)}
-                        size='xs'
-                        shape='pill'
-                        options={[
-                          { label: t.cardThick, value: 'default' },
-                          { label: t.cardThin, value: 'thin' },
-                          { label: t.cardNone, value: 'none' },
-                        ]}
-                      />
-                    </SettingsRow>
-                    <SettingsRow icon='code' label={t.customCardCss}>
-                      <Switch
-                        checked={enableCustomCardCss}
-                        onChange={setEnableCustomCardCss}
-                        theme={currentTheme.name.toLowerCase()}
-                        activeColor={currentTheme.hex}
-                      />
-                    </SettingsRow>
-                    <div className='px-2 pb-1.5'>
-                      <CustomCssEditor
-                        value={customCardCss || ''}
-                        onChange={(v) => setCustomCardCss?.(v)}
-                        placeholder='box-shadow: 0px 4px 6px rgba(0,0,0,0.1);'
-                      />
-                    </div>
-                  </>
+                {onNavigate && (
+                  <SettingsRow
+                    icon='palette'
+                    label={isAR ? 'استوديو المظهر' : 'Theme Studio'}
+                    onClick={() => {
+                      onNavigate('theme-studio');
+                      setIsOpen(false);
+                    }}
+                  >
+                    <Switch
+                      checked={enableCustomCardCss}
+                      onChange={setEnableCustomCardCss}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                    <span className='material-symbols-rounded text-lg text-(--text-tertiary)'>
+                      arrow_outward
+                    </span>
+                  </SettingsRow>
                 )}
                 {/* --- Background Pattern --- */}
                 <div className='border-t border-(--border-divider) my-1 opacity-50' />

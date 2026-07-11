@@ -56,5 +56,6 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'attendance-reports': 'attendance.view',
   'employee-attendance-profile': 'attendance.view',
   'desktop-settings': 'settings.view',
+  'theme-studio': 'settings.view',
   'drug-interactions': 'inventory.view',
 } as const;

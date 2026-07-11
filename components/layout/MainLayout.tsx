@@ -220,7 +220,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               style={{ borderColor: 'var(--border-divider)' }}
             >
               {/* Sidebar */}
-              {!isStandalone && currentEmployeeId && (
+              {!isStandalone && currentEmployeeId && view !== 'theme-studio' && (
                 <motion.aside
                   initial={false}
                   animate={{
@@ -312,6 +312,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               currentEmployeeId={currentEmployeeId}
               onSelectEmployee={setCurrentEmployeeId}
               isRecoveringPassword={isRecoveringPassword}
+              onNavigate={handleNavigate}
             />
           )}
         </div>

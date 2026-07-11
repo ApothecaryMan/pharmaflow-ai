@@ -165,7 +165,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Apply border radius
   useEffect(() => {
     let radiusValue = '0.625rem';
-    if (ui.borderRadius === 'sharp') radiusValue = '0rem';
+    if (ui.borderRadius === 'sharp') radiusValue = '0.25rem';
     else if (ui.borderRadius === 'full') radiusValue = '0.375rem';
 
     document.documentElement.style.setProperty('--radius', radiusValue);

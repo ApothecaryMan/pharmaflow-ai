@@ -38,6 +38,7 @@ interface CustomCssEditorProps {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
+  className?: string;
 }
 
 const parseCss = (css: string, isOverlay: boolean) => {
@@ -104,7 +105,7 @@ const parseCss = (css: string, isOverlay: boolean) => {
   return elements;
 };
 
-export const CustomCssEditor = React.memo<CustomCssEditorProps>(({ value, onChange, placeholder }) => {
+export const CustomCssEditor = React.memo<CustomCssEditorProps>(({ value, onChange, placeholder, className = '' }) => {
   const backdropRef0 = useRef<HTMLDivElement>(null);
   const backdropRef20 = useRef<HTMLDivElement>(null);
 
@@ -122,7 +123,7 @@ export const CustomCssEditor = React.memo<CustomCssEditorProps>(({ value, onChan
   const cssText = value || placeholder || '';
 
   return (
-    <div className='relative w-full rounded-lg bg-(--bg-input) border border-(--border-divider) focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 transition-colors'>
+    <div className={`relative w-full rounded-lg bg-gray-100 dark:bg-(--bg-input) border border-(--border-divider) focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 transition-colors ${className}`}>
       <div
         ref={backdropRef0}
         className={`absolute inset-0 p-2 whitespace-pre-wrap break-words overflow-hidden text-gray-500 dark:text-gray-400 font-mono text-xs ${!value ? 'opacity-40' : ''}`}
@@ -136,7 +137,7 @@ export const CustomCssEditor = React.memo<CustomCssEditorProps>(({ value, onChan
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onScroll={handleScroll}
-        className='relative z-10 block w-full h-full p-2 bg-transparent text-transparent caret-black dark:caret-white outline-hidden font-mono text-xs min-h-[80px] resize-y scrollbar-none m-0 border-none selection:bg-primary-500/30 selection:text-transparent'
+        className='relative z-10 block w-full h-full p-2 bg-transparent text-transparent caret-black dark:caret-white outline-hidden font-mono text-xs min-h-[80px] resize-none scrollbar-none m-0 border-none selection:bg-primary-500/30 selection:text-transparent'
         spellCheck={false}
         dir='ltr'
       />
