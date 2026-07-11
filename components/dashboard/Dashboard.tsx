@@ -752,6 +752,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   monthlyTargetFormatted={achievements.monthlyTargetFormatted}
                   language={language}
                   isLoading={achievementsLoading}
+                  showDetailsInline={true}
                 />
 
                 <div className='overflow-x-auto rounded-2xl border border-(--border-primary)'>
@@ -952,8 +953,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Row 2: Chart & Top Selling */}
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
-        {/* Sales Chart (2 Cols) */}
+      <div className='grid grid-cols-1 lg:grid-cols-12 gap-4'>
+        {/* Sales Chart (1 Col) */}
         <ChartWidget
           title={t.trend}
           icon=''
@@ -965,7 +966,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           unit={getCurrencySymbol()}
           allowChartTypeSelection={true}
           primaryLabel={t.totalSales || 'Sales'}
-          className='h-80'
+          className='lg:!col-span-6 h-80'
           chartClassName='h-[90%]'
           isLoading={isLoading || finLoading}
           xAxisKey='day'
@@ -973,21 +974,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
           tooltipLabelFormatter={formatTooltipLabel}
         />
 
+        {/* Target Achievements (1 Col) */}
+        <MonthlyHeatmap
+          days={achievements?.days ?? []}
+          year={currentYear}
+          month={currentMonth}
+          monthlyRevenue={achievements?.monthlyRevenue ?? 0}
+          monthlyTarget={achievements?.monthlyTarget ?? 0}
+          overallPct={achievements?.overallPct ?? 0}
+          monthlyRevenueFormatted={achievements?.monthlyRevenueFormatted}
+          monthlyTargetFormatted={achievements?.monthlyTargetFormatted}
+          onExpand={() => setExpandedView('achievements')}
+          language={language}
+          isLoading={isLoading || achievementsLoading}
+          compact={false}
+          className='lg:col-span-2 h-80 overflow-y-auto'
+        />
+
         {/* Top Selling Products (1 Col) */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group lg:col-span-4`}>
           <div className='flex justify-between items-center mb-3'>
             <h3 className='text-base font-semibold text-(--text-primary) flex items-center gap-2 truncate'>
               <span className='truncate'>
                 {topSellingMode === 'revenue' 
-                  ? t.dashboard?.mostProfitable 
-                  : (t.dashboard?.topSelling || t.topSelling)}
+                  ? (t.mostProfitable || t.dashboard?.mostProfitable || 'Most Profitable')
+                  : (t.topSelling || t.dashboard?.topSelling || 'Top Selling Products')}
               </span>
             </h3>
             <div className='flex items-center gap-2 shrink-0'>
               <SegmentedControl
                 options={[
-                  { label: t.dashboard?.byRevenue || t.revenue, value: 'revenue' },
-                  { label: t.dashboard?.byQuantity || 'Quantity', value: 'qty' },
+                  { label: t.byRevenue || t.dashboard?.byRevenue || t.revenue || 'Revenue', value: 'revenue' },
+                  { label: t.byQuantity || t.dashboard?.byQuantity || t.inventory?.quantity || 'Quantity', value: 'qty' },
                 ]}
                 value={topSellingMode}
                 onChange={(val) => setTopSellingMode(String(val) as 'revenue' | 'qty')}
@@ -1143,20 +1161,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           ))}
 
-          {/* Monthly Target Achievement Heatmap */}
-          <MonthlyHeatmap
-            days={achievements?.days ?? []}
-            year={currentYear}
-            month={currentMonth}
-            monthlyRevenue={achievements?.monthlyRevenue ?? 0}
-            monthlyTarget={achievements?.monthlyTarget ?? 0}
-            overallPct={achievements?.overallPct ?? 0}
-            monthlyRevenueFormatted={achievements?.monthlyRevenueFormatted}
-            monthlyTargetFormatted={achievements?.monthlyTargetFormatted}
-            onExpand={() => setExpandedView('achievements')}
-            language={language}
-            isLoading={isLoading || achievementsLoading}
-          />
         </div>
 
         {/* Recent Transactions */}
