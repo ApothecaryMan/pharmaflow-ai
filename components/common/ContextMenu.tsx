@@ -336,7 +336,7 @@ export const ContextMenuProvider: React.FC<{
               ref={menuRef}
               onMouseEnter={() => setIsMouseOverMenu(true)}
               onMouseLeave={() => setIsMouseOverMenu(false)}
-              className={`fixed z-[999999] min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 origin-top-left overflow-hidden
+              className={`fixed z-[999999] min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 origin-top-left overflow-hidden custom-card-css-target no-padding
                 ${enableGlassEffect ? 'glass-surface' : 'bg-(--bg-menu)'}
             `}
               style={{

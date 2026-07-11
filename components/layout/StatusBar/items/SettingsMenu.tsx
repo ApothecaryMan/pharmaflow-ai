@@ -9,6 +9,7 @@ import { TRANSLATIONS } from '../../../../i18n/translations';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useAuthStore } from '../../../../stores/authStore';
 import type { Language } from '../../../../types';
+import { CustomCssEditor } from '../../../common/CustomCssEditor';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { Tooltip } from '../../../common/Tooltip';
@@ -30,9 +31,8 @@ const SettingsRow = React.memo<{
   onClick?: () => void;
 }>(({ icon, label, children, className = '', onClick }) => (
   <div
-    className={`flex items-center justify-between transition-colors px-2 ${
-      onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
-    } ${className}`}
+    className={`flex items-center justify-between transition-colors px-2 ${onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
+      } ${className}`}
     onClick={onClick}
   >
     <div className='flex items-center gap-2'>
@@ -121,13 +121,15 @@ const SubmenuSection = React.memo<{
     return (
       <div className='space-y-1 relative' ref={ref}>
         <SettingsRow icon={icon} label={label} onClick={() => onToggle(id)}>
-          {rowExtra}
-          <span
-            className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${isOpen ? 'rotate-180' : ''}`}
-            style={iconFontSizeStyle}
-          >
-            chevron_left
-          </span>
+          <div className='flex items-center gap-2'>
+            {rowExtra}
+            <span
+              className={`material-symbols-rounded text-lg text-(--text-tertiary) transition-transform duration-200 ${isOpen ? (isMobile ? 'rotate-90' : isRTL ? '-rotate-90' : 'rotate-90') : ''
+                }`}
+            >
+              {isRTL ? 'chevron_left' : 'chevron_right'}
+            </span>
+          </div>
         </SettingsRow>
         <SubmenuWrapper
           isOpen={isOpen}
@@ -502,7 +504,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     </div>
                   </>
                 )}
-                {!darkMode && developerMode && (
+                {developerMode && (
                   <>
                     <SettingsRow icon='border_style' label={t.borderStyle || t.cardStyle}>
                       <SegmentedControl
@@ -526,13 +528,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       />
                     </SettingsRow>
                     <div className='px-2 pb-1.5'>
-                      <textarea
+                      <CustomCssEditor
                         value={customCardCss || ''}
-                        onChange={(e) => setCustomCardCss?.(e.target.value)}
+                        onChange={(v) => setCustomCardCss?.(v)}
                         placeholder='box-shadow: 0px 4px 6px rgba(0,0,0,0.1);'
-                        className='w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none'
-                        spellCheck={false}
-                        dir='ltr'
                       />
                     </div>
                   </>
@@ -579,37 +578,36 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       <button
                         key={p}
                         onClick={() => setBackgroundPattern(p)}
-                        className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${
-                          backgroundPattern === p
+                        className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${backgroundPattern === p
                             ? 'border-(--primary-500) bg-(--primary-500)/10'
                             : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
-                        }`}
+                          }`}
                       >
                         <div
                           className={`w-10 h-10 rounded-md overflow-hidden ${p !== 'none' ? `bg-pattern-${p}` : 'border border-dashed border-(--border-divider)'}`}
                           style={
                             p !== 'none'
                               ? ({
-                                  backgroundImage: 'var(--bg-pattern-image)',
-                                  backgroundSize: (
-                                    {
-                                      dots: '10px 10px',
-                                      grid: '10px 10px',
-                                      crosshatch: '12px 12px',
-                                      mesh: '100% 100%',
-                                      stripes: '8px 8px',
-                                      noise: '24px 24px',
-                                      mandala: '18px 18px',
-                                      diamond: '40px 40px',
-                                      corners: '20px 20px',
-                                      cross: '30px 30px',
-                                      stars: '35px 35px',
-                                    } as Record<string, string>
-                                  )[p],
-                                  backgroundRepeat: 'var(--bg-pattern-repeat)',
-                                  backgroundPosition: 'var(--bg-pattern-position)',
-                                  '--bg-pattern-color': 'var(--text-tertiary)',
-                                } as React.CSSProperties)
+                                backgroundImage: 'var(--bg-pattern-image)',
+                                backgroundSize: (
+                                  {
+                                    dots: '10px 10px',
+                                    grid: '10px 10px',
+                                    crosshatch: '12px 12px',
+                                    mesh: '100% 100%',
+                                    stripes: '8px 8px',
+                                    noise: '24px 24px',
+                                    mandala: '18px 18px',
+                                    diamond: '40px 40px',
+                                    corners: '20px 20px',
+                                    cross: '30px 30px',
+                                    stars: '35px 35px',
+                                  } as Record<string, string>
+                                )[p],
+                                backgroundRepeat: 'var(--bg-pattern-repeat)',
+                                backgroundPosition: 'var(--bg-pattern-position)',
+                                '--bg-pattern-color': 'var(--text-tertiary)',
+                              } as unknown as React.CSSProperties & Record<string, string>)
                               : undefined
                           }
                         />

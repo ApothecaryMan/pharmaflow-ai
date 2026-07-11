@@ -894,7 +894,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             </ContextMenuTrigger>
           ) : (
             <table className='w-full text-start border-separate border-spacing-0 table-fixed'>
-              <thead ref={headerRef} className='sticky top-0 z-10 bg-(--bg-card)'>
+              <thead ref={headerRef} className='sticky top-0 z-10 bg-(--bg-card) custom-card-css-target no-padding'>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {

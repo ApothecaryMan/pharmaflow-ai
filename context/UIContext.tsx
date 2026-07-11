@@ -209,42 +209,6 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     document.documentElement.style.setProperty('--sidebar-modal-width', widthVal);
   }, [ui.sidebarModalWidth]);
 
-  // Apply custom card CSS
-  useEffect(() => {
-    let styleEl = document.getElementById('pharma-custom-card-css') as HTMLStyleElement | null;
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = 'pharma-custom-card-css';
-      document.head.appendChild(styleEl);
-    }
-
-    if (ui.customCardCss && ui.enableCustomCardCss) {
-      const processedCss = ui.customCardCss
-        .split(';')
-        .map((part) => {
-          const trimmed = part.trim();
-          if (!trimmed || !trimmed.includes(':')) return trimmed;
-          if (/!important/i.test(trimmed)) return trimmed;
-          return `${trimmed} !important`;
-        })
-        .join('; ');
-
-      styleEl.textContent = `
-        html:not(.dark) .card-shadow,
-        html.dark .card-shadow,
-        .card-shadow {
-          ${processedCss}
-        }
-      `;
-    } else {
-      styleEl.textContent = '';
-    }
-
-    return () => {
-      document.getElementById('pharma-custom-card-css')?.remove();
-    };
-  }, [ui.customCardCss, ui.enableCustomCardCss]);
-
   const setNavStyle = useCallback((navStyle: 1 | 2 | 3) => {
     setUI((prev) => ({ ...prev, navStyle }));
   }, []);

@@ -333,11 +333,10 @@ export const Modal: React.FC<ModalProps> = ({
             key={item.key}
             onClick={() => setSidebarModalWidth?.(item.key)}
             disabled={!isSidebar}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-              !isSidebar
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${!isSidebar
                 ? 'opacity-30 cursor-not-allowed'
                 : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-            }`}
+              }`}
           >
             <span className='material-symbols-rounded text-lg'>
               {sidebarModalWidth === item.key ? 'check_circle' : 'circle'}
@@ -360,16 +359,18 @@ export const Modal: React.FC<ModalProps> = ({
 
   const maxWidthClass = width || LAYOUT_CONFIG.MODAL_SIZES[size] || LAYOUT_CONFIG.MODAL_SIZES.lg;
 
+  const exitTransition = { duration: 0 };
+
   const cardVariants = {
     modal: {
       initial: { opacity: 0, scale: 0.95, y: 20 },
       animate: { opacity: 1, scale: 1, y: 0 },
-      exit: { opacity: 0, scale: 0.95, y: 20 },
+      exit: { opacity: 0, scale: 0.95, y: 20, transition: exitTransition },
     },
     sidebar: {
       initial: { opacity: 0, x: '100%' },
       animate: { opacity: 1, x: 0 },
-      exit: { opacity: 0, x: '100%' },
+      exit: { opacity: 0, x: '100%', transition: exitTransition },
     },
   };
 
@@ -379,9 +380,8 @@ export const Modal: React.FC<ModalProps> = ({
     exit: { opacity: 0 },
   };
 
-  const cardTransition = { type: 'spring', damping: 28, stiffness: 300 };
+  const cardTransition = { type: 'spring', damping: 28, stiffness: 300 } as const;
   const backdropTransition = { duration: 0.2 };
-  const exitTransition = { duration: 0 };
 
   const mode = isSidebar ? 'sidebar' : 'modal';
 
@@ -419,7 +419,7 @@ export const Modal: React.FC<ModalProps> = ({
               className={
                 isSidebar
                   ? `relative w-full h-dvh bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card select-none pointer-events-auto ${className}`
-                  : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none pointer-events-auto ${className}`
+                  : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none pointer-events-auto modal-card ${className}`
               }
               style={isSidebar ? style : { height: height || 'auto', ...style }}
               onClick={(e) => e.stopPropagation()}
@@ -427,13 +427,13 @@ export const Modal: React.FC<ModalProps> = ({
               initial='initial'
               animate='animate'
               exit='exit'
-              transition={{ ...cardTransition, exit: exitTransition }}
+              transition={cardTransition}
             >
               {title || tabs || headerActions ? (
                 <div className='h-full flex flex-col overflow-hidden'>
                   {/* Header - Windows 10 Style (Compact & Functional) */}
                   <div
-                    className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative select-none'
+                    className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative select-none custom-card-css-target no-padding'
                     onContextMenu={handleHeaderContextMenu}
                   >
                     {/* Title Section: Icon + Title */}
@@ -491,7 +491,7 @@ export const Modal: React.FC<ModalProps> = ({
                         <button
                           onClick={onClose}
                           disabled={disabled}
-                          className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent'
+                          className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent custom-card-css-target no-padding'
                           aria-label='Close modal'
                         >
                           <span

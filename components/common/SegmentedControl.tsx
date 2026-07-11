@@ -122,10 +122,10 @@ export function SegmentedControl<T extends string | number | boolean>({
       dir={dir}
       data-settled='false'
       data-dir-change='false'
-      className={`relative flex p-1 gap-1 bg-gray-100 dark:bg-gray-900 ${pill ? 'rounded-full' : 'rounded-xl'} shadow-[inset_0_1px_3px_0_rgb(0_0_0/0.12)] isolate ${className} [--itn:none] data-[settled=true]:data-[dir-change=false]:[--itn:inset-inline-start_0.2s_ease-out,width_0.2s_ease-out,height_0.2s_ease-out,top_0.2s_ease-out]`}
+      className={`relative flex p-1 gap-1 bg-gray-100 dark:bg-gray-900 custom-card-css-target no-padding ${pill ? 'rounded-full' : 'rounded-xl'} shadow-[inset_0_1px_3px_0_rgb(0_0_0/0.12)] isolate ${className} [--itn:none] data-[settled=true]:data-[dir-change=false]:[--itn:inset-inline-start_0.2s_ease-out,width_0.2s_ease-out,height_0.2s_ease-out,top_0.2s_ease-out]`}
     >
       <div
-        className={`absolute bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) ${pill ? 'rounded-full' : 'rounded-lg'} z-0 shadow-sm ${disableAnimation ? '' : 'transition-[var(--itn)]'}`}
+        className={`absolute bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) custom-card-css-target no-padding ${pill ? 'rounded-full' : 'rounded-lg'} z-0 shadow-sm ${disableAnimation ? '' : 'transition-[var(--itn)]'}`}
         style={{
           width: 'var(--iw)',
           height: 'var(--ih)',

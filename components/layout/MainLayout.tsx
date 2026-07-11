@@ -12,6 +12,7 @@ import type { ViewState } from '../../types';
 import { useAutoSystemBarColor } from '../../utils/systemBars';
 import { ContextMenuProvider, useContextMenu } from '../common/ContextMenu';
 import { HelpModal } from '../common/HelpModal';
+import { ThemeStudio } from '../common/ThemeStudio';
 import { DynamicEventLayer } from './DynamicEventLayer';
 import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
@@ -160,6 +161,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <ContextMenuProvider enableGlassEffect={false}>
+      <ThemeStudio />
       <DynamicEventLayer view={view} />
       <GlobalContextMenuWrapper
         t={t}
@@ -174,7 +176,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               backgroundColor: 'var(--bg-primary)',
               color: 'var(--text-primary)',
               ...(isStandalone ? { '--navbar-height': '0px', '--statusbar-height': '0px' } : {}),
-            } as React.CSSProperties
+            } as unknown as React.CSSProperties & Record<string, string>
           }
           dir={language === 'AR' ? 'rtl' : 'ltr'}
         >
@@ -280,7 +282,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     '--bg-pattern-color': backgroundPatternUseThemeColor
                       ? 'var(--primary-500)'
                       : 'var(--text-tertiary)',
-                  } as React.CSSProperties
+                  } as unknown as React.CSSProperties & Record<string, string>
                 }
               >
                 <div

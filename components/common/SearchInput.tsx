@@ -226,7 +226,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <div className='fixed inset-x-0 top-0 z-[99999] bg-(--bg-page-surface) border-b border-(--border-divider) p-3'>
                   <div className='flex items-center gap-2'>
                     <div
-                      className='flex-1 flex items-center gap-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-(--bg-input) focus-within:ring-2 focus-within:ring-primary-500'
+                      className='flex-1 flex items-center gap-1 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding bg-(--bg-input) focus-within:ring-2 focus-within:ring-primary-500'
                       dir={dir}
                     >
                       <span
@@ -266,7 +266,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <button
                   type='button'
                   onClick={() => setExpanded(true)}
-                  className='flex items-center gap-2 px-3 h-8 rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
+                  className='flex items-center gap-2 px-3 h-8 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
                 >
                   <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path
@@ -284,7 +284,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               <div
                 className={`
                   flex items-center gap-1 px-2 py-1.5 text-sm rounded-lg border
-                  border-gray-200 dark:border-gray-700
+                  border-gray-300 dark:border-gray-600 custom-card-css-target no-padding
                   bg-(--bg-input)
                   focus-within:ring-2 focus-within:ring-primary-500
                   ${wrapperClassName}
@@ -326,7 +326,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <div
           className={`
             flex items-center gap-1 px-2 py-1.5 text-sm rounded-lg border
-            border-gray-200 dark:border-gray-700
+            border-gray-300 dark:border-gray-600 custom-card-css-target no-padding
             bg-(--bg-input)
             focus-within:ring-2 focus-within:ring-primary-500
             ${wrapperClassName}
@@ -368,10 +368,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         className={`
             relative flex items-center flex-wrap gap-2
             bg-(--bg-input)
-            border-2 dark:border border-(--border-search)
+            border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding
             ${isFocused ? 'border-gray-400 dark:border-gray-500 shadow-sm' : ''}
             ${rounded === 'full' ? 'rounded-full ps-4 pe-1.5' : 'rounded-3xl ps-4 pe-1.5'} 
-            h-11
+            min-h-11
             ${wrapperClassName}
          `}
         dir={dir}
@@ -385,7 +385,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       >
         <div
           className={`
-          flex items-center h-full select-none
+          flex items-center self-stretch select-none
           ${isFocused ? 'text-black dark:text-white' : 'text-gray-400'}
         `}
         >
@@ -409,7 +409,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
         <div
           className={`
-             relative flex-1 h-full flex items-center
+             relative flex-1 self-stretch flex items-center
              ${hasActiveFilters ? 'ms-1' : 'ms-2'}
         `}
         >
@@ -428,7 +428,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             autoCapitalize='none'
             inputMode='search'
             className={`
-                w-full h-full bg-transparent
+                w-full self-stretch bg-transparent
                 text-base font-medium text-gray-900 dark:text-gray-100 
                 placeholder-gray-400 outline-hidden
                 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden
@@ -450,7 +450,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         </div>
 
         {hasActiveFilters && (
-          <div className='flex items-center gap-1.5 h-full ms-auto'>
+          <div className='flex items-center gap-1.5 self-stretch ms-auto'>
             {activeGroups.map((groupId) => {
               const config = filterConfigs.find((c) => c.id === groupId);
               const values = activeFilters[groupId];
@@ -472,7 +472,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           </div>
         )}
 
-        <div className='flex items-center gap-1.5 ms-auto h-full'>
+        <div className='flex items-center gap-1.5 ms-auto self-stretch'>
           {filterConfigs.length > 0 && (
             <div
               className={`

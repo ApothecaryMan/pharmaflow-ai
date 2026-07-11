@@ -37,6 +37,8 @@ export const Tooltip: React.FC<{
   triggerClassName?: string;
   tooltipClassName?: string;
   disabled?: boolean;
+  fillColor?: string;
+  textColor?: string;
 }> = ({
   children,
   content,
@@ -46,6 +48,8 @@ export const Tooltip: React.FC<{
   triggerClassName = '',
   tooltipClassName = '',
   disabled = false,
+  fillColor,
+  textColor,
 }) => {
   const [show, setShow] = useState(false),
     [side, setSide] = useState(position);
@@ -140,12 +144,17 @@ export const Tooltip: React.FC<{
                 className='absolute inset-0 w-full h-full pointer-events-none overflow-visible'
                 style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
               >
-                <path d={path || ''} className='fill-gray-800 dark:fill-stone-50' />
+                <path 
+                  d={path || ''} 
+                  className={fillColor ? '' : 'fill-gray-800 dark:fill-stone-50'} 
+                  style={fillColor ? { fill: fillColor } : undefined} 
+                />
               </svg>
               <div
                 ref={contentRef}
-                className='relative z-10 text-stone-50 dark:text-gray-800 text-[11px] font-semibold tracking-tight whitespace-nowrap w-max'
+                className={`relative z-10 text-[11px] font-semibold tracking-tight whitespace-nowrap w-max ${textColor ? '' : 'text-stone-50 dark:text-gray-800'}`}
                 style={{
+                  ...(textColor ? { color: textColor } : {}),
                   paddingTop: side === 'bottom' ? AH + 8 : 8,
                   paddingBottom: side === 'top' ? AH + 8 : 8,
                   paddingLeft: side === 'right' ? AH + 12 : 12,
