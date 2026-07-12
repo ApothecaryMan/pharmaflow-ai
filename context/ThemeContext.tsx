@@ -18,9 +18,8 @@ type BackgroundPattern =
   | 'none'
   | 'dots'
   | 'grid'
+  | 'blueprint'
   | 'mesh'
-  | 'crosshatch'
-  | 'stripes'
   | 'noise'
   | 'mandala'
   | 'diamond'
@@ -31,7 +30,8 @@ type BackgroundPattern =
   | 'polka'
   | 'abstract'
   | 'circuit'
-  | 'ornate';
+  | 'ornate'
+  | 'diagonal-stripes';
 
 export interface ThemeState {
   theme: ThemeColor;

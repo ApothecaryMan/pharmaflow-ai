@@ -544,9 +544,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       'none',
                       'dots',
                       'grid',
+                      'blueprint',
                       'mesh',
-                      'crosshatch',
-                      'stripes',
                       'noise',
                       'mandala',
                       'diamond',
@@ -558,6 +557,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       'abstract',
                       'circuit',
                       'ornate',
+                      'diagonal-stripes',
                     ] as const
                   )
                     .filter((p) => p !== 'mesh' || (backgroundPatternUseThemeColor && darkMode))
@@ -566,8 +566,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         key={p}
                         onClick={() => setBackgroundPattern(p)}
                         className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${backgroundPattern === p
-                            ? 'border-(--primary-500) bg-(--primary-500)/10'
-                            : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
+                          ? 'border-(--primary-500) bg-(--primary-500)/10'
+                          : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
                           }`}
                       >
                         <div
@@ -579,10 +579,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                 backgroundSize: (
                                   {
                                     dots: '10px 10px',
-                                    grid: '10px 10px',
-                                    crosshatch: '12px 12px',
+                                    grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
+                                    blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
                                     mesh: '100% 100%',
-                                    stripes: '8px 8px',
                                     noise: '24px 24px',
                                     mandala: '18px 18px',
                                     diamond: '40px 40px',
@@ -593,7 +592,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                 )[p],
                                 backgroundRepeat: 'var(--bg-pattern-repeat)',
                                 backgroundPosition: 'var(--bg-pattern-position)',
-                                '--bg-pattern-color': 'var(--text-tertiary)',
+                                '--bg-pattern-color': 'var(--text-primary)',
                               } as unknown as React.CSSProperties & Record<string, string>)
                               : undefined
                           }
@@ -604,9 +603,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                               none: t.patternNone,
                               dots: t.patternDots,
                               grid: t.patternGrid,
+                              blueprint: t.patternBlueprint,
                               mesh: t.patternMesh,
-                              crosshatch: t.patternCrosshatch,
-                              stripes: t.patternStripes,
                               noise: t.patternNoise,
                               diamond: t.patternDiamond,
                               corners: t.patternCorners,
@@ -617,6 +615,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                               abstract: t.patternAbstract,
                               circuit: t.patternCircuit,
                               ornate: t.patternOrnate,
+                              'diagonal-stripes': t.patternDiagonalStripes,
                             } as Record<string, string>
                           )[p] ?? t.patternMandala}
                         </span>
