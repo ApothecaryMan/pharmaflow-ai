@@ -2,8 +2,6 @@ import { supabase } from '../../lib/supabase';
 import type { Drug } from '../../types';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
-import { authService } from '../auth/authService';
-import { permissionsService } from '../auth/permissionsService';
 import { BaseDomainService } from '../core/baseDomainService';
 import { settingsService } from '../settings/settingsService';
 import { batchService } from './batchService';
@@ -57,15 +55,29 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
   }
 
   async search(query: string, branchId?: string): Promise<Drug[]> {
-    const all = await this.getAll(branchId);
-    const q = query.toLowerCase();
-    return all.filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) ||
-        (d.genericName && d.genericName.some((g) => g.toLowerCase().includes(q))) ||
-        d.barcode?.includes(q) ||
-        d.internalCode?.toLowerCase().includes(q)
-    );
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+
+    const { data, error } = await supabase
+      .from(inventoryRepository.tableName)
+      .select(
+        'id, org_id, branch_id, name, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
+      )
+      .eq('branch_id', effectiveBranchId)
+      .or(`name.ilike.%${query}%,barcode.ilike.%${query}%,internal_code.ilike.%${query}%`)
+      .limit(20);
+
+    if (error) throw error;
+    return (data || []).map((item) => inventoryRepository.mapFromDb(item));
+  }
+
+  async getPage(
+    branchId: string,
+    options: { page: number; pageSize: number; search?: string; filters?: Record<string, any> }
+  ): Promise<{ data: Drug[]; total: number }> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    return inventoryRepository.getPage(effectiveBranchId, options);
   }
 
   async filter(filters: InventoryFilters, branchId?: string): Promise<Drug[]> {

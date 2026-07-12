@@ -73,6 +73,54 @@ export const inventoryRepository = {
     return db;
   },
 
+  async getPage(
+    branchId: string,
+    options: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      filters?: Record<string, any>;
+      sort?: { column: string; ascending: boolean };
+    }
+  ): Promise<{ data: Drug[]; total: number }> {
+    const from = (options.page - 1) * options.pageSize;
+    const to = from + options.pageSize - 1;
+
+    let query = supabase
+      .from(this.tableName)
+      .select(
+        'id, org_id, branch_id, name, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank',
+        { count: 'exact' }
+      )
+      .eq('branch_id', branchId);
+
+    if (options.search?.trim()) {
+      const term = options.search.trim();
+      query = query.or(
+        `name.ilike.%${term}%,barcode.ilike.%${term}%,internal_code.ilike.%${term}%`
+      );
+    }
+
+    if (options.filters) {
+      if (options.filters.category) query = query.eq('category', options.filters.category);
+      if (options.filters.status) query = query.eq('status', options.filters.status);
+    }
+
+    const sortCol = options.sort?.column || 'name';
+    const asc = options.sort?.ascending ?? true;
+    query = query.order(sortCol, { ascending: asc });
+
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+
+    return {
+      data: (data || []).map((item) => this.mapFromDb(item)),
+      total: count || 0,
+    };
+  },
+
   async getAll(branchId?: string, orgId?: string): Promise<Drug[]> {
     let query = supabase
       .from(this.tableName)

@@ -73,3 +73,23 @@ export function useSuppliers(branchId: string) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+export function useInventoryPage(
+  branchId: string,
+  page: number,
+  pageSize: number,
+  search?: string,
+  filters?: Record<string, any>
+) {
+  return useQuery({
+    queryKey: [...queryKeys.inventory.all(branchId), 'page', page, pageSize, search, filters],
+    queryFn: () =>
+      inventoryService.getPage(branchId, { page, pageSize, search, filters }) as Promise<{
+        data: Drug[];
+        total: number;
+      }>,
+    enabled: !!branchId,
+    staleTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}

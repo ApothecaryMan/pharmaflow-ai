@@ -7,21 +7,17 @@ import {
   getCategories,
   getLocalizedCategory,
   getLocalizedProductType,
-  getProductTypes,
-  isMedicineCategory,
 } from '../../data/productCategories';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { batchService } from '../../services/inventory/batchService';
-import { DrugSearchEngine } from '../../services/search/drugSearchService';
-import type { Drug, GroupedDrug, GroupingKey } from '../../types';
+import type { Drug } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useInventoryPage } from '../../hooks/queries/useInventoryQuery';
 import {
   useAddProduct,
   useUpdateProduct,
   useDeleteProduct,
 } from '../../hooks/mutations/useInventoryMutations';
-import { formatCompactCurrency, formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   formatExpiryDate,
@@ -81,7 +77,6 @@ export const Inventory: React.FC<InventoryProps> = ({
   onViewChange,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
-  const { data: inventory = [], isLoading } = useInventory(activeBranchId);
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
@@ -95,6 +90,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const currentLang = isRTL ? 'ar' : 'en';
 
   const [mode, setMode] = useState<'list' | 'add'>('list');
+  const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -102,21 +98,12 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [activeDetailsTab, setActiveDetailsTab] = useState<'general' | 'pharmacy'>('general');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-
-  const viewingDrugBatches = useMemo(() => {
-    if (!viewingDrug) return [];
-    if (viewingDrug.barcode) {
-      return inventory.filter((d) => d.barcode === viewingDrug.barcode);
-    }
-    return inventory.filter(
-      (d) => d.name === viewingDrug.name && d.dosageForm === viewingDrug.dosageForm
-    );
-  }, [inventory, viewingDrug]);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
-  const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [selectedUnits, setSelectedUnits] = useState<Record<string, string>>({});
   const [isDataSettled, setIsDataSettled] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const tablePageSize = 50;
 
   useEffect(() => {
     if (searchTerm === '') {
@@ -128,6 +115,22 @@ export const Inventory: React.FC<InventoryProps> = ({
     }, 150);
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  const { data: pageResult, isLoading, isFetching } = useInventoryPage(
+    activeBranchId,
+    page + 1,
+    tablePageSize,
+    debouncedSearchTerm,
+    activeFilters
+  );
+
+  const currentData = pageResult?.data || [];
+  const totalCount = pageResult?.total || 0;
+
+  const viewingDrugBatches = useMemo(() => {
+    if (!viewingDrug) return [];
+    return [viewingDrug];
+  }, [viewingDrug]);
 
   const {
     setLeftContent,
@@ -141,19 +144,17 @@ export const Inventory: React.FC<InventoryProps> = ({
   // Synchronization Buffer: Ensures skeleton stays until data is actually available
   useEffect(() => {
     if (!isLoading) {
-      // If we have data, settle quickly but not instantly to avoid flicker
-      if (inventory.length > 0) {
+      if (currentData.length > 0) {
         const timer = setTimeout(() => setIsDataSettled(true), 200);
         return () => clearTimeout(timer);
       } else {
-        // If it's truly empty, wait a bit longer to be absolutely sure before showing "No results"
         const timer = setTimeout(() => setIsDataSettled(true), 1000);
         return () => clearTimeout(timer);
       }
     } else {
       setIsDataSettled(false);
     }
-  }, [isLoading, inventory.length]);
+  }, [isLoading, currentData.length]);
 
   // Print Label Modal State
   const [printModalDrug, setPrintModalDrug] = useState<Drug | null>(null);
@@ -269,106 +270,12 @@ export const Inventory: React.FC<InventoryProps> = ({
   // Categories are now determined dynamically using helper
   const allCategories = getCategories(currentLang);
 
-  // 1. Base filtering (Pills/Status only - No Search)
-  const baseFilteredInventory = useMemo(() => {
-    let result = [...inventory];
-
-    // Apply Stock Status Filter
-    const stockVals =
-      activeFilters['stock_status'] && activeFilters['stock_status'].length > 0
-        ? activeFilters['stock_status']
-        : ['in_stock'];
-
-    if (!stockVals.includes('all')) {
-      result = result
-        .map((d) => {
-          if (d.batches && d.batches.length > 0) {
-            return {
-              ...d,
-              batches: d.batches.filter((b: any) => {
-                if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock'))
-                  return true;
-                if (stockVals.includes('in_stock')) return b.stock > 0;
-                if (stockVals.includes('out_of_stock')) return b.stock <= 0;
-                return true;
-              }),
-            };
-          }
-          return d;
-        })
-        .filter((d) => {
-          if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
-          if (stockVals.includes('in_stock')) return d.stock > 0;
-          if (stockVals.includes('out_of_stock')) return d.stock <= 0;
-          return true;
-        });
-    }
-
-    // Apply other Active Filters (Pills)
-    Object.entries(activeFilters).forEach(([groupId, values]) => {
-      const vals = values as any[];
-      if (!vals || vals.length === 0 || groupId === 'stock_status') return;
-
-      if (groupId === 'expiry_status') {
-        const now = getVerifiedDate();
-        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const nearExpiredLimit = new Date(currentMonthStart);
-        nearExpiredLimit.setMonth(nearExpiredLimit.getMonth() + 3);
-
-        result = result.filter((d) => {
-          const expiry = parseExpiryEndOfMonth(d.expiryDate);
-          if (vals.includes('expired')) return expiry < currentMonthStart;
-          if (vals.includes('near_expiry'))
-            return expiry >= currentMonthStart && expiry <= nearExpiredLimit;
-          if (vals.includes('valid')) return expiry > nearExpiredLimit;
-          return true;
-        });
-      } else if (groupId === 'category') {
-        result = result.filter((d) => vals.includes(d.category));
-      } else if (groupId === 'item_rank') {
-        result = result.filter((d) => vals.includes(d.itemRank));
-      } else if (groupId === 'product_status_filter') {
-        if (!vals.includes('all')) {
-          result = result.filter((d) => vals.includes(d.status || 'active'));
-        }
-      }
-    });
-
-    return result;
-  }, [inventory, activeFilters, getVerifiedDate]);
-
-  // Memoized Search Engine instance for the current baseFilteredInventory
-  const searchEngine = useMemo(() => {
-    return new DrugSearchEngine(baseFilteredInventory as any);
-  }, [baseFilteredInventory]);
-
-  // 2. Final filtering (Apply Search on top of Base)
-  const filteredInventory = useMemo(() => {
-    if (debouncedSearchTerm) {
-      return searchEngine.search(debouncedSearchTerm, activeFilters) as Drug[];
-    }
-    return baseFilteredInventory;
-  }, [baseFilteredInventory, searchEngine, debouncedSearchTerm, activeFilters]);
-
-  const groupedInventory = useMemo(() => {
-    const groups = batchService.groupInventory(filteredInventory);
-    return groups.map((group) => {
-      const selectedId = selectedBatches[group.groupId] || group.id;
-      const selectedBatch = group.batches.find((d: any) => d.id === selectedId) || group;
-      return {
-        ...group,
-        selectedBatchId: selectedId,
-        selectedBatch,
-      };
-    });
-  }, [filteredInventory, selectedBatches]);
-
-  // Calculate summary stats
+  // Summary stats computed from current page data (server-side total for item count)
   const summaryStats = useMemo(() => {
-    return groupedInventory.reduce(
+    return currentData.reduce(
       (acc, drug) => {
-        acc.totalItems += 1;
-        const packs = convertToPacks(drug.totalStock || 0, drug.unitsPerPack || 1);
+        acc.totalItems = totalCount;
+        const packs = convertToPacks(drug.stock || 0, drug.unitsPerPack || 1);
 
         acc.totalCost = money.add(acc.totalCost, money.multiply(drug.costPrice || 0, packs, 0));
 
@@ -377,10 +284,10 @@ export const Inventory: React.FC<InventoryProps> = ({
           money.multiply(drug.publicPrice || 0, packs, 0)
         );
 
-        const status = (drug as any).status || 'active';
+        const status = drug.status || 'active';
         if (status === 'active') {
-          if (drug.totalStock === 0) acc.criticalRestock += 1;
-          else if (drug.totalStock <= (drug.minStock || 5) * (drug.unitsPerPack || 1))
+          if (drug.stock === 0) acc.criticalRestock += 1;
+          else if (drug.stock <= (drug.minStock || 5) * (drug.unitsPerPack || 1))
             acc.nearReorder += 1;
         } else if (status === 'discontinued') {
           acc.discontinuedCount += 1;
@@ -397,12 +304,9 @@ export const Inventory: React.FC<InventoryProps> = ({
         discontinuedCount: 0,
       }
     );
-  }, [groupedInventory]);
+  }, [currentData, totalCount]);
 
-  const getRowActions = (drugRow: any) => {
-    const groupData = drugRow as GroupedDrug & { selectedBatch?: Drug };
-    const drug = groupData.selectedBatch || groupData;
-
+  const getRowActions = (drug: Drug) => {
     const actions = [];
 
     if (permissionsService.can('inventory.update')) {
@@ -621,8 +525,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         header: t.headers.cost,
         meta: { align: 'start' },
         cell: ({ row }) => {
-          const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
-          const drug = groupData.selectedBatch || groupData;
+          const drug = row.original;
 
           if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
           const parts = formatCurrencyParts(drug.costPrice);
@@ -642,91 +545,14 @@ export const Inventory: React.FC<InventoryProps> = ({
       accessorKey: 'expiryDate',
       header: t.headers.expiry,
       cell: ({ row }) => {
-        const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
-        const batches = groupData.batches || [groupData];
-        const drug = groupData.selectedBatch || groupData;
-
-        const renderDateWrapper = (val: string, isDropdownTrigger = false) => {
-          if (!val) return <span className='text-gray-400'>-</span>;
-          const colorClass = getExpiryColorClass(val);
-
-          return (
-            <div
-              className={`flex items-center justify-center w-full gap-1 tabular-nums text-xs ${colorClass} ${isDropdownTrigger ? 'cursor-pointer hover:opacity-70' : ''}`}
-            >
-              {formatExpiryDate(val)}
-            </div>
-          );
-        };
-
-        if (batches.length > 1) {
-          const availableBatches = batches.filter((d: Drug) => d.stock > 0);
-          const selectedBatchId = selectedBatches[groupData.groupId];
-          const selectedBatchWithInventory = selectedBatchId
-            ? availableBatches.find((d: Drug) => d.id === selectedBatchId)
-            : null;
-          const defaultBatch = availableBatches[0] || drug;
-          const displayBatch = selectedBatchWithInventory || defaultBatch;
-          const colorClass = getExpiryColorClass(displayBatch.expiryDate);
-
-          return (
-            <div className='flex justify-center overflow-visible'>
-              <HoverDropdown
-                panelWidth='min-w-[180px]'
-                panelClassName='space-y-0.5 p-1.5'
-                trigger={
-                  <div
-                    className={`flex items-center justify-center font-bold ${colorClass} h-7 w-28 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer`}
-                  >
-                    <span className='flex-1 text-center text-sm'>
-                      {formatExpiryDate(displayBatch.expiryDate)}
-                    </span>
-                    <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
-                    <span className='flex-1 text-center text-sm tabular-nums'>
-                      {formatStock(displayBatch.stock, displayBatch.unitsPerPack, {
-                        packs: '',
-                        outOfStock: t.outOfStockShort || 'Out',
-                      }).trim()}
-                    </span>
-                  </div>
-                }
-              >
-                <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 py-1'>
-                  {availableBatches.length} {t.batches || 'batches'}
-                </div>
-                {availableBatches.map((batch) => {
-                  const isSelected = (selectedBatchWithInventory || defaultBatch)?.id === batch.id;
-                  const c = getExpiryColorClass(batch.expiryDate);
-                  return (
-                    <div
-                      key={batch.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: batch.id }));
-                      }}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
-                        isSelected
-                          ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
-                          : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      <span className={`font-bold w-[44px] text-center ${c}`}>
-                        {formatExpiryDate(batch.expiryDate)}
-                      </span>
-                      <span className='ml-auto rtl:mr-auto rtl:ml-0 tabular-nums font-bold'>
-                        {formatStock(batch.stock, batch.unitsPerPack, {
-                          packs: '',
-                          outOfStock: t.outOfStockShort || 'Out',
-                        }).trim()}
-                      </span>
-                    </div>
-                  );
-                })}
-              </HoverDropdown>
-            </div>
-          );
-        }
-        return <div className='flex justify-center'>{renderDateWrapper(drug.expiryDate)}</div>;
+        const drug = row.original;
+        if (!drug.expiryDate) return <span className='text-gray-400'>-</span>;
+        const colorClass = getExpiryColorClass(drug.expiryDate);
+        return (
+          <div className={`flex items-center justify-center w-full gap-1 tabular-nums text-xs ${colorClass}`}>
+            {formatExpiryDate(drug.expiryDate)}
+          </div>
+        );
       },
       meta: { align: 'center', smartDate: false },
       size: 143,
@@ -822,18 +648,17 @@ export const Inventory: React.FC<InventoryProps> = ({
       <div className='relative flex-1 max-w-xl'>
         <SearchEngineInput
           value={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={(val) => { setSearchTerm(val); setPage(0); }}
           activeFilters={activeFilters}
           filterConfigs={filterConfigs}
-          onUpdateFilter={(id, vals) => setActiveFilters((prev) => ({ ...prev, [id]: vals }))}
-          onClear={() => setSearchTerm('')}
+          onUpdateFilter={(id, vals) => { setActiveFilters((prev) => ({ ...prev, [id]: vals })); setPage(0); }}
+          onClear={() => { setSearchTerm(''); setPage(0); }}
           placeholder={t.searchPlaceholder}
           color={color}
-          inventory={baseFilteredInventory}
         />
       </div>
     );
-  }, [mode, searchTerm, activeFilters, filterConfigs, t, color, baseFilteredInventory]);
+  }, [mode, searchTerm, activeFilters, filterConfigs, t, color]);
 
   const bottomContentElement = useMemo(() => {
     if (mode !== 'list') return null;
@@ -979,11 +804,11 @@ export const Inventory: React.FC<InventoryProps> = ({
           {/* Table Card - Default Design */}
           <div className='flex-1 overflow-hidden'>
             <TanStackTable
-              data={groupedInventory}
+              data={currentData}
               columns={enhancedColumns}
               tableId='inventory_table'
               color={color}
-              enableTopToolbar={false} // Disabled since we have our custom hub above
+              enableTopToolbar={false}
               manualFiltering={true}
               onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
               emptyMessage={t.noResults}
@@ -991,11 +816,15 @@ export const Inventory: React.FC<InventoryProps> = ({
               dense={true}
               enablePagination={true}
               enableVirtualization={true}
-              pageSize='auto'
-              enableShowAll={true}
+              pageSize={tablePageSize}
+              enableShowAll={false}
               initialFilters={activeFilters}
-              onFilterChange={setActiveFilters}
+              onFilterChange={(f) => { setActiveFilters(f); setPage(0); }}
               isLoading={!isDataSettled}
+              manualPagination
+              totalCount={totalCount}
+              onPaginationChange={(p) => setPage(p.pageIndex)}
+              isFetching={isFetching}
             />
           </div>
         </div>
@@ -1241,7 +1070,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         }}
         editingDrug={editingDrug}
         initialData={initialData}
-        inventory={inventory}
+        inventory={currentData}
         onAddDrug={(drug) => addProduct.mutateAsync(drug)}
         onUpdateDrug={(drug) => updateProduct.mutateAsync({ id: drug.id, updates: drug })}
         color={color}
