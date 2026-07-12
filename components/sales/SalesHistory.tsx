@@ -10,6 +10,7 @@ import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { money } from '../../utils/money';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
@@ -20,36 +21,56 @@ import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
 import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { SaleDetailModal } from './SaleDetailModal';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
+import { useSalesHandlers } from '../../hooks/sales/useSalesHandlers';
 
 interface SalesHistoryProps {
-  onProcessReturn: (returnData: Return) => void;
   color: string;
   t: Translations;
   language: string;
   datePickerTranslations: any;
-  currentEmployeeId?: string;
-  currentShift: Shift | null;
   navigationParams?: any;
   isLoading?: boolean;
 }
 
 export const SalesHistory: React.FC<SalesHistoryProps> = ({
-  onProcessReturn,
   color,
   t,
   language,
   datePickerTranslations: _datePickerTranslations,
-  currentEmployeeId,
-  currentShift,
   navigationParams,
   isLoading = false,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
   const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
   const { data: returns = [] } = useSalesReturns(activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
+  const infra = useHandlerInfrastructure();
+  const { currentShift } = infra;
+  const { handleProcessReturn: handleSalesReturn } = useSalesHandlers({
+    currentEmployeeId,
+    employees,
+    activeBranchId,
+    activeOrgId,
+    inventory,
+    setInventory: infra.setInventory,
+    sales,
+    setSales: infra.setSales,
+    setBatches: infra.setBatches,
+    setCustomers: infra.setCustomers,
+    setReturns: infra.setReturns,
+    currentShift,
+    addTransaction: infra.addTransaction,
+    getVerifiedDate: infra.getVerifiedDate,
+    validateTransactionTime: infra.validateTransactionTime,
+    updateLastTransactionTime: infra.updateLastTransactionTime,
+    completeSale: infra.completeSale,
+    processSalesReturn: infra.processSalesReturn,
+  });
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
@@ -585,7 +606,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
     setPendingIds((prev) => new Set(prev).add(returnData.saleId));
     try {
-      await onProcessReturn(returnData);
+      await handleSalesReturn(returnData);
 
       // Update pagedSales locally immediately to reflect return status and net totals
       setPagedSales((prevPaged) =>

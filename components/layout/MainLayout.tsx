@@ -10,6 +10,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useUI } from '../../context/UIContext';
 import type { ViewState } from '../../types';
 import { useAutoSystemBarColor } from '../../utils/systemBars';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useAuthStore } from '../../stores/authStore';
 import { CommandPalette } from '../common/CommandPalette';
 import { ContextMenuProvider, useContextMenu } from '../common/ContextMenu';
 import { HelpModal } from '../common/HelpModal';
@@ -39,7 +41,6 @@ interface MainLayoutProps {
   // Other
   currentEmployeeId: string | null;
   setCurrentEmployeeId: (id: string | null) => void;
-  employees: any[];
   dashboardSubView: string;
   onOpenInWindow: (view: ViewState) => void;
   isRecoveringPassword?: boolean;
@@ -119,11 +120,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   handleViewChange,
   currentEmployeeId,
   setCurrentEmployeeId,
-  employees,
   dashboardSubView,
   onOpenInWindow,
   isRecoveringPassword,
 }) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
+
   const {
     theme,
     setTheme,

@@ -14,6 +14,8 @@ import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 import {
   DateRangePicker,
   type FilterConfig,
@@ -35,7 +37,6 @@ interface PurchaseHistoryProps {
   language: 'EN' | 'AR';
   navigationParams?: any;
   onViewChange?: (view: string, params?: any) => void;
-  onMarkAsReceived?: (id: string) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -45,7 +46,6 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   language,
   navigationParams,
   onViewChange,
-  onMarkAsReceived,
   isLoading,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
@@ -55,6 +55,24 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   const { data: inventory = [] } = useInventory(activeBranchId);
   const { data: suppliers = [] } = useSuppliers(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
+  const infra = useHandlerInfrastructure();
+  const { handleMarkAsReceived } = usePurchaseHandlers({
+    currentEmployeeId,
+    employees,
+    activeBranchId,
+    activeOrgId,
+    purchases,
+    setPurchases: infra.setPurchases,
+    purchaseReturns,
+    setPurchaseReturns: infra.setPurchaseReturns,
+    currentShift: infra.currentShift,
+    addPurchase: infra.addPurchase,
+    approvePurchase: infra.approvePurchase,
+    markAsReceived: infra.markAsReceived,
+    createPurchaseReturn: infra.createPurchaseReturn,
+  });
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
@@ -351,7 +369,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
     {
       label: t.contextMenu?.markAsReceived || 'Mark as Received',
       icon: 'inventory',
-      action: () => onMarkAsReceived?.(purchase.id),
+      action: () => handleMarkAsReceived(purchase.id),
       disabled: purchase.status !== 'approved' && purchase.status !== 'pending',
     },
   ];
@@ -658,11 +676,11 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               </table>
             </div>
 
-            {selectedPurchase.status === 'approved' && onMarkAsReceived && (
+            {selectedPurchase.status === 'approved' && (
               <div className='flex justify-end'>
                 <button
                   onClick={() => {
-                    onMarkAsReceived(selectedPurchase.id);
+                    handleMarkAsReceived(selectedPurchase.id);
                     setSelectedPurchase(null);
                   }}
                   className='flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-lg shadow-emerald-200 dark:shadow-none'

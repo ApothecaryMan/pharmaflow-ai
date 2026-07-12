@@ -4,7 +4,6 @@ import { useSettings } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
 import { useShift } from '../../hooks/sales/useShift';
-import { usePageHandlers } from '../../hooks/usePageHandlers';
 import type { ViewState } from '../../types';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { PageLoader } from '../common/PageLoader';
@@ -46,7 +45,6 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   const switchBranch = useAuthStore((s) => s.switchBranch);
 
   const { currentShift } = useShift();
-  const handlers = usePageHandlers();
 
   if (!currentEmployeeId) {
     return <LandingPage language={language} darkMode={darkMode} />;
@@ -131,23 +129,9 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     navigationParams: navigationParams,
   };
 
-  const handlerMap: Record<string, any> = {
-    onCompleteSale: handlers.handleCompleteSale,
-    onUpdateSale: handlers.handleUpdateSale,
-    onProcessReturn: handlers.handleProcessReturn,
-    onPurchaseComplete: handlers.handlePurchaseComplete,
-    onApprovePurchase: handlers.handleApprovePurchase,
-    onMarkAsReceived: handlers.handleMarkAsReceived,
-    onRejectPurchase: handlers.handleRejectPurchase,
-    onCreatePurchaseReturn: handlers.handleCreatePurchaseReturn,
-    onViewChange: handleNavigate,
-    onLoginSuccess: handleLoginSuccess,
-  };
-
   const requiredProps = pageConfig.requiredProps || [];
   requiredProps.forEach((prop: string) => {
     if (dataMap[prop] !== undefined) props[prop] = dataMap[prop];
-    if (handlerMap[prop] !== undefined) props[prop] = handlerMap[prop];
   });
 
   const viewTranslations: Record<string, any> = {

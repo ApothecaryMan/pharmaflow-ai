@@ -1,11 +1,8 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { UserRole } from '../../../config/permissions';
 import { useAlert, useSettings } from '../../../context';
-import { getLocationName } from '../../../data/locations';
 import { useInventorySearch } from '../../../hooks/inventory/useInventorySearch';
-import { useFilterDropdown } from '../../../hooks/layout/useFilterDropdown';
 import { usePOSTabs } from '../../../hooks/sales/usePOSTabs';
 import { useShift } from '../../../hooks/sales/useShift'; // Import useShift
 import type { TRANSLATIONS } from '../../../i18n/translations';
@@ -19,23 +16,20 @@ import { useInventory } from '../../../hooks/queries/useInventoryQuery';
 import { useCustomers } from '../../../hooks/queries/useCustomersQuery';
 import { useRecentSales } from '../../../hooks/queries/useSalesQuery';
 import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
+import { useHandlerInfrastructure } from '../../../hooks/useHandlerInfrastructure';
+import { useSalesHandlers } from '../../../hooks/sales/useSalesHandlers';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
 import { formatExpiryDate, getExpiryColorClass } from '../../../utils/expiryUtils';
 import { formatStock } from '../../../utils/inventory';
 import { money } from '../../../utils/money';
-import { parseSearchTerm } from '../../../utils/searchUtils';
 import { resolveDisplayStock } from '../../../utils/stockUtils';
 
 import { useContextMenu } from '../../common/ContextMenu';
-import { FilterDropdown } from '../../common/FilterDropdown';
-import type { FilterConfig } from '../../common/FilterPill';
 import { HoverDropdown } from '../../common/HoverDropdown';
 import { usePageShortcuts } from '../../../hooks/keyboard';
 import { usePosSounds } from '../../common/hooks/usePosSounds';
 import { Modal } from '../../common/Modal';
 import { SearchEngineInput } from '../../common/SearchEngineInput';
-import { SegmentedControl } from '../../common/SegmentedControl';
-import { SmartAutocomplete } from '../../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../../common/TanStackTable';
 import { useStatusBar } from '../../layout/StatusBar';
 import { DeliveryOrdersModal } from './DeliveryOrdersModal';
@@ -45,7 +39,6 @@ import { usePOSCheckout } from './hooks/usePOSCheckout';
 import { usePOSCustomer } from './hooks/usePOSCustomer';
 import { usePOSSearchAndFilters } from './hooks/usePOSSearchAndFilters';
 import { usePOSSidebarResizer } from './hooks/usePOSSidebarResizer';
-import { SortableCartItem } from './SortableCartItem';
 import { ClosedTabsHistoryModal } from './ui/ClosedTabsHistoryModal';
 import { POSCartSidebar } from './ui/POSCartSidebar';
 import { POSCustomerHistoryModal } from './ui/POSCustomerHistoryModal';
@@ -57,49 +50,26 @@ import { POSPageHeader } from './ui/POSPageHeader';
 
 // --- Main POS Component ---
 interface POSProps {
-  onCompleteSale: (saleData: {
-    items: CartItem[];
-    customerName: string;
-    customerCode?: string;
-    customerPhone?: string;
-    customerAddress?: string;
-    customerStreetAddress?: string;
-    paymentMethod: 'cash' | 'visa';
-    saleType?: 'walk-in' | 'delivery';
-    deliveryFee?: number;
-    globalDiscount: number;
-    subtotal: number;
-    total: number;
-    // Extended properties
-    deliveryEmployeeId?: string;
-    status?: 'completed' | 'pending' | 'with_delivery' | 'on_way' | 'cancelled';
-    processingTimeMinutes?: number;
-  }) => Promise<{ success: boolean; sale?: Sale }>;
   color: string;
   t: typeof TRANSLATIONS.EN.pos;
   language?: Language;
-  darkMode: boolean;
-  onUpdateSale?: (saleId: string, updates: Partial<Sale>) => void;
-  currentEmployeeId?: string;
 }
 
 export const POS: React.FC<POSProps> = ({
-  onCompleteSale,
   color,
   t,
   language = 'EN',
-  darkMode,
-  onUpdateSale,
-  currentEmployeeId,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
   const { data: inventory = [] } = useInventory(activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
   const { data: sales = [] } = useRecentSales(activeBranchId);
   const { success, error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
-  const { textTransform } = useSettings();
+  const { textTransform, darkMode } = useSettings();
   const { getVerifiedDate, addNotification } = useStatusBar();
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
@@ -252,6 +222,27 @@ export const POS: React.FC<POSProps> = ({
     };
   }, [cart, globalDiscount]);
 
+  const infra = useHandlerInfrastructure();
+  const { handleCompleteSale, handleUpdateSale } = useSalesHandlers({
+    currentEmployeeId,
+    employees,
+    activeBranchId,
+    activeOrgId,
+    inventory,
+    setInventory: infra.setInventory,
+    sales,
+    setSales: infra.setSales,
+    setBatches: infra.setBatches,
+    setCustomers: infra.setCustomers,
+    setReturns: infra.setReturns,
+    currentShift,
+    addTransaction: infra.addTransaction,
+    getVerifiedDate: infra.getVerifiedDate,
+    validateTransactionTime: infra.validateTransactionTime,
+    updateLastTransactionTime: infra.updateLastTransactionTime,
+    completeSale: infra.completeSale,
+    processSalesReturn: infra.processSalesReturn,
+  });
   const {
     paymentMethod,
     setPaymentMethod,
@@ -279,7 +270,7 @@ export const POS: React.FC<POSProps> = ({
     activeTab,
     activeTabId,
     removeTab,
-    onCompleteSale,
+    onCompleteSale: handleCompleteSale,
     customerName,
     customerCode,
     selectedCustomer,
@@ -495,12 +486,12 @@ export const POS: React.FC<POSProps> = ({
       },
       ...(permissionsService.can('reports.view_financial')
         ? [
-            {
-              label: currentLang === 'ar' ? 'تحليلات' : 'Analytics',
-              value: 'analytics',
-              icon: 'analytics',
-            },
-          ]
+          {
+            label: currentLang === 'ar' ? 'تحليلات' : 'Analytics',
+            value: 'analytics',
+            icon: 'analytics',
+          },
+        ]
         : []),
     ];
 
@@ -556,79 +547,79 @@ export const POS: React.FC<POSProps> = ({
         }
       },
       arrowup: () => {
-      if (focusMode === 'table') {
-        setActiveIndex((prev) => {
-          const next = prev - 1;
-          return Math.max(0, Math.min(next, tableData.length - 1));
-        });
-      } else if (mergedCartItems.length > 0) {
-        setHighlightedItemId((prevId) => {
-          const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
-          const nextIndex = currentIndex - 1;
-          const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
-          const newItem = mergedCartItems[clamped];
-          if (newItem && newItem.id !== prevId) {
-            playClick();
-            return newItem.id;
-          }
-          return prevId;
-        });
-      }
-    },
-    arrowdown: () => {
-      if (focusMode === 'table') {
-        setActiveIndex((prev) => {
-          const next = prev + 1;
-          return Math.max(0, Math.min(next, tableData.length - 1));
-        });
-      } else if (mergedCartItems.length > 0) {
-        setHighlightedItemId((prevId) => {
-          const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
-          const nextIndex = currentIndex + 1;
-          const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
-          const newItem = mergedCartItems[clamped];
-          if (newItem && newItem.id !== prevId) {
-            playClick();
-            return newItem.id;
-          }
-          return prevId;
-        });
-      }
-    },
-    enter: () => {
-      if (focusMode === 'table' && tableData[activeIndex]) {
-        addGroupToCart(tableData[activeIndex].batches);
-        setSearch('');
-        setActiveIndex(0);
-        searchInputRef.current?.focus();
-      }
-    },
-    '+': () => {
-      const item = mergedCartItems.find((i) => i.id === highlightedItemId);
-      if (!highlightedItemId || !item) {
-        playError();
-        return;
-      }
-      playBeep();
-      updateQuantity(item.common.id, !item.pack, 1);
-    },
-    '-': () => {
-      const item = mergedCartItems.find((i) => i.id === highlightedItemId);
-      if (!highlightedItemId || !item) {
-        playError();
-        return;
-      }
-      playBeep();
-      updateQuantity(item.common.id, !item.pack, -1);
-    },
-    delete: () => {
-      const item = mergedCartItems.find((i) => i.id === highlightedItemId);
-      if (!highlightedItemId || !item) return;
-      if (item.pack) removeFromCart(item.pack.id, false);
-      if (item.unit) removeFromCart(item.unit.id, true);
-      playClick();
-    },
-  }, [focusMode, isTableFocused, activeIndex, highlightedItemId, mergedCartItems, cart.length, tableData]);
+        if (focusMode === 'table') {
+          setActiveIndex((prev) => {
+            const next = prev - 1;
+            return Math.max(0, Math.min(next, tableData.length - 1));
+          });
+        } else if (mergedCartItems.length > 0) {
+          setHighlightedItemId((prevId) => {
+            const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
+            const nextIndex = currentIndex - 1;
+            const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
+            const newItem = mergedCartItems[clamped];
+            if (newItem && newItem.id !== prevId) {
+              playClick();
+              return newItem.id;
+            }
+            return prevId;
+          });
+        }
+      },
+      arrowdown: () => {
+        if (focusMode === 'table') {
+          setActiveIndex((prev) => {
+            const next = prev + 1;
+            return Math.max(0, Math.min(next, tableData.length - 1));
+          });
+        } else if (mergedCartItems.length > 0) {
+          setHighlightedItemId((prevId) => {
+            const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
+            const nextIndex = currentIndex + 1;
+            const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
+            const newItem = mergedCartItems[clamped];
+            if (newItem && newItem.id !== prevId) {
+              playClick();
+              return newItem.id;
+            }
+            return prevId;
+          });
+        }
+      },
+      enter: () => {
+        if (focusMode === 'table' && tableData[activeIndex]) {
+          addGroupToCart(tableData[activeIndex].batches);
+          setSearch('');
+          setActiveIndex(0);
+          searchInputRef.current?.focus();
+        }
+      },
+      '+': () => {
+        const item = mergedCartItems.find((i) => i.id === highlightedItemId);
+        if (!highlightedItemId || !item) {
+          playError();
+          return;
+        }
+        playBeep();
+        updateQuantity(item.common.id, !item.pack, 1);
+      },
+      '-': () => {
+        const item = mergedCartItems.find((i) => i.id === highlightedItemId);
+        if (!highlightedItemId || !item) {
+          playError();
+          return;
+        }
+        playBeep();
+        updateQuantity(item.common.id, !item.pack, -1);
+      },
+      delete: () => {
+        const item = mergedCartItems.find((i) => i.id === highlightedItemId);
+        if (!highlightedItemId || !item) return;
+        if (item.pack) removeFromCart(item.pack.id, false);
+        if (item.unit) removeFromCart(item.unit.id, true);
+        playClick();
+      },
+    }, [focusMode, isTableFocused, activeIndex, highlightedItemId, mergedCartItems, cart.length, tableData]);
 
   // --- TanStack Table Configuration ---
   const columnHelper = createColumnHelper<(typeof tableData)[0]>();
@@ -794,11 +785,10 @@ export const POS: React.FC<POSProps> = ({
                         e.stopPropagation();
                         setSelectedUnits((prev) => ({ ...prev, [row.id]: opt }));
                       }}
-                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${
-                        isSelected
+                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                           : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
-                      }`}
+                        }`}
                     >
                       {opt === 'pack' ? t.pack : t.unit}
                     </div>
@@ -936,11 +926,10 @@ export const POS: React.FC<POSProps> = ({
                         e.stopPropagation();
                         setSelectedBatches((prev) => ({ ...prev, [row.id]: batch.id }));
                       }}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${
-                        isSelected
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                           : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
-                      }`}
+                        }`}
                     >
                       <span className={`font-bold w-[44px] text-center ${c}`}>
                         {formatExpiryDate(batch.expiryDate)}
@@ -1006,9 +995,8 @@ export const POS: React.FC<POSProps> = ({
       <div className='flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden'>
         {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
         <div
-          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${
-            mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
-          }`}
+          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
+            }`}
         >
           {/* Customer Details */}
           <POSCustomerPanel
@@ -1303,11 +1291,7 @@ export const POS: React.FC<POSProps> = ({
           sales={sales}
           employees={employees}
           inventory={inventory}
-          onUpdateSale={(saleId, updates) => {
-            if (onUpdateSale) {
-              onUpdateSale(saleId, updates);
-            }
-          }}
+          onUpdateSale={handleUpdateSale}
           color={color}
           t={t}
           currentEmployeeId={currentEmployeeId}

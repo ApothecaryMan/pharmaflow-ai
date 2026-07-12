@@ -4,11 +4,6 @@ import type React from 'react';
 interface LogoutOverlayProps {
   language: 'EN' | 'AR';
   darkMode: boolean;
-  currentEmployeeId: string | null;
-  activeBranchId: string | null;
-  employees: any[];
-  inventory: any[];
-  sales: any[];
   logoutReason?: 'normal' | 'remote';
   terminatorName?: string | null;
 }
@@ -34,15 +29,9 @@ const LogoAsterisk = ({ scale = 1.4 }: { scale?: number }) => (
 export const LogoutOverlay: React.FC<LogoutOverlayProps> = ({
   language,
   darkMode,
-  currentEmployeeId,
-  activeBranchId,
-  employees,
-  inventory,
-  sales,
   logoutReason = 'normal',
   terminatorName = null,
 }) => {
-  const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
 
   return (
     <div className='h-dvh w-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-black relative overflow-hidden'>

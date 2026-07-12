@@ -5,7 +5,9 @@ import { StorageKeys } from '../../config/storageKeys';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { sessionRepository } from '../../services/auth/repositories/sessionRepository';
-import type { Branch, Employee, UserSession, ViewState } from '../../types';
+import type { Branch, UserSession, ViewState } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import { useEmployees } from '../queries/useEmployeesQuery';
 import { storage } from '../../utils/storage';
 
 interface ExtendedSession extends UserSession {
@@ -16,7 +18,6 @@ interface ExtendedSession extends UserSession {
 }
 
 interface SessionHandlersProps {
-  employees: Employee[];
   currentEmployeeId: string | null;
   setCurrentEmployeeId: (id: string | null) => void;
   setView: (view: ViewState) => void;
@@ -31,7 +32,6 @@ interface SessionHandlersProps {
  * useSessionHandlers centralizes logic for logout and employee management.
  */
 export const useSessionHandlers = ({
-  employees,
   currentEmployeeId,
   setCurrentEmployeeId,
   setView,
@@ -41,6 +41,8 @@ export const useSessionHandlers = ({
   switchBranch,
   branches,
 }: SessionHandlersProps) => {
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   // State removed since useAuth handles isLoggingOut
 
   // --- Employee Selection Wrapper (Audit Logging) ---

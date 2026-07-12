@@ -1,37 +1,19 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
-import type { Customer, Drug, Employee, Purchase, PurchaseReturn, Return, Sale, StockBatch } from '../types';
+import type { ActionContext, Customer, Drug, Purchase, PurchaseReturn, Return, Sale, StockBatch } from '../types';
+import type { SaleData } from './sales/useSalesHandlers';
 import { useAuthStore } from '../stores/authStore';
-import { useInventory, useBatches } from './queries/useInventoryQuery';
-import { useRecentSales } from './queries/useSalesQuery';
-import { useCustomers } from './queries/useCustomersQuery';
-import { useEmployees } from './queries/useEmployeesQuery';
-import { usePurchases } from './queries/usePurchasesQuery';
-import { usePurchaseReturns, useSalesReturns } from './queries/useReturnsQuery';
 import { useCompleteSale } from './mutations/useSalesMutations';
 import { useAddPurchase, useApprovePurchase, useMarkPurchaseReceived } from './mutations/usePurchaseMutations';
 import { useProcessSalesReturn, useCreatePurchaseReturn } from './mutations/useReturnsMutations';
-import { useEntityHandlers } from './useEntityHandlers';
 import { useShift } from './sales/useShift';
 import { useStatusBar } from '../components/layout/StatusBar';
-import type { ActionContext } from '../types';
 
-export function usePageHandlers() {
+export function useHandlerInfrastructure() {
   const queryClient = useQueryClient();
-  const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
-  const isLoading = useAuthStore((s) => s.isLoading);
-
-  const { data: inventory = [] } = useInventory(activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
-  const { data: employees = [] } = useEmployees(activeBranchId);
-  const { data: customers = [] as Customer[] } = useCustomers(activeBranchId);
-  const { data: purchases = [] } = usePurchases(activeBranchId);
-  const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
-  const { data: returns = [] } = useSalesReturns(activeBranchId);
-  const { data: batches = [] } = useBatches(activeBranchId);
 
   const completeSaleMut = useCompleteSale();
   const addPurchaseMut = useAddPurchase();
@@ -62,7 +44,7 @@ export function usePageHandlers() {
   );
 
   const completeSale = useCallback(
-    async (saleData: any, context: ActionContext) => {
+    async (saleData: SaleData, context: ActionContext) => {
       const result = await completeSaleMut.mutateAsync({ saleData, context });
       if (!result.success) throw new Error(result.error || 'Checkout failed');
       return result.sale as Sale;
@@ -71,7 +53,7 @@ export function usePageHandlers() {
   );
 
   const processSalesReturnAction = useCallback(
-    (returnData: any, sale: Sale, context: ActionContext) =>
+    (returnData: Return, sale: Sale, context: ActionContext) =>
       processSalesReturnMut.mutateAsync({ returnData, sale, context }),
     [processSalesReturnMut]
   );
@@ -110,7 +92,7 @@ export function usePageHandlers() {
     [queryClient, activeBranchId]
   );
 
-  const setPurchasesState = useCallback(
+  const setPurchases = useCallback(
     (updater: Purchase[] | ((prev: Purchase[]) => Purchase[])) => {
       queryClient.setQueryData(
         queryKeys.purchases.all(activeBranchId, 100),
@@ -123,7 +105,7 @@ export function usePageHandlers() {
     [queryClient, activeBranchId]
   );
 
-  const setPurchaseReturnsState = useCallback(
+  const setPurchaseReturns = useCallback(
     (updater: PurchaseReturn[] | ((prev: PurchaseReturn[]) => PurchaseReturn[])) => {
       queryClient.setQueryData(
         queryKeys.returns.purchases(activeBranchId, 100),
@@ -136,7 +118,7 @@ export function usePageHandlers() {
     [queryClient, activeBranchId]
   );
 
-  const setReturnsState = useCallback(
+  const setReturns = useCallback(
     (updater: Return[] | ((prev: Return[]) => Return[])) => {
       queryClient.setQueryData(
         queryKeys.returns.sales(activeBranchId, 100),
@@ -149,7 +131,7 @@ export function usePageHandlers() {
     [queryClient, activeBranchId]
   );
 
-  const setCustomersState = useCallback(
+  const setCustomers = useCallback(
     (updater: Customer[] | ((prev: Customer[]) => Customer[])) => {
       queryClient.setQueryData(
         queryKeys.customers.all(activeBranchId),
@@ -162,7 +144,7 @@ export function usePageHandlers() {
     [queryClient, activeBranchId]
   );
 
-  const setBatchesState = useCallback(
+  const setBatches = useCallback(
     (updater: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => {
       queryClient.setQueryData(
         queryKeys.batches.all(activeBranchId),
@@ -175,54 +157,25 @@ export function usePageHandlers() {
     [queryClient, activeBranchId]
   );
 
-  const {
-    handlePurchaseComplete,
-    handleApprovePurchase,
-    handleMarkAsReceived,
-    handleRejectPurchase,
-    handleCreatePurchaseReturn,
-    handleCompleteSale,
-    handleUpdateSale,
-    handleProcessReturn,
-  } = useEntityHandlers({
-    inventory,
+  return {
     setInventory,
-    sales,
     setSales,
-    purchases,
-    setPurchases: setPurchasesState,
-    returns,
-    setReturns: setReturnsState,
-    customers,
-    setCustomers: setCustomersState,
-    purchaseReturns,
-    setPurchaseReturns: setPurchaseReturnsState,
-    currentEmployeeId,
-    activeBranchId,
-    activeOrgId,
-    employees,
-    isLoading,
-    batches,
-    setBatches: setBatchesState,
-    approvePurchase: approvePurchaseAction,
+    setPurchases,
+    setPurchaseReturns,
+    setReturns,
+    setCustomers,
+    setBatches,
     addPurchase: addPurchaseAction,
+    approvePurchase: approvePurchaseAction,
+    markAsReceived: markAsReceivedAction,
     completeSale,
     processSalesReturn: processSalesReturnAction,
     createPurchaseReturn: createPurchaseReturnAction,
-    markAsReceived: markAsReceivedAction,
+    currentShift,
+    addTransaction,
     getVerifiedDate,
     validateTransactionTime,
     updateLastTransactionTime,
-  });
-
-  return {
-    handleCompleteSale,
-    handleUpdateSale,
-    handleProcessReturn,
-    handlePurchaseComplete,
-    handleApprovePurchase,
-    handleMarkAsReceived,
-    handleRejectPurchase,
-    handleCreatePurchaseReturn,
+    activeOrgId,
   };
 }

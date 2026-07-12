@@ -7,9 +7,6 @@ import { useSessionHandlers } from '../../hooks/auth/useSessionHandlers';
 
 import type { AppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useRealtimeSync } from '../../hooks/realtime/useRealtimeSync';
 import { KeyboardProvider } from '../../hooks/keyboard';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -87,9 +84,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   const switchBranch = useAuthStore((s) => s.switchBranch);
 
   // --- Domain Data from React Query ---
-  const { data: inventory = [] } = useInventory(activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
-  const { data: employees = [] } = useEmployees(activeBranchId);
+  // Components fetch their own data internally.
 
   // --- Realtime Sync ---
   useRealtimeSync({ activeBranchId });
@@ -121,7 +116,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   // --- Session Handlers Hook ---
   const { onLogoutClick, handleSelectEmployee } = useSessionHandlers({
-    employees,
     currentEmployeeId,
     setCurrentEmployeeId,
     setView,
@@ -188,11 +182,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       <LogoutOverlay
         language={language}
         darkMode={darkMode}
-        currentEmployeeId={currentEmployeeId}
-        activeBranchId={activeBranchId}
-        employees={employees}
-        inventory={inventory}
-        sales={sales}
         logoutReason={logoutReason}
         terminatorName={terminatorName}
       />
@@ -214,7 +203,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         handleViewChange={handleViewChange}
         currentEmployeeId={currentEmployeeId}
         setCurrentEmployeeId={handleSelectEmployee}
-        employees={employees}
         dashboardSubView={dashboardSubView}
         onOpenInWindow={setWindowedView}
         isRecoveringPassword={isRecoveringPassword}

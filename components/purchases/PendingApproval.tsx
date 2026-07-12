@@ -13,6 +13,8 @@ import { Modal, PageHeader, SearchInput, SegmentedControl, useSmartDirection } f
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useAuthStore } from '../../stores/authStore';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 
 // --- Sub-components (SalesHistory Style) ---
 
@@ -32,13 +34,8 @@ const CurrencyDisplay: React.FC<{ amount: number; className?: string }> = ({
 interface PendingApprovalProps {
   color: string;
   t: Translations;
-  onApprovePurchase: (id: string) => void;
-  onMarkAsReceived?: (id: string) => void;
-  onRejectPurchase: (id: string, reason?: string) => void;
-  language: string;
-  currentShift: Shift | null;
-  currentEmployeeId: string | null;
   hideHeader?: boolean;
+  language: string;
   externalSearch?: string;
   onViewChange?: (view: string, params?: any) => void;
   isLoading?: boolean;
@@ -47,12 +44,7 @@ interface PendingApprovalProps {
 export const PendingApproval: React.FC<PendingApprovalProps> = ({
   color,
   t,
-  onApprovePurchase,
-  onMarkAsReceived,
-  onRejectPurchase,
   language,
-  currentShift,
-  currentEmployeeId,
   hideHeader = false,
   externalSearch = '',
   onViewChange,
@@ -62,6 +54,25 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: purchases = [] } = usePurchases(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
+  const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const infra = useHandlerInfrastructure();
+  const { currentShift } = infra;
+  const { handleApprovePurchase, handleRejectPurchase } = usePurchaseHandlers({
+    currentEmployeeId,
+    employees,
+    activeBranchId,
+    activeOrgId,
+    purchases,
+    setPurchases: infra.setPurchases,
+    purchaseReturns: [], // not needed by PendingApproval
+    setPurchaseReturns: infra.setPurchaseReturns,
+    currentShift,
+    addPurchase: infra.addPurchase,
+    approvePurchase: infra.approvePurchase,
+    markAsReceived: infra.markAsReceived,
+    createPurchaseReturn: infra.createPurchaseReturn,
+  });
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
 
   // Reject State
@@ -116,7 +127,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
   const confirmReject = () => {
     if (purchaseToReject) {
-      onRejectPurchase(purchaseToReject, rejectReason);
+      handleRejectPurchase(purchaseToReject, rejectReason);
       setIsRejectModalOpen(false);
       setPurchaseToReject(null);
       setRejectReason('');
@@ -133,7 +144,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
   const confirmApprove = () => {
     if (purchaseToApprove) {
-      onApprovePurchase(purchaseToApprove);
+      handleApprovePurchase(purchaseToApprove);
       setIsApproveModalOpen(false);
       setPurchaseToApprove(null);
       if (selectedPurchase) setSelectedPurchase(null);
@@ -549,7 +560,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   <button
                     onClick={() => {
                       if (purchaseToApprove || selectedPurchase) {
-                        onApprovePurchase(selectedPurchase!.id);
+                        handleApprovePurchase(selectedPurchase!.id);
                         setSelectedPurchase(null);
                       }
                     }}
@@ -560,7 +571,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   </button>
                   <button
                     onClick={() => {
-                      onRejectPurchase(selectedPurchase.id, rejectReason);
+                      handleRejectPurchase(selectedPurchase.id, rejectReason);
                       setSelectedPurchase(null);
                       setRejectReason('');
                     }}

@@ -20,6 +20,7 @@ export { type AppState, type ToastState, useAppState } from './layout/useAppStat
 export { useColumnReorder } from './layout/useColumnReorder';
 export { useDynamicTickerData } from './layout/useDynamicTickerData';
 export { useFilterDropdown } from './layout/useFilterDropdown';
+export { useHandlerInfrastructure } from './useHandlerInfrastructure';
 export { type NavigationHandlers, useNavigation } from './layout/useNavigation';
 export { useTheme } from './layout/useTheme';
 export { useProcurement } from './purchases/useProcurement';
@@ -30,5 +31,3 @@ export { usePOSTabs } from './sales/usePOSTabs';
 export { useSalesHandlers } from './sales/useSalesHandlers';
 export { useShift } from './sales/useShift';
 export { useSupplierHandlers } from './suppliers/useSupplierHandlers';
-// Root Hooks
-export { type EntityHandlers, type SaleData, useEntityHandlers } from './useEntityHandlers';

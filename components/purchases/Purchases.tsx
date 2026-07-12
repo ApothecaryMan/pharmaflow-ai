@@ -37,7 +37,6 @@ import type {
   PurchaseItem,
   PurchaseReturn,
   PurchaseTab,
-  Shift,
   Supplier,
 } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
@@ -57,6 +56,9 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 import {
   DatePicker,
   DateRangePicker,
@@ -80,16 +82,11 @@ import { usePosSounds } from '../common/hooks/usePosSounds';
 import { SupplierDirectoryModal } from './SupplierDirectoryModal';
 
 interface PurchasesProps {
-  onPurchaseComplete: (purchase: Purchase) => Promise<boolean>;
   color: string;
   t: Translations;
-  onApprovePurchase?: (id: string) => Promise<void>;
-  onMarkAsReceived?: (id: string) => Promise<void>;
-  onRejectPurchase?: (purchase: Purchase) => void;
   language: 'EN' | 'AR';
   navigationParams?: any;
   onViewChange?: (view: string, params?: any) => void;
-  currentShift: Shift | null;
   isLoading?: boolean;
 }
 
@@ -503,16 +500,11 @@ const SortableCartItem = React.memo(
 );
 
 export const Purchases: React.FC<PurchasesProps> = ({
-  onPurchaseComplete,
   color,
   t,
-  onApprovePurchase,
-  onMarkAsReceived,
-  onRejectPurchase,
   language,
   navigationParams,
   onViewChange,
-  currentShift,
   isLoading,
 }) => {
   const { getVerifiedDate } = useStatusBar();
@@ -525,6 +517,26 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { data: purchases = [] } = usePurchases(activeBranchId);
   const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
+  const { data: employees = [] } = useEmployees(activeBranchId);
+  const infra = useHandlerInfrastructure();
+  const { currentShift } = infra;
+  const { handlePurchaseComplete } = usePurchaseHandlers({
+    currentEmployeeId,
+    employees,
+    activeBranchId,
+    activeOrgId,
+    purchases,
+    setPurchases: infra.setPurchases,
+    purchaseReturns,
+    setPurchaseReturns: infra.setPurchaseReturns,
+    currentShift,
+    addPurchase: infra.addPurchase,
+    approvePurchase: infra.approvePurchase,
+    markAsReceived: infra.markAsReceived,
+    createPurchaseReturn: infra.createPurchaseReturn,
+  });
+
   const {
     tabs,
     activeTab,
@@ -1134,7 +1146,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     setIsConfirming(true);
     try {
-      const success = await onPurchaseComplete(purchase);
+      const success = await handlePurchaseComplete(purchase);
 
       if (success) {
         updateTab(activeTabId, {
@@ -1266,7 +1278,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     setIsConfirming(true);
     try {
-      const success = await onPurchaseComplete(purchase);
+      const success = await handlePurchaseComplete(purchase);
       if (success) {
         setCart([]);
         setSelectedSupplierId('');

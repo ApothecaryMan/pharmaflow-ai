@@ -9,10 +9,13 @@ import { returnService } from '../../services/returns/returnService';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/queryKeys';
 import { useAuthStore } from '../../stores/authStore';
-import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
+import type { Drug, Employee, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { idGenerator } from '../../utils/idGenerator';
@@ -41,14 +44,12 @@ interface PurchaseReturnsProps {
   color: string;
   t: Translations;
   language: 'EN' | 'AR';
-  onCreatePurchaseReturn?: (ret: PurchaseReturn) => Promise<void>;
 }
 
 export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   color,
   t,
   language,
-  onCreatePurchaseReturn,
 }) => {
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
@@ -57,6 +58,24 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   const { data: drugs = [] } = useInventory(activeBranchId);
   const queryClient = useQueryClient();
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
+  const { data: employees = [] } = useEmployees(activeBranchId);
+  const infra = useHandlerInfrastructure();
+  const { handleCreatePurchaseReturn } = usePurchaseHandlers({
+    currentEmployeeId,
+    employees,
+    activeBranchId,
+    activeOrgId,
+    purchases,
+    setPurchases: infra.setPurchases,
+    purchaseReturns,
+    setPurchaseReturns: infra.setPurchaseReturns,
+    currentShift: infra.currentShift,
+    addPurchase: infra.addPurchase,
+    approvePurchase: infra.approvePurchase,
+    markAsReceived: infra.markAsReceived,
+    createPurchaseReturn: infra.createPurchaseReturn,
+  });
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
@@ -395,11 +414,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       orgId: activeOrgId,
     } as PurchaseReturn;
 
-    if (onCreatePurchaseReturn) {
-      await onCreatePurchaseReturn(newReturn);
-    } else {
-      console.error('onCreatePurchaseReturn prop likely missing');
-    }
+    await handleCreatePurchaseReturn(newReturn);
     queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns });
     queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
 
