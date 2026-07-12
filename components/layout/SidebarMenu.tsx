@@ -7,6 +7,7 @@ import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
+import { preloadPage } from '../../hooks/layout/usePreloadPage';
 
 interface SidebarMenuProps {
   menuItems: MenuItem[];
@@ -294,6 +295,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                   const buttonContent = (
                     <button
                       disabled={!isImplemented}
+                      onMouseEnter={() => itemView && preloadPage(itemView)}
                       onClick={() => {
                         if (onViewChange && itemView) {
                           onViewChange(itemView);

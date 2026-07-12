@@ -137,6 +137,7 @@ export function SegmentedControl<T extends string | number | boolean>({
         <button
           key={String(o.value)}
           type='button'
+          data-value={String(o.value)}
           onClick={() => onChange(o.value)}
           data-active={value === o.value}
           disabled={disabled || o.disabled}

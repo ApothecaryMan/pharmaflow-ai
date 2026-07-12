@@ -4,6 +4,7 @@ import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { ViewState } from '../../types';
 import { ContextMenuTrigger } from '../common/ContextMenu';
+import { preloadPage } from '../../hooks/layout/usePreloadPage';
 
 interface SidebarDropdownProps {
   module: MenuItem;
@@ -214,6 +215,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                           >
                             <button
                               disabled={!isImplemented}
+                              onMouseEnter={() => itemView && preloadPage(itemView)}
                               onClick={() => {
                                 if (itemView) {
                                   onNavigate(itemView);
@@ -281,6 +283,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                     >
                       <button
                         disabled={!isImplemented}
+                        onMouseEnter={() => itemView && preloadPage(itemView)}
                         onClick={() => {
                           if (itemView) {
                             onNavigate(itemView);

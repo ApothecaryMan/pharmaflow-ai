@@ -127,6 +127,8 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   const dataMap: Record<string, any> = {
     currentShift: currentShift,
     navigationParams: navigationParams,
+    onViewChange: handleNavigate,
+    handleNavigate: handleNavigate,
   };
 
   const requiredProps = pageConfig.requiredProps || [];

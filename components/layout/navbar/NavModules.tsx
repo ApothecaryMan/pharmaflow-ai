@@ -9,6 +9,7 @@ import { EventManager } from '../../../utils/events/eventManager';
 import { getIconByName, Icons } from '../../common/Icons';
 import { Tooltip } from '../../common/Tooltip';
 import { SidebarDropdown } from '../SidebarDropdown';
+import { preloadPages } from '../../../hooks/layout/usePreloadPage';
 
 interface NavModulesProps {
   menuItems: MenuItem[];
@@ -128,7 +129,16 @@ export const NavModules: React.FC<NavModulesProps> = ({
               onMouseLeave={handleMouseLeave}
             >
               <button
-                onMouseEnter={(e) => handleMouseEnter(module.id, e)}
+                onMouseEnter={(e) => {
+                  handleMouseEnter(module.id, e);
+                  const views: string[] = [];
+                  module.submenus?.forEach((sub) =>
+                    sub.items.forEach((item) => {
+                      if (typeof item === 'object' && item.view) views.push(item.view);
+                    })
+                  );
+                  preloadPages(views);
+                }}
                 onClick={(e) => handleModuleClick(module.id, e)}
                 disabled={isEffectivelyDisabled}
                 className={`main-nav-tab flex items-center gap-2 ${module.id === 'settings' || module.id === 'test' ? 'px-2' : 'px-2.5'} py-1 rounded-lg whitespace-nowrap relative type-interactive transition-all duration-200

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
 import type { ReactNode } from 'react';
 import { Tooltip } from './Tooltip';
+import { preloadPage } from '../../hooks/layout/usePreloadPage';
 
 /**
  * PageHeader Component
@@ -103,7 +104,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         {/* Center Section: Tabs / Switchers */}
-        <div className='w-full md:w-auto md:flex-1 flex justify-center mx-0 md:mx-4 empty:hidden order-3 md:order-2 overflow-x-auto scrollbar-hide pb-1 md:pb-0 -mb-1 md:mb-0'>
+        <div
+          className='w-full md:w-auto md:flex-1 flex justify-center mx-0 md:mx-4 empty:hidden order-3 md:order-2 overflow-x-auto scrollbar-hide pb-1 md:pb-0 -mb-1 md:mb-0'
+          onMouseEnter={(e) => {
+            const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-value]');
+            if (btn?.dataset.value) preloadPage(btn.dataset.value);
+          }}
+        >
           {centerContent}
         </div>
 
