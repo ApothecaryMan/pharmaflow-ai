@@ -55,8 +55,4 @@ export interface TanStackTableProps<TData extends { id: string | number }, TValu
   pendingRowIds?: Set<string | number>;
   enableNewRowAnimation?: boolean;
   onVisibleRowsChange?: (visibleRows: TData[]) => void;
-  manualPagination?: boolean;
-  totalCount?: number;
-  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void;
-  isFetching?: boolean;
 }

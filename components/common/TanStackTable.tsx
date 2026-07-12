@@ -149,9 +149,6 @@ interface TablePaginationBarProps {
   };
   enableShowAll: boolean;
   tableContainerRef: React.RefObject<HTMLDivElement | null>;
-  manualPagination?: boolean;
-  totalCount?: number;
-  isFetching?: boolean;
 }
 
 const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
@@ -162,9 +159,6 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
   translations: t,
   enableShowAll,
   tableContainerRef,
-  manualPagination = false,
-  totalCount,
-  isFetching = false,
 }) => {
   // Jump-to-page state lives here — only pagination needs it
   const [isJumping, setIsJumping] = React.useState(false);
@@ -201,13 +195,8 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
               </span>
               <span className='shrink-0 px-1'>{t.of || 'of'}</span>
               <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
-                {manualPagination
-                  ? (totalCount ?? table.getFilteredRowModel().rows.length).toLocaleString()
-                  : table.getFilteredRowModel().rows.length.toLocaleString()}
+                {table.getFilteredRowModel().rows.length.toLocaleString()}
               </span>
-              {manualPagination && isFetching && (
-                <span className='animate-spin material-symbols-rounded text-[11px] ml-1'>progress_activity</span>
-              )}
             </div>
           )}
         </div>
@@ -317,7 +306,6 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
         {enableShowAll && (
           <button
             onClick={() => setIsShowAll(!isShowAll)}
-            disabled={manualPagination}
             className={`px-2.5 h-full flex items-center justify-center transition-colors ${
               isShowAll
                 ? `text-primary-600 bg-primary-500/10 dark:text-primary-400 dark:bg-primary-400/10`
@@ -372,10 +360,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   pendingRowIds = new Set(),
   enableNewRowAnimation = true,
   onVisibleRowsChange,
-  manualPagination = false,
-  totalCount,
-  onPaginationChange,
-  isFetching = false,
 }: TanStackTableProps<TData, TValue>) {
   const { language, numeralLocale, textLocale } = useTypography();
   const { developerMode } = useUI();
@@ -624,13 +608,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: (updater) => {
-      const next = typeof updater === 'function' ? updater(pagination) : updater;
-      setPagination(next);
-      if (manualPagination && onPaginationChange) {
-        onPaginationChange(next);
-      }
-    },
+    onPaginationChange: setPagination,
     onColumnSizingChange: setColumnSizing,
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
@@ -642,8 +620,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     // ─── Optimization: use module-level stable reference ───
     globalFilterFn: globalFilterFnStable,
     enableSorting: true,
-    manualPagination: manualPagination || false,
-    pageCount: manualPagination ? Math.ceil((totalCount || 0) / pagination.pageSize) : undefined,
     manualFiltering,
     filterFns: {
       arrIncludesSome: unifiedFilterFn,
@@ -1120,9 +1096,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             }}
             enableShowAll={enableShowAll}
             tableContainerRef={tableContainerRef}
-            manualPagination={manualPagination}
-            totalCount={totalCount}
-            isFetching={isFetching}
           />
         )}
       </div>

@@ -520,7 +520,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [activeBranchId, activeOrgId, page, serverFilters]);
+  }, [activeBranchId, activeOrgId, page, serverFilters, sales]);
 
   const handleSearchChange = React.useCallback((value: string) => {
     setSearchTerm(value);
@@ -701,10 +701,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           pageSize={pageSize}
           enableShowAll={false}
           pendingRowIds={pendingIds}
-          manualPagination
-          totalCount={totalSales}
-          onPaginationChange={(p) => setPage(p.pageIndex + 1)}
-          isFetching={isPageLoading}
           rightCustomControls={
             <div className='flex justify-center sm:justify-end w-full gap-1'>
               <SearchInput
