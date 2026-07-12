@@ -83,6 +83,14 @@ class TimeService {
 
         console.log(`Time synced via Supabase RPC. Offset: ${this.offset}ms`);
         this.isSyncing = false;
+        
+        // Notify app if local clock is wrong by more than 5 minutes
+        if (Math.abs(this.offset) > 5 * 60 * 1000) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('pharma_clock_skew', { detail: this.offset }));
+          }
+        }
+        
         return true;
       }
     } catch (err) {
@@ -148,6 +156,14 @@ class TimeService {
 
         console.log(`Time synced via ${provider}. Offset: ${this.offset}ms`);
         this.isSyncing = false;
+
+        // Notify app if local clock is wrong by more than 5 minutes
+        if (Math.abs(this.offset) > 5 * 60 * 1000) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('pharma_clock_skew', { detail: this.offset }));
+          }
+        }
+
         return true;
       } catch (error) {
         console.warn(`Time sync failed for ${provider}:`, error);
@@ -188,14 +204,15 @@ class TimeService {
   }
 
   /**
-   * Check if time has been synced recently (within last 24 hours)
+   * Check if time has been synced recently (within last 5 minutes)
+   * Changed from 24 hours to 5 minutes to quickly detect OS clock changes
    */
   isSynced(): boolean {
     if (this.lastSyncTime === 0) {
       return false;
     }
-    const hoursSinceSync = (Date.now() - this.lastSyncTime) / (1000 * 60 * 60);
-    return hoursSinceSync < 24;
+    const minsSinceSync = (Date.now() - this.lastSyncTime) / (1000 * 60);
+    return minsSinceSync < 5;
   }
 
   /**
