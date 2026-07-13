@@ -154,7 +154,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   // Removed Auto-fill effect for approverName as it is now handled by context
 
   return (
-    <div className='h-full flex flex-col space-y-6 animate-fade-in overflow-hidden'>
+    <div className='h-full flex flex-col space-y-6 overflow-hidden'>
       {/* Header */}
       {!hideHeader && (
         <PageHeader

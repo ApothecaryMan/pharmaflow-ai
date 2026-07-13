@@ -88,7 +88,7 @@ export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = (
         }}
       />
 
-      <div className='flex flex-col items-center text-center max-w-md w-full relative z-10 animate-fade-in'>
+      <div className='flex flex-col items-center text-center max-w-md w-full relative z-10 '>
         <div className='mb-8 p-6 rounded-full bg-zinc-100/80 dark:bg-zinc-800/40 border border-zinc-200/50 dark:border-zinc-700/50 shadow-xs'>
           <span className='material-symbols-rounded text-6xl text-primary-500 dark:text-blue-400 animate-pulse'>
             domain_disabled

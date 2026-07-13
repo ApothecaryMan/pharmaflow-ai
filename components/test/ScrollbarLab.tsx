@@ -36,28 +36,28 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       className: 'scrollbar-ghost',
       colorClass: 'from-zinc-400 to-zinc-650',
       cssCode: `.scrollbar-ghost {
-  scrollbar-width: none !important; /* Hide for Firefox */
+ scrollbar-width: none !important; /* Hide for Firefox */
 }
 .scrollbar-ghost:hover {
-  scrollbar-width: auto !important; /* Show for Firefox */
+ scrollbar-width: auto !important; /* Show for Firefox */
 }
 .scrollbar-ghost::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+ width: 3px;
+ height: 3px;
 }
 .scrollbar-ghost::-webkit-scrollbar-track {
-  background: transparent;
+ background: transparent;
 }
 .scrollbar-ghost::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 0px;
-  transition: background-color 0.2s ease;
+ background: transparent;
+ border-radius: 0px;
+ transition: background-color 0.2s ease;
 }
 .scrollbar-ghost:hover::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
+ background: rgba(156, 163, 175, 0.3);
 }
 .scrollbar-ghost:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.6);
+ background: rgba(156, 163, 175, 0.6);
 }`,
     },
     {
@@ -71,25 +71,25 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       className: 'scrollbar-neon',
       colorClass: 'from-blue-500 to-indigo-600',
       cssCode: `.scrollbar-neon {
-  scrollbar-width: auto !important;
-  scrollbar-color: auto !important;
+ scrollbar-width: auto !important;
+ scrollbar-color: auto !important;
 }
 .scrollbar-neon::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+ width: 8px;
+ height: 8px;
 }
 .scrollbar-neon::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 99px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+ background: rgba(255, 255, 255, 0.02);
+ border-radius: 99px;
+ border: 1px solid rgba(255, 255, 255, 0.05);
 }
 .scrollbar-neon::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6, #6366f1);
-  border-radius: 99px;
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+ background: linear-gradient(180deg, #3b82f6, #6366f1);
+ border-radius: 99px;
+ box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
 }
 .scrollbar-neon::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #60a5fa, #818cf8);
+ background: linear-gradient(180deg, #60a5fa, #818cf8);
 }`,
     },
     {
@@ -104,26 +104,26 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       className: 'scrollbar-stealth',
       colorClass: 'from-zinc-700 to-zinc-900',
       cssCode: `.scrollbar-stealth {
-  scrollbar-width: auto !important;
-  scrollbar-color: auto !important;
+ scrollbar-width: auto !important;
+ scrollbar-color: auto !important;
 }
 .scrollbar-stealth::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-  transition: width 0.3s ease;
+ width: 4px;
+ height: 4px;
+ transition: width 0.3s ease;
 }
 .scrollbar-stealth:hover::-webkit-scrollbar {
-  width: 8px;
+ width: 8px;
 }
 .scrollbar-stealth::-webkit-scrollbar-track {
-  background: transparent;
+ background: transparent;
 }
 .scrollbar-stealth::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.25);
-  border-radius: 99px;
+ background: rgba(156, 163, 175, 0.25);
+ border-radius: 99px;
 }
 .scrollbar-stealth::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.6);
+ background: rgba(156, 163, 175, 0.6);
 }`,
     },
     {
@@ -138,27 +138,27 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       className: 'scrollbar-aurora',
       colorClass: 'from-pink-500 to-rose-600',
       cssCode: `.scrollbar-aurora {
-  scrollbar-width: auto !important;
-  scrollbar-color: auto !important;
+ scrollbar-width: auto !important;
+ scrollbar-color: auto !important;
 }
 .scrollbar-aurora::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+ width: 10px;
+ height: 10px;
 }
 .scrollbar-aurora::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 6px;
+ background: rgba(0, 0, 0, 0.03);
+ border-radius: 6px;
 }
 .scrollbar-aurora::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #ec4899, #f43f5e, #eab308);
-  border-radius: 6px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+ background: linear-gradient(180deg, #ec4899, #f43f5e, #eab308);
+ border-radius: 6px;
+ border: 2px solid transparent;
+ background-clip: padding-box;
 }
 .scrollbar-aurora::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #f472b6, #fb7185, #facc15);
-  border: 2px solid transparent;
-  background-clip: padding-box;
+ background: linear-gradient(180deg, #f472b6, #fb7185, #facc15);
+ border: 2px solid transparent;
+ background-clip: padding-box;
 }`,
     },
     {
@@ -173,24 +173,24 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       className: 'scrollbar-cyber',
       colorClass: 'from-amber-500 to-yellow-655',
       cssCode: `.scrollbar-cyber {
-  scrollbar-width: auto !important;
-  scrollbar-color: auto !important;
+ scrollbar-width: auto !important;
+ scrollbar-color: auto !important;
 }
 .scrollbar-cyber::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+ width: 12px;
+ height: 12px;
 }
 .scrollbar-cyber::-webkit-scrollbar-track {
-  background: rgba(245, 158, 11, 0.03);
-  border: 1px dashed rgba(245, 158, 11, 0.3);
+ background: rgba(245, 158, 11, 0.03);
+ border: 1px dashed rgba(245, 158, 11, 0.3);
 }
 .scrollbar-cyber::-webkit-scrollbar-thumb {
-  background: #f59e0b;
-  border: 2px solid #000;
-  box-shadow: inset 0 0 0 1px #fbbf24;
+ background: #f59e0b;
+ border: 2px solid #000;
+ box-shadow: inset 0 0 0 1px #fbbf24;
 }
 .scrollbar-cyber::-webkit-scrollbar-thumb:hover {
-  background: #fbbf24;
+ background: #fbbf24;
 }`,
     },
     {
@@ -205,26 +205,26 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       className: 'scrollbar-velvet',
       colorClass: 'from-emerald-500 to-teal-650',
       cssCode: `.scrollbar-velvet {
-  scrollbar-width: auto !important;
-  scrollbar-color: auto !important;
+ scrollbar-width: auto !important;
+ scrollbar-color: auto !important;
 }
 .scrollbar-velvet::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+ width: 8px;
+ height: 8px;
 }
 .scrollbar-velvet::-webkit-scrollbar-track {
-  background: transparent;
+ background: transparent;
 }
 .scrollbar-velvet::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.25);
-  border-radius: 99px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+ background: rgba(16, 185, 129, 0.25);
+ border-radius: 99px;
+ border: 2px solid transparent;
+ background-clip: padding-box;
 }
 .scrollbar-velvet::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.7);
-  border: 2px solid transparent;
-  background-clip: padding-box;
+ background: rgba(16, 185, 129, 0.7);
+ border: 2px solid transparent;
+ background-clip: padding-box;
 }`,
     },
   ];
@@ -252,162 +252,162 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
 
   return (
     <div
-      className='h-full space-y-6 animate-fade-in overflow-y-auto p-6 scrollbar-sandbox'
+      className='h-full space-y-6 overflow-y-auto p-6 scrollbar-sandbox'
       dir={language === 'AR' ? 'rtl' : 'ltr'}
     >
       {/* Scope CSS Styles Injection */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        /* Overriding Webkit disabling standard property */
-        .scrollbar-sandbox .scrollbar-ghost, 
-        .scrollbar-sandbox .scrollbar-neon, 
-        .scrollbar-sandbox .scrollbar-stealth, 
-        .scrollbar-sandbox .scrollbar-aurora, 
-        .scrollbar-sandbox .scrollbar-cyber, 
-        .scrollbar-sandbox .scrollbar-velvet {
-          scrollbar-width: auto !important;
-          scrollbar-color: auto !important;
-        }
+ /* Overriding Webkit disabling standard property */
+ .scrollbar-sandbox .scrollbar-ghost, 
+ .scrollbar-sandbox .scrollbar-neon, 
+ .scrollbar-sandbox .scrollbar-stealth, 
+ .scrollbar-sandbox .scrollbar-aurora, 
+ .scrollbar-sandbox .scrollbar-cyber, 
+ .scrollbar-sandbox .scrollbar-velvet {
+ scrollbar-width: auto !important;
+ scrollbar-color: auto !important;
+ }
 
-        /* Ghost Scrollbar - Invisible by default, flat 0 radius and ultra-thin 3px of FADED GRAY */
-        .scrollbar-sandbox .scrollbar-ghost {
-          scrollbar-width: none !important;
-        }
-        .scrollbar-sandbox .scrollbar-ghost:hover {
-          scrollbar-width: auto !important;
-        }
-        .scrollbar-sandbox .scrollbar-ghost::-webkit-scrollbar {
-          display: block !important;
-          width: 3px !important;
-          height: 3px !important;
-        }
-        .scrollbar-sandbox .scrollbar-ghost::-webkit-scrollbar-track {
-          background: transparent !important;
-          border: none !important;
-        }
-        .scrollbar-sandbox .scrollbar-ghost::-webkit-scrollbar-thumb {
-          background: transparent !important;
-          border-radius: 0px !important;
-          border: none !important;
-          background-clip: border-box !important;
-          transition: background-color 0.2s ease !important;
-        }
-        .scrollbar-sandbox .scrollbar-ghost:hover::-webkit-scrollbar-thumb {
-          background: rgba(156, 163, 175, 0.3) !important;
-        }
-        .scrollbar-sandbox .scrollbar-ghost:hover::-webkit-scrollbar-thumb:hover {
-          background: rgba(156, 163, 175, 0.6) !important;
-        }
+ /* Ghost Scrollbar - Invisible by default, flat 0 radius and ultra-thin 3px of FADED GRAY */
+ .scrollbar-sandbox .scrollbar-ghost {
+ scrollbar-width: none !important;
+ }
+ .scrollbar-sandbox .scrollbar-ghost:hover {
+ scrollbar-width: auto !important;
+ }
+ .scrollbar-sandbox .scrollbar-ghost::-webkit-scrollbar {
+ display: block !important;
+ width: 3px !important;
+ height: 3px !important;
+ }
+ .scrollbar-sandbox .scrollbar-ghost::-webkit-scrollbar-track {
+ background: transparent !important;
+ border: none !important;
+ }
+ .scrollbar-sandbox .scrollbar-ghost::-webkit-scrollbar-thumb {
+ background: transparent !important;
+ border-radius: 0px !important;
+ border: none !important;
+ background-clip: border-box !important;
+ transition: background-color 0.2s ease !important;
+ }
+ .scrollbar-sandbox .scrollbar-ghost:hover::-webkit-scrollbar-thumb {
+ background: rgba(156, 163, 175, 0.3) !important;
+ }
+ .scrollbar-sandbox .scrollbar-ghost:hover::-webkit-scrollbar-thumb:hover {
+ background: rgba(156, 163, 175, 0.6) !important;
+ }
 
-        /* Neon Glow Scrollbar */
-        .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar {
-          display: block !important;
-          width: 8px !important;
-          height: 8px !important;
-        }
-        .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.02) !important;
-          border-radius: 99px !important;
-          border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        }
-        .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, #3b82f6, #6366f1) !important;
-          border-radius: 99px !important;
-          box-shadow: 0 0 8px rgba(99, 102, 241, 0.5) !important;
-          border: none !important;
-          background-clip: border-box !important;
-        }
-        .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(180deg, #60a5fa, #818cf8) !important;
-        }
+ /* Neon Glow Scrollbar */
+ .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar {
+ display: block !important;
+ width: 8px !important;
+ height: 8px !important;
+ }
+ .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar-track {
+ background: rgba(255, 255, 255, 0.02) !important;
+ border-radius: 99px !important;
+ border: 1px solid rgba(255, 255, 255, 0.05) !important;
+ }
+ .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar-thumb {
+ background: linear-gradient(180deg, #3b82f6, #6366f1) !important;
+ border-radius: 99px !important;
+ box-shadow: 0 0 8px rgba(99, 102, 241, 0.5) !important;
+ border: none !important;
+ background-clip: border-box !important;
+ }
+ .scrollbar-sandbox .scrollbar-neon::-webkit-scrollbar-thumb:hover {
+ background: linear-gradient(180deg, #60a5fa, #818cf8) !important;
+ }
 
-        /* Stealth Blade Scrollbar */
-        .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar {
-          display: block !important;
-          width: 4px !important;
-          height: 4px !important;
-          transition: width 0.3s ease !important;
-        }
-        .scrollbar-sandbox .scrollbar-stealth:hover::-webkit-scrollbar {
-          width: 8px !important;
-        }
-        .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar-track {
-          background: transparent !important;
-          border: none !important;
-        }
-        .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar-thumb {
-          background: rgba(156, 163, 175, 0.25) !important;
-          border-radius: 99px !important;
-          border: none !important;
-          background-clip: border-box !important;
-        }
-        .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar-thumb:hover {
-          background: rgba(156, 163, 175, 0.6) !important;
-        }
+ /* Stealth Blade Scrollbar */
+ .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar {
+ display: block !important;
+ width: 4px !important;
+ height: 4px !important;
+ transition: width 0.3s ease !important;
+ }
+ .scrollbar-sandbox .scrollbar-stealth:hover::-webkit-scrollbar {
+ width: 8px !important;
+ }
+ .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar-track {
+ background: transparent !important;
+ border: none !important;
+ }
+ .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar-thumb {
+ background: rgba(156, 163, 175, 0.25) !important;
+ border-radius: 99px !important;
+ border: none !important;
+ background-clip: border-box !important;
+ }
+ .scrollbar-sandbox .scrollbar-stealth::-webkit-scrollbar-thumb:hover {
+ background: rgba(156, 163, 175, 0.6) !important;
+ }
 
-        /* Liquid Aurora Scrollbar */
-        .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar {
-          display: block !important;
-          width: 10px !important;
-          height: 10px !important;
-        }
-        .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.03) !important;
-          border-radius: 6px !important;
-          border: none !important;
-        }
-        .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, #ec4899, #f43f5e, #eab308) !important;
-          border-radius: 6px !important;
-          border: 2px solid transparent !important;
-          background-clip: padding-box !important;
-        }
-        .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(180deg, #f472b6, #fb7185, #facc15) !important;
-        }
+ /* Liquid Aurora Scrollbar */
+ .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar {
+ display: block !important;
+ width: 10px !important;
+ height: 10px !important;
+ }
+ .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar-track {
+ background: rgba(0, 0, 0, 0.03) !important;
+ border-radius: 6px !important;
+ border: none !important;
+ }
+ .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar-thumb {
+ background: linear-gradient(180deg, #ec4899, #f43f5e, #eab308) !important;
+ border-radius: 6px !important;
+ border: 2px solid transparent !important;
+ background-clip: padding-box !important;
+ }
+ .scrollbar-sandbox .scrollbar-aurora::-webkit-scrollbar-thumb:hover {
+ background: linear-gradient(180deg, #f472b6, #fb7185, #facc15) !important;
+ }
 
-        /* Retro Cyberpunk Scrollbar */
-        .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar {
-          display: block !important;
-          width: 12px !important;
-          height: 12px !important;
-        }
-        .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar-track {
-          background: rgba(245, 158, 11, 0.03) !important;
-          border: 1px dashed rgba(245, 158, 11, 0.3) !important;
-        }
-        .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar-thumb {
-          background: #f59e0b !important;
-          border: 2px solid #000 !important;
-          box-shadow: inset 0 0 0 1px #fbbf24 !important;
-          border-radius: 0px !important;
-          background-clip: border-box !important;
-        }
-        .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar-thumb:hover {
-          background: #fbbf24 !important;
-        }
+ /* Retro Cyberpunk Scrollbar */
+ .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar {
+ display: block !important;
+ width: 12px !important;
+ height: 12px !important;
+ }
+ .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar-track {
+ background: rgba(245, 158, 11, 0.03) !important;
+ border: 1px dashed rgba(245, 158, 11, 0.3) !important;
+ }
+ .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar-thumb {
+ background: #f59e0b !important;
+ border: 2px solid #000 !important;
+ box-shadow: inset 0 0 0 1px #fbbf24 !important;
+ border-radius: 0px !important;
+ background-clip: border-box !important;
+ }
+ .scrollbar-sandbox .scrollbar-cyber::-webkit-scrollbar-thumb:hover {
+ background: #fbbf24 !important;
+ }
 
-        /* Velvet Organic Scrollbar */
-        .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar {
-          display: block !important;
-          width: 8px !important;
-          height: 8px !important;
-        }
-        .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-track {
-          background: transparent !important;
-          border: none !important;
-        }
-        .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-thumb {
-          background: rgba(16, 185, 129, 0.25) !important;
-          border-radius: 99px !important;
-          border: 2px solid transparent !important;
-          background-clip: padding-box !important;
-        }
-        .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-thumb:hover {
-          background: rgba(16, 185, 129, 0.7) !important;
-        }
-      `,
+ /* Velvet Organic Scrollbar */
+ .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar {
+ display: block !important;
+ width: 8px !important;
+ height: 8px !important;
+ }
+ .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-track {
+ background: transparent !important;
+ border: none !important;
+ }
+ .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-thumb {
+ background: rgba(16, 185, 129, 0.25) !important;
+ border-radius: 99px !important;
+ border: 2px solid transparent !important;
+ background-clip: padding-box !important;
+ }
+ .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-thumb:hover {
+ background: rgba(16, 185, 129, 0.7) !important;
+ }
+ `,
         }}
       />
 

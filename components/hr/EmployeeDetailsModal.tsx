@@ -218,10 +218,10 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
       closeOnBackdropClick={true}
       bodyClassName='p-0 bg-(--bg-card)'
     >
-      <div className='animate-fade-in min-h-[360px] text-(--text-primary)'>
+      <div className=' min-h-[360px] text-(--text-primary)'>
         {activeTab === 'page1' && (
           /* ── Page 1: Overview ── */
-          <div className='animate-fade-in'>
+          <div className=''>
             {/* Banner Graphics */}
             <div className='relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none'>
               {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}
@@ -460,7 +460,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
         {activeTab === 'page2' && (
           /* ── Page 2: CV (Contact & Experience) ── */
-          <div className='animate-fade-in p-6 space-y-6'>
+          <div className=' p-6 space-y-6'>
             {/* Contact Details Section */}
             <div className='space-y-3'>
               <h4
@@ -544,7 +544,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
         {activeTab === 'page4' && stats && (
           /* ── Page 4: Achievements ── */
-          <div className='animate-fade-in p-6 space-y-4'>
+          <div className=' p-6 space-y-4'>
             <div className='flex items-center justify-between'>
               <h4
                 className='text-xs font-bold uppercase tracking-wider'
@@ -789,7 +789,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
         {activeTab === 'page6' && (
           /* ── Page 6: Documents ── */
-          <div className='animate-fade-in p-6 space-y-6'>
+          <div className=' p-6 space-y-6'>
             {/* National ID Section */}
             <div className='space-y-2'>
               <div

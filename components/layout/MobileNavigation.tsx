@@ -209,14 +209,14 @@ const DockButton = React.memo<DockButtonProps>(
       <button
         onClick={onClick}
         className={`
-        relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all duration-500
-        ${
-          isActive
-            ? `text-black dark:text-white z-10`
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-        }
-        ${isDynamic ? 'animate-scale-in' : ''}
-      `}
+ relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all duration-500
+ ${
+   isActive
+     ? `text-black dark:text-white z-10`
+     : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+ }
+ ${isDynamic ? 'animate-scale-in' : ''}
+ `}
         aria-label={ariaLabel || label}
         aria-current={isActive ? 'page' : undefined}
         type='button'
@@ -702,7 +702,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     <>
       {/* Mobile Search View Content - Overlay when active */}
       {view === 'medicine-search' && (
-        <div className='md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-[#06080F] animate-fade-in'>
+        <div className='md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-[#06080F] '>
           <MobileMedicineSearch
             inventory={inventory}
             color={theme.primary}
@@ -740,13 +740,13 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         {!currentEmployeeId ? (
           <div
             className={`
-              relative flex items-stretch justify-around p-1 rounded-full w-[90%] max-w-[440px] mx-auto
-              bg-black/[0.08] dark:bg-black/40 backdrop-blur-[40px]
-              border border-black/10 dark:border-white/10
-              shadow-xl shadow-black/5
-              transition-all duration-500 ease-out
-              overflow-hidden
-            `}
+ relative flex items-stretch justify-around p-1 rounded-full w-[90%] max-w-[440px] mx-auto
+ bg-black/[0.08] dark:bg-black/40 backdrop-blur-[40px]
+ border border-black/10 dark:border-white/10
+ shadow-xl shadow-black/5
+ transition-all duration-500 ease-out
+ overflow-hidden
+ `}
           >
             <MobileDockLogin
               employees={employees}
@@ -760,13 +760,13 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             {permissionsService.can('inventory.view') && (
               <div
                 className={`
-                  relative flex items-center justify-center rounded-full w-14 h-14 shrink-0
-                  bg-black/[0.08] dark:bg-black/40 backdrop-blur-[40px]
-                  border border-black/10 dark:border-white/10
-                  shadow-xl shadow-black/5
-                  transition-all duration-500 ease-out
-                  ${view === 'medicine-search' ? 'ring-2 ring-black/10 dark:ring-white/10 ring-offset-2 ring-offset-transparent' : ''}
-                `}
+ relative flex items-center justify-center rounded-full w-14 h-14 shrink-0
+ bg-black/[0.08] dark:bg-black/40 backdrop-blur-[40px]
+ border border-black/10 dark:border-white/10
+ shadow-xl shadow-black/5
+ transition-all duration-500 ease-out
+ ${view === 'medicine-search' ? 'ring-2 ring-black/10 dark:ring-white/10 ring-offset-2 ring-offset-transparent' : ''}
+ `}
               >
                 <button
                   onClick={() => {
@@ -777,13 +777,13 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                     }
                   }}
                   className={`
-                    relative w-full h-full flex items-center justify-center rounded-full transition-all duration-500
-                    ${
-                      view === 'medicine-search'
-                        ? 'text-black dark:text-white'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }
-                  `}
+ relative w-full h-full flex items-center justify-center rounded-full transition-all duration-500
+ ${
+   view === 'medicine-search'
+     ? 'text-black dark:text-white'
+     : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+ }
+ `}
                   aria-label={language === 'AR' ? 'بحث' : 'Search'}
                   type='button'
                 >
@@ -807,13 +807,13 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             {/* Main Navigation Dock */}
             <div
               className={`
-                relative flex-1 flex items-stretch justify-around p-1 rounded-full max-w-[360px]
-                bg-black/[0.08] dark:bg-black/40 backdrop-blur-[40px]
-                border border-black/10 dark:border-white/10
-                shadow-xl shadow-black/5
-                transition-all duration-500 ease-out
-                overflow-hidden
-              `}
+ relative flex-1 flex items-stretch justify-around p-1 rounded-full max-w-[360px]
+ bg-black/[0.08] dark:bg-black/40 backdrop-blur-[40px]
+ border border-black/10 dark:border-white/10
+ shadow-xl shadow-black/5
+ transition-all duration-500 ease-out
+ overflow-hidden
+ `}
             >
               {/* Static Dock Items */}
               {permissionsService.can('reports.view_inventory') && (

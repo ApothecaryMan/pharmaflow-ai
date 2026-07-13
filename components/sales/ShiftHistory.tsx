@@ -465,7 +465,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   };
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in'>
+    <div className='h-full flex flex-col space-y-4 '>
       {/* Page Header */}
       <PageHeader
         centerContent={

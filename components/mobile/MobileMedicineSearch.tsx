@@ -220,13 +220,13 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
       {/* Fixed Header with Search Bar */}
       <div
         className={`
-          w-full z-50 shrink-0
-          ${
-            isKeyboardOpen
-              ? 'bg-(--bg-page-surface) border-b border-(--border-search) p-4'
-              : 'p-4 bg-(--bg-page-surface) border-b border-(--border-search)'
-          }
-        `}
+ w-full z-50 shrink-0
+ ${
+   isKeyboardOpen
+     ? 'bg-(--bg-page-surface) border-b border-(--border-search) p-4'
+     : 'p-4 bg-(--bg-page-surface) border-b border-(--border-search)'
+ }
+ `}
       >
         <div
           className={`grid transition-all duration-250 ease-[cubic-bezier(0.2,0,0,1)] ${isScannerOpen ? 'grid-rows-[1fr] opacity-100 mb-3' : 'grid-rows-[0fr] opacity-0 mb-0'}`}
@@ -285,8 +285,8 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                 </button>
               }
               wrapperClassName={`
-                bg-(--bg-navbar) shadow-none
-              `}
+ bg-(--bg-navbar) shadow-none
+ `}
               style={{ borderColor: 'var(--border-search)' }}
               className='!bg-transparent'
             />
@@ -324,7 +324,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
       {/* Results List - Scrollable */}
       <div className='flex-1 overflow-y-auto min-h-0 flex flex-col w-full relative'>
         {searchTerm && combinedFilteredDrugs.length === 0 ? (
-          <div className='flex-1 flex flex-col items-center justify-start pt-6 p-6 text-center animate-fade-in'>
+          <div className='flex-1 flex flex-col items-center justify-start pt-6 p-6 text-center '>
             <h3 className='text-lg font-bold text-gray-900 dark:text-gray-100 mb-2'>
               {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
             </h3>
@@ -362,7 +362,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         )}
 
         {!searchTerm && scannedDrugs.length === 0 && (
-          <div className='flex-1 flex flex-col items-center justify-start pt-12 p-8 text-center animate-fade-in'>
+          <div className='flex-1 flex flex-col items-center justify-start pt-12 p-8 text-center '>
             <h3 className='text-xl font-black text-gray-900 dark:text-gray-100 mb-3 tracking-tight'>
               {language === 'AR' ? 'ماذا تبحث عنه اليوم؟' : 'What are you looking for?'}
             </h3>
@@ -374,35 +374,35 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
           </div>
         )}
         <style>{`
-          @keyframes stagger-fade-in {
-            from {
-              opacity: 0;
-              transform: translateY(10px) scale(0.98);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0) scale(1);
-            }
-          }
+ @keyframes stagger-fade-in {
+ from {
+ opacity: 0;
+ transform: translateY(10px) scale(0.98);
+ }
+ to {
+ opacity: 1;
+ transform: translateY(0) scale(1);
+ }
+ }
 
-          .animate-stagger-fade-in {
-            animation: stagger-fade-in 0.3s ease-out both;
-            animation-delay: calc(var(--index) * 0.03s);
-          }
+ .animate-stagger-fade-in {
+ animation: stagger-fade-in 0.3s ease-out both;
+ animation-delay: calc(var(--index) * 0.03s);
+ }
 
-          @keyframes scan-line {
-            0% { top: 0; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-          }
-          
-          /* Smooth scroll for the entire list */
-          .overflow-y-auto {
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-          }
-        `}</style>
+ @keyframes scan-line {
+ 0% { top: 0; opacity: 0; }
+ 10% { opacity: 1; }
+ 90% { opacity: 1; }
+ 100% { top: 100%; opacity: 0; }
+ }
+ 
+ /* Smooth scroll for the entire list */
+ .overflow-y-auto {
+ scroll-behavior: smooth;
+ -webkit-overflow-scrolling: touch;
+ }
+ `}</style>
       </div>
     </div>
   );

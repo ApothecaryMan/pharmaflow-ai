@@ -46,11 +46,7 @@ interface PurchaseReturnsProps {
   language: 'EN' | 'AR';
 }
 
-export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
-  color,
-  t,
-  language,
-}) => {
+export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, language }) => {
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: purchases = [] } = usePurchases(activeBranchId);
@@ -444,7 +440,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   };
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
+    <div className='h-full flex flex-col space-y-4 overflow-hidden'>
       {/* Header */}
       <div className='flex justify-between items-center shrink-0'>
         <div>
@@ -627,7 +623,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
 
             {/* Selected Purchase Info & Interactive Items Table */}
             {selectedPurchase ? (
-              <div className='space-y-5 animate-fade-in'>
+              <div className='space-y-5 '>
                 {/* PO Summary Card */}
                 <div className='p-4 bg-gray-50 dark:bg-zinc-900/50 rounded-2xl border border-gray-100 dark:border-gray-800/80 flex flex-wrap gap-4 justify-between items-center'>
                   <div className='space-y-1'>

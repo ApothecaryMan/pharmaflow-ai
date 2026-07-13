@@ -327,7 +327,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       }
     >
       <>
-        <div className='animate-fade-in text-(--text-primary)'>
+        <div className=' text-(--text-primary)'>
           {/* Banner Graphic with Selectable Cover styles */}
           <div className='relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none group/cover'>
             {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}

@@ -106,7 +106,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
   }
 
   return (
-    <div className='p-6 max-w-4xl mx-auto animate-fade-in space-y-8'>
+    <div className='p-6 max-w-4xl mx-auto space-y-8'>
       {/* Header */}
       <div>
         <h1

@@ -71,7 +71,7 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
   );
 
   return (
-    <div className='h-full flex flex-col space-y-6 animate-fade-in' dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className='h-full flex flex-col space-y-6 ' dir={isRTL ? 'rtl' : 'ltr'}>
       <PageHeader
         centerContent={
           <SegmentedControl

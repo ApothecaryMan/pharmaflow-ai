@@ -70,11 +70,7 @@ const ListItem: React.FC<{
   );
 };
 
-export const SuppliersList: React.FC<SuppliersListProps> = ({
-  color,
-  t,
-  language,
-}) => {
+export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language }) => {
   const { showMenu } = useContextMenu();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: suppliers = [] } = useSuppliers(activeBranchId);
@@ -366,7 +362,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   ); // getRowActions is stable component reference but we just in case include it
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
+    <div className='h-full flex flex-col space-y-4 overflow-hidden'>
       <PageHeader
         leftContent={
           mode === 'list' ? (
@@ -905,7 +901,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               </div>
             }
           >
-            <div className='animate-fade-in space-y-6'>
+            <div className=' space-y-6'>
               <div>
                 <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>
                   {detailsTab === 'info'

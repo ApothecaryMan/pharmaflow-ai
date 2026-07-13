@@ -34,92 +34,92 @@ export interface ProfileData {
 }
 
 const MOCK_ID_FRONT = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250">
-  <rect width="100%" height="100%" rx="16" fill="url(%23idGrad)" />
-  <defs>
-    <linearGradient id="idGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%230f766e" />
-      <stop offset="100%" stop-color="%231e3b8a" />
-    </linearGradient>
-  </defs>
-  <rect x="30" y="35" width="55" height="42" rx="6" fill="%23f59e0b" opacity="0.85" />
-  <path d="M30 56 H85 M57 35 V77" stroke="%23b45309" strokeWidth="1.5" />
-  <rect x="290" y="35" width="80" height="100" rx="10" fill="%23ffffff" opacity="0.1" />
-  <circle cx="330" cy="70" r="20" fill="%23ffffff" opacity="0.25" />
-  <path d="M305 125 C305 105, 355 105, 355 125 Z" fill="%23ffffff" opacity="0.25" />
-  <rect x="30" y="95" width="180" height="8" rx="2" fill="%23ffffff" opacity="0.7" />
-  <text x="30" y="125" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" letter-spacing="0.5" opacity="0.95">EGYPTIAN PHARMACISTS SYNDICATE</text>
-  <text x="30" y="142" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" opacity="0.75">نقابة صيادلة مصر</text>
-  <line x1="30" y1="160" x2="370" y2="160" stroke="%23ffffff" strokeWidth="1" opacity="0.25" />
-  <text x="30" y="185" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" opacity="0.95">Ahmed Mohamed</text>
-  <text x="30" y="202" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" opacity="0.8">Pharmacist Manager / صيدلي مدير</text>
-  <circle cx="240" cy="195" r="18" fill="%2310b981" opacity="0.8" />
-  <path d="M232 195 L238 201 L250 189" stroke="%23ffffff" strokeWidth="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-  <rect x="0" y="222" width="400" height="28" fill="%230f172a" />
-  <text x="30" y="240" fill="%23ffffff" font-family="monospace" font-size="11" font-weight="bold" opacity="0.6">MEMBER SINCE 2024 • عضو منذ</text>
+ <rect width="100%" height="100%" rx="16" fill="url(%23idGrad)" />
+ <defs>
+ <linearGradient id="idGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+ <stop offset="0%" stop-color="%230f766e" />
+ <stop offset="100%" stop-color="%231e3b8a" />
+ </linearGradient>
+ </defs>
+ <rect x="30" y="35" width="55" height="42" rx="6" fill="%23f59e0b" opacity="0.85" />
+ <path d="M30 56 H85 M57 35 V77" stroke="%23b45309" strokeWidth="1.5" />
+ <rect x="290" y="35" width="80" height="100" rx="10" fill="%23ffffff" opacity="0.1" />
+ <circle cx="330" cy="70" r="20" fill="%23ffffff" opacity="0.25" />
+ <path d="M305 125 C305 105, 355 105, 355 125 Z" fill="%23ffffff" opacity="0.25" />
+ <rect x="30" y="95" width="180" height="8" rx="2" fill="%23ffffff" opacity="0.7" />
+ <text x="30" y="125" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" letter-spacing="0.5" opacity="0.95">EGYPTIAN PHARMACISTS SYNDICATE</text>
+ <text x="30" y="142" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" opacity="0.75">نقابة صيادلة مصر</text>
+ <line x1="30" y1="160" x2="370" y2="160" stroke="%23ffffff" strokeWidth="1" opacity="0.25" />
+ <text x="30" y="185" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" opacity="0.95">Ahmed Mohamed</text>
+ <text x="30" y="202" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" opacity="0.8">Pharmacist Manager / صيدلي مدير</text>
+ <circle cx="240" cy="195" r="18" fill="%2310b981" opacity="0.8" />
+ <path d="M232 195 L238 201 L250 189" stroke="%23ffffff" strokeWidth="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+ <rect x="0" y="222" width="400" height="28" fill="%230f172a" />
+ <text x="30" y="240" fill="%23ffffff" font-family="monospace" font-size="11" font-weight="bold" opacity="0.6">MEMBER SINCE 2024 • عضو منذ</text>
 </svg>`;
 
 const MOCK_ID_BACK = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250">
-  <rect width="100%" height="100%" rx="16" fill="%231e293b" />
-  <rect x="0" y="30" width="400" height="45" fill="%230f172a" />
-  <rect x="30" y="100" width="220" height="60" fill="%23e2e8f0" opacity="0.15" />
-  <line x1="40" y1="110" x2="160" y2="110" stroke="%23ffffff" strokeWidth="4" opacity="0.5" />
-  <line x1="40" y1="125" x2="200" y2="125" stroke="%23ffffff" strokeWidth="4" opacity="0.5" />
-  <line x1="40" y1="140" x2="130" y2="140" stroke="%23ffffff" strokeWidth="4" opacity="0.5" />
-  <rect x="290" y="100" width="80" height="80" fill="%23f8fafc" />
-  <path d="M300 110 H360 V170 H300 Z" fill="none" stroke="%230f172a" strokeWidth="2" />
-  <rect x="310" y="120" width="10" height="40" fill="%230f172a" />
-  <rect x="325" y="130" width="10" height="30" fill="%230f172a" />
-  <rect x="340" y="115" width="10" height="45" fill="%230f172a" />
-  <text x="30" y="200" fill="%2394a3b8" font-family="monospace" font-size="10">ID-9821420042 / رقم الهوية الوطنية</text>
-  <text x="30" y="215" fill="%2394a3b8" font-family="monospace" font-size="10">EXP: 2031-01-14 / تاريخ الانتهاء</text>
+ <rect width="100%" height="100%" rx="16" fill="%231e293b" />
+ <rect x="0" y="30" width="400" height="45" fill="%230f172a" />
+ <rect x="30" y="100" width="220" height="60" fill="%23e2e8f0" opacity="0.15" />
+ <line x1="40" y1="110" x2="160" y2="110" stroke="%23ffffff" strokeWidth="4" opacity="0.5" />
+ <line x1="40" y1="125" x2="200" y2="125" stroke="%23ffffff" strokeWidth="4" opacity="0.5" />
+ <line x1="40" y1="140" x2="130" y2="140" stroke="%23ffffff" strokeWidth="4" opacity="0.5" />
+ <rect x="290" y="100" width="80" height="80" fill="%23f8fafc" />
+ <path d="M300 110 H360 V170 H300 Z" fill="none" stroke="%230f172a" strokeWidth="2" />
+ <rect x="310" y="120" width="10" height="40" fill="%230f172a" />
+ <rect x="325" y="130" width="10" height="30" fill="%230f172a" />
+ <rect x="340" y="115" width="10" height="45" fill="%230f172a" />
+ <text x="30" y="200" fill="%2394a3b8" font-family="monospace" font-size="10">ID-9821420042 / رقم الهوية الوطنية</text>
+ <text x="30" y="215" fill="%2394a3b8" font-family="monospace" font-size="10">EXP: 2031-01-14 / تاريخ الانتهاء</text>
 </svg>`;
 
 const MOCK_SYNDICATE_MAIN = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250">
-  <rect width="100%" height="100%" rx="16" fill="url(%23synGrad)" />
-  <defs>
-    <linearGradient id="synGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%231e3b8a" />
-      <stop offset="100%" stop-color="%23311042" />
-    </linearGradient>
-  </defs>
-  <rect x="30" y="30" width="340" height="190" rx="12" fill="%23ffffff" opacity="0.05" />
-  <circle cx="200" cy="125" r="70" fill="none" stroke="%23ffffff" strokeWidth="1" opacity="0.1" />
-  <text x="30" y="55" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="bold" letter-spacing="0.5" opacity="0.9">EGYPTIAN PHARMACISTS SYNDICATE</text>
-  <text x="30" y="72" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" opacity="0.7">نقابة صيادلة مصر - النقابة العامة</text>
-  <line x1="30" y1="85" x2="370" y2="85" stroke="%23ffffff" strokeWidth="1" opacity="0.2" />
-  <rect x="30" y="105" width="70" height="85" rx="8" fill="%23ffffff" opacity="0.1" />
-  <circle cx="65" cy="135" r="16" fill="%23ffffff" opacity="0.25" />
-  <path d="M45 178 C45 162, 85 162, 85 178 Z" fill="%23ffffff" opacity="0.25" />
-  <text x="120" y="125" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" opacity="0.95">Ahmed Mohamed</text>
-  <text x="120" y="142" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" opacity="0.8">Mgr-9821 / عضوية رقم</text>
-  <circle cx="330" cy="145" r="22" fill="%23fbbf24" opacity="0.8" />
-  <path d="M320 145 L328 153 L342 137" stroke="%231e3b8a" strokeWidth="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-  <rect x="0" y="215" width="400" height="35" fill="%231e1b4b" />
-  <text x="30" y="235" fill="%23ffffff" font-family="monospace" font-size="11" font-weight="bold" opacity="0.6">GENERAL MEMBER • عضو عامل</text>
+ <rect width="100%" height="100%" rx="16" fill="url(%23synGrad)" />
+ <defs>
+ <linearGradient id="synGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+ <stop offset="0%" stop-color="%231e3b8a" />
+ <stop offset="100%" stop-color="%23311042" />
+ </linearGradient>
+ </defs>
+ <rect x="30" y="30" width="340" height="190" rx="12" fill="%23ffffff" opacity="0.05" />
+ <circle cx="200" cy="125" r="70" fill="none" stroke="%23ffffff" strokeWidth="1" opacity="0.1" />
+ <text x="30" y="55" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="bold" letter-spacing="0.5" opacity="0.9">EGYPTIAN PHARMACISTS SYNDICATE</text>
+ <text x="30" y="72" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" opacity="0.7">نقابة صيادلة مصر - النقابة العامة</text>
+ <line x1="30" y1="85" x2="370" y2="85" stroke="%23ffffff" strokeWidth="1" opacity="0.2" />
+ <rect x="30" y="105" width="70" height="85" rx="8" fill="%23ffffff" opacity="0.1" />
+ <circle cx="65" cy="135" r="16" fill="%23ffffff" opacity="0.25" />
+ <path d="M45 178 C45 162, 85 162, 85 178 Z" fill="%23ffffff" opacity="0.25" />
+ <text x="120" y="125" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" opacity="0.95">Ahmed Mohamed</text>
+ <text x="120" y="142" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" opacity="0.8">Mgr-9821 / عضوية رقم</text>
+ <circle cx="330" cy="145" r="22" fill="%23fbbf24" opacity="0.8" />
+ <path d="M320 145 L328 153 L342 137" stroke="%231e3b8a" strokeWidth="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+ <rect x="0" y="215" width="400" height="35" fill="%231e1b4b" />
+ <text x="30" y="235" fill="%23ffffff" font-family="monospace" font-size="11" font-weight="bold" opacity="0.6">GENERAL MEMBER • عضو عامل</text>
 </svg>`;
 
 const MOCK_SYNDICATE_SUB = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250">
-  <rect width="100%" height="100%" rx="16" fill="url(%23synSubGrad)" />
-  <defs>
-    <linearGradient id="synSubGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%23111827" />
-      <stop offset="100%" stop-color="%230f766e" />
-    </linearGradient>
-  </defs>
-  <rect x="30" y="25" width="340" height="180" rx="12" fill="%23ffffff" opacity="0.05" />
-  <circle cx="200" cy="115" r="60" fill="none" stroke="%23ffffff" strokeWidth="1" opacity="0.08" />
-  <text x="30" y="45" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" letter-spacing="0.5" opacity="0.9">EGYPTIAN PHARMACISTS SYNDICATE - SUB</text>
-  <text x="30" y="62" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" opacity="0.7">نقابة صيادلة مصر - الفرعية</text>
-  <line x1="30" y1="75" x2="370" y2="75" stroke="%23ffffff" strokeWidth="1" opacity="0.2" />
-  <rect x="30" y="95" width="70" height="85" rx="8" fill="%23ffffff" opacity="0.1" />
-  <circle cx="65" cy="125" r="16" fill="%23ffffff" opacity="0.25" />
-  <path d="M45 168 C45 152, 85 152, 85 168 Z" fill="%23ffffff" opacity="0.25" />
-  <text x="120" y="115" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="bold" opacity="0.95">Ahmed Mohamed</text>
-  <text x="120" y="132" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" opacity="0.8">Sub-9821 / عضوية فرعية رقم</text>
-  <circle cx="330" cy="135" r="22" fill="%2338bdf8" opacity="0.8" />
-  <path d="M320 135 L328 143 L342 127" stroke="%231e3a8a" strokeWidth="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-  <rect x="0" y="205" width="400" height="45" fill="%231e1b4b" />
-  <text x="30" y="232" fill="%23ffffff" font-family="monospace" font-size="11" font-weight="bold" opacity="0.6">SUB MEMBER • عضو فرعي</text>
+ <rect width="100%" height="100%" rx="16" fill="url(%23synSubGrad)" />
+ <defs>
+ <linearGradient id="synSubGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+ <stop offset="0%" stop-color="%23111827" />
+ <stop offset="100%" stop-color="%230f766e" />
+ </linearGradient>
+ </defs>
+ <rect x="30" y="25" width="340" height="180" rx="12" fill="%23ffffff" opacity="0.05" />
+ <circle cx="200" cy="115" r="60" fill="none" stroke="%23ffffff" strokeWidth="1" opacity="0.08" />
+ <text x="30" y="45" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" letter-spacing="0.5" opacity="0.9">EGYPTIAN PHARMACISTS SYNDICATE - SUB</text>
+ <text x="30" y="62" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" opacity="0.7">نقابة صيادلة مصر - الفرعية</text>
+ <line x1="30" y1="75" x2="370" y2="75" stroke="%23ffffff" strokeWidth="1" opacity="0.2" />
+ <rect x="30" y="95" width="70" height="85" rx="8" fill="%23ffffff" opacity="0.1" />
+ <circle cx="65" cy="125" r="16" fill="%23ffffff" opacity="0.25" />
+ <path d="M45 168 C45 152, 85 152, 85 168 Z" fill="%23ffffff" opacity="0.25" />
+ <text x="120" y="115" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="bold" opacity="0.95">Ahmed Mohamed</text>
+ <text x="120" y="132" fill="%23ffffff" font-family="system-ui, sans-serif" font-size="11" opacity="0.8">Sub-9821 / عضوية فرعية رقم</text>
+ <circle cx="330" cy="135" r="22" fill="%2338bdf8" opacity="0.8" />
+ <path d="M320 135 L328 143 L342 127" stroke="%231e3a8a" strokeWidth="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+ <rect x="0" y="205" width="400" height="45" fill="%231e1b4b" />
+ <text x="30" y="232" fill="%23ffffff" font-family="monospace" font-size="11" font-weight="bold" opacity="0.6">SUB MEMBER • عضو فرعي</text>
 </svg>`;
 
 export const LOCAL_TRANSLATIONS = {
@@ -751,13 +751,13 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
     <button
       onClick={() => openModal(config)}
       className={`
-        flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all
-        ${
-          variant === 'primary'
-            ? `bg-primary-500 text-white hover:bg-primary-600 shadow-lg hover:shadow-xl`
-            : 'bg-(--bg-secondary) hover:bg-(--bg-hover) text-(--text-primary) border border-(--border-divider)'
-        }
-      `}
+ flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all
+ ${
+   variant === 'primary'
+     ? `bg-primary-500 text-white hover:bg-primary-600 shadow-lg hover:shadow-xl`
+     : 'bg-(--bg-secondary) hover:bg-(--bg-hover) text-(--text-primary) border border-(--border-divider)'
+ }
+ `}
       style={variant === 'primary' ? { backgroundColor: 'var(--color-primary-500, #3b82f6)' } : {}}
     >
       <span className='material-symbols-rounded text-[20px]'>{icon}</span>
@@ -992,10 +992,10 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
       >
         {/* Modal Content */}
         {modalConfig.testType === 'multipage' ? (
-          <div className='space-y-4 animate-fade-in'>
+          <div className='space-y-4 '>
             <div className='p-6 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl'>
               {activePage === 'page1' ? (
-                <div className='animate-fade-in'>
+                <div className=''>
                   <span className='material-symbols-rounded text-6xl text-primary-500 mb-4'>
                     description
                   </span>
@@ -1009,7 +1009,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
                   </p>
                 </div>
               ) : (
-                <div className='animate-fade-in'>
+                <div className=''>
                   <span className='material-symbols-rounded text-6xl text-purple-500 mb-4'>
                     settings
                   </span>

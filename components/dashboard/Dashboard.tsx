@@ -624,7 +624,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         ),
       },
       topSelling: {
-        title: topSellingMode === 'revenue' ? t.dashboard?.mostProfitable : (t.dashboard?.topSelling || t.topSelling),
+        title:
+          topSellingMode === 'revenue'
+            ? t.dashboard?.mostProfitable
+            : t.dashboard?.topSelling || t.topSelling,
         actions: exportBtn('top_selling', topSelling20),
         children: (
           <div className='space-y-3'>
@@ -765,26 +768,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </tr>
                     </thead>
                     <tbody className='divide-y divide-(--border-primary) bg-(--bg-panel)'>
-                      {achievements.days.map(day => (
-                        <tr key={day.date} className={day.isFuture ? 'opacity-50 bg-gray-50 dark:bg-gray-800/20' : 'hover:bg-(--bg-menu-hover)'}>
+                      {achievements.days.map((day) => (
+                        <tr
+                          key={day.date}
+                          className={
+                            day.isFuture
+                              ? 'opacity-50 bg-gray-50 dark:bg-gray-800/20'
+                              : 'hover:bg-(--bg-menu-hover)'
+                          }
+                        >
                           <td className='px-4 py-3 font-medium text-(--text-primary)'>
                             {day.day} {achievements.monthName}
-                            {day.isFuture && <span className='text-[10px] text-(--text-tertiary) ms-2'>({t.expand.upcoming})</span>}
+                            {day.isFuture && (
+                              <span className='text-[10px] text-(--text-tertiary) ms-2'>
+                                ({t.expand.upcoming})
+                              </span>
+                            )}
                           </td>
                           <td className='px-4 py-3 text-end text-(--text-tertiary)'>
                             {formatCurrency(day.target, undefined, language, 0)}
                           </td>
                           <td className='px-4 py-3 text-end font-semibold text-(--text-primary)'>
-                            {!day.isFuture ? formatCurrency(day.revenue, undefined, language, 0) : '-'}
+                            {!day.isFuture
+                              ? formatCurrency(day.revenue, undefined, language, 0)
+                              : '-'}
                           </td>
                           <td className='px-4 py-3 text-end'>
                             {!day.isFuture ? (
-                              <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${
-                                day.achievementPct >= 100 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400' :
-                                day.achievementPct >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                                day.achievementPct >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
-                                'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
-                              }`}>
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${
+                                  day.achievementPct >= 100
+                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
+                                    : day.achievementPct >= 80
+                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                      : day.achievementPct >= 50
+                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                                        : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                                }`}
+                              >
                                 {day.achievementPct}%
                               </span>
                             ) : (
@@ -832,10 +853,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // --- CHART COLOR LOGIC ---
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in'
-    >
+    <div ref={scrollContainerRef} className='h-full overflow-y-auto px-page space-y-4 '>
       <PageHeader
         mb='mb-0'
         centerContent={
@@ -995,16 +1013,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className='flex justify-between items-center mb-3'>
             <h3 className='text-base font-semibold text-(--text-primary) flex items-center gap-2 truncate'>
               <span className='truncate'>
-                {topSellingMode === 'revenue' 
-                  ? (t.mostProfitable || t.dashboard?.mostProfitable || 'Most Profitable')
-                  : (t.topSelling || t.dashboard?.topSelling || 'Top Selling Products')}
+                {topSellingMode === 'revenue'
+                  ? t.mostProfitable || t.dashboard?.mostProfitable || 'Most Profitable'
+                  : t.topSelling || t.dashboard?.topSelling || 'Top Selling Products'}
               </span>
             </h3>
             <div className='flex items-center gap-2 shrink-0'>
               <SegmentedControl
                 options={[
-                  { label: t.byRevenue || t.dashboard?.byRevenue || t.revenue || 'Revenue', value: 'revenue' },
-                  { label: t.byQuantity || t.dashboard?.byQuantity || t.inventory?.quantity || 'Quantity', value: 'qty' },
+                  {
+                    label: t.byRevenue || t.dashboard?.byRevenue || t.revenue || 'Revenue',
+                    value: 'revenue',
+                  },
+                  {
+                    label:
+                      t.byQuantity ||
+                      t.dashboard?.byQuantity ||
+                      t.inventory?.quantity ||
+                      'Quantity',
+                    value: 'qty',
+                  },
                 ]}
                 value={topSellingMode}
                 onChange={(val) => setTopSellingMode(String(val) as 'revenue' | 'qty')}
@@ -1043,7 +1071,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </span>
                   </div>
                   <span className='badge-zinc whitespace-nowrap'>
-                    {topSellingMode === 'revenue' ? formatCurrency(item.revenue) : `${item.qty} ${t.sold}`}
+                    {topSellingMode === 'revenue'
+                      ? formatCurrency(item.revenue)
+                      : `${item.qty} ${t.sold}`}
                   </span>
                 </div>
               ))
@@ -1159,7 +1189,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
           ))}
-
         </div>
 
         {/* Recent Transactions */}

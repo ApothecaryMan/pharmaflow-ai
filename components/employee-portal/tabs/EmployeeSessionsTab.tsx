@@ -142,7 +142,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   const offlineCount = mySessions.length - onlineCount;
 
   return (
-    <div className='animate-fade-in space-y-6'>
+    <div className=' space-y-6'>
       <div className='flex items-center justify-between px-1'>
         <div className='flex items-center gap-3'>
           <span className='material-symbols-rounded text-3xl text-(--text-secondary)'>devices</span>

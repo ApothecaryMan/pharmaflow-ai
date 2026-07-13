@@ -114,7 +114,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
         {/* Profile Dropdown */}
         {showProfileMenu && (
           <div
-            className={`absolute ${language === 'AR' ? 'left-0' : 'right-0'} mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-[10000] animate-fade-in`}
+            className={`absolute ${language === 'AR' ? 'left-0' : 'right-0'} mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-[10000] `}
           >
             {/* User Info */}
             <div className='p-4 border-b border-(--border-divider) bg-(--bg-page-surface)'>
@@ -212,12 +212,12 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                             key={workspace.id}
                             onClick={() => {}}
                             className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
-                          ${
-                            isActive
-                              ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
-                          }
-                        `}
+ ${
+   isActive
+     ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+     : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
+ }
+ `}
                           >
                             <div className='flex flex-col items-start'>
                               <span>{workspace.orgName || 'Pharmacy'}</span>
@@ -255,12 +255,12 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                           setShowProfileMenu(false);
                         }}
                         className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
-                          ${
-                            activeBranchId === branch.id
-                              ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
-                          }
-                        `}
+ ${
+   activeBranchId === branch.id
+     ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
+     : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
+ }
+ `}
                       >
                         <div className='flex items-center gap-2'>
                           {activeBranchId === branch.id ? (

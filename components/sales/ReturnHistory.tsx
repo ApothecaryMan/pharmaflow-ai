@@ -309,7 +309,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
   );
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in'>
+    <div className='h-full flex flex-col space-y-4 '>
       {/* Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>

@@ -540,7 +540,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
           )}
 
           {phase === 'waiting' && (
-            <div className='pt-2 pb-0 animate-fade-in flex flex-col items-center justify-center text-center'>
+            <div className='pt-2 pb-0 flex flex-col items-center justify-center text-center'>
               <div className='relative mb-6 mt-4 flex items-center justify-center'>
                 <span
                   className='material-symbols-rounded animate-pulse'
@@ -552,11 +552,11 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
 
               {/* Linear Loading Bar */}
               <style>{`
-                @keyframes loadingBar {
-                  0% { left: -35%; width: 35%; }
-                  100% { left: 100%; width: 35%; }
-                }
-              `}</style>
+ @keyframes loadingBar {
+ 0% { left: -35%; width: 35%; }
+ 100% { left: 100%; width: 35%; }
+ }
+ `}</style>
               <div className='w-48 h-1.5 rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800 mb-4 relative'>
                 <div
                   className='absolute top-0 h-full rounded-full'
@@ -599,7 +599,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
           )}
 
           {phase === 'setup' && acceptedEmployee && (
-            <form onSubmit={handleSetupLocalCredentials} className='space-y-4 animate-fade-in'>
+            <form onSubmit={handleSetupLocalCredentials} className='space-y-4 '>
               <div className='p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700/50 mb-6 flex items-center gap-4'>
                 <div className='w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center font-bold text-lg text-zinc-500'>
                   {acceptedEmployee.name.charAt(0).toUpperCase()}

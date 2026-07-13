@@ -32,12 +32,7 @@ interface EmployeeListProps {
   onViewChange?: (view: string) => void;
 }
 
-export const EmployeeList: React.FC<EmployeeListProps> = ({
-  color,
-  t,
-  language,
-  onViewChange,
-}) => {
+export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, onViewChange }) => {
   // --- Data Context ---
   const branches = useAuthStore((s) => s.branches);
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
@@ -356,7 +351,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
   // --- Render ---
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
+    <div className='h-full flex flex-col space-y-4 overflow-hidden'>
       <PageHeader
         leftContent={
           <div className='w-full max-w-md'>

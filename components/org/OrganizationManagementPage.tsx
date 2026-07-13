@@ -105,7 +105,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   ];
 
   return (
-    <div className='h-full flex flex-col overflow-hidden animate-fade-in'>
+    <div className='h-full flex flex-col overflow-hidden '>
       <PageHeader
         centerContent={
           <SegmentedControl

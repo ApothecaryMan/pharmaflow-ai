@@ -548,7 +548,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         {/* Right Side: Selection Indicator OR Counter */}
                         <div onClick={(e) => e.stopPropagation()}>
                           {isSelected ? (
-                            <div className='flex items-center gap-3 animate-fadeIn'>
+                            <div className='flex items-center gap-3 '>
                               <div className='flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 border border-gray-200 dark:border-gray-700 shadow-xs'>
                                 <button
                                   onClick={() =>
@@ -669,7 +669,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               <label
                 htmlFor='returnNotes'
                 className={`absolute top-2 inset-s-4 text-xs font-bold text-gray-400 pointer-events-none transition-all 
-                    peer-focus:text-primary-600 peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs`}
+ peer-focus:text-primary-600 peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs`}
               >
                 {t.returns.notes}
               </label>

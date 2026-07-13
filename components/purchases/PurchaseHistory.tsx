@@ -375,7 +375,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   ];
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
+    <div className='h-full flex flex-col space-y-4 overflow-hidden'>
       <PageHeader
         leftContent={
           <div className='relative w-48 xl:w-140'>

@@ -30,7 +30,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
   };
 
   return (
-    <div className='h-full flex flex-col items-center justify-center max-w-2xl mx-auto animate-fade-in'>
+    <div className='h-full flex flex-col items-center justify-center max-w-2xl mx-auto '>
       <div
         className={`w-full bg-white dark:bg-gray-900 p-6 rounded-4xl shadow-xl border border-gray-200 dark:border-gray-800`}
       >
@@ -101,7 +101,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
         </form>
 
         {response && (
-          <div className='mt-6 p-5 bg-gray-50 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 animate-fade-in'>
+          <div className='mt-6 p-5 bg-gray-50 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 '>
             <div className='flex items-start gap-3'>
               <span className={`material-symbols-rounded text-primary-600 mt-0.5 text-xl`}>
                 info

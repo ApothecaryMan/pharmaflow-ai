@@ -431,7 +431,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
   // Wrapper Render
   if (!isUnlocked) {
     return (
-      <div className='flex-1 flex flex-col items-center justify-center min-h-[500px] w-full animate-fade-in'>
+      <div className='flex-1 flex flex-col items-center justify-center min-h-[500px] w-full '>
         {!actualIsModalOpen && (
           <div className='flex flex-col items-center justify-center animate-in zoom-in duration-300'>
             <div className='w-20 h-20 rounded-3xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center mb-6 shadow-sm'>

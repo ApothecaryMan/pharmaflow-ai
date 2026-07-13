@@ -274,7 +274,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
 
     setBottomContent(
       selectedDrug ? (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 '>
           <SmallCard
             title={isRTL ? 'وارد المخزون' : 'Stock In'}
             value={(summary?.totalIn || 0) / (selectedDrug?.unitsPerPack || 1)}
@@ -363,7 +363,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
 
   return (
     <div
-      className={`h-full flex flex-col gap-2 animate-fade-in overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`}
+      className={`h-full flex flex-col gap-2 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       {!selectedDrug && !showAll ? (

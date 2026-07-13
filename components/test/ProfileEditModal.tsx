@@ -241,7 +241,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       closeOnBackdropClick={true}
       bodyClassName='p-0 bg-(--bg-card)'
     >
-      <div className='animate-fade-in flex flex-col h-full justify-between min-h-[450px]'>
+      <div className=' flex flex-col h-full justify-between min-h-[450px]'>
         <div>
           {/* Edit Modal Tabs */}
           <div className='flex border-b border-(--border-divider) mb-5 px-6 overflow-x-auto scrollbar-none'>
@@ -281,7 +281,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
           {/* Tab 1: Appearance & Status */}
           {editTab === 'appearance' && (
-            <div className='space-y-5 px-6 pb-6 animate-fade-in'>
+            <div className='space-y-5 px-6 pb-6 '>
               {/* Banner Position Adjustment Preview / Editor */}
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
@@ -341,7 +341,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className='space-y-3 p-4 rounded-xl border border-(--border-divider) bg-(--bg-secondary)/20 animate-fade-in'>
+                  <div className='space-y-3 p-4 rounded-xl border border-(--border-divider) bg-(--bg-secondary)/20 '>
                     <div
                       ref={bannerEditorRef}
                       onMouseDown={handleMouseDown}
@@ -505,7 +505,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
           {/* Tab 2: Personal Info */}
           {editTab === 'personal' && (
-            <div className='space-y-4 px-6 pb-6 animate-fade-in'>
+            <div className='space-y-4 px-6 pb-6 '>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {/* Name English */}
                 <div className='space-y-2'>
@@ -564,7 +564,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
           {/* Tab 3: Contact & Job Details */}
           {editTab === 'contact' && (
-            <div className='space-y-4 px-6 pb-6 animate-fade-in overflow-y-auto max-h-[320px]'>
+            <div className='space-y-4 px-6 pb-6 overflow-y-auto max-h-[320px]'>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {/* Email */}
                 <div className='space-y-2'>
@@ -688,7 +688,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
           {/* Tab 4: Documents Upload */}
           {editTab === 'documents' && (
-            <div className='space-y-5 px-6 pb-6 animate-fade-in'>
+            <div className='space-y-5 px-6 pb-6 '>
               {/* National ID Upload Section */}
               <div className='space-y-1'>
                 <label className='text-xs font-semibold text-(--text-tertiary) uppercase px-1 flex items-center gap-2'>

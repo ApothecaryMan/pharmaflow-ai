@@ -257,7 +257,7 @@ export function EmploymentRequestsList({
                 />
               </div>
               {error?.id === request.id && (
-                <div className='w-full text-center sm:text-end text-xs font-semibold text-(--color-error) bg-(--color-error)/10 px-3 py-1.5 rounded-lg animate-fade-in'>
+                <div className='w-full text-center sm:text-end text-xs font-semibold text-(--color-error) bg-(--color-error)/10 px-3 py-1.5 rounded-lg '>
                   {error.message}
                 </div>
               )}

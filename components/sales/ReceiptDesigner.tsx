@@ -44,7 +44,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /*                               TEMPLATE MANAGER                             */
+  /* TEMPLATE MANAGER */
   /* -------------------------------------------------------------------------- */
 
   interface SavedTemplate {
@@ -226,7 +226,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   };
 
   /* -------------------------------------------------------------------------- */
-  /*                                  PREVIEW                                   */
+  /* PREVIEW */
   /* -------------------------------------------------------------------------- */
 
   // Preview-only toggles (not saved to localStorage, just for visualization)
@@ -443,7 +443,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           </label>
           <div className='flex flex-wrap md:flex-nowrap items-center gap-2 min-w-0'>
             {isAddingTemplate || isEditingName ? (
-              <div className='flex items-center gap-2 w-full animate-fadeIn'>
+              <div className='flex items-center gap-2 w-full '>
                 <SmartInput
                   autoFocus
                   value={isEditingName ? editingNameValue : newTemplateName}
@@ -607,7 +607,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                           setIsSaving(false);
                         }
                       }}
-                      className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0 border border-transparent animate-fadeIn'
+                      className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0 border border-transparent '
                     >
                       <span className='material-symbols-rounded text-[20px]'>save</span>
                       <span className='hidden lg:inline text-[13px] font-bold'>

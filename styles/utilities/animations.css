@@ -138,8 +138,34 @@
 .animate-spin-slow {
   animation: spin 3s linear infinite;
 }
+
+/* Updated Smooth Fade In for elements */
+@keyframes fadeInSmooth {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .animate-fade-in {
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeInSmooth 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Global Page Reveal Overlay */
+@keyframes pageReveal {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+.animate-page-reveal {
+  animation: pageReveal 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
 /* --- Loading Wave Animation --- */

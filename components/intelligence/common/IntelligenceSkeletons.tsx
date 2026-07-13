@@ -28,7 +28,7 @@ export const KPICardSkeleton = () => (
  * Used at Tier 2 for progressive loading.
  */
 export const KPIGridSkeleton = () => (
-  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in'>
+  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 '>
     {[1, 2, 3, 4].map((i) => (
       <KPICardSkeleton key={i} />
     ))}
@@ -58,7 +58,7 @@ export const SegmentedProgressSkeleton = () => (
 export const DashboardPageSkeleton: React.FC<{ withTopBar?: boolean }> = ({
   withTopBar = false,
 }) => (
-  <div className='space-y-6 animate-fade-in h-full flex flex-col'>
+  <div className='space-y-6 h-full flex flex-col'>
     {withTopBar && (
       <div className='h-16 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl animate-pulse' />
     )}

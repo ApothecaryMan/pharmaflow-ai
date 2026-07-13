@@ -223,7 +223,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
 
   return (
     <div
-      className='w-full relative overflow-hidden bg-black rounded-[32px] shadow-inner mb-3 transition-all duration-600 ease-[cubic-bezier(0.2,0.8,0.2,1)] animate-fade-in group'
+      className='w-full relative overflow-hidden bg-black rounded-[32px] shadow-inner mb-3 transition-all duration-600 ease-[cubic-bezier(0.2,0.8,0.2,1)] group'
       style={{ height: '180px' }}
     >
       {/* Video Feed */}
@@ -314,13 +314,13 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
       </div>
 
       <style>{`
-        @keyframes scan {
-          0%, 100% { top: 0; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          50% { top: 100%; }
-        }
-      `}</style>
+ @keyframes scan {
+ 0%, 100% { top: 0; opacity: 0; }
+ 10% { opacity: 1; }
+ 90% { opacity: 1; }
+ 50% { top: 100%; }
+ }
+ `}</style>
     </div>
   );
 };

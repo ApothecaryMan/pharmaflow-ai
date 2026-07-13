@@ -181,7 +181,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   );
 
   return (
-    <div className='animate-fade-in text-(--text-primary) -mt-2 sm:-mt-4'>
+    <div className=' text-(--text-primary) -mt-2 sm:-mt-4'>
       {/* Tab Bar */}
       <div className='flex mb-6 overflow-x-auto hide-scrollbar max-sm:-mx-4'>
         {tabs.map((tab) => {

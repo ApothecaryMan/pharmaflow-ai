@@ -28,47 +28,47 @@
  * @usage_basic
  * ```tsx
  * <ExpandedChartModal
- *   isOpen={true}
- *   onClose={() => setIsOpen(false)}
- *   data={[
- *     { date: 'Jan', value: 1000 },
- *     { date: 'Feb', value: 1500 },
- *     { date: 'Mar', value: 1200 }
- *   ]}
- *   title="Sales Revenue"
- *   color="#3B82F6"
- *   unit="$"
+ * isOpen={true}
+ * onClose={() => setIsOpen(false)}
+ * data={[
+ * { date: 'Jan', value: 1000 },
+ * { date: 'Feb', value: 1500 },
+ * { date: 'Mar', value: 1200 }
+ * ]}
+ * title="Sales Revenue"
+ * color="#3B82F6"
+ * unit="$"
  * />
  * ```
  *
  * @usage_custom
  * ```tsx
  * <ExpandedChartModal
- *   isOpen={true}
- *   onClose={() => setIsOpen(false)}
- *   data={salesData}
- *   title="Monthly Revenue"
- *   color="#10B981"
- *   unit="EGP "
- *   // تخصيص الميزات المعروضة
- *   features={{
- *     showStats: true,              // عرض الإحصائيات
- *     showChartTypeToggle: false,   // إخفاء زر تبديل نوع الرسم
- *     showLineStyleToggle: false,   // إخفاء زر نمط الخط
- *     showPeriodSelector: true,     // عرض اختيار الفترة
- *     showBrush: true,             // عرض شريط التمرير
- *     showExportButtons: false,     // إخفاء أزرار التصدير
- *     showTableView: true,         // عرض خيار الجدول
- *     showDateRange: true,         // عرض نطاق التاريخ
- *   }}
- *   // إعدادات الرسم البياني
- *   chartConfig={{
- *     defaultChartType: 'bar',      // نوع الرسم الافتراضي
- *     defaultLineStyle: 'solid',    // نمط الخط الافتراضي
- *     defaultPeriod: '1m',         // الفترة الافتراضية
- *     enableAnimation: true,        // تفعيل الحركات
- *     chartHeight: 500,            // ارتفاع الرسم بالبكسل
- *   }}
+ * isOpen={true}
+ * onClose={() => setIsOpen(false)}
+ * data={salesData}
+ * title="Monthly Revenue"
+ * color="#10B981"
+ * unit="EGP "
+ * // تخصيص الميزات المعروضة
+ * features={{
+ * showStats: true, // عرض الإحصائيات
+ * showChartTypeToggle: false, // إخفاء زر تبديل نوع الرسم
+ * showLineStyleToggle: false, // إخفاء زر نمط الخط
+ * showPeriodSelector: true, // عرض اختيار الفترة
+ * showBrush: true, // عرض شريط التمرير
+ * showExportButtons: false, // إخفاء أزرار التصدير
+ * showTableView: true, // عرض خيار الجدول
+ * showDateRange: true, // عرض نطاق التاريخ
+ * }}
+ * // إعدادات الرسم البياني
+ * chartConfig={{
+ * defaultChartType: 'bar', // نوع الرسم الافتراضي
+ * defaultLineStyle: 'solid', // نمط الخط الافتراضي
+ * defaultPeriod: '1m', // الفترة الافتراضية
+ * enableAnimation: true, // تفعيل الحركات
+ * chartHeight: 500, // ارتفاع الرسم بالبكسل
+ * }}
  * />
  * ```
  *
@@ -487,7 +487,6 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
             { label: '', value: 'table', icon: 'table_chart' },
           ]}
           size='xs'
-          variant='onPage'
           fullWidth={false}
         />
       )}
@@ -495,7 +494,7 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
       {/* Chart Type Toggle - Only in chart view */}
       {/* زر نوع الرسم - يظهر فقط في وضع الرسم */}
       {viewMode === 'chart' && features?.showChartTypeToggle !== false && (
-        <div className='animate-fade-in'>
+        <div className=''>
           <SegmentedControl
             value={chartType}
             onChange={onChartTypeChange}
@@ -504,8 +503,6 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
               { label: '', value: 'bar', icon: 'bar_chart' },
             ]}
             size='xs'
-            variant='onPage'
-            color='blue'
             fullWidth={false}
           />
         </div>
@@ -514,7 +511,7 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
       {/* Line Style Toggle - Only with Area chart */}
       {/* زر نمط الخط - فقط مع رسم المساحة */}
       {viewMode === 'chart' && chartType === 'area' && features?.showLineStyleToggle !== false && (
-        <div className='animate-fade-in'>
+        <div className=''>
           <SegmentedControl
             value={lineStyle}
             onChange={onLineStyleChange}
@@ -523,8 +520,6 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
               { label: '', value: 'dashed', icon: 'more_horiz' },
             ]}
             size='xs'
-            variant='onPage'
-            color='gray'
             fullWidth={false}
           />
         </div>
@@ -533,7 +528,7 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
       {/* Period Selector - Shows in chart view */}
       {/* اختيار الفترة - يظهر في وضع الرسم */}
       {viewMode === 'chart' && features?.showPeriodSelector !== false && (
-        <div className='animate-fade-in'>
+        <div className=''>
           <SegmentedControl
             value={period}
             onChange={onPeriodChange}
@@ -544,8 +539,6 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
               { label: 'All', value: 'all' },
             ]}
             size='xs'
-            variant='onPage'
-            color='indigo'
           />
         </div>
       )}
@@ -736,33 +729,33 @@ const useTableVirtualization = (detailedData: any[], rowHeight = 40, visibleRows
  * @example
  * // Basic usage
  * <ExpandedChartModal
- *   isOpen={true}
- *   onClose={() => setIsOpen(false)}
- *   data={chartData}
- *   title="Sales Analytics"
- *   color="#3B82F6"
- *   unit="$"
+ * isOpen={true}
+ * onClose={() => setIsOpen(false)}
+ * data={chartData}
+ * title="Sales Analytics"
+ * color="#3B82F6"
+ * unit="$"
  * />
  *
  * @example
  * // Advanced usage with custom configuration
  * <ExpandedChartModal
- *   isOpen={true}
- *   onClose={() => setIsOpen(false)}
- *   data={chartData}
- *   title="Revenue Analysis"
- *   color="#10B981"
- *   unit="EGP "
- *   features={{
- *     showStats: true,
- *     showChartTypeToggle: false,
- *     showBrush: true
- *   }}
- *   chartConfig={{
- *     defaultChartType: 'bar',
- *     defaultPeriod: '1m',
- *     chartHeight: 500
- *   }}
+ * isOpen={true}
+ * onClose={() => setIsOpen(false)}
+ * data={chartData}
+ * title="Revenue Analysis"
+ * color="#10B981"
+ * unit="EGP "
+ * features={{
+ * showStats: true,
+ * showChartTypeToggle: false,
+ * showBrush: true
+ * }}
+ * chartConfig={{
+ * defaultChartType: 'bar',
+ * defaultPeriod: '1m',
+ * chartHeight: 500
+ * }}
  * />
  */
 
@@ -901,10 +894,10 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
     >
       <div className='space-y-6'>
         {/* ═══════════════════════════════════════════════════════════════
-            SECTION 1: STATISTICS CARDS
-            عرض بطاقات الإحصائيات (اختياري)
-            Shows current value with trend, average, min, and max
-            ═══════════════════════════════════════════════════════════════ */}
+ SECTION 1: STATISTICS CARDS
+ عرض بطاقات الإحصائيات (اختياري)
+ Shows current value with trend, average, min, and max
+ ═══════════════════════════════════════════════════════════════ */}
         {features.showStats && (
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
             <StatsCard
@@ -920,10 +913,10 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
-            SECTION 2: CONTROLS & ACTIONS
-            أدوات التحكم وأزرار الإجراءات
-            Displays chart controls and export buttons based on features
-            ═══════════════════════════════════════════════════════════════ */}
+ SECTION 2: CONTROLS & ACTIONS
+ أدوات التحكم وأزرار الإجراءات
+ Displays chart controls and export buttons based on features
+ ═══════════════════════════════════════════════════════════════ */}
         <div className='flex flex-wrap items-center justify-between gap-4'>
           {/* Chart Control Toggles / أزرار التحكم في الرسم */}
           <ChartControls
@@ -957,10 +950,10 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
             <div className='w-full h-full flex flex-col pt-4'>
               {/* Remove focus outlines */}
               <style>{`
-                .recharts-brush-traveller { outline: none !important; cursor: ew-resize !important; }
-                .recharts-brush-traveller *:focus { outline: none !important; }
-                .recharts-brush-traveller group:focus { outline: none !important; }
-              `}</style>
+ .recharts-brush-traveller { outline: none !important; cursor: ew-resize !important; }
+ .recharts-brush-traveller *:focus { outline: none !important; }
+ .recharts-brush-traveller group:focus { outline: none !important; }
+ `}</style>
 
               <div className='flex-1 w-full min-h-0 **:outline-hidden **:ring-0 focus:**:outline-hidden'>
                 <ResponsiveContainer width='100%' height='100%'>

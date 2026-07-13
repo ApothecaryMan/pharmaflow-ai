@@ -228,7 +228,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     if (!formData.name || !formData.phone) return;
 
     if (editingCustomer) {
-      updateCustomer.mutateAsync({ id: editingCustomer.id, updates: { ...editingCustomer, ...formData } });
+      updateCustomer.mutateAsync({
+        id: editingCustomer.id,
+        updates: { ...editingCustomer, ...formData },
+      });
       handleCloseModal();
     } else {
       addCustomer.mutateAsync(formData);
@@ -792,7 +795,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         }
         rightContent={
           mode === 'list' ? (
-            <div className='flex gap-2 items-center animate-fade-in'>
+            <div className='flex gap-2 items-center '>
               {permissionsService.can('customer.add') && (
                 <button
                   onClick={handleOpenKiosk}
@@ -818,7 +821,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         toggleTooltip={showStats ? t.hideSummary : t.showSummary}
         bottomContent={
           canViewStats && mode === 'list' ? (
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 '>
               <InteractiveCard
                 isLoading={isLoading}
                 className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
@@ -967,11 +970,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         }
       />
 
-      <div className='flex-1 min-h-0 flex flex-col space-y-6 animate-fade-in'>
+      <div className='flex-1 min-h-0 flex flex-col space-y-6 '>
         {/* Success Message */}
         {showSuccess && mode === 'add' && (
           <div
-            className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 animate-fade-in`}
+            className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 `}
           >
             <span className={`material-symbols-rounded text-primary-600 dark:text-primary-400`}>
               check_circle
@@ -1290,7 +1293,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         {isModalOpen && !isKioskMode && editingCustomer && (
           <form id='customer-edit-form' onSubmit={handleSubmit} className='p-1 space-y-4'>
             {activeTab === 'basic' ? (
-              <div className='space-y-4 animate-fade-in'>
+              <div className='space-y-4 '>
                 {/* Code & Basic Info */}
                 <div className='grid grid-cols-3 gap-4'>
                   <div className='col-span-1'>
@@ -1358,7 +1361,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 {renderAddressForm()}
               </div>
             ) : (
-              <div className='space-y-4 animate-fade-in'>
+              <div className='space-y-4 '>
                 {/* Preferences */}
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
@@ -1634,7 +1637,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       {/* Copy Feedback Toast */}
       {copyFeedback && (
-        <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-70 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-fade-in'>
+        <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-70 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 '>
           <span className='material-symbols-rounded text-[18px] text-green-400'>check_circle</span>
           <span className='text-sm font-medium'>{t.modal.copied}</span>
         </div>

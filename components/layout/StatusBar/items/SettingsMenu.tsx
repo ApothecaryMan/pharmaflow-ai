@@ -31,8 +31,9 @@ const SettingsRow = React.memo<{
   onClick?: () => void;
 }>(({ icon, label, children, className = '', onClick }) => (
   <div
-    className={`flex items-center justify-between transition-colors px-2 ${onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
-      } ${className}`}
+    className={`flex items-center justify-between transition-colors px-2 ${
+      onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
+    } ${className}`}
     onClick={onClick}
   >
     <div className='flex items-center gap-2'>
@@ -48,7 +49,6 @@ const SettingsRow = React.memo<{
   </div>
 ));
 
-
 const SubmenuWrapper = React.memo<{
   isOpen: boolean;
   isMobile: boolean;
@@ -58,35 +58,46 @@ const SubmenuWrapper = React.memo<{
   align?: 'top' | 'bottom';
   maxHeight?: number;
   isRTL?: boolean;
-}>(({ isOpen, isMobile, children, title, side = 'left', align = 'top', maxHeight, isRTL = false }) => {
-  if (!isOpen) return null;
+}>(
+  ({
+    isOpen,
+    isMobile,
+    children,
+    title,
+    side = 'left',
+    align = 'top',
+    maxHeight,
+    isRTL = false,
+  }) => {
+    if (!isOpen) return null;
 
-  const mobileClasses = 'relative w-full mt-2 p-2.5 space-y-2 rounded-xl bg-(--border-divider)';
+    const mobileClasses = 'relative w-full mt-2 p-2.5 space-y-2 rounded-xl bg-(--border-divider)';
 
-  const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-72 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu) overflow-y-auto`;
+    const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-72 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu) overflow-y-auto`;
 
-  const useInlineStart = (side === 'right') !== isRTL;
-  const desktopStyle: React.CSSProperties = {
-    ...(useInlineStart
-      ? { insetInlineStart: 'calc(100% + 12px)' }
-      : { insetInlineEnd: 'calc(100% + 12px)' }),
-    ...(maxHeight ? { maxHeight } : {}),
-  };
+    const useInlineStart = (side === 'right') !== isRTL;
+    const desktopStyle: React.CSSProperties = {
+      ...(useInlineStart
+        ? { insetInlineStart: 'calc(100% + 12px)' }
+        : { insetInlineEnd: 'calc(100% + 12px)' }),
+      ...(maxHeight ? { maxHeight } : {}),
+    };
 
-  return (
-    <div
-      className={isMobile ? mobileClasses : desktopClasses}
-      style={isMobile ? undefined : desktopStyle}
-    >
-      {title && (
-        <label className='text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1'>
-          {title}
-        </label>
-      )}
-      {children}
-    </div>
-  );
-});
+    return (
+      <div
+        className={isMobile ? mobileClasses : desktopClasses}
+        style={isMobile ? undefined : desktopStyle}
+      >
+        {title && (
+          <label className='text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1'>
+            {title}
+          </label>
+        )}
+        {children}
+      </div>
+    );
+  }
+);
 
 const SubmenuSection = React.memo<{
   id: string;
@@ -125,8 +136,9 @@ const SubmenuSection = React.memo<{
           <div className='flex items-center gap-2'>
             {rowExtra}
             <span
-              className={`material-symbols-rounded text-lg text-(--text-tertiary) transition-transform duration-200 ${isOpen ? (isMobile ? 'rotate-90' : isRTL ? '-rotate-90' : 'rotate-90') : ''
-                }`}
+              className={`material-symbols-rounded text-lg text-(--text-tertiary) transition-transform duration-200 ${
+                isOpen ? (isMobile ? 'rotate-90' : isRTL ? '-rotate-90' : 'rotate-90') : ''
+              }`}
             >
               {isRTL ? 'chevron_left' : 'chevron_right'}
             </span>
@@ -339,17 +351,17 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const menuContainerClasses = useMemo(() => {
     if (isMobile) {
       return `
-        fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-        w-[calc(100vw-32px)] max-w-sm max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl border border-(--border-divider) z-150 animate-scale-in
-        bg-(--bg-menu)
-      `;
+ fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+ w-[calc(100vw-32px)] max-w-sm max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl border border-(--border-divider) z-150 animate-scale-in
+ bg-(--bg-menu)
+ `;
     }
     return `
-      absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
-      ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-      w-72 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
-      bg-(--bg-menu)
-    `;
+ absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
+ ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
+ w-72 rounded-xl shadow-2xl border border-(--border-divider) z-110 
+ bg-(--bg-menu)
+ `;
   }, [dropDirection, align, isMobile]);
 
   return (
@@ -380,7 +392,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         <>
           {isMobile && (
             <div
-              className='fixed inset-0 bg-black/40 z-140 animate-fade-in'
+              className='fixed inset-0 bg-black/40 z-140 '
               onClick={() => {
                 setIsOpen(false);
                 onClose?.();
@@ -573,76 +585,77 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       <button
                         key={p}
                         onClick={() => setBackgroundPattern(p)}
-                        className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${backgroundPattern === p
-                          ? 'border-(--primary-500) bg-(--primary-500)/10'
-                          : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
-                          }`}
+                        className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${
+                          backgroundPattern === p
+                            ? 'border-(--primary-500) bg-(--primary-500)/10'
+                            : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
+                        }`}
                       >
                         <div
                           className={`w-10 h-10 rounded-md overflow-hidden ${p !== 'none' ? `bg-pattern-${p}` : 'border border-dashed border-(--border-divider)'}`}
                           style={
                             p !== 'none'
                               ? ({
-                                backgroundImage: 'var(--bg-pattern-image)',
-                                backgroundSize: (
-                                  {
-                                    dots: '10px 10px',
-                                    grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
-                                    'thick-grid': '24px 24px',
-                                    blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
-                                    rings: '100% 100%',
-                                    mesh: '100% 100%',
-                                    noise: '24px 24px',
-                                    mandala: '18px 18px',
-                                    diamond: '40px 40px',
-                                    corners: '20px 20px',
-                                    cross: '30px 30px',
-                                    stars: '35px 35px',
-                                    'glowing-stars': '100% 100%',
-                                  } as Record<string, string>
-                                )[p],
-                                backgroundRepeat: 'var(--bg-pattern-repeat)',
-                                backgroundPosition: 'var(--bg-pattern-position)',
-                                maskImage: 'var(--bg-pattern-mask)',
-                                WebkitMaskImage: 'var(--bg-pattern-mask)',
-                                maskSize: (
-                                  {
-                                    dots: '10px 10px',
-                                    grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
-                                    'thick-grid': '24px 24px',
-                                    blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
-                                    rings: '100% 100%',
-                                    mesh: '100% 100%',
-                                    noise: '24px 24px',
-                                    mandala: '18px 18px',
-                                    diamond: '40px 40px',
-                                    corners: '20px 20px',
-                                    cross: '30px 30px',
-                                    stars: '35px 35px',
-                                    'glowing-stars': '100% 100%',
-                                    hearts: '35px 35px',
-                                  } as Record<string, string>
-                                )[p],
-                                WebkitMaskSize: (
-                                  {
-                                    dots: '10px 10px',
-                                    grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
-                                    'thick-grid': '24px 24px',
-                                    blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
-                                    rings: '100% 100%',
-                                    mesh: '100% 100%',
-                                    noise: '24px 24px',
-                                    mandala: '18px 18px',
-                                    diamond: '40px 40px',
-                                    corners: '20px 20px',
-                                    cross: '30px 30px',
-                                    stars: '35px 35px',
-                                    hearts: '35px 35px',
-                                  } as Record<string, string>
-                                )[p],
-                                backgroundColor: 'var(--bg-pattern-solid-color, transparent)',
-                                '--bg-pattern-color': 'var(--text-primary)',
-                              } as unknown as React.CSSProperties & Record<string, string>)
+                                  backgroundImage: 'var(--bg-pattern-image)',
+                                  backgroundSize: (
+                                    {
+                                      dots: '10px 10px',
+                                      grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
+                                      'thick-grid': '24px 24px',
+                                      blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
+                                      rings: '100% 100%',
+                                      mesh: '100% 100%',
+                                      noise: '24px 24px',
+                                      mandala: '18px 18px',
+                                      diamond: '40px 40px',
+                                      corners: '20px 20px',
+                                      cross: '30px 30px',
+                                      stars: '35px 35px',
+                                      'glowing-stars': '100% 100%',
+                                    } as Record<string, string>
+                                  )[p],
+                                  backgroundRepeat: 'var(--bg-pattern-repeat)',
+                                  backgroundPosition: 'var(--bg-pattern-position)',
+                                  maskImage: 'var(--bg-pattern-mask)',
+                                  WebkitMaskImage: 'var(--bg-pattern-mask)',
+                                  maskSize: (
+                                    {
+                                      dots: '10px 10px',
+                                      grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
+                                      'thick-grid': '24px 24px',
+                                      blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
+                                      rings: '100% 100%',
+                                      mesh: '100% 100%',
+                                      noise: '24px 24px',
+                                      mandala: '18px 18px',
+                                      diamond: '40px 40px',
+                                      corners: '20px 20px',
+                                      cross: '30px 30px',
+                                      stars: '35px 35px',
+                                      'glowing-stars': '100% 100%',
+                                      hearts: '35px 35px',
+                                    } as Record<string, string>
+                                  )[p],
+                                  WebkitMaskSize: (
+                                    {
+                                      dots: '10px 10px',
+                                      grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
+                                      'thick-grid': '24px 24px',
+                                      blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
+                                      rings: '100% 100%',
+                                      mesh: '100% 100%',
+                                      noise: '24px 24px',
+                                      mandala: '18px 18px',
+                                      diamond: '40px 40px',
+                                      corners: '20px 20px',
+                                      cross: '30px 30px',
+                                      stars: '35px 35px',
+                                      hearts: '35px 35px',
+                                    } as Record<string, string>
+                                  )[p],
+                                  backgroundColor: 'var(--bg-pattern-solid-color, transparent)',
+                                  '--bg-pattern-color': 'var(--text-primary)',
+                                } as unknown as React.CSSProperties & Record<string, string>)
                               : undefined
                           }
                         />
@@ -678,7 +691,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <div className='px-2 py-1.5'>
                     <div className='flex justify-between items-center mb-1.5 px-1'>
                       <div className='flex items-center gap-1.5'>
-                        <span className='material-symbols-rounded text-(--text-secondary) text-[14px]'>texture</span>
+                        <span className='material-symbols-rounded text-(--text-secondary) text-[14px]'>
+                          texture
+                        </span>
                         <span className='text-[10px] uppercase font-bold text-(--text-tertiary)'>
                           {language === 'AR' ? 'إعدادات النقش' : 'Pattern Settings'}
                         </span>
@@ -713,7 +728,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           step={5}
                           value={backgroundPatternScale}
                           onChange={setBackgroundPatternScale}
-                          thumbClass={backgroundPatternScale < 0 ? '[&::-webkit-slider-thumb]:bg-(--color-error)' : '[&::-webkit-slider-thumb]:bg-(--color-success)'}
+                          thumbClass={
+                            backgroundPatternScale < 0
+                              ? '[&::-webkit-slider-thumb]:bg-(--color-error)'
+                              : '[&::-webkit-slider-thumb]:bg-(--color-success)'
+                          }
                           formatValue={Math.abs}
                           backgroundStyle={{
                             background: `linear-gradient(to right, transparent ${Math.min(
@@ -762,7 +781,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     />
                   </SettingsRow>
                 )}
-                <SettingsRow icon='chat_bubble' label={language === 'AR' ? 'نمط التلميحات' : 'Tooltip Style'}>
+                <SettingsRow
+                  icon='chat_bubble'
+                  label={language === 'AR' ? 'نمط التلميحات' : 'Tooltip Style'}
+                >
                   <SegmentedControl
                     value={tooltipStyle || 'default'}
                     onChange={(v) => setTooltipStyle(v as 'default' | 'box')}

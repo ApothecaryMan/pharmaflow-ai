@@ -91,10 +91,10 @@ export const ProfileCardModal: React.FC<ProfileCardModalProps> = ({
       closeOnBackdropClick={true}
       bodyClassName='p-0 bg-(--bg-card)'
     >
-      <div className='animate-fade-in'>
+      <div className=''>
         {activePage === 'page1' ? (
           /* ── Page 1: Overview (Discord Style) ── */
-          <div className='animate-fade-in'>
+          <div className=''>
             {/* Banner Graphics */}
             <div className='relative w-full h-36 bg-(--bg-secondary) overflow-hidden'>
               {renderBanner(bannerStyle, bannerOffset, bannerZoom)}
@@ -238,7 +238,7 @@ export const ProfileCardModal: React.FC<ProfileCardModalProps> = ({
           </div>
         ) : activePage === 'page2' ? (
           /* ── Page 2: Details ── */
-          <div className='animate-fade-in p-6 space-y-5'>
+          <div className=' p-6 space-y-5'>
             {/* Contact Info */}
             <div>
               <h4
@@ -317,7 +317,7 @@ export const ProfileCardModal: React.FC<ProfileCardModalProps> = ({
           </div>
         ) : activePage === 'page3' ? (
           /* ── Page 3: Achievements ── */
-          <div className='animate-fade-in p-6 space-y-5'>
+          <div className=' p-6 space-y-5'>
             {/* Stats */}
             <div>
               <h4
@@ -382,7 +382,7 @@ export const ProfileCardModal: React.FC<ProfileCardModalProps> = ({
           </div>
         ) : (
           /* ── Page 4: Documents ── */
-          <div className='animate-fade-in p-6 space-y-6'>
+          <div className=' p-6 space-y-6'>
             {/* National ID Section */}
             <div className='space-y-1'>
               <div

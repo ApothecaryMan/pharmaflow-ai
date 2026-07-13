@@ -554,13 +554,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           setIsOpen(!isOpen);
         }}
         className={`
-          flex items-center transition-all select-none outline-hidden focus:ring-0
-          ${variant === 'default' ? 'border' : 'border'}
-          ${styles[size]}
-          ${styles.innerRounded[rounded]}
-          ${getVariantStyles()}
-          ${className}
-        `}
+ flex items-center transition-all select-none outline-hidden focus:ring-0
+ ${variant === 'default' ? 'border' : 'border'}
+ ${styles[size]}
+ ${styles.innerRounded[rounded]}
+ ${getVariantStyles()}
+ ${className}
+ `}
       >
         {iconPosition === 'start' && !value && (
           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
@@ -610,7 +610,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         createPortal(
           <div
             ref={dropdownRef}
-            className={`fixed z-[99999] animate-fade-in`}
+            className={`fixed z-[99999] `}
             style={{
               top: position.top,
               left: position.left,

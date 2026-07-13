@@ -5,7 +5,7 @@ export const AnimatedCounterLab = () => {
   const [value, setValue] = useState(1500);
 
   return (
-    <div className='h-full flex flex-col p-6 gap-6 animate-fade-in overflow-hidden'>
+    <div className='h-full flex flex-col p-6 gap-6 overflow-hidden'>
       <div className='flex-shrink-0 flex gap-6'>
         <div className='flex-1 bg-[var(--bg-card)] p-6 rounded-3xl shadow-sm border border-[var(--border-divider)] flex flex-col justify-center'>
           <h1 className='text-3xl font-bold mb-2'>Animated Counter Lab</h1>

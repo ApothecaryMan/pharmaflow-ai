@@ -75,11 +75,7 @@ interface InventoryProps {
   onViewChange?: (view: string) => void;
 }
 
-export const Inventory: React.FC<InventoryProps> = ({
-  color,
-  t,
-  onViewChange,
-}) => {
+export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventory = [], isLoading } = useInventory(activeBranchId);
   const addProduct = useAddProduct();
@@ -175,19 +171,25 @@ export const Inventory: React.FC<InventoryProps> = ({
     };
   }, []);
 
-  usePageShortcuts('inventory', {
-    'ctrl+n': () => {
-      if (permissionsService.can('inventory.add')) {
-        handleOpenAdd();
-      }
+  usePageShortcuts(
+    'inventory',
+    {
+      'ctrl+n': () => {
+        if (permissionsService.can('inventory.add')) {
+          handleOpenAdd();
+        }
+      },
+      'ctrl+f': () => {
+        const searchInput = document.querySelector<HTMLInputElement>(
+          'input[type="text"][placeholder*="Search"], input[type="text"][placeholder*="بحث"]'
+        );
+        if (searchInput) {
+          searchInput.focus();
+        }
+      },
     },
-    'ctrl+f': () => {
-      const searchInput = document.querySelector<HTMLInputElement>('input[type="text"][placeholder*="Search"], input[type="text"][placeholder*="بحث"]');
-      if (searchInput) {
-        searchInput.focus();
-      }
-    }
-  }, []);
+    []
+  );
 
   const handleViewDetails = (drug: Drug) => {
     if (drug) {
@@ -838,7 +840,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const bottomContentElement = useMemo(() => {
     if (mode !== 'list') return null;
     return (
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 '>
         <InteractiveCard
           isLoading={isLoading || !isDataSettled}
           className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
@@ -971,7 +973,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   }, [bottomContentElement, mode, setBottomContent, setShowStatsToggle]);
 
   return (
-    <div className='h-full flex flex-col gap-2 animate-fade-in overflow-y-auto'>
+    <div className='h-full flex flex-col gap-2 overflow-y-auto'>
       {/* Header slots are registered in the useEffect above */}
 
       {mode === 'list' ? (
@@ -1062,7 +1064,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         >
           <div className='space-y-6 pt-2 pb-4'>
             {activeDetailsTab === 'general' ? (
-              <div className='space-y-6 animate-fade-in'>
+              <div className='space-y-6 '>
                 <div className='flex justify-between items-start bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700'>
                   <div>
                     <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 page-title'>
@@ -1132,7 +1134,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                 </div>
               </div>
             ) : (
-              <div className='space-y-6 animate-fade-in'>
+              <div className='space-y-6 '>
                 <div className='overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900/50'>
                   <table className='w-full text-center text-sm'>
                     <thead className='border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50'>

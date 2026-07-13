@@ -55,11 +55,7 @@ interface POSProps {
   language?: Language;
 }
 
-export const POS: React.FC<POSProps> = ({
-  color,
-  t,
-  language = 'EN',
-}) => {
+export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
@@ -486,12 +482,12 @@ export const POS: React.FC<POSProps> = ({
       },
       ...(permissionsService.can('reports.view_financial')
         ? [
-          {
-            label: currentLang === 'ar' ? 'تحليلات' : 'Analytics',
-            value: 'analytics',
-            icon: 'analytics',
-          },
-        ]
+            {
+              label: currentLang === 'ar' ? 'تحليلات' : 'Analytics',
+              value: 'analytics',
+              icon: 'analytics',
+            },
+          ]
         : []),
     ];
 
@@ -619,7 +615,17 @@ export const POS: React.FC<POSProps> = ({
         if (item.unit) removeFromCart(item.unit.id, true);
         playClick();
       },
-    }, [focusMode, isTableFocused, activeIndex, highlightedItemId, mergedCartItems, cart.length, tableData]);
+    },
+    [
+      focusMode,
+      isTableFocused,
+      activeIndex,
+      highlightedItemId,
+      mergedCartItems,
+      cart.length,
+      tableData,
+    ]
+  );
 
   // --- TanStack Table Configuration ---
   const columnHelper = createColumnHelper<(typeof tableData)[0]>();
@@ -785,10 +791,11 @@ export const POS: React.FC<POSProps> = ({
                         e.stopPropagation();
                         setSelectedUnits((prev) => ({ ...prev, [row.id]: opt }));
                       }}
-                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${isSelected
+                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${
+                        isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                           : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
-                        }`}
+                      }`}
                     >
                       {opt === 'pack' ? t.pack : t.unit}
                     </div>
@@ -926,10 +933,11 @@ export const POS: React.FC<POSProps> = ({
                         e.stopPropagation();
                         setSelectedBatches((prev) => ({ ...prev, [row.id]: batch.id }));
                       }}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${isSelected
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm outline-hidden focus:bg-primary-100 dark:focus:bg-primary-900/40 focus:text-primary-700 dark:focus:text-primary-300 ${
+                        isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                           : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
-                        }`}
+                      }`}
                     >
                       <span className={`font-bold w-[44px] text-center ${c}`}>
                         {formatExpiryDate(batch.expiryDate)}
@@ -992,11 +1000,12 @@ export const POS: React.FC<POSProps> = ({
       />
 
       {/* Main POS Content */}
-      <div className='flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden'>
+      <div className='flex-1 flex flex-col lg:flex-row gap-3 relative overflow-hidden'>
         {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
         <div
-          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
-            }`}
+          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${
+            mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
+          }`}
         >
           {/* Customer Details */}
           <POSCustomerPanel

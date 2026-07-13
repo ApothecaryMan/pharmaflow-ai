@@ -36,11 +36,7 @@ interface BatchWithDrug extends StockBatch {
   drug: Drug;
 }
 
-export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
-  color,
-  t,
-  language,
-}) => {
+export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, language }) => {
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventory = [] } = useInventory(activeBranchId);
@@ -361,7 +357,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   }, [t, getVerifiedDate, textTransform]);
 
   return (
-    <div className='h-full flex flex-col gap-6 animate-fade-in'>
+    <div className='h-full flex flex-col gap-6 '>
       {/* Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0'>
         <div>

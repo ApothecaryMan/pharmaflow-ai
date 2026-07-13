@@ -576,7 +576,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     : preview || (profile?.image?.startsWith('data:image/') ? profile.image : undefined);
 
   return (
-    <div className='animate-fade-in'>
+    <div className=''>
       {/* Banner */}
       <div
         ref={bannerRef}
@@ -1239,7 +1239,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                       </div>
 
                       {expandedWorkspaces.has(ws.id) && (
-                        <div className='space-y-4 animate-fade-in'>
+                        <div className='space-y-4 '>
                           <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-4 gap-x-4 border-b border-black/10 dark:border-white/5 pb-4'>
                             <div>
                               <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>

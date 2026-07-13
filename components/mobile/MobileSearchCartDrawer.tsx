@@ -159,7 +159,7 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   };
 
   return (
-    <div className='fixed inset-0 z-[250] flex flex-col bg-black/60 backdrop-blur-sm animate-fade-in'>
+    <div className='fixed inset-0 z-[250] flex flex-col bg-black/60 backdrop-blur-sm '>
       <div className='mt-auto bg-white dark:bg-[#06080F] rounded-t-3xl h-[85vh] overflow-hidden flex flex-col animate-slide-up'>
         <POSCartSidebar {...sidebarProps} />
       </div>

@@ -859,7 +859,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   }
 
   return (
-    <div className='h-full space-y-6 animate-fade-in overflow-y-auto'>
+    <div className='h-full space-y-6 overflow-y-auto'>
       <PageHeader
         centerContent={
           <SegmentedControl

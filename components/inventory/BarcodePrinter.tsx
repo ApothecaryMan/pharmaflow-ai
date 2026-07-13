@@ -389,7 +389,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   }, [previewDims]);
 
   return (
-    <div className='h-full flex flex-col gap-6 overflow-hidden animate-fade-in'>
+    <div className='h-full flex flex-col gap-6 overflow-hidden '>
       {/* Header Section */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2'>
         <div>

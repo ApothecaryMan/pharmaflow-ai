@@ -59,10 +59,7 @@ interface BatchSelectionModalProps {
   onClose: () => void;
 }
 
-export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
-  color = 'blue',
-  t,
-}) => {
+export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue', t }) => {
   const { branchCode, language, textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
@@ -700,11 +697,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             type='number'
             inputMode='decimal'
             className={`w-20 text-center px-2 py-1 rounded-md border text-sm tabular-nums outline-hidden focus:ring-2 ring-blue-500/20 transition-colors
-                ${
-                  info.row.original.newStock !== info.row.original.currentStock
-                    ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
-                    : 'border-(--border-divider) bg-(--bg-input) text-(--text-primary)'
-                }`}
+ ${
+   info.row.original.newStock !== info.row.original.currentStock
+     ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
+     : 'border-(--border-divider) bg-(--bg-input) text-(--text-primary)'
+ }`}
             value={info.getValue() as number}
             onChange={(e) => updateAdjustment(info.row.index, 'newStock', e.target.value)}
             onClick={(e) => (e.target as HTMLInputElement).select()}
@@ -1027,7 +1024,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   );
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in'>
+    <div className='h-full flex flex-col space-y-4 '>
       {/* Header */}
 
       <div>

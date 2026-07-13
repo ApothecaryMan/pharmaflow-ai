@@ -41,10 +41,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
   const menuContainerClasses = useMemo(
     () => `
-    absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
-    ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-    w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in bg-(--bg-menu)
-  `,
+ absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
+ ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
+ w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 bg-(--bg-menu)
+ `,
     [dropDirection, align]
   );
 

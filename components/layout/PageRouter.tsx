@@ -82,7 +82,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   const isDebugOverride = pageConfig.permission === 'system.debug' && developerMode;
   if (pageConfig.permission && !isDebugOverride && !permissionsService.can(pageConfig.permission)) {
     return (
-      <div className='flex flex-col items-center justify-center h-full p-8 animate-fade-in select-none text-center'>
+      <div className='flex flex-col items-center justify-center h-full p-8 select-none text-center'>
         <div className='mb-12'>
           <div
             style={{ width: '180px', height: '180px' }}

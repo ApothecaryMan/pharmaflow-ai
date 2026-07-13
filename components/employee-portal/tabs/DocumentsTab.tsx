@@ -241,7 +241,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   );
 
   return (
-    <div className='animate-fade-in space-y-6'>
+    <div className=' space-y-6'>
       <div className='space-y-2'>
         <h4
           className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-1.5 !font-["GraphicSansFont"]'

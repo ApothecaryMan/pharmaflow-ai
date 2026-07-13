@@ -265,10 +265,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
   ];
 
   return (
-    <div
-      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in'
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
+    <div className='h-full overflow-y-auto px-page space-y-4 ' dir={isRTL ? 'rtl' : 'ltr'}>
       <PageHeader
         mb='mb-0'
         centerContent={

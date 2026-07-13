@@ -281,10 +281,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
               {/* Actual Page Surface */}
               <main
-                className="flex-1 h-full overflow-hidden relative main-layout-content"
+                className='flex-1 h-full overflow-hidden relative main-layout-content'
                 style={
                   {
-                    '--bg-pattern-opacity': (backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity) / 100,
+                    '--bg-pattern-opacity':
+                      (backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity) / 100,
                     '--bg-pattern-color': backgroundPatternUseThemeColor
                       ? 'var(--primary-500)'
                       : 'var(--text-tertiary)',
@@ -292,10 +293,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 }
               >
                 {backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) && (
-                  <div className="bg-pattern-wrapper">
-                    <div className={`bg-pattern-layer bg-pattern-${backgroundPattern}${backgroundPattern === 'mandala' && !backgroundPatternUseThemeColor ? ' bg-pattern-mandala-accent-theme' : ''}`} />
+                  <div className='bg-pattern-wrapper'>
+                    <div
+                      className={`bg-pattern-layer bg-pattern-${backgroundPattern}${backgroundPattern === 'mandala' && !backgroundPatternUseThemeColor ? ' bg-pattern-mandala-accent-theme' : ''}`}
+                    />
                   </div>
                 )}
+                {/* Global Smooth Page Transition Overlay */}
+                <div
+                  key={view}
+                  className='absolute inset-0 bg-(--bg-page-surface) z-[100] pointer-events-none animate-page-reveal'
+                />
                 <div
                   className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}
                 >

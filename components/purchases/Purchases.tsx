@@ -682,30 +682,34 @@ export const Purchases: React.FC<PurchasesProps> = ({
   // Refs for keyboard navigation
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
-  usePageShortcuts('purchases', {
-    'ctrl+n': () => {
-      handleAddTab();
+  usePageShortcuts(
+    'purchases',
+    {
+      'ctrl+n': () => {
+        handleAddTab();
+      },
+      arrowdown: () => {
+        if (cart.length > 0) {
+          setSelectedCartIndex((prev) => (prev + 1) % cart.length);
+        }
+      },
+      arrowup: () => {
+        if (cart.length > 0) {
+          setSelectedCartIndex((prev) => (prev - 1 + cart.length) % cart.length);
+        }
+      },
+      escape: () => {
+        if (
+          document.activeElement?.tagName === 'INPUT' ||
+          document.activeElement?.tagName === 'TEXTAREA'
+        ) {
+          (document.activeElement as HTMLElement).blur();
+          setShowSuggestions(false);
+        }
+      },
     },
-    arrowdown: () => {
-      if (cart.length > 0) {
-        setSelectedCartIndex((prev) => (prev + 1) % cart.length);
-      }
-    },
-    arrowup: () => {
-      if (cart.length > 0) {
-        setSelectedCartIndex((prev) => (prev - 1 + cart.length) % cart.length);
-      }
-    },
-    escape: () => {
-      if (
-        document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA'
-      ) {
-        (document.activeElement as HTMLElement).blur();
-        setShowSuggestions(false);
-      }
-    },
-  }, [cart.length, tabs.length]);
+    [cart.length, tabs.length]
+  );
 
   // Auto-add on barcode match
   useEffect(() => {
@@ -1363,7 +1367,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   });
 
   return (
-    <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
+    <div className='h-full flex flex-col gap-2 overflow-hidden'>
       {/* Header with toggle */}
       <PageHeader
         mb='mb-0'
@@ -1602,7 +1606,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     : 0;
 
                 return (
-                  <div className='flex items-center gap-3 animate-fadeIn'>
+                  <div className='flex items-center gap-3 '>
                     {/* Stock */}
                     <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
                       <span className='material-symbols-rounded text-gray-400 text-lg'>

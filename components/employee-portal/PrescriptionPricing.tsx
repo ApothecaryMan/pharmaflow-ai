@@ -216,7 +216,7 @@ const PrescriptionPricing: React.FC = () => {
         {/* Search Results */}
         <div className='flex-1 min-w-0 order-2 lg:order-1'>
           {searchTerm && combinedSearchResults.length === 0 ? (
-            <div className='flex flex-col items-center justify-start pt-6 p-6 text-center animate-fade-in'>
+            <div className='flex flex-col items-center justify-start pt-6 p-6 text-center '>
               <h3 className='text-lg font-bold text-gray-900 dark:text-gray-100 mb-2'>
                 {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
               </h3>
@@ -245,7 +245,7 @@ const PrescriptionPricing: React.FC = () => {
           )}
 
           {!searchTerm && scannedDrugs.length === 0 && (
-            <div className='flex flex-col items-center justify-start pt-12 p-8 text-center animate-fade-in'>
+            <div className='flex flex-col items-center justify-start pt-12 p-8 text-center '>
               <h3 className='text-xl font-black text-gray-900 dark:text-gray-100 mb-3 tracking-tight'>
                 {language === 'AR' ? 'ماذا تبحث عنه اليوم؟' : 'What are you looking for?'}
               </h3>
@@ -258,8 +258,8 @@ const PrescriptionPricing: React.FC = () => {
           )}
 
           {/* Dynamic spacer prevents cart from overlapping the last items on mobile. 
-                Parent container already has pb-28 (112px), so we subtract it from the required space (cartHeight + 68px bottom offset + 16px gap = cartHeight + 84px).
-                Required spacer = (cartHeight + 84px) - 112px = cartHeight - 28px. */}
+ Parent container already has pb-28 (112px), so we subtract it from the required space (cartHeight + 68px bottom offset + 16px gap = cartHeight + 84px).
+ Required spacer = (cartHeight + 84px) - 112px = cartHeight - 28px. */}
           {prescriptionItems.length > 0 && (
             <div
               className='lg:hidden w-full transition-[height] duration-400 ease-[cubic-bezier(0.2,0,0,1)]'

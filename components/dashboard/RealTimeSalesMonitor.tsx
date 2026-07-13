@@ -580,10 +580,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   }, [todaysSales, products, t]);
 
   return (
-    <div
-      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in'
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
+    <div className='h-full overflow-y-auto px-page space-y-4 ' dir={isRTL ? 'rtl' : 'ltr'}>
       <PageHeader
         mb='mb-0'
         centerContent={
@@ -782,10 +779,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                           <tr
                             key={sale.id}
                             className={`
-                          group transition-all duration-300
-                          ${sale.isNew ? 'new-transaction' : ''} 
-                          relative
-                        `}
+ group transition-all duration-300
+ ${sale.isNew ? 'new-transaction' : ''} 
+ relative
+ `}
                           >
                             <td
                               className={`py-3 px-2 text-sm text-gray-500 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10 rounded-s-xl' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 group-hover:rounded-s-xl'}`}

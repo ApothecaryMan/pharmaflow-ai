@@ -47,7 +47,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
   isLoading,
 }) => {
   return (
-    <div className='animate-fade-in space-y-6'>
+    <div className=' space-y-6'>
       {isLoading ? (
         <div className='relative before:absolute before:top-2 before:bottom-2 before:start-3.5 before:w-0.5 before:bg-(--border-divider) space-y-4 animate-pulse'>
           {[...Array(3)].map((_, i) => (

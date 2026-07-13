@@ -314,84 +314,88 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
   // Autosave current workspace
 
-  usePageShortcuts('barcode-studio', {
-    'ctrl+p': () => {
-      if (printButtonRef.current?.disabled) {
-        playError();
-      } else {
-        printButtonRef.current?.click();
-      }
+  usePageShortcuts(
+    'barcode-studio',
+    {
+      'ctrl+p': () => {
+        if (printButtonRef.current?.disabled) {
+          playError();
+        } else {
+          printButtonRef.current?.click();
+        }
+      },
+      'ctrl+z': () => {
+        handleUndo();
+      },
+      'ctrl+shift+z': () => {
+        handleRedo();
+      },
+      'ctrl+y': () => {
+        handleRedo();
+      },
+      ArrowUp: (e) => {
+        if (!selectedElementId) return;
+        const step = e?.shiftKey ? 0.1 : 0.5;
+        setElements((prev) =>
+          prev.map((el) => {
+            if (el.id === selectedElementId) {
+              return {
+                ...el,
+                y: Number(Math.max(0, el.y - step).toFixed(1)),
+              };
+            }
+            return el;
+          })
+        );
+      },
+      ArrowDown: (e) => {
+        if (!selectedElementId) return;
+        const step = e?.shiftKey ? 0.1 : 0.5;
+        setElements((prev) =>
+          prev.map((el) => {
+            if (el.id === selectedElementId) {
+              return {
+                ...el,
+                y: Number(Math.max(0, el.y + step).toFixed(1)),
+              };
+            }
+            return el;
+          })
+        );
+      },
+      ArrowLeft: (e) => {
+        if (!selectedElementId) return;
+        const step = e?.shiftKey ? 0.1 : 0.5;
+        setElements((prev) =>
+          prev.map((el) => {
+            if (el.id === selectedElementId) {
+              return {
+                ...el,
+                x: Number(Math.max(0, el.x - step).toFixed(1)),
+              };
+            }
+            return el;
+          })
+        );
+      },
+      ArrowRight: (e) => {
+        if (!selectedElementId) return;
+        const step = e?.shiftKey ? 0.1 : 0.5;
+        setElements((prev) =>
+          prev.map((el) => {
+            if (el.id === selectedElementId) {
+              return {
+                ...el,
+                x: Number(Math.max(0, el.x + step).toFixed(1)),
+              };
+            }
+            return el;
+          })
+        );
+      },
     },
-    'ctrl+z': () => {
-      handleUndo();
-    },
-    'ctrl+shift+z': () => {
-      handleRedo();
-    },
-    'ctrl+y': () => {
-      handleRedo();
-    },
-    'ArrowUp': (e) => {
-      if (!selectedElementId) return;
-      const step = e?.shiftKey ? 0.1 : 0.5;
-      setElements((prev) =>
-        prev.map((el) => {
-          if (el.id === selectedElementId) {
-            return {
-              ...el,
-              y: Number(Math.max(0, el.y - step).toFixed(1)),
-            };
-          }
-          return el;
-        })
-      );
-    },
-    'ArrowDown': (e) => {
-      if (!selectedElementId) return;
-      const step = e?.shiftKey ? 0.1 : 0.5;
-      setElements((prev) =>
-        prev.map((el) => {
-          if (el.id === selectedElementId) {
-            return {
-              ...el,
-              y: Number(Math.max(0, el.y + step).toFixed(1)),
-            };
-          }
-          return el;
-        })
-      );
-    },
-    'ArrowLeft': (e) => {
-      if (!selectedElementId) return;
-      const step = e?.shiftKey ? 0.1 : 0.5;
-      setElements((prev) =>
-        prev.map((el) => {
-          if (el.id === selectedElementId) {
-            return {
-              ...el,
-              x: Number(Math.max(0, el.x - step).toFixed(1)),
-            };
-          }
-          return el;
-        })
-      );
-    },
-    'ArrowRight': (e) => {
-      if (!selectedElementId) return;
-      const step = e?.shiftKey ? 0.1 : 0.5;
-      setElements((prev) =>
-        prev.map((el) => {
-          if (el.id === selectedElementId) {
-            return {
-              ...el,
-              x: Number(Math.max(0, el.x + step).toFixed(1)),
-            };
-          }
-          return el;
-        })
-      );
-    },
-  }, [history, redoStack, elements, selectedElementId]);
+    [history, redoStack, elements, selectedElementId]
+  );
 
   const getDesignState = () => ({
     selectedPreset,
@@ -1076,7 +1080,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
   return (
     <div
-      className='h-full flex flex-col space-y-4 animate-fade-in'
+      className='h-full flex flex-col space-y-4 '
       onMouseMove={handleMouseMove}
       onMouseUp={handleEnd}
       onTouchMove={handleTouchMove}
@@ -1109,7 +1113,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
             </button>
             {/* Compact Template Selector & Rename */}
             {editingTemplateName ? (
-              <div className='flex items-center gap-2 w-full md:w-64 animate-fadeIn'>
+              <div className='flex items-center gap-2 w-full md:w-64 '>
                 <SmartInput
                   autoFocus
                   value={tempTemplateName}
@@ -1449,7 +1453,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                 {developerMode && (
                   <div className='absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2'>
                     {showBlueprint ? (
-                      <div className='bg-white/95 dark:bg-muted/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-border shadow-xl w-80 max-h-72 overflow-y-auto animate-fade-in flex flex-col gap-2'>
+                      <div className='bg-white/95 dark:bg-muted/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-border shadow-xl w-80 max-h-72 overflow-y-auto flex flex-col gap-2'>
                         <div className='flex items-center justify-between border-b border-gray-100 dark:border-border pb-2'>
                           <div className='flex items-center gap-1.5 text-primary-600 dark:text-primary-400'>
                             <span className='material-symbols-rounded text-lg'>square_foot</span>
@@ -1482,7 +1486,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                                 ]
                                   .filter(Boolean)
                                   .join(', ');
-                                return `  "${el.id}": { ${props} }`;
+                                return ` "${el.id}": { ${props} }`;
                               })
                               .join(',\n') +
                             `\n}`}

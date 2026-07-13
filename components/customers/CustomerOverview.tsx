@@ -278,7 +278,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 
   return (
     <div
-      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in'
+      className='h-full overflow-y-auto px-page space-y-4 '
       dir={language === 'AR' ? 'rtl' : 'ltr'}
     >
       <PageHeader
@@ -310,7 +310,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         }
       />
 
-      <div className='space-y-6 animate-fade-in'>
+      <div className='space-y-6 '>
         {/* Row 1: Key Metrics */}
         <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
           {/* Total Customers */}
