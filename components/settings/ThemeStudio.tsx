@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { useUI } from '../../context/UIContext';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -6,16 +6,11 @@ import { SmallCard } from '../common/SmallCard';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { CustomCssEditor } from '../common/CustomCssEditor';
 import { Switch } from '../common/Switch';
+import { PillSlider } from '../common/PillSlider';
 
 type CssPropMap = Record<string, string>;
 
-const SHADOW_PRESETS: Record<string, string> = {
-  none: '',
-  subtle: '0px 1px 3px rgba(0,0,0,0.12)',
-  medium: '0px 4px 12px rgba(0,0,0,0.15)',
-  heavy: '0px 8px 24px rgba(0,0,0,0.2)',
-};
-
+// --- Helper Functions ---
 const cssToProps = (css: string): CssPropMap => {
   const props: CssPropMap = {};
   css.split(';').forEach((part) => {
@@ -46,98 +41,308 @@ const stripUnit = (value: string): number => {
   return isNaN(num) ? 0 : num;
 };
 
-const simplifyShadow = (value: string): string => {
-  if (!value) return 'none';
-  const normalized = value.replace(/\s+/g, ' ').trim().toLowerCase();
-  if (normalized === SHADOW_PRESETS.subtle) return 'subtle';
-  if (normalized === SHADOW_PRESETS.medium) return 'medium';
-  if (normalized === SHADOW_PRESETS.heavy) return 'heavy';
-  return 'custom';
-};
+// --- CSS Metadata Definitions ---
+type ControlType = 'slider' | 'color' | 'select' | 'text';
 
-const getSliderValue = (props: CssPropMap, key: string, defaultValue: string): number => {
-  if (props[key]) return stripUnit(displayValue(props[key]));
-  const globalProps = cssToProps(defaultValue);
-  return globalProps[key] ? stripUnit(globalProps[key]) : 0;
+interface CssPropDef {
+  key: string;
+  label: string;
+  type: ControlType;
+  icon?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  options?: { label: string; value: string }[];
+  defaultValue?: string;
+}
+
+interface CssCategory {
+  id: string;
+  label: string;
+  icon: string;
+  properties: CssPropDef[];
+}
+
+const CSS_CATEGORIES: CssCategory[] = [
+  {
+    id: 'layout',
+    label: 'Layout & Box Model',
+    icon: 'dashboard',
+    properties: [
+      { key: 'display', label: 'Display', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Block', value: 'block' },
+        { label: 'Flex', value: 'flex' },
+        { label: 'Grid', value: 'grid' },
+        { label: 'Inline-Block', value: 'inline-block' },
+        { label: 'None', value: 'none' }
+      ]},
+      { key: 'flex-direction', label: 'Flex Direction', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Row', value: 'row' },
+        { label: 'Column', value: 'column' },
+        { label: 'Row Reverse', value: 'row-reverse' },
+        { label: 'Column Reverse', value: 'column-reverse' }
+      ]},
+      { key: 'justify-content', label: 'Justify Content', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Flex Start', value: 'flex-start' },
+        { label: 'Center', value: 'center' },
+        { label: 'Flex End', value: 'flex-end' },
+        { label: 'Space Between', value: 'space-between' },
+        { label: 'Space Around', value: 'space-around' }
+      ]},
+      { key: 'align-items', label: 'Align Items', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Stretch', value: 'stretch' },
+        { label: 'Flex Start', value: 'flex-start' },
+        { label: 'Center', value: 'center' },
+        { label: 'Flex End', value: 'flex-end' }
+      ]},
+      { key: 'gap', label: 'Gap', type: 'slider', min: 0, max: 64, step: 1, unit: 'px', icon: 'space_bar' },
+      { key: 'width', label: 'Width', type: 'text', defaultValue: 'auto' },
+      { key: 'min-width', label: 'Min Width', type: 'text' },
+      { key: 'max-width', label: 'Max Width', type: 'text' },
+      { key: 'height', label: 'Height', type: 'text', defaultValue: 'auto' },
+      { key: 'min-height', label: 'Min Height', type: 'text' },
+      { key: 'max-height', label: 'Max Height', type: 'text' },
+      { key: 'overflow', label: 'Overflow', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Visible', value: 'visible' },
+        { label: 'Hidden', value: 'hidden' },
+        { label: 'Scroll', value: 'scroll' },
+        { label: 'Auto', value: 'auto' }
+      ]},
+    ]
+  },
+  {
+    id: 'spacing',
+    label: 'Spacing',
+    icon: 'format_line_spacing',
+    properties: [
+      { key: 'padding', label: 'Padding (All)', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'padding-inline-start', label: 'Padding Start', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'padding-inline-end', label: 'Padding End', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'padding-top', label: 'Padding Top', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'padding-right', label: 'Padding Right', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'padding-bottom', label: 'Padding Bottom', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'padding-left', label: 'Padding Left', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'margin', label: 'Margin (All)', type: 'slider', min: -32, max: 64, step: 1, unit: 'px' },
+      { key: 'margin-inline-start', label: 'Margin Start', type: 'slider', min: -32, max: 64, step: 1, unit: 'px' },
+      { key: 'margin-inline-end', label: 'Margin End', type: 'slider', min: -32, max: 64, step: 1, unit: 'px' },
+      { key: 'margin-top', label: 'Margin Top', type: 'slider', min: -32, max: 64, step: 1, unit: 'px' },
+      { key: 'margin-right', label: 'Margin Right', type: 'slider', min: -32, max: 64, step: 1, unit: 'px' },
+      { key: 'margin-bottom', label: 'Margin Bottom', type: 'slider', min: -32, max: 64, step: 1, unit: 'px' },
+      { key: 'margin-left', label: 'Margin Left', type: 'slider', min: -32, max: 64, step: 1, unit: 'px' },
+    ]
+  },
+  {
+    id: 'typography',
+    label: 'Typography',
+    icon: 'text_fields',
+    properties: [
+      { key: 'color', label: 'Text Color', type: 'color', defaultValue: '#111827' },
+      { key: 'font-family', label: 'Font Family', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'System UI', value: 'system-ui, sans-serif' },
+        { label: 'Serif', value: 'serif' },
+        { label: 'Monospace', value: 'monospace' }
+      ]},
+      { key: 'font-size', label: 'Font Size', type: 'slider', min: 8, max: 72, step: 1, unit: 'px' },
+      { key: 'font-weight', label: 'Font Weight', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: '300 (Light)', value: '300' },
+        { label: '400 (Normal)', value: '400' },
+        { label: '500 (Medium)', value: '500' },
+        { label: '600 (Semibold)', value: '600' },
+        { label: '700 (Bold)', value: '700' },
+        { label: '900 (Black)', value: '900' }
+      ]},
+      { key: 'line-height', label: 'Line Height', type: 'slider', min: 0.5, max: 3, step: 0.1, unit: '' },
+      { key: 'letter-spacing', label: 'Letter Spacing', type: 'slider', min: -2, max: 10, step: 0.1, unit: 'px' },
+      { key: 'text-align', label: 'Text Align', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Left', value: 'left' },
+        { label: 'Center', value: 'center' },
+        { label: 'Right', value: 'right' },
+        { label: 'Justify', value: 'justify' }
+      ]},
+      { key: 'text-transform', label: 'Text Transform', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'None', value: 'none' },
+        { label: 'Capitalize', value: 'capitalize' },
+        { label: 'Uppercase', value: 'uppercase' },
+        { label: 'Lowercase', value: 'lowercase' }
+      ]},
+    ]
+  },
+  {
+    id: 'borders',
+    label: 'Borders & Outlines',
+    icon: 'border_style',
+    properties: [
+      { key: 'border-radius', label: 'Border Radius', type: 'slider', min: 0, max: 64, step: 1, unit: 'px' },
+      { key: 'border-width', label: 'Border Width', type: 'slider', min: 0, max: 16, step: 1, unit: 'px' },
+      { key: 'border-style', label: 'Border Style', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Solid', value: 'solid' },
+        { label: 'Dashed', value: 'dashed' },
+        { label: 'Dotted', value: 'dotted' },
+        { label: 'Double', value: 'double' },
+        { label: 'None', value: 'none' }
+      ]},
+      { key: 'border-color', label: 'Border Color', type: 'color', defaultValue: '#e5e7eb' },
+      { key: 'outline-width', label: 'Outline Width', type: 'slider', min: 0, max: 16, step: 1, unit: 'px' },
+      { key: 'outline-style', label: 'Outline Style', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Solid', value: 'solid' },
+        { label: 'Dashed', value: 'dashed' },
+        { label: 'None', value: 'none' }
+      ]},
+      { key: 'outline-color', label: 'Outline Color', type: 'color', defaultValue: '#3b82f6' },
+      { key: 'outline-offset', label: 'Outline Offset', type: 'slider', min: -10, max: 20, step: 1, unit: 'px' }
+    ]
+  },
+  {
+    id: 'backgrounds',
+    label: 'Backgrounds',
+    icon: 'format_paint',
+    properties: [
+      { key: 'background', label: 'Background', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'None (Transparent)', value: 'none' },
+      ]},
+      { key: 'background-color', label: 'Background Color', type: 'color', defaultValue: '#ffffff' },
+      { key: 'background-image', label: 'Background Image', type: 'text', defaultValue: '' },
+      { key: 'background-size', label: 'Background Size', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Auto', value: 'auto' },
+        { label: 'Cover', value: 'cover' },
+        { label: 'Contain', value: 'contain' }
+      ]},
+      { key: 'background-position', label: 'Background Position', type: 'text', defaultValue: 'center' },
+    ]
+  },
+  {
+    id: 'effects',
+    label: 'Effects & Filters',
+    icon: 'blur_on',
+    properties: [
+      { key: 'box-shadow', label: 'Box Shadow', type: 'text' },
+      { key: 'opacity', label: 'Opacity', type: 'slider', min: 0, max: 1, step: 0.05, unit: '' },
+      { key: 'filter', label: 'Filter (e.g., blur(4px))', type: 'text' },
+      { key: 'backdrop-filter', label: 'Backdrop Filter', type: 'text' },
+      { key: 'mix-blend-mode', label: 'Mix Blend Mode', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Normal', value: 'normal' },
+        { label: 'Multiply', value: 'multiply' },
+        { label: 'Screen', value: 'screen' },
+        { label: 'Overlay', value: 'overlay' },
+        { label: 'Color Dodge', value: 'color-dodge' },
+        { label: 'Difference', value: 'difference' }
+      ]}
+    ]
+  },
+  {
+    id: 'transforms',
+    label: 'Transforms & Transitions',
+    icon: 'transform',
+    properties: [
+      { key: 'transform', label: 'Transform (e.g., scale(1.1))', type: 'text' },
+      { key: 'transform-origin', label: 'Transform Origin', type: 'text', defaultValue: 'center' },
+      { key: 'transition', label: 'Transition', type: 'text', defaultValue: 'all 0.3s ease' },
+      { key: 'cursor', label: 'Cursor', type: 'select', options: [
+        { label: 'Default', value: '' },
+        { label: 'Pointer', value: 'pointer' },
+        { label: 'Text', value: 'text' },
+        { label: 'Not Allowed', value: 'not-allowed' },
+        { label: 'Crosshair', value: 'crosshair' }
+      ]},
+      { key: 'z-index', label: 'Z-Index', type: 'text' }
+    ]
+  }
+];
+
+const getPropValue = (props: CssPropMap, key: string): string => {
+  return displayValue(props[key]);
 };
 
 export const ThemeStudio: React.FC = () => {
   const { customCardCss, setCustomCardCss, enableCustomCardCss, setEnableCustomCardCss } = useUI();
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set([CSS_CATEGORIES[0].id]));
+  const [inactiveCategories, setInactiveCategories] = useState<Set<string>>(new Set());
+  const lastKnownProps = useRef<CssPropMap>({});
 
   const currentProps = useMemo(() => cssToProps(customCardCss || ''), [customCardCss]);
 
   const updateProp = useCallback(
     (name: string, value: string) => {
-      const newProps = { ...currentProps, [name]: value };
-      setCustomCardCss(propsToCss(newProps));
-    },
-    [currentProps, setCustomCardCss]
-  );
-
-  const removeProp = useCallback(
-    (name: string) => {
       const newProps = { ...currentProps };
-      delete newProps[name];
+      if (!value) {
+        delete newProps[name];
+      } else {
+        newProps[name] = value;
+      }
       setCustomCardCss(propsToCss(newProps));
-    },
-    [currentProps, setCustomCardCss]
-  );
 
-  const handleSlider = useCallback(
-    (name: string, raw: number, unit: string = 'px') => {
-      if (raw === 0) {
-        removeProp(name);
-      } else {
-        updateProp(name, `${raw}${unit}`);
+      const category = CSS_CATEGORIES.find(c => c.properties.some(p => p.key === name));
+      if (category && inactiveCategories.has(category.id)) {
+        setInactiveCategories(prev => {
+          const next = new Set(prev);
+          next.delete(category.id);
+          return next;
+        });
       }
     },
-    [updateProp, removeProp]
+    [currentProps, setCustomCardCss, inactiveCategories]
   );
 
-  const handleColor = useCallback(
-    (name: string, value: string) => {
-      updateProp(name, value);
-    },
-    [updateProp]
-  );
+  const toggleCategoryActive = useCallback((categoryId: string, active: boolean) => {
+    const category = CSS_CATEGORIES.find(c => c.id === categoryId);
+    if (!category) return;
 
-  const handleShadow = useCallback(
-    (value: string) => {
-      if (value === 'none' || !value) {
-        removeProp('box-shadow');
+    const newProps = { ...currentProps };
+    
+    if (active) {
+      setInactiveCategories(prev => {
+        const next = new Set(prev);
+        next.delete(categoryId);
+        return next;
+      });
+      category.properties.forEach(p => {
+        if (lastKnownProps.current[p.key]) {
+          newProps[p.key] = lastKnownProps.current[p.key];
+        }
+      });
+    } else {
+      setInactiveCategories(prev => {
+        const next = new Set(prev);
+        next.add(categoryId);
+        return next;
+      });
+      category.properties.forEach(p => {
+        if (newProps[p.key]) {
+          lastKnownProps.current[p.key] = newProps[p.key];
+          delete newProps[p.key];
+        }
+      });
+    }
+    
+    setCustomCardCss(propsToCss(newProps));
+  }, [currentProps, setCustomCardCss]);
+
+  const toggleCategory = useCallback((id: string) => {
+    setOpenCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        updateProp('box-shadow', SHADOW_PRESETS[value] || value);
+        next.add(id);
       }
-    },
-    [updateProp, removeProp]
-  );
-
-  const sliders = [
-    {
-      key: 'border-radius' as const,
-      label: 'Border Radius',
-      icon: 'rounded_corner',
-      min: 0, max: 24, step: 1, unit: 'px',
-    },
-    {
-      key: 'padding' as const,
-      label: 'Padding',
-      icon: 'space_bar',
-      min: 0, max: 32, step: 1, unit: 'px',
-    },
-    {
-      key: 'margin' as const,
-      label: 'Margin',
-      icon: 'outlined_flag',
-      min: 0, max: 32, step: 1, unit: 'px',
-    },
-    {
-      key: 'border-width' as const,
-      label: 'Border Width',
-      icon: 'border_style',
-      min: 0, max: 8, step: 0.5, unit: 'px',
-    },
-  ];
+      return next;
+    });
+  }, []);
 
   return (
     <div className='flex flex-col h-full w-full overflow-hidden bg-transparent p-4 md:p-6 gap-4 md:gap-6'>
@@ -149,7 +354,7 @@ export const ThemeStudio: React.FC = () => {
           </div>
           <div>
             <h1 className='text-base font-bold text-(--text-primary)'>Theme Studio</h1>
-            <p className='text-xs text-(--text-tertiary)'>Customize and preview your theme in real-time</p>
+            <p className='text-xs text-(--text-tertiary)'>Advanced CSS Visual Controls</p>
           </div>
         </div>
         <div className='flex items-center gap-3'>
@@ -164,84 +369,166 @@ export const ThemeStudio: React.FC = () => {
       {/* Main Grid */}
       <div className='flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 overflow-hidden'>
         
-        {/* Left Column: Visual Controls */}
-        <div className='lg:col-span-4 xl:col-span-3 flex flex-col gap-4 overflow-y-auto pr-1 pb-10 scrollbar-none'>
-          <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl p-5 shadow-sm space-y-6'>
-            <div className='space-y-1'>
-              <h2 className='text-sm font-bold text-(--text-primary)'>Visual Controls</h2>
-              <p className='text-xs text-(--text-tertiary)'>Adjust CSS properties visually</p>
-            </div>
-
-            {sliders.map(({ key, label, icon, min, max, step, unit }) => {
-              const colorConfig = 
-                key === 'border-width' ? { cKey: 'border-color' as const, cLabel: 'Border Color', cDef: '#e5e7eb' } :
-                key === 'padding' ? { cKey: 'background-color' as const, cLabel: 'BG Color', cDef: '#ffffff' } :
-                key === 'border-radius' ? { cKey: 'color' as const, cLabel: 'Text Color', cDef: '#111827' } : null;
-
-              return (
-              <div key={key} className='space-y-2 bg-(--bg-card)'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-base text-(--text-secondary)'>{icon}</span>
-                    <label className='text-xs font-semibold text-(--text-secondary) uppercase tracking-wider'>
-                      {label}
-                    </label>
-                  </div>
-                  {colorConfig && (
-                    <div className='flex items-center gap-1.5' title={colorConfig.cLabel}>
-                      <span className='text-[10px] text-(--text-tertiary) font-medium'>{colorConfig.cLabel}</span>
-                      <input
-                        type='color'
-                        value={currentProps[colorConfig.cKey] || colorConfig.cDef}
-                        onChange={(e) => handleColor(colorConfig.cKey, e.target.value)}
-                        className='w-5 h-5 rounded cursor-pointer border-0 p-0 bg-transparent'
-                      />
-                    </div>
-                  )}
-                </div>
-                <input
-                  type='range'
-                  min={min}
-                  max={max}
-                  step={step}
-                  value={getSliderValue(currentProps, key, customCardCss || '')}
-                  onChange={(e) => handleSlider(key, Number(e.target.value))}
-                  className='w-full h-1.5 rounded-full appearance-none cursor-pointer bg-(--border-divider) [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-500'
-                />
-                <div className='flex justify-between text-[10px] text-(--text-tertiary)'>
-                  <span>{min}{unit}</span>
-                  <span className='font-mono font-bold text-(--text-primary)'>{getSliderValue(currentProps, key, customCardCss || '')}{unit}</span>
-                  <span>{max}{unit}</span>
-                </div>
-              </div>
-            )})}
-
-            <div className='border-t border-(--border-divider) pt-4 space-y-4'>
-              <div className='space-y-2'>
-                <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-base text-(--text-secondary)'>shadow</span>
-                  <label className='text-xs font-semibold text-(--text-secondary) uppercase tracking-wider'>Box Shadow</label>
-                </div>
-                <select
-                  value={simplifyShadow(currentProps['box-shadow'] || '')}
-                  onChange={(e) => handleShadow(e.target.value)}
-                  className='w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden'
+        {/* Left Column: Visual Controls Accordion */}
+        <div className='lg:col-span-3 xl:col-span-2 flex flex-col gap-2 overflow-y-auto pr-1 pb-10 scrollbar-none'>
+          {CSS_CATEGORIES.map((category) => {
+            const isOpen = openCategories.has(category.id);
+            const isActive = !inactiveCategories.has(category.id);
+            return (
+            <div key={category.id} className={`bg-(--bg-card) border rounded-xl overflow-hidden shadow-sm shrink-0 transition-colors ${isActive ? 'border-(--border-divider)' : 'border-transparent opacity-60'}`}>
+              <div className={`w-full flex items-center justify-between p-3 transition-colors ${isOpen ? 'bg-(--bg-menu-hover)' : 'hover:bg-(--bg-menu-hover)/50'}`}>
+                <button
+                  className='flex-1 flex items-center gap-2.5 text-left'
+                  onClick={() => toggleCategory(category.id)}
                 >
-                  <option value='none'>None</option>
-                  <option value='subtle'>Subtle</option>
-                  <option value='medium'>Medium</option>
-                  <option value='heavy'>Heavy</option>
-                  {currentProps['box-shadow'] && simplifyShadow(currentProps['box-shadow']) === 'custom' && (
-                    <option value='custom' disabled>Custom</option>
-                  )}
-                </select>
+                  <span className={`material-symbols-rounded text-[18px] ${isActive ? (isOpen ? 'text-primary-500' : 'text-(--text-secondary)') : 'text-(--text-tertiary)'}`}>
+                    {category.icon}
+                  </span>
+                  <span className={`text-xs font-bold ${isActive ? (isOpen ? 'text-(--text-primary)' : 'text-(--text-secondary)') : 'text-(--text-tertiary)'}`}>
+                    {category.label}
+                  </span>
+                </button>
+                <div className='flex items-center gap-3 shrink-0'>
+                  <Switch 
+                    checked={isActive} 
+                    onChange={(checked) => toggleCategoryActive(category.id, checked)}
+                  />
+                  <button onClick={() => toggleCategory(category.id)} className='flex items-center justify-center w-5 h-5'>
+                    <span className={`material-symbols-rounded text-[18px] text-(--text-tertiary) transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                      expand_more
+                    </span>
+                  </button>
+                </div>
               </div>
+              
+              {isOpen && (
+                <div className={`px-3 pb-3 pt-2 border-t border-(--border-divider)/50 space-y-3 mt-0 ${!isActive ? 'opacity-50 pointer-events-none' : ''}`}>
+                  {category.properties.map((prop) => {
+                    const value = getPropValue(currentProps, prop.key);
+                    
+                    if (prop.type === 'slider') {
+                      return (
+                        <div key={prop.key} className='flex items-center justify-between gap-2'>
+                          <label className='text-[10px] font-medium text-(--text-secondary) capitalize shrink-0'>
+                            {prop.label}
+                          </label>
+                          <div className='flex items-center gap-1'>
+                            <PillSlider
+                              min={prop.min || 0}
+                              max={prop.max || 100}
+                              step={prop.step || 1}
+                              value={value ? stripUnit(value) : (prop.min || 0)}
+                              onChange={(v) => updateProp(prop.key, `${v}${prop.unit || ''}`)}
+                              className='w-24 md:w-32'
+                              formatValue={(v) => `${v}${prop.unit || ''}`}
+                              backgroundStyle={{
+                                background: `linear-gradient(to right, var(--primary-500) ${((value ? stripUnit(value) : (prop.min || 0)) - (prop.min || 0)) / ((prop.max || 100) - (prop.min || 0)) * 100}%, transparent ${((value ? stripUnit(value) : (prop.min || 0)) - (prop.min || 0)) / ((prop.max || 100) - (prop.min || 0)) * 100}%)`,
+                              }}
+                            />
+                            {value && (
+                              <button 
+                                onClick={() => updateProp(prop.key, '')}
+                                className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0 ml-1'
+                                title='Reset'
+                              >
+                                <span className='material-symbols-rounded text-[12px]'>close</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={prop.key} className='space-y-1.5'>
+                        <label className='text-xs font-semibold text-(--text-secondary) capitalize block'>
+                          {prop.label}
+                        </label>
+                        
+                        {prop.type === 'color' && (
+                          <div className='flex items-center gap-2'>
+                            <div className='flex-1 flex items-center bg-(--bg-input) border border-(--border-divider) rounded-lg p-1 px-2 gap-2'>
+                              <input
+                                type='color'
+                                value={value || prop.defaultValue || '#000000'}
+                                onChange={(e) => updateProp(prop.key, e.target.value)}
+                                className='w-5 h-5 rounded cursor-pointer border-0 p-0 bg-transparent shrink-0'
+                              />
+                              <input
+                                type='text'
+                                value={value}
+                                onChange={(e) => updateProp(prop.key, e.target.value)}
+                                placeholder='Inherit'
+                                className='flex-1 bg-transparent text-xs text-(--text-primary) outline-hidden'
+                              />
+                            </div>
+                            {value && (
+                              <button
+                                onClick={() => updateProp(prop.key, '')}
+                                className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0'
+                                title='Reset'
+                              >
+                                <span className='material-symbols-rounded text-[12px]'>close</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {prop.type === 'select' && (
+                          <div className='flex items-center gap-2'>
+                            <select
+                              value={value}
+                              onChange={(e) => updateProp(prop.key, e.target.value)}
+                              className='flex-1 text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden'
+                            >
+                              {prop.options?.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                            {value && (
+                              <button
+                                onClick={() => updateProp(prop.key, '')}
+                                className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0'
+                                title='Reset'
+                              >
+                                <span className='material-symbols-rounded text-[12px]'>close</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {prop.type === 'text' && (
+                          <div className='flex items-center gap-2'>
+                            <input
+                              type='text'
+                              value={value}
+                              onChange={(e) => updateProp(prop.key, e.target.value)}
+                              placeholder={prop.defaultValue || 'e.g. auto'}
+                              className='flex-1 text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden placeholder:text-(--text-tertiary)'
+                            />
+                            {value && (
+                              <button
+                                onClick={() => updateProp(prop.key, '')}
+                                className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0'
+                                title='Reset'
+                              >
+                                <span className='material-symbols-rounded text-[12px]'>close</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
+          );
+          })}
         </div>
 
         {/* Middle Column: Live Preview */}
-        <div className='lg:col-span-5 xl:col-span-6 flex flex-col overflow-y-auto pr-1 pb-10 scrollbar-none'>
+        <div className='lg:col-span-6 xl:col-span-7 flex flex-col overflow-y-auto pr-1 pb-10 scrollbar-none'>
           <div className='min-h-full flex flex-wrap gap-3 items-start content-start'>
             
             <div className='w-full flex flex-wrap xl:flex-nowrap gap-3'>
@@ -278,14 +565,14 @@ export const ThemeStudio: React.FC = () => {
 
             <div className='w-full grid grid-cols-2 gap-3'>
               <div className='custom-card-css-target no-padding bg-(--bg-card) border border-(--border-divider) rounded-2xl p-1 shadow-xl flex flex-col justify-center'>
-                <div className='px-3 py-1.5 text-xs font-semibold text-(--text-primary) hover:bg-(--bg-menu-hover) rounded-xl cursor-pointer'>Edit Settings</div>
-                <div className='px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 rounded-xl cursor-pointer'>Delete Record</div>
+                <div className='px-3 py-1.5 text-xs font-semibold text-(--text-primary) hover:bg-(--bg-menu-hover) rounded-xl cursor-pointer transition-colors'>Edit Settings</div>
+                <div className='px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 rounded-xl cursor-pointer transition-colors'>Delete Record</div>
               </div>
 
               <div className='flex flex-col border border-(--border-divider) rounded-xl overflow-hidden'>
                 <div className='custom-card-css-target no-padding shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-3 h-10 flex items-center justify-between'>
                   <span className='font-bold text-xs text-(--text-primary)'>Modal Window</span>
-                  <button className='custom-card-css-target no-padding w-6 h-6 rounded-full grid place-items-center text-(--text-tertiary) hover:bg-zinc-500/10'>
+                  <button className='custom-card-css-target no-padding w-6 h-6 rounded-full grid place-items-center text-(--text-tertiary) hover:bg-zinc-500/10 transition-colors'>
                     <span className='material-symbols-rounded text-[16px]'>close</span>
                   </button>
                 </div>
