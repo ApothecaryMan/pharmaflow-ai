@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
@@ -92,6 +92,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [isPageLoading, setIsPageLoading] = useState(false);
   const { textTransform } = useSettings();
   const pageSize = 50;
+  const initialSorting = useMemo(() => [{ id: 'date', desc: true }], []);
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
   const currentDailyRefunds = React.useMemo(() => {
@@ -245,19 +246,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             itemsText,
             '-------------------',
             sale.subtotal &&
-              `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
+            `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
             sale.globalDiscount &&
-              `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
+            `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
             sale.tax && `${isAr ? 'الضريبة' : 'Tax'}: ${formatCurrency(sale.tax)}`,
             sale.deliveryFee &&
-              `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
+            `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
             isReturned
               ? `${isAr ? 'المرتجع' : 'Returned'}: -${formatCurrency(returnedAmount)}\n${isAr ? 'صافي الإجمالي' : 'Net Total'}: ${formatCurrency(sale.netTotal || 0)}`
               : `${t.headers.total || (isAr ? 'الإجمالي' : 'Total')}: ${formatCurrency(sale.total)}`,
             '-------------------',
             `${isAr ? 'طريقة الدفع' : 'Payment Method'}: ${sale.paymentMethod === 'visa' ? t.visa : t.cash}`,
             sale.saleType &&
-              `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : isAr ? 'شراء مباشر' : 'Walk-in'}`,
+            `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : isAr ? 'شراء مباشر' : 'Walk-in'}`,
             sale.notes?.trim() && `${isAr ? 'ملاحظات' : 'Notes'}: ${sale.notes}`,
           ]
             .filter(Boolean)
@@ -542,7 +543,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     setPage(1);
   }, []);
 
-  const handleSelectSale = async (sale: Sale) => {
+  const handlePaginationChange = useCallback((p: { pageIndex: number }) => {
+    setPage(p.pageIndex + 1);
+  }, []);
+
+  const handleSelectSale = useCallback(async (sale: Sale) => {
     setIsDetailLoading(true);
     try {
       const fullSale = await salesService.getById(sale.id);
@@ -553,9 +558,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     } finally {
       setIsDetailLoading(false);
     }
-  };
+  }, []);
 
-  const exportToCSV = () => {
+  const exportToCSV = useCallback(() => {
     if (pagedSales.length === 0) return;
 
     const headers = [
@@ -598,7 +603,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [pagedSales, locale]);
 
   // Wrap onProcessReturn to track pending state for the "real" duration
   const handleProcessReturn = async (returnData: Return) => {
@@ -645,22 +650,52 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     }
   };
 
-  const [isMounting, setIsMounting] = useState(true);
+  const showLoading = isLoading || isPageLoading || isDetailLoading;
 
-  React.useEffect(() => {
-    // TIER 1: Instant Skeleton.
-    // Delay mounting the heavy table by 100ms to allow the skeleton to show up
-    // before the main thread gets busy with virtualization calculations.
-    const timer = setTimeout(() => setIsMounting(false), 100);
-    return () => clearTimeout(timer);
-  }, []);
+  const rightControls = useMemo(() => (
+    <div className='flex justify-center sm:justify-end w-full gap-1'>
+      <SearchInput
+        compact
+        expandable
+        value={searchTerm}
+        onSearchChange={handleSearchChange}
+        placeholder={t.searchPlaceholder || 'Search sales…'}
+        wrapperClassName='w-full sm:w-[250px] lg:w-[350px]'
+      />
+      <DateRangePicker
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={handleStartDateChange}
+        onEndDateChange={handleEndDateChange}
+        color={color}
+        locale={locale}
+        rounded='lg'
+        className='h-8'
+      />
 
-  const showLoading = isLoading || isMounting || isPageLoading || isDetailLoading;
+      <button
+        type='button'
+        onClick={exportToCSV}
+        disabled={pagedSales.length === 0}
+        className='inline-flex items-center gap-2 px-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0 text-gray-700 dark:text-gray-200 h-8'
+      >
+        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={2}
+            d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+          />
+        </svg>
+        <span className='hidden lg:inline'>{t.exportCSV}</span>
+      </button>
+    </div>
+  ), [searchTerm, handleSearchChange, startDate, endDate, handleStartDateChange, handleEndDateChange, color, locale, exportToCSV, pagedSales.length, t]);
 
   return (
     <div className='flex flex-col h-full bg-(--bg-page-surface)'>
       <div
-        className={`flex-1 pt-4 sm:pt-6 overflow-hidden flex flex-col transition-opacity duration-300 ${isMounting ? 'opacity-50' : 'opacity-100'}`}
+        className='flex-1 pt-4 sm:pt-6 overflow-hidden flex flex-col transition-opacity duration-300 opacity-100'
         dir={language === 'AR' ? 'rtl' : 'ltr'}
       >
         <TanStackTable
@@ -695,51 +730,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           emptyMessage={t.noResults}
           lite={false}
           dense={true}
-          initialSorting={[{ id: 'date', desc: true }]}
+          initialSorting={initialSorting}
           enablePagination={true}
           enableVirtualization={true}
           pageSize={pageSize}
           enableShowAll={false}
           pendingRowIds={pendingIds}
-          rightCustomControls={
-            <div className='flex justify-center sm:justify-end w-full gap-1'>
-              <SearchInput
-                compact
-                expandable
-                value={searchTerm}
-                onSearchChange={handleSearchChange}
-                placeholder={t.searchPlaceholder || 'Search sales…'}
-                wrapperClassName='w-full sm:w-[250px] lg:w-[350px]'
-              />
-              <DateRangePicker
-                startDate={startDate}
-                endDate={endDate}
-                onStartDateChange={handleStartDateChange}
-                onEndDateChange={handleEndDateChange}
-                color={color}
-                locale={locale}
-                rounded='lg'
-                className='h-8'
-              />
-
-              <button
-                type='button'
-                onClick={exportToCSV}
-                disabled={pagedSales.length === 0}
-                className='inline-flex items-center gap-2 px-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0 text-gray-700 dark:text-gray-200 h-8'
-              >
-                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-                  />
-                </svg>
-                <span className='hidden lg:inline'>{t.exportCSV}</span>
-              </button>
-            </div>
-          }
+          rightCustomControls={rightControls}
         />
       </div>
 
