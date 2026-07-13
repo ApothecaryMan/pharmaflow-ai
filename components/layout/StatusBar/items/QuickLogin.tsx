@@ -126,6 +126,7 @@ const LoginInputView: React.FC<{
 export const QuickLogin: React.FC<QuickLoginProps> = ({
   userName,
   roleLabel,
+  avatarUrl,
   employees = [],
   currentEmployeeId,
   onSelectEmployee,
@@ -152,8 +153,30 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   // --- Smart Memoization ---
   const tooltipText = useMemo(() => {
     if (!currentEmployeeId) return t?.login || 'Login';
-    return `${userName}${roleLabel ? ` (${roleLabel})` : ''}`;
-  }, [currentEmployeeId, userName, roleLabel, t]);
+    return (
+      <div className="flex items-center gap-3 py-0.5 pr-2 pl-0.5" dir={isAR ? 'rtl' : 'ltr'}>
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 dark:bg-black/10 flex-shrink-0 border-2 border-white/30 dark:border-black/10 flex items-center justify-center shadow-inner">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+          ) : (
+            <span className="material-symbols-rounded text-white dark:text-gray-700 text-2xl">
+              person
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col gap-0.5 justify-center min-w-20">
+          <span className="text-[13px] font-bold text-white dark:text-gray-900 leading-none">
+            {userName}
+          </span>
+          {roleLabel && (
+            <span className="text-[10px] text-white/70 dark:text-gray-600 font-semibold tracking-wider uppercase">
+              {roleLabel}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }, [currentEmployeeId, userName, roleLabel, avatarUrl, t, isAR]);
 
   const loginLabel = useMemo(() => {
     if (isLoading && currentEmployeeId) return undefined;

@@ -269,6 +269,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
             userName={currentEmployee?.name}
             isLoading={isLoading}
             roleLabel={currentEmployee?.role}
+            avatarUrl={currentEmployee?.image}
             employees={orgEmployees}
             currentEmployeeId={currentEmployeeId}
             onSelectEmployee={onSelectEmployee}

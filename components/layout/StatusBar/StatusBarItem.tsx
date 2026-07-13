@@ -7,8 +7,8 @@ export interface StatusBarItemProps {
   icon?: string;
   /** Text label */
   label?: string;
-  /** Tooltip text on hover */
-  tooltip?: string;
+  /** Tooltip content on hover */
+  tooltip?: React.ReactNode;
   /** Click handler */
   onClick?: () => void;
   /** Badge counter (for notifications) */
@@ -100,7 +100,7 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
       content={tooltip}
       className='h-full'
       triggerClassName='h-full'
-      tooltipClassName='font-bold uppercase tracking-wider z-60'
+      tooltipClassName={typeof tooltip === 'string' ? 'font-bold uppercase tracking-wider z-60' : 'z-60'}
     >
       {Item}
     </Tooltip>

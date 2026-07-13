@@ -2,6 +2,7 @@ import type React from 'react';
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Z_INDEX } from '../../src/styles/z-index';
+import { useTheme } from '../../context/ThemeContext';
 
 const R = 10,
   AW = 14,
@@ -51,6 +52,14 @@ export const Tooltip: React.FC<{
   fillColor,
   textColor,
 }) => {
+  let tooltipStyle = 'default';
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const themeContext = useTheme();
+    tooltipStyle = themeContext.tooltipStyle;
+  } catch (e) {
+    // Fallback if rendered outside ThemeProvider
+  }
   const [show, setShow] = useState(false),
     [side, setSide] = useState(position);
   const trigRef = useRef<HTMLDivElement>(null),
@@ -69,8 +78,16 @@ export const Tooltip: React.FC<{
         vh = window.innerHeight,
         gap = 4;
       let s = position;
+      
+      // Box style defaults to side placement instead of top
+      if (tooltipStyle === 'box' && position === 'top') {
+        s = 'right';
+      }
+
       if (s === 'top' && tr.top < ch + gap) s = 'bottom';
       else if (s === 'bottom' && vh - tr.bottom < ch + gap) s = 'top';
+      else if (s === 'left' && tr.left < cw + gap) s = 'right';
+      else if (s === 'right' && vw - tr.right < cw + gap) s = 'left';
       setSide(s);
       const x =
         s === 'top' || s === 'bottom'
@@ -139,26 +156,34 @@ export const Tooltip: React.FC<{
             className={`fixed pointer-events-auto z-[${Z_INDEX.TOOLTIP}] ${tooltipClassName}`}
             style={{ top: 'var(--ty)', left: 'var(--tx)', zIndex: Z_INDEX.TOOLTIP }}
           >
-            <div className='relative group' style={{ borderRadius: R }}>
-              <svg
-                className='absolute inset-0 w-full h-full pointer-events-none overflow-visible'
-                style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
-              >
-                <path 
-                  d={path || ''} 
-                  className={fillColor ? '' : 'fill-gray-800 dark:fill-stone-50'} 
-                  style={fillColor ? { fill: fillColor } : undefined} 
-                />
-              </svg>
+            <div className={`relative group ${tooltipStyle === 'box' ? (fillColor ? '' : 'bg-black/90 dark:bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xl') : ''}`} style={{ borderRadius: tooltipStyle === 'box' ? 10 : R, filter: tooltipStyle === 'box' ? 'none' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))', ...(tooltipStyle === 'box' && fillColor ? { backgroundColor: fillColor } : {}) }}>
+              {tooltipStyle !== 'box' && (
+                <svg
+                  className='absolute inset-0 w-full h-full pointer-events-none overflow-visible'
+                  style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
+                >
+                  <path 
+                    d={path || ''} 
+                    className={fillColor ? '' : 'fill-gray-800 dark:fill-stone-50'} 
+                    style={fillColor ? { fill: fillColor } : undefined} 
+                  />
+                </svg>
+              )}
               <div
                 ref={contentRef}
-                className={`relative z-10 text-[11px] font-semibold tracking-tight whitespace-nowrap w-max ${textColor ? '' : 'text-stone-50 dark:text-gray-800'}`}
+                className={`relative z-10 font-medium tracking-tight whitespace-nowrap w-max ${
+                  tooltipStyle === 'box' 
+                    ? 'text-[12px] px-3 py-1.5' 
+                    : `text-[11px] font-semibold ${textColor ? '' : 'text-stone-50 dark:text-gray-800'}`
+                }`}
                 style={{
                   ...(textColor ? { color: textColor } : {}),
-                  paddingTop: side === 'bottom' ? AH + 8 : 8,
-                  paddingBottom: side === 'top' ? AH + 8 : 8,
-                  paddingLeft: side === 'right' ? AH + 12 : 12,
-                  paddingRight: side === 'left' ? AH + 12 : 12,
+                  ...(tooltipStyle !== 'box' ? {
+                    paddingTop: side === 'bottom' ? AH + 8 : 8,
+                    paddingBottom: side === 'top' ? AH + 8 : 8,
+                    paddingLeft: side === 'right' ? AH + 12 : 12,
+                    paddingRight: side === 'left' ? AH + 12 : 12,
+                  } : {})
                 }}
               >
                 {content}

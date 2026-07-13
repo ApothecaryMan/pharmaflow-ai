@@ -87,7 +87,7 @@ export function SegmentedControl<T extends string | number | boolean>({
         act = el.querySelector<HTMLButtonElement>('button[data-active="true"]');
       if (!act) return;
       const { offsetWidth: w, offsetHeight: h, offsetLeft: l, offsetTop: t } = act;
-      const x = rtl ? el.offsetWidth - (l + w) : l;
+      const x = rtl ? el.clientWidth - (l + w) : l;
       el.style.setProperty('--iw', `${w}px`);
       el.style.setProperty('--ih', `${h}px`);
       el.style.setProperty('--ix', `${x}px`);
