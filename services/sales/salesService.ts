@@ -5,7 +5,6 @@
 
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { money } from '../../utils/money';
 import { BaseDomainService } from '../core/baseDomainService';
 import { dateRangeService } from '../financials/dateRangeService';
 import { settingsService } from '../settings/settingsService';
@@ -95,20 +94,9 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
   }
 
   async getStats(branchId?: string): Promise<SalesStats> {
-    const all = await this.getAll(branchId);
-    const today = dateRangeService.getLocalDateString();
-    const todaySales = all.filter((s) => s.date.startsWith(today));
-
-    const totalRev = all.reduce((sum, s) => money.add(sum, s.total), 0);
-    const todayRev = todaySales.reduce((sum, s) => money.add(sum, s.total), 0);
-
-    return {
-      totalSales: all.length,
-      totalRevenue: totalRev,
-      averageTransaction: all.length > 0 ? money.divide(totalRev, all.length) : 0,
-      todaySales: todaySales.length,
-      todayRevenue: todayRev,
-    };
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    return salesRepository.getStats(effectiveBranchId, settings.orgId);
   }
 
   async filter(filters: SalesFilters, branchId?: string): Promise<Sale[]> {

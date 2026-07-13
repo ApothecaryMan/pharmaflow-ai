@@ -2,7 +2,7 @@ import { supabase } from '../../../lib/supabase';
 import type { Sale } from '../../../types';
 import { money } from '../../../utils/money';
 import { dateRangeService } from '../../financials/dateRangeService';
-import type { PagedResult, SalesFilters, SalesPageOptions } from '../types';
+import type { PagedResult, SalesFilters, SalesPageOptions, SalesStats } from '../types';
 
 const SALE_LIST_COLUMNS = [
   'id',
@@ -150,6 +150,49 @@ export const salesRepository = {
     return (data || []).map((item) => this.mapFromDb(item));
   },
 
+  async getStats(effectiveBranchId: string, orgId?: string): Promise<SalesStats> {
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+    const today = dateRangeService.getLocalDateString();
+
+    let allSumQuery = supabase.from(this.tableName).select('total.sum()');
+    let todaySumQuery = supabase.from(this.tableName).select('total.sum()');
+    let allCountQuery = supabase.from(this.tableName).select('*', { count: 'exact', head: true });
+    let todayCountQuery = supabase.from(this.tableName).select('*', { count: 'exact', head: true });
+
+    const applyFilter = (q: any) => {
+      if (effectiveBranchId && !isAll) return q.eq('branch_id', effectiveBranchId);
+      if (isAll && orgId) return q.eq('org_id', orgId);
+      return q;
+    };
+
+    allSumQuery = applyFilter(allSumQuery);
+    todaySumQuery = applyFilter(todaySumQuery).gte('date', `${today}T00:00:00`).lte('date', `${today}T23:59:59`);
+    allCountQuery = applyFilter(allCountQuery);
+    todayCountQuery = applyFilter(todayCountQuery).gte('date', `${today}T00:00:00`).lte('date', `${today}T23:59:59`);
+
+    const [allSumResult, todaySumResult, allCountResult, todayCountResult] =
+      await Promise.all([allSumQuery, todaySumQuery, allCountQuery, todayCountQuery]);
+
+    if (allSumResult.error) throw allSumResult.error;
+    if (todaySumResult.error) throw todaySumResult.error;
+    if (allCountResult.error) throw allCountResult.error;
+    if (todayCountResult.error) throw todayCountResult.error;
+
+    const totalRevenue = (allSumResult.data as any)?.[0]?.sum?.total || 0;
+    const todayRevenue = (todaySumResult.data as any)?.[0]?.sum?.total || 0;
+
+    return {
+      totalSales: allCountResult.count || 0,
+      totalRevenue: money.fromSmallestUnit(money.toSmallestUnit(totalRevenue)),
+      averageTransaction: allCountResult.count && allCountResult.count > 0
+        ? money.divide(totalRevenue, allCountResult.count)
+        : 0,
+      todaySales: todayCountResult.count || 0,
+      todayRevenue: money.fromSmallestUnit(money.toSmallestUnit(todayRevenue)),
+    };
+  },
+
   async listPage(options: SalesPageOptions): Promise<PagedResult<Sale>> {
     const page = Math.max(1, options.page || 1);
     const pageSize = Math.min(Math.max(1, options.pageSize || 50), 200);
@@ -247,20 +290,6 @@ export const salesRepository = {
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
     return (data || []).map((item) => this.mapFromDb(item));
-  },
-
-  async getNextDailyOrderNumber(branchId: string): Promise<number> {
-    const today = dateRangeService.getLocalDateString();
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('daily_order_number')
-      .eq('branch_id', branchId)
-      .gte('date', `${today}T00:00:00`)
-      .order('daily_order_number', { ascending: false })
-      .limit(1);
-
-    if (error) throw error;
-    return (data?.[0]?.daily_order_number || 0) + 1;
   },
 
   async insert(sale: Sale): Promise<void> {
