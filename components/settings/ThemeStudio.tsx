@@ -7,10 +7,15 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { CustomCssEditor } from '../common/CustomCssEditor';
 import { Switch } from '../common/Switch';
 import { PillSlider } from '../common/PillSlider';
+import { ShadowBuilder, FilterBuilder, BlendModePicker } from './EffectsControls';
+import { DesignMcpBridge } from './DesignMcpBridge';
+import { PresetSelector } from './PresetSelector';
 
 type CssPropMap = Record<string, string>;
 
-// --- Helper Functions ---
+const gradientPct = (val: number, min: number, max: number) =>
+  ((val - min) / (max - min || 1)) * 100;
+
 const cssToProps = (css: string): CssPropMap => {
   const props: CssPropMap = {};
   css.split(';').forEach((part) => {
@@ -41,8 +46,7 @@ const stripUnit = (value: string): number => {
   return isNaN(num) ? 0 : num;
 };
 
-// --- CSS Metadata Definitions ---
-type ControlType = 'slider' | 'color' | 'select' | 'text';
+type ControlType = 'slider' | 'color' | 'select' | 'text' | 'shadow' | 'filter' | 'backdrop-filter' | 'blend';
 
 interface CssPropDef {
   key: string;
@@ -229,19 +233,11 @@ const CSS_CATEGORIES: CssCategory[] = [
     label: 'Effects & Filters',
     icon: 'blur_on',
     properties: [
-      { key: 'box-shadow', label: 'Box Shadow', type: 'text' },
+      { key: 'box-shadow', label: 'Box Shadow', type: 'shadow' },
       { key: 'opacity', label: 'Opacity', type: 'slider', min: 0, max: 1, step: 0.05, unit: '' },
-      { key: 'filter', label: 'Filter (e.g., blur(4px))', type: 'text' },
-      { key: 'backdrop-filter', label: 'Backdrop Filter', type: 'text' },
-      { key: 'mix-blend-mode', label: 'Mix Blend Mode', type: 'select', options: [
-        { label: 'Default', value: '' },
-        { label: 'Normal', value: 'normal' },
-        { label: 'Multiply', value: 'multiply' },
-        { label: 'Screen', value: 'screen' },
-        { label: 'Overlay', value: 'overlay' },
-        { label: 'Color Dodge', value: 'color-dodge' },
-        { label: 'Difference', value: 'difference' }
-      ]}
+      { key: 'filter', label: 'Filter (Blur & Color)', type: 'filter' },
+      { key: 'backdrop-filter', label: 'Backdrop Filter', type: 'backdrop-filter' },
+      { key: 'mix-blend-mode', label: 'Mix Blend Mode', type: 'blend' }
     ]
   },
   {
@@ -345,8 +341,9 @@ export const ThemeStudio: React.FC = () => {
   }, []);
 
   return (
+    <>
+    <DesignMcpBridge />
     <div className='flex flex-col h-full w-full overflow-hidden bg-transparent p-4 md:p-6 gap-4 md:gap-6'>
-      {/* Header Card */}
       <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl p-4 flex items-center justify-between shadow-sm shrink-0'>
         <div className='flex items-center gap-3'>
           <div className='w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center'>
@@ -366,11 +363,21 @@ export const ThemeStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Grid */}
       <div className='flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 overflow-hidden'>
-        
-        {/* Left Column: Visual Controls Accordion */}
         <div className='lg:col-span-3 xl:col-span-2 flex flex-col gap-2 overflow-y-auto pr-1 pb-10 scrollbar-none'>
+
+          <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl overflow-hidden shadow-sm shrink-0'>
+            <div className='px-3 pt-3 pb-1'>
+              <span className='text-xs font-bold text-(--text-secondary) flex items-center gap-2'>
+                <span className='material-symbols-rounded text-[16px]'>auto_awesome</span>
+                Presets
+              </span>
+            </div>
+            <div className='px-3 pb-3'>
+              <PresetSelector />
+            </div>
+          </div>
+
           {CSS_CATEGORIES.map((category) => {
             const isOpen = openCategories.has(category.id);
             const isActive = !inactiveCategories.has(category.id);
@@ -404,9 +411,41 @@ export const ThemeStudio: React.FC = () => {
               {isOpen && (
                 <div className={`px-3 pb-3 pt-2 border-t border-(--border-divider)/50 space-y-3 mt-0 ${!isActive ? 'opacity-50 pointer-events-none' : ''}`}>
                   {category.properties.map((prop) => {
-                    const value = getPropValue(currentProps, prop.key);
-                    
+                    const val = getPropValue(currentProps, prop.key);
+
+                    if (prop.type === 'shadow') {
+                      return (
+                        <div key={prop.key} className='space-y-1.5'>
+                          <label className='text-xs font-semibold text-(--text-secondary) block'>{prop.label}</label>
+                          <ShadowBuilder value={val} onChange={(v) => updateProp(prop.key, v)} />
+                        </div>
+                      );
+                    }
+                    if (prop.type === 'filter' || prop.type === 'backdrop-filter') {
+                      return (
+                        <div key={prop.key} className='space-y-1.5'>
+                          <label className='text-xs font-semibold text-(--text-secondary) block'>{prop.label}</label>
+                          <FilterBuilder
+                            value={val}
+                            onChange={(v) => updateProp(prop.key, v)}
+                            backdrop={prop.type === 'backdrop-filter'}
+                          />
+                        </div>
+                      );
+                    }
+                    if (prop.type === 'blend') {
+                      return (
+                        <div key={prop.key} className='space-y-1.5'>
+                          <label className='text-xs font-semibold text-(--text-secondary) block'>{prop.label}</label>
+                          <BlendModePicker value={val} onChange={(v) => updateProp(prop.key, v)} />
+                        </div>
+                      );
+                    }
+
                     if (prop.type === 'slider') {
+                      const rawNum = val ? stripUnit(val) : (prop.min || 0);
+                      const sliderMin = prop.min || 0;
+                      const sliderMax = prop.max || 100;
                       return (
                         <div key={prop.key} className='flex items-center justify-between gap-2'>
                           <label className='text-[10px] font-medium text-(--text-secondary) capitalize shrink-0'>
@@ -414,18 +453,18 @@ export const ThemeStudio: React.FC = () => {
                           </label>
                           <div className='flex items-center gap-1'>
                             <PillSlider
-                              min={prop.min || 0}
-                              max={prop.max || 100}
+                              min={sliderMin}
+                              max={sliderMax}
                               step={prop.step || 1}
-                              value={value ? stripUnit(value) : (prop.min || 0)}
+                              value={rawNum}
                               onChange={(v) => updateProp(prop.key, `${v}${prop.unit || ''}`)}
                               className='w-24 md:w-32'
                               formatValue={(v) => `${v}${prop.unit || ''}`}
                               backgroundStyle={{
-                                background: `linear-gradient(to right, var(--primary-500) ${((value ? stripUnit(value) : (prop.min || 0)) - (prop.min || 0)) / ((prop.max || 100) - (prop.min || 0)) * 100}%, transparent ${((value ? stripUnit(value) : (prop.min || 0)) - (prop.min || 0)) / ((prop.max || 100) - (prop.min || 0)) * 100}%)`,
+                                background: `linear-gradient(to right, var(--primary-500) ${gradientPct(rawNum, sliderMin, sliderMax)}%, transparent ${gradientPct(rawNum, sliderMin, sliderMax)}%)`,
                               }}
                             />
-                            {value && (
+                            {val && (
                               <button 
                                 onClick={() => updateProp(prop.key, '')}
                                 className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0 ml-1'
@@ -450,19 +489,19 @@ export const ThemeStudio: React.FC = () => {
                             <div className='flex-1 flex items-center bg-(--bg-input) border border-(--border-divider) rounded-lg p-1 px-2 gap-2'>
                               <input
                                 type='color'
-                                value={value || prop.defaultValue || '#000000'}
+                                value={val || prop.defaultValue || '#000000'}
                                 onChange={(e) => updateProp(prop.key, e.target.value)}
                                 className='w-5 h-5 rounded cursor-pointer border-0 p-0 bg-transparent shrink-0'
                               />
                               <input
                                 type='text'
-                                value={value}
+                                value={val}
                                 onChange={(e) => updateProp(prop.key, e.target.value)}
                                 placeholder='Inherit'
                                 className='flex-1 bg-transparent text-xs text-(--text-primary) outline-hidden'
                               />
                             </div>
-                            {value && (
+                            {val && (
                               <button
                                 onClick={() => updateProp(prop.key, '')}
                                 className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0'
@@ -477,7 +516,7 @@ export const ThemeStudio: React.FC = () => {
                         {prop.type === 'select' && (
                           <div className='flex items-center gap-2'>
                             <select
-                              value={value}
+                              value={val}
                               onChange={(e) => updateProp(prop.key, e.target.value)}
                               className='flex-1 text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden'
                             >
@@ -485,7 +524,7 @@ export const ThemeStudio: React.FC = () => {
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                               ))}
                             </select>
-                            {value && (
+                            {val && (
                               <button
                                 onClick={() => updateProp(prop.key, '')}
                                 className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0'
@@ -501,12 +540,12 @@ export const ThemeStudio: React.FC = () => {
                           <div className='flex items-center gap-2'>
                             <input
                               type='text'
-                              value={value}
+                              value={val}
                               onChange={(e) => updateProp(prop.key, e.target.value)}
                               placeholder={prop.defaultValue || 'e.g. auto'}
                               className='flex-1 text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden placeholder:text-(--text-tertiary)'
                             />
-                            {value && (
+                            {val && (
                               <button
                                 onClick={() => updateProp(prop.key, '')}
                                 className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0'
@@ -527,7 +566,6 @@ export const ThemeStudio: React.FC = () => {
           })}
         </div>
 
-        {/* Middle Column: Live Preview */}
         <div className='lg:col-span-6 xl:col-span-7 flex flex-col overflow-y-auto pr-1 pb-10 scrollbar-none'>
           <div className='min-h-full flex flex-wrap gap-3 items-start content-start'>
             
@@ -602,7 +640,6 @@ export const ThemeStudio: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Raw CSS */}
         <div className='lg:col-span-3 xl:col-span-3 flex flex-col h-full overflow-hidden'>
           <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl p-5 shadow-sm space-y-4 flex-1 flex flex-col min-h-0'>
             <div className='space-y-1 shrink-0'>
@@ -624,6 +661,7 @@ export const ThemeStudio: React.FC = () => {
 
       </div>
     </div>
+    </>
   );
 };
 

@@ -38,3 +38,6 @@ src-tauri/target/
 src-tauri/gen/
 
 # *.test.*
+
+# MCP Design Server
+.theme-studio-state.json

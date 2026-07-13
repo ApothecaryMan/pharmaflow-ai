@@ -39,7 +39,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "bump": "tsx scripts/bump-version.ts",
-    "bump-version": "ts-node scripts/bump-version.ts"
+    "bump-version": "ts-node scripts/bump-version.ts",
+    "mcp:design": "tsx mcp-design-server/index.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
