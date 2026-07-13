@@ -369,11 +369,6 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     if (!isOpen) closeAllSubmenus();
   }, [isOpen, closeAllSubmenus]);
 
-  // Auto-close submenus when master switch is turned off
-  useEffect(() => {
-    if (!showTicker && expandedSubmenu === 'status') setExpandedSubmenu(null);
-  }, [showTicker, expandedSubmenu]);
-
   useEffect(() => {
     if (expandedSubmenu === 'status') requestAnimationFrame(statusSmartPos.checkPosition);
   }, [expandedSubmenu, statusSmartPos.checkPosition]);
@@ -569,12 +564,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       setIsOpen(false);
                     }}
                   >
-                    <Switch
-                      checked={enableCustomCardCss}
-                      onChange={setEnableCustomCardCss}
-                      theme={currentTheme.name.toLowerCase()}
-                      activeColor={currentTheme.hex}
-                    />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Switch
+                        checked={enableCustomCardCss}
+                        onChange={setEnableCustomCardCss}
+                        theme={currentTheme.name.toLowerCase()}
+                        activeColor={currentTheme.hex}
+                      />
+                    </div>
                     <span className='material-symbols-rounded text-lg text-(--text-tertiary)'>
                       arrow_outward
                     </span>
@@ -1222,7 +1219,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <SettingsRow
                       icon='speed'
                       label={t.quickStatuses}
-                      onClick={() => toggleSubmenu('status')}
+                      onClick={() => showTicker && toggleSubmenu('status')}
                     >
                       <div onClick={(e) => e.stopPropagation()}>
                         <Switch
@@ -1233,10 +1230,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         />
                       </div>
                       <span
-                        className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}
-                        style={iconFontSizeStyle}
+                        className={`material-symbols-rounded text-lg text-(--text-tertiary) transition-transform duration-200 ${expandedSubmenu === 'status' ? (isMobile ? 'rotate-90' : isAR ? '-rotate-90' : 'rotate-90') : ''}`}
                       >
-                        chevron_left
+                        {isAR ? 'chevron_left' : 'chevron_right'}
                       </span>
                     </SettingsRow>
                     <SubmenuWrapper
