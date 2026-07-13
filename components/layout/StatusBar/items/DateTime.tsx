@@ -46,7 +46,7 @@ export const DateTime: React.FC<DateTimeProps> = ({
       now,
       locale,
       format === 'date' ? DATE_OPTS_SHORT : format === 'time' ? timeOpts : combinedOpts,
-      format
+      format as 'date' | 'time' | 'datetime'
     );
   }, [now, locale, format, timeOpts, combinedOpts]);
 

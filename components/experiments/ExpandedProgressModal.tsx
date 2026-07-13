@@ -198,7 +198,6 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
                 { label: 'Milestones', value: 'milestones', icon: 'flag' },
               ]}
               size='sm'
-              variant='onPage'
             />
           </div>
 

@@ -2,7 +2,7 @@ import type React from 'react';
 import type { ReactNode } from 'react';
 import type { BadgeStyle, Language, SwitchVariant, ThemeColor } from '../types';
 import { NotificationProvider, useNotification } from './NotificationContext';
-import { ThemeProvider, useTheme } from './ThemeContext';
+import { ThemeProvider, useTheme, type BackgroundPattern } from './ThemeContext';
 import { TypographyProvider, useTypography } from './TypographyContext';
 import { UIProvider, useUI } from './UIContext';
 
@@ -21,24 +21,7 @@ export interface SettingsState {
   fontFamilyAR: string;
   textTransform: 'normal' | 'uppercase';
   numeralSystem: 'AR' | 'EN';
-  backgroundPattern:
-    | 'none'
-    | 'dots'
-    | 'grid'
-    | 'mesh'
-    | 'crosshatch'
-    | 'stripes'
-    | 'noise'
-    | 'mandala'
-    | 'diamond'
-    | 'corners'
-    | 'cross'
-    | 'stars'
-    | 'bricks'
-    | 'polka'
-    | 'abstract'
-    | 'circuit'
-    | 'ornate';
+  backgroundPattern: BackgroundPattern;
   backgroundPatternOpacity: number;
   backgroundPatternUseThemeColor: boolean;
   navStyle: 1 | 2 | 3;

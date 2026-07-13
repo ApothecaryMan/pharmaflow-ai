@@ -20,5 +20,5 @@
     "esModuleInterop": true,
     "noEmit": true
   },
-  "exclude": ["node_modules", "dist", "src-tauri"]
+  "exclude": ["node_modules", "dist", "src-tauri", "supabase/functions", "mcp-design-server"]
 }

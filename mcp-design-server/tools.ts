@@ -19,7 +19,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
     'get_css_state',
     {
       description: 'Get the current CSS theme state, including all properties and whether custom CSS is enabled',
-      inputSchema: z.object({}).shape,
+      inputSchema: z.object({}),
     },
     async () => {
       const loaded = await loadState();
@@ -37,7 +37,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
       inputSchema: z.object({
         name: z.string().describe('CSS property name (kebab-case, e.g. "border-radius")'),
         value: z.string().describe('CSS property value (e.g. "12px", "#ffffff", "flex"). Empty string removes the property.'),
-      }).shape,
+      }),
     },
     async (args) => {
       const loaded = await loadState();
@@ -60,7 +60,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
       description: 'Set multiple CSS properties at once. Provide an object of property-value pairs.',
       inputSchema: z.object({
         properties: z.record(z.string()).describe('CSS properties as key-value pairs. Set a value to empty string to remove it.'),
-      }).shape,
+      }),
     },
     async (args) => {
       const loaded = await loadState();
@@ -69,7 +69,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
         if (!value) {
           delete props[name];
         } else {
-          props[name] = value;
+          props[name] = value as string;
         }
       }
       await sync({ ...loaded, properties: props });
@@ -83,7 +83,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
     'reset_all_properties',
     {
       description: 'Remove all custom CSS properties and reset the theme state.',
-      inputSchema: z.object({}).shape,
+      inputSchema: z.object({}),
     },
     async () => {
       await sync({ properties: {}, enabled: true });
@@ -99,7 +99,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
       description: 'Set the full CSS string directly (e.g. "border-radius: 12px;\\nbackground: #f0f0f0;"). This replaces all existing properties.',
       inputSchema: z.object({
         css: z.string().describe('Semicolon-separated CSS declarations'),
-      }).shape,
+      }),
     },
     async (args) => {
       const props = cssToProps(args.css);
@@ -117,7 +117,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
       description: 'Enable or disable the custom CSS theme.',
       inputSchema: z.object({
         enabled: z.boolean().describe('Whether custom CSS should be applied'),
-      }).shape,
+      }),
     },
     async (args) => {
       const loaded = await loadState();
@@ -132,7 +132,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
     'list_presets',
     {
       description: 'List available style presets with their labels and descriptions.',
-      inputSchema: z.object({}).shape,
+      inputSchema: z.object({}),
     },
     async () => {
       return {
@@ -154,7 +154,7 @@ export function registerAllTools(server: McpServer, broadcast: BroadcastFn) {
       description: 'Apply a named style preset (e.g. "paper-notebook", "paper-torn", "paper-clean"). This replaces all current properties.',
       inputSchema: z.object({
         name: z.string().describe('Preset name. Use list_presets to see available options.'),
-      }).shape,
+      }),
     },
     async (args) => {
       const preset = PRESETS.find((p) => p.name === args.name);

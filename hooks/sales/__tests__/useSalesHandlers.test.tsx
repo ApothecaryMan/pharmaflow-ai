@@ -65,8 +65,9 @@ vi.mock('../../../utils/monitoring', () => ({
 
 const mockEmployee: Employee = {
   id: 'emp1', name: 'Test Admin', role: 'admin',
-  email: '', phone: '', branchId: 'B1', orgId: 'O1', language: 'EN',
-  pin: '', isActive: true, createdAt: '', updatedAt: '',
+  email: '', phone: '', branchId: 'B1', orgId: 'O1',
+  employeeCode: 'EMP-001', position: 'Pharmacist', department: 'pharmacy',
+  startDate: '2024-01-01', status: 'active',
 };
 
 const defaultProps = {

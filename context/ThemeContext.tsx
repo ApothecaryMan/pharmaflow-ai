@@ -14,7 +14,7 @@ import { storage } from '../utils/storage';
 
 export { THEMES } from '../config/themeColors';
 
-type BackgroundPattern =
+export type BackgroundPattern =
   | 'none'
   | 'dots'
   | 'grid'
