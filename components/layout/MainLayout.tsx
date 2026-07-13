@@ -134,6 +134,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setDarkMode,
     backgroundPattern,
     backgroundPatternOpacity,
+    backgroundPatternBlur,
     backgroundPatternUseThemeColor,
   } = useTheme();
 
@@ -280,16 +281,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
               {/* Actual Page Surface */}
               <main
-                className={`flex-1 h-full overflow-hidden relative main-layout-content${backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) ? ' bg-pattern-' + backgroundPattern : ''}${backgroundPattern === 'mandala' && !backgroundPatternUseThemeColor ? ' bg-pattern-mandala-accent-theme' : ''}`}
+                className="flex-1 h-full overflow-hidden relative main-layout-content"
                 style={
                   {
-                    '--bg-pattern-opacity': backgroundPatternOpacity / 100,
+                    '--bg-pattern-opacity': (backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity) / 100,
                     '--bg-pattern-color': backgroundPatternUseThemeColor
                       ? 'var(--primary-500)'
                       : 'var(--text-tertiary)',
                   } as unknown as React.CSSProperties & Record<string, string>
                 }
               >
+                {backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) && (
+                  <div className="bg-pattern-wrapper">
+                    <div className={`bg-pattern-layer bg-pattern-${backgroundPattern}${backgroundPattern === 'mandala' && !backgroundPatternUseThemeColor ? ' bg-pattern-mandala-accent-theme' : ''}`} />
+                  </div>
+                )}
                 <div
                   className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}
                 >

@@ -47,6 +47,57 @@ const SettingsRow = React.memo<{
   </div>
 ));
 
+const PillSlider = React.memo<{
+  min: number;
+  max: number;
+  step?: number;
+  value: number;
+  onChange: (value: number) => void;
+  thumbClass?: string;
+  backgroundStyle?: React.CSSProperties;
+  formatValue?: (value: number) => React.ReactNode;
+  disabled?: boolean;
+}>(({ min, max, step = 1, value, onChange, thumbClass = '[&::-webkit-slider-thumb]:bg-(--primary-500)', backgroundStyle, formatValue, disabled }) => {
+  const fraction = (value - min) / (max - min);
+  const percent = fraction * 100;
+
+  return (
+    <div className={`relative w-32 flex items-center ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+      <input
+        dir='ltr'
+        type='range'
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className={`w-full h-1.5 bg-(--border-divider) appearance-none outline-none relative z-10
+          [&::-webkit-slider-thumb]:appearance-none 
+          [&::-webkit-slider-thumb]:w-8 
+          [&::-webkit-slider-thumb]:h-4.5 
+          [&::-webkit-slider-thumb]:rounded-full
+          [&::-webkit-slider-thumb]:cursor-pointer
+          [&::-webkit-slider-thumb]:border-2
+          [&::-webkit-slider-thumb]:border-white
+          dark:[&::-webkit-slider-thumb]:border-(--bg-menu)
+          ${thumbClass}`}
+        style={backgroundStyle}
+      />
+      <div
+        className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none z-20 flex items-center justify-center text-[9px] font-bold text-white tabular-nums drop-shadow-sm'
+        style={{
+          left: `calc(${percent}% - ${fraction * 32}px + 16px)`,
+          width: '32px',
+          height: '18px',
+        }}
+      >
+        {formatValue ? formatValue(value) : value}
+      </div>
+    </div>
+  );
+});
+
 const SubmenuWrapper = React.memo<{
   isOpen: boolean;
   isMobile: boolean;
@@ -179,8 +230,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setBackgroundPattern,
     backgroundPatternOpacity,
     setBackgroundPatternOpacity,
+    backgroundPatternScale,
+    setBackgroundPatternScale,
+    backgroundPatternBlur,
+    setBackgroundPatternBlur,
     backgroundPatternUseThemeColor,
     setBackgroundPatternUseThemeColor,
+    tooltipStyle,
+    setTooltipStyle,
   } = useTheme();
 
   const {
@@ -544,7 +601,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       'none',
                       'dots',
                       'grid',
+                      'thick-grid',
                       'blueprint',
+                      'rings',
                       'mesh',
                       'noise',
                       'mandala',
@@ -552,8 +611,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       'corners',
                       'cross',
                       'stars',
+                      'glowing-stars',
+                      'hearts',
                       'bricks',
-                      'polka',
                       'abstract',
                       'circuit',
                       'ornate',
@@ -580,7 +640,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                   {
                                     dots: '10px 10px',
                                     grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
+                                    'thick-grid': '24px 24px',
                                     blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
+                                    rings: '100% 100%',
                                     mesh: '100% 100%',
                                     noise: '24px 24px',
                                     mandala: '18px 18px',
@@ -588,10 +650,49 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                     corners: '20px 20px',
                                     cross: '30px 30px',
                                     stars: '35px 35px',
+                                    'glowing-stars': '100% 100%',
                                   } as Record<string, string>
                                 )[p],
                                 backgroundRepeat: 'var(--bg-pattern-repeat)',
                                 backgroundPosition: 'var(--bg-pattern-position)',
+                                maskImage: 'var(--bg-pattern-mask)',
+                                WebkitMaskImage: 'var(--bg-pattern-mask)',
+                                maskSize: (
+                                  {
+                                    dots: '10px 10px',
+                                    grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
+                                    'thick-grid': '24px 24px',
+                                    blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
+                                    rings: '100% 100%',
+                                    mesh: '100% 100%',
+                                    noise: '24px 24px',
+                                    mandala: '18px 18px',
+                                    diamond: '40px 40px',
+                                    corners: '20px 20px',
+                                    cross: '30px 30px',
+                                    stars: '35px 35px',
+                                    'glowing-stars': '100% 100%',
+                                    hearts: '35px 35px',
+                                  } as Record<string, string>
+                                )[p],
+                                WebkitMaskSize: (
+                                  {
+                                    dots: '10px 10px',
+                                    grid: '8px 8px, 8px 8px, 40px 40px, 40px 40px',
+                                    'thick-grid': '24px 24px',
+                                    blueprint: '10px 10px, 10px 10px, 50px 50px, 50px 50px',
+                                    rings: '100% 100%',
+                                    mesh: '100% 100%',
+                                    noise: '24px 24px',
+                                    mandala: '18px 18px',
+                                    diamond: '40px 40px',
+                                    corners: '20px 20px',
+                                    cross: '30px 30px',
+                                    stars: '35px 35px',
+                                    hearts: '35px 35px',
+                                  } as Record<string, string>
+                                )[p],
+                                backgroundColor: 'var(--bg-pattern-solid-color, transparent)',
                                 '--bg-pattern-color': 'var(--text-primary)',
                               } as unknown as React.CSSProperties & Record<string, string>)
                               : undefined
@@ -603,15 +704,18 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                               none: t.patternNone,
                               dots: t.patternDots,
                               grid: t.patternGrid,
+                              'thick-grid': t.patternThickGrid,
                               blueprint: t.patternBlueprint,
+                              rings: t.patternRings,
                               mesh: t.patternMesh,
                               noise: t.patternNoise,
                               diamond: t.patternDiamond,
                               corners: t.patternCorners,
                               cross: t.patternCross,
                               stars: t.patternStars,
+                              'glowing-stars': t.patternGlowingStars,
+                              hearts: t.patternHearts,
                               bricks: t.patternBricks,
-                              polka: t.patternPolka,
                               abstract: t.patternAbstract,
                               circuit: t.patternCircuit,
                               ornate: t.patternOrnate,
@@ -623,34 +727,74 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     ))}
                 </div>
                 {backgroundPattern !== 'none' && (
-                  <div className='flex items-center justify-between px-2 py-1'>
-                    <div className='flex items-center gap-2'>
-                      <span
-                        className='material-symbols-rounded text-(--text-secondary)'
-                        style={iconFontSizeStyle}
-                      >
-                        opacity
-                      </span>
-                      <span className='text-xs font-medium text-(--text-primary)'>
-                        {t.patternOpacity}
-                      </span>
+                  <div className='px-2 py-1.5'>
+                    <div className='flex justify-between items-center mb-1.5 px-1'>
+                      <div className='flex items-center gap-1.5'>
+                        <span className='material-symbols-rounded text-(--text-secondary) text-[14px]'>texture</span>
+                        <span className='text-[10px] uppercase font-bold text-(--text-tertiary)'>
+                          {language === 'AR' ? 'إعدادات النقش' : 'Pattern Settings'}
+                        </span>
+                      </div>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <input
-                        type='range'
-                        min='5'
-                        max='70'
-                        step='5'
-                        value={backgroundPatternOpacity}
-                        onChange={(e) => setBackgroundPatternOpacity(Number(e.target.value))}
-                        className='w-20 h-1.5 rounded-full appearance-none cursor-pointer bg-(--border-divider) [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-(--primary-500) [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer'
-                        style={{
-                          background: `linear-gradient(90deg, var(--primary-500) ${backgroundPatternOpacity}%, var(--border-divider) ${backgroundPatternOpacity}%)`,
-                        }}
-                      />
-                      <span className='text-xs text-(--text-secondary) w-8 text-right tabular-nums'>
-                        {backgroundPatternOpacity}%
-                      </span>
+                    <div className='bg-(--bg-menu-hover) border border-(--border-divider) p-2 rounded-2xl flex flex-col gap-3 relative'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-[10px] font-medium text-(--text-secondary) flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>opacity</span>
+                          {t.patternOpacity}
+                        </span>
+                        <PillSlider
+                          min={5}
+                          max={backgroundPatternBlur > 0 ? 100 : 70}
+                          step={5}
+                          value={backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity}
+                          onChange={setBackgroundPatternOpacity}
+                          disabled={backgroundPatternBlur > 0}
+                          backgroundStyle={{
+                            background: `linear-gradient(to right, var(--primary-500) ${(((backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity) - 5) / (backgroundPatternBlur > 0 ? 95 : 65)) * 100}%, transparent ${(((backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity) - 5) / (backgroundPatternBlur > 0 ? 95 : 65)) * 100}%)`,
+                          }}
+                        />
+                      </div>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-[10px] font-medium text-(--text-secondary) flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>zoom_out_map</span>
+                          {language === 'AR' ? 'الحجم' : 'Scale'}
+                        </span>
+                        <PillSlider
+                          min={-100}
+                          max={100}
+                          step={5}
+                          value={backgroundPatternScale}
+                          onChange={setBackgroundPatternScale}
+                          thumbClass={backgroundPatternScale < 0 ? '[&::-webkit-slider-thumb]:bg-(--color-error)' : '[&::-webkit-slider-thumb]:bg-(--color-success)'}
+                          formatValue={Math.abs}
+                          backgroundStyle={{
+                            background: `linear-gradient(to right, transparent ${Math.min(
+                              50,
+                              50 + backgroundPatternScale / 2
+                            )}%, ${backgroundPatternScale < 0 ? 'var(--color-error)' : 'var(--color-success)'} ${Math.min(50, 50 + backgroundPatternScale / 2)}%, ${backgroundPatternScale < 0 ? 'var(--color-error)' : 'var(--color-success)'} ${Math.max(50, 50 + backgroundPatternScale / 2)}%, transparent ${Math.max(
+                              50,
+                              50 + backgroundPatternScale / 2
+                            )}%)`,
+                            backgroundColor: 'var(--border-divider)',
+                          }}
+                        />
+                      </div>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-[10px] font-medium text-(--text-secondary) flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>blur_on</span>
+                          {language === 'AR' ? 'التمويه' : 'Blur'}
+                        </span>
+                        <PillSlider
+                          min={0}
+                          max={5}
+                          step={1}
+                          value={backgroundPatternBlur}
+                          onChange={setBackgroundPatternBlur}
+                          backgroundStyle={{
+                            background: `linear-gradient(to right, var(--primary-500) ${(backgroundPatternBlur / 5) * 100}%, transparent ${(backgroundPatternBlur / 5) * 100}%)`,
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -670,6 +814,19 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     />
                   </SettingsRow>
                 )}
+                <SettingsRow icon='chat_bubble' label={language === 'AR' ? 'نمط التلميحات' : 'Tooltip Style'}>
+                  <SegmentedControl
+                    value={tooltipStyle || 'default'}
+                    onChange={(v) => setTooltipStyle(v as 'default' | 'box')}
+                    size='xs'
+                    shape='pill'
+                    iconSize='--icon-settings'
+                    options={[
+                      { label: '', value: 'default', icon: 'play_arrow' },
+                      { label: '', value: 'box', icon: 'crop_square' },
+                    ]}
+                  />
+                </SettingsRow>
               </SubmenuSection>
 
               <div className='border-t border-(--border-divider) my-0.5 opacity-50' />

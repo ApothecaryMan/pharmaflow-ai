@@ -18,7 +18,9 @@ type BackgroundPattern =
   | 'none'
   | 'dots'
   | 'grid'
+  | 'thick-grid'
   | 'blueprint'
+  | 'rings'
   | 'mesh'
   | 'noise'
   | 'mandala'
@@ -26,8 +28,9 @@ type BackgroundPattern =
   | 'corners'
   | 'cross'
   | 'stars'
+  | 'glowing-stars'
+  | 'hearts'
   | 'bricks'
-  | 'polka'
   | 'abstract'
   | 'circuit'
   | 'ornate'
@@ -39,7 +42,10 @@ export interface ThemeState {
   vividBg: 'muted' | 'subtle' | 'vivid';
   backgroundPattern: BackgroundPattern;
   backgroundPatternOpacity: number;
+  backgroundPatternScale: number;
+  backgroundPatternBlur: number;
   backgroundPatternUseThemeColor: boolean;
+  tooltipStyle: 'default' | 'box';
 }
 
 export interface ThemeContextType extends ThemeState {
@@ -48,7 +54,10 @@ export interface ThemeContextType extends ThemeState {
   setVividBg: (vivid: 'muted' | 'subtle' | 'vivid') => void;
   setBackgroundPattern: (pattern: BackgroundPattern) => void;
   setBackgroundPatternOpacity: (opacity: number) => void;
+  setBackgroundPatternScale: (scale: number) => void;
+  setBackgroundPatternBlur: (blur: number) => void;
   setBackgroundPatternUseThemeColor: (use: boolean) => void;
+  setTooltipStyle: (style: 'default' | 'box') => void;
   availableThemes: ThemeColor[];
 }
 
@@ -58,7 +67,10 @@ const defaultState: ThemeState = {
   vividBg: 'subtle',
   backgroundPattern: 'none',
   backgroundPatternOpacity: 30,
+  backgroundPatternScale: 0,
+  backgroundPatternBlur: 0,
   backgroundPatternUseThemeColor: true,
+  tooltipStyle: 'default',
 };
 
 function loadState(): ThemeState {
@@ -83,8 +95,20 @@ function loadState(): ThemeState {
       'pharma_backgroundPatternOpacity',
       null
     );
+    const backgroundPatternScale = storage.get<number | null>(
+      'pharma_backgroundPatternScale',
+      null
+    );
+    const backgroundPatternBlur = storage.get<number | null>(
+      'pharma_backgroundPatternBlur',
+      null
+    );
     const backgroundPatternUseThemeColor = storage.get<boolean | null>(
       'pharma_backgroundPatternUseThemeColor',
+      null
+    );
+    const tooltipStyle = storage.get<'default' | 'box' | null>(
+      'pharma_tooltipStyle',
       null
     );
 
@@ -94,8 +118,11 @@ function loadState(): ThemeState {
       vividBg: vividBg ?? defaultState.vividBg,
       backgroundPattern: backgroundPattern ?? defaultState.backgroundPattern,
       backgroundPatternOpacity: backgroundPatternOpacity ?? defaultState.backgroundPatternOpacity,
+      backgroundPatternScale: backgroundPatternScale ?? defaultState.backgroundPatternScale,
+      backgroundPatternBlur: backgroundPatternBlur ?? defaultState.backgroundPatternBlur,
       backgroundPatternUseThemeColor:
         backgroundPatternUseThemeColor ?? defaultState.backgroundPatternUseThemeColor,
+      tooltipStyle: tooltipStyle ?? defaultState.tooltipStyle,
     };
   } catch {
     return defaultState;
@@ -128,8 +155,26 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [state.backgroundPatternOpacity]);
 
   useEffect(() => {
+    storage.set('pharma_backgroundPatternScale', state.backgroundPatternScale);
+    // Apply CSS variable for scaling: -100 maps to 0.5x, +100 maps to 2x
+    const scale = state.backgroundPatternScale;
+    const scaleFactor = scale >= 0 ? 1 + scale / 100 : 1 / (1 - scale / 100);
+    document.documentElement.style.setProperty('--bg-pattern-scale', String(scaleFactor));
+  }, [state.backgroundPatternScale]);
+
+  useEffect(() => {
+    storage.set('pharma_backgroundPatternBlur', state.backgroundPatternBlur);
+    // Apply CSS variable for blur
+    document.documentElement.style.setProperty('--bg-pattern-blur', `${state.backgroundPatternBlur}px`);
+  }, [state.backgroundPatternBlur]);
+
+  useEffect(() => {
     storage.set('pharma_backgroundPatternUseThemeColor', state.backgroundPatternUseThemeColor);
   }, [state.backgroundPatternUseThemeColor]);
+
+  useEffect(() => {
+    storage.set('pharma_tooltipStyle', state.tooltipStyle);
+  }, [state.tooltipStyle]);
 
   useEffect(() => {
     if (state.darkMode) {
@@ -159,12 +204,24 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setState((prev) => ({ ...prev, backgroundPatternOpacity }));
   }, []);
 
+  const setBackgroundPatternScale = useCallback((backgroundPatternScale: number) => {
+    setState((prev) => ({ ...prev, backgroundPatternScale }));
+  }, []);
+
+  const setBackgroundPatternBlur = useCallback((backgroundPatternBlur: number) => {
+    setState((prev) => ({ ...prev, backgroundPatternBlur }));
+  }, []);
+
   const setBackgroundPatternUseThemeColor = useCallback(
     (backgroundPatternUseThemeColor: boolean) => {
       setState((prev) => ({ ...prev, backgroundPatternUseThemeColor }));
     },
     []
   );
+
+  const setTooltipStyle = useCallback((tooltipStyle: 'default' | 'box') => {
+    setState((prev) => ({ ...prev, tooltipStyle }));
+  }, []);
 
   const value = useMemo<ThemeContextType>(
     () => ({
@@ -174,7 +231,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setVividBg,
       setBackgroundPattern,
       setBackgroundPatternOpacity,
+      setBackgroundPatternScale,
+      setBackgroundPatternBlur,
       setBackgroundPatternUseThemeColor,
+      setTooltipStyle,
       availableThemes: THEMES,
     }),
     [
@@ -184,6 +244,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setVividBg,
       setBackgroundPattern,
       setBackgroundPatternOpacity,
+      setBackgroundPatternScale,
+      setBackgroundPatternBlur,
       setBackgroundPatternUseThemeColor,
     ]
   );
