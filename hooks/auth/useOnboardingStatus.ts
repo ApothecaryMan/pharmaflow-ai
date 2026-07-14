@@ -7,12 +7,11 @@ export type OnboardingStep = 1 | 2 | 3 | 0;
 
 export const useOnboardingStatus = (isAuthenticated?: boolean) => {
   const [activeStep, setActiveStep] = useState<OnboardingStep>(0);
-  const [isChecking, setIsChecking] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [hasChecked, setHasChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const checkStatus = async () => {
-    if (isChecking) return;
     try {
       setIsChecking(true);
       setError(null);
