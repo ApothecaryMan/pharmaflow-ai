@@ -865,7 +865,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color: _color,
                   <div
                     className={`relative bg-gray-50 dark:bg-muted/30 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
                   >
-                    /* biome-ignore lint/security/noDangerouslySetInnerHtml: user-uploaded logo SVG */
+                    {/* biome-ignore lint/security/noDangerouslySetInnerHtml: user-uploaded logo SVG */}
                     <div
                       className={`w-full h-full flex items-center justify-center overflow-hidden ${options.hideLogo ? 'opacity-30 grayscale' : ''}`}
                       dangerouslySetInnerHTML={{ __html: options.logoSvgCode }}
