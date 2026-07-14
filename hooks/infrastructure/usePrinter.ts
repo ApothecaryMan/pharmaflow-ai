@@ -85,109 +85,6 @@ export const usePrinter = (): UsePrinterResult => {
     };
   }, []);
 
-  // Auto-connect if enabled, disconnect if disabled
-  useEffect(() => {
-    if (settings.enabled) {
-      handleConnect();
-    } else {
-      handleDisconnect();
-    }
-  }, [settings.enabled]);
-
-  // Periodic status check
-  useEffect(() => {
-    const checkStatus = () => {
-      if (isMounted.current) {
-        setStatus(getStatus());
-      }
-    };
-
-    // Check immediately
-    checkStatus();
-
-    // Check every 5 seconds
-    const interval = setInterval(checkStatus, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Sync Tauri printer ready status for TitleBar if possible
-  useEffect(() => {
-    if (isTauri()) {
-      const checkTauriPrinter = async () => {
-        const printers = await printerService.getAvailablePrinters();
-        const selected = localStorage.getItem('desktop_receipt_printer');
-        // If we are in Tauri and have a selected printer, assume it's ready for now
-        // This is a simplification
-      };
-      checkTauriPrinter();
-    }
-  }, []);
-
-  /**
-   * Connect to QZ Tray
-   */
-  const handleConnect = useCallback(async () => {
-    if (isConnecting) return;
-
-    if (isConnected()) {
-      if (isMounted.current) {
-        setStatus('connected');
-        await handleRefreshPrinters();
-      }
-      return;
-    }
-
-    setIsConnecting(true);
-    setStatus('connecting');
-
-    try {
-      await loadQzTray();
-      await connect();
-
-      if (isMounted.current) {
-        setStatus('connected');
-        // Refresh printer list on connect
-        await handleRefreshPrinters();
-      }
-    } catch (err: any) {
-      const errorMsg = err?.message || String(err);
-
-      // Handle known connection errors quietly
-      if (
-        errorMsg.includes('Connection blocked by client') ||
-        errorMsg.includes('Connection refused') ||
-        errorMsg.includes('failed to connect')
-      ) {
-        console.warn(`[Printer] QZ Tray unreachable: ${errorMsg}. Ensure QZ Tray is running.`);
-      } else {
-        console.error('Failed to connect to QZ Tray:', err);
-      }
-
-      if (isMounted.current) {
-        setStatus('not_installed');
-      }
-    } finally {
-      if (isMounted.current) {
-        setIsConnecting(false);
-      }
-    }
-  }, [isConnecting]);
-
-  /**
-   * Disconnect from QZ Tray
-   */
-  const handleDisconnect = useCallback(async () => {
-    try {
-      await disconnect();
-      if (isMounted.current) {
-        setStatus('disconnected');
-      }
-    } catch (err) {
-      console.error('Failed to disconnect from QZ Tray:', err);
-    }
-  }, []);
-
   /**
    * Update printer settings
    */
@@ -259,6 +156,109 @@ export const usePrinter = (): UsePrinterResult => {
       }
     }
   }, [handleUpdateSettings]);
+
+  /**
+   * Connect to QZ Tray
+   */
+  const handleConnect = useCallback(async () => {
+    if (isConnecting) return;
+
+    if (isConnected()) {
+      if (isMounted.current) {
+        setStatus('connected');
+        await handleRefreshPrinters();
+      }
+      return;
+    }
+
+    setIsConnecting(true);
+    setStatus('connecting');
+
+    try {
+      await loadQzTray();
+      await connect();
+
+      if (isMounted.current) {
+        setStatus('connected');
+        // Refresh printer list on connect
+        await handleRefreshPrinters();
+      }
+    } catch (err: any) {
+      const errorMsg = err?.message || String(err);
+
+      // Handle known connection errors quietly
+      if (
+        errorMsg.includes('Connection blocked by client') ||
+        errorMsg.includes('Connection refused') ||
+        errorMsg.includes('failed to connect')
+      ) {
+        console.warn(`[Printer] QZ Tray unreachable: ${errorMsg}. Ensure QZ Tray is running.`);
+      } else {
+        console.error('Failed to connect to QZ Tray:', err);
+      }
+
+      if (isMounted.current) {
+        setStatus('not_installed');
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsConnecting(false);
+      }
+    }
+  }, [isConnecting, handleRefreshPrinters]);
+
+  /**
+   * Disconnect from QZ Tray
+   */
+  const handleDisconnect = useCallback(async () => {
+    try {
+      await disconnect();
+      if (isMounted.current) {
+        setStatus('disconnected');
+      }
+    } catch (err) {
+      console.error('Failed to disconnect from QZ Tray:', err);
+    }
+  }, []);
+
+  // Auto-connect if enabled, disconnect if disabled
+  useEffect(() => {
+    if (settings.enabled) {
+      handleConnect();
+    } else {
+      handleDisconnect();
+    }
+  }, [settings.enabled, handleConnect, handleDisconnect]);
+
+  // Periodic status check
+  useEffect(() => {
+    const checkStatus = () => {
+      if (isMounted.current) {
+        setStatus(getStatus());
+      }
+    };
+
+    // Check immediately
+    checkStatus();
+
+    // Check every 5 seconds
+    const interval = setInterval(checkStatus, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Sync Tauri printer ready status for TitleBar if possible
+  useEffect(() => {
+    if (isTauri()) {
+      const checkTauriPrinter = async () => {
+        const _printers = await printerService.getAvailablePrinters();
+        const _selected = localStorage.getItem('desktop_receipt_printer');
+        // If we are in Tauri and have a selected printer, assume it's ready for now
+        // This is a simplification
+      };
+      checkTauriPrinter();
+    }
+  }, []);
 
   // Fetch printers on mount if already connected
   useEffect(() => {

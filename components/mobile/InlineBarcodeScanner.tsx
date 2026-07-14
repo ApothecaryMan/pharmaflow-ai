@@ -18,7 +18,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   isActive = true,
 }) => {
   const { language } = useTypography();
-  const t = TRANSLATIONS[language];
+  const _t = TRANSLATIONS[language];
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -36,72 +36,21 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    if (isActive) {
-      initScanner();
-    }
-    return () => {
-      stopScanner();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isActive) {
-      if (!streamRef.current) {
-        initScanner();
-      } else if (isScanCompleteRef.current) {
-        startDetection();
-      }
-    } else {
-      stopScanner();
-      setIsReady(false);
-    }
-  }, [isActive]);
-
-  const initScanner = async () => {
-    try {
-      setError(null);
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error(language === 'AR' ? 'الكاميرا غير متوفرة' : 'Camera not available');
-      }
-      if (!detectorRef.current) {
-        detectorRef.current = new BarcodeDetector({
-          formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e'],
-        });
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      });
-
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setIsReady(true);
-        startDetection();
-
-        const track = stream.getVideoTracks()[0];
-        if (track) {
-          const capabilities = track.getCapabilities() as any;
-          if (capabilities.torch) {
-            setHasFlash(true);
-          }
+  const toggleFlash = async (forceState?: boolean) => {
+    const newState = forceState !== undefined ? forceState : !isFlashOn;
+    if (streamRef.current) {
+      const track = streamRef.current.getVideoTracks()[0];
+      if (track) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ torch: newState }],
+          } as any);
+          isFlashOnRef.current = newState;
+          setIsFlashOn(newState);
+        } catch (err) {
+          console.error('Failed to toggle flash:', err);
         }
       }
-    } catch (err: any) {
-      console.error('Failed to start scanner:', err);
-      let errorMsg = language === 'AR' ? 'فشل تشغيل الكاميرا.' : 'Failed to start camera.';
-
-      if (err.name === 'NotAllowedError') {
-        errorMsg = language === 'AR' ? 'الكاميرا مرفوضة.' : 'Camera access denied.';
-      }
-      setError(errorMsg);
     }
   };
 
@@ -190,7 +139,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
             return;
           }
         }
-      } catch (err) {
+      } catch (_err) {
       } finally {
         isProcessingRef.current = false;
         // Since we return inside the success block, the finally block will only run
@@ -203,23 +152,74 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
     animationFrameRef.current = requestAnimationFrame(detectFrame);
   };
 
-  const toggleFlash = async (forceState?: boolean) => {
-    const newState = forceState !== undefined ? forceState : !isFlashOn;
-    if (streamRef.current) {
-      const track = streamRef.current.getVideoTracks()[0];
-      if (track) {
-        try {
-          await track.applyConstraints({
-            advanced: [{ torch: newState }],
-          } as any);
-          isFlashOnRef.current = newState;
-          setIsFlashOn(newState);
-        } catch (err) {
-          console.error('Failed to toggle flash:', err);
+  const initScanner = async () => {
+    try {
+      setError(null);
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error(language === 'AR' ? 'الكاميرا غير متوفرة' : 'Camera not available');
+      }
+      if (!detectorRef.current) {
+        detectorRef.current = new BarcodeDetector({
+          formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e'],
+        });
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setIsReady(true);
+        startDetection();
+
+        const track = stream.getVideoTracks()[0];
+        if (track) {
+          const capabilities = track.getCapabilities() as any;
+          if (capabilities.torch) {
+            setHasFlash(true);
+          }
         }
       }
+    } catch (err: any) {
+      console.error('Failed to start scanner:', err);
+      let errorMsg = language === 'AR' ? 'فشل تشغيل الكاميرا.' : 'Failed to start camera.';
+
+      if (err.name === 'NotAllowedError') {
+        errorMsg = language === 'AR' ? 'الكاميرا مرفوضة.' : 'Camera access denied.';
+      }
+      setError(errorMsg);
     }
   };
+
+  useEffect(() => {
+    if (isActive) {
+      initScanner();
+    }
+    return () => {
+      stopScanner();
+    };
+  }, [initScanner, isActive, stopScanner]);
+
+  useEffect(() => {
+    if (isActive) {
+      if (!streamRef.current) {
+        initScanner();
+      } else if (isScanCompleteRef.current) {
+        startDetection();
+      }
+    } else {
+      stopScanner();
+      setIsReady(false);
+    }
+  }, [isActive, initScanner, startDetection, stopScanner]);
 
   return (
     <div
@@ -293,6 +293,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
         <button
           onClick={onClose}
           className='w-10 h-10 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-white hover:text-black transition-colors flex items-center justify-center shadow-lg border border-white/10'
+          type='button'
         >
           <span className='material-symbols-rounded text-xl'>close</span>
         </button>
@@ -305,6 +306,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
                 ? 'bg-yellow-400 text-black shadow-yellow-400/30'
                 : 'bg-black/50 text-white hover:bg-white/20'
             }`}
+            type='button'
           >
             <span className='material-symbols-rounded text-xl'>
               {isFlashOn ? 'flashlight_off' : 'flashlight_on'}

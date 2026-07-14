@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useAuthStore } from '../../../../stores/authStore';
 import type { CartItem, Customer, Sale } from '../../../../types';
@@ -238,6 +237,7 @@ export const usePOSCheckout = ({
       deliveryFee,
       refreshShifts,
       activeBranch,
+      activeBranchId,
     ]
   );
 

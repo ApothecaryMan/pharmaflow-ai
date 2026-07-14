@@ -1,6 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-import path from 'path';
 
 // --- Configuration ---
 const ENV_PATH = path.resolve('.env');
@@ -11,8 +11,8 @@ envContent.split('\n').forEach((line) => {
   if (key && value) env[key.trim()] = value.trim();
 });
 
-const supabaseUrl = env['VITE_SUPABASE_URL'];
-const supabaseKey = env['VITE_SUPABASE_ANON_KEY'];
+const supabaseUrl = env.VITE_SUPABASE_URL;
+const supabaseKey = env.VITE_SUPABASE_ANON_KEY;
 const BRANCH_ID = '20864e85-6a6e-4b4b-a44c-b87fe50ecb7b';
 
 if (!supabaseUrl || !supabaseKey) {
@@ -55,7 +55,7 @@ async function seed() {
         // A. Global Drug (Optional fallback if table doesn't exist)
         let globalDrugId = null;
         try {
-          const { data: gData, error: gError } = await supabase
+          const { data: gData, error: _gError } = await supabase
             .from('global_drugs')
             .upsert(
               {
@@ -77,7 +77,7 @@ async function seed() {
             .maybeSingle();
 
           if (gData) globalDrugId = gData.id;
-        } catch (e) {
+        } catch (_e) {
           console.warn(`  ⚠️ Global Catalog skipped for ${item.name}`);
         }
 

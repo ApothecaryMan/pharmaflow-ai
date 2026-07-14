@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   Area,
   AreaChart,
@@ -11,18 +11,14 @@ import {
   Funnel,
   FunnelChart,
   LabelList,
-  Legend,
   Line,
   LineChart,
   Pie,
   PieChart,
-  RadialBar,
-  RadialBarChart,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
-  Treemap,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -199,7 +195,7 @@ const funnelData = [
 const gaugeData = [{ name: 'Target', value: 78, fill: '#10b981' }];
 
 // 14. Treemap - Category Distribution
-const treemapData = [
+const _treemapData = [
   { name: 'Medicine', size: 4500, fill: '#3b82f6' },
   { name: 'Cosmetics', size: 3200, fill: '#8b5cf6' },
   { name: 'Equipment', size: 2100, fill: '#10b981' },
@@ -232,7 +228,7 @@ const CHART_COLORS = {
 
 // ========== COMPONENT ==========
 export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
-  color,
+  color: _color,
   t,
   language,
 }) => {
@@ -476,8 +472,8 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                   outerRadius={60}
                   strokeWidth={0}
                 >
-                  {customerSegmentsData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {customerSegmentsData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<SimpleTooltip />} />
@@ -520,8 +516,8 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                   outerRadius={60}
                   strokeWidth={0}
                 >
-                  {stockStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {stockStatusData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<SimpleTooltip />} />
@@ -851,8 +847,12 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                           <p className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2'>
                             {label}
                           </p>
-                          {payload.map((entry: any, idx: number) => (
-                            <p key={idx} className='text-xs' style={{ color: entry.fill }}>
+                          {payload.map((entry: any) => (
+                            <p
+                              key={entry.name}
+                              className='text-xs'
+                              style={{ color: entry.fill }}
+                            >
                               {entry.name}:{' '}
                               <span className='font-bold'>${entry.value.toLocaleString()}</span>
                             </p>
@@ -913,7 +913,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
               </FunnelChart>
             </ResponsiveContainer>
             <div className='flex-1 space-y-1.5 ps-2'>
-              {funnelData.map((item, idx) => (
+              {funnelData.map((item, _idx) => (
                 <div key={item.name} className='flex items-center gap-2 text-xs'>
                   <div
                     className='w-2.5 h-2.5 rounded-full shrink-0'
@@ -938,6 +938,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
           <div className='flex-1 flex flex-col items-center justify-center relative w-full mt-4'>
             <div className='w-56 h-32 relative'>
               <svg viewBox='0 0 100 55' className='w-full h-full'>
+                <title>Gauge</title>
                 <defs>
                   <linearGradient id='gaugeGradient' x1='0%' y1='0%' x2='100%' y2='0%'>
                     <stop offset='0%' stopColor='#10b981' />
@@ -1040,8 +1041,8 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                     { fill: '#10b981' },
                     { fill: '#f59e0b' },
                     { fill: '#ef4444' },
-                  ].map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ].map((entry) => (
+                    <Cell key={entry.fill} fill={entry.fill} />
                   ))}
                 </Bar>
               </BarChart>

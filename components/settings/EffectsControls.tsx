@@ -1,6 +1,7 @@
-import React, { useMemo, useCallback } from 'react';
-import { Switch } from '../common/Switch';
+import type React from 'react';
+import { useCallback, useMemo } from 'react';
 import { PillSlider } from '../common/PillSlider';
+import { Switch } from '../common/Switch';
 
 const gradientPct = (val: number, min: number, max: number) =>
   ((val - min) / (max - min || 1)) * 100;
@@ -31,7 +32,10 @@ function tokenize(str: string): string[] {
     if (ch === '(') depth++;
     if (ch === ')') depth--;
     if (/\s/.test(ch) && depth === 0) {
-      if (current) { out.push(current); current = ''; }
+      if (current) {
+        out.push(current);
+        current = '';
+      }
     } else {
       current += ch;
     }
@@ -42,10 +46,14 @@ function tokenize(str: string): string[] {
 
 const isLength = (t: string) => /^-?\d+(\.\d+)?(px|rem|em)?$/.test(t);
 
-const ColorField: React.FC<{ value: string; onChange: (v: string) => void; className?: string }> = ({
-  value, onChange, className = '',
-}) => (
-  <div className={`flex items-center bg-(--bg-input) border border-(--border-divider) rounded-lg p-1 px-2 gap-2 ${className}`}>
+const ColorField: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}> = ({ value, onChange, className = '' }) => (
+  <div
+    className={`flex items-center bg-(--bg-input) border border-(--border-divider) rounded-lg p-1 px-2 gap-2 ${className}`}
+  >
     <input
       type='color'
       value={/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value) ? value : '#000000'}
@@ -63,8 +71,13 @@ const ColorField: React.FC<{ value: string; onChange: (v: string) => void; class
 );
 
 const MiniSlider: React.FC<{
-  label: string; min: number; max: number; step?: number; value: number;
-  unit?: string; onChange: (v: number) => void;
+  label: string;
+  min: number;
+  max: number;
+  step?: number;
+  value: number;
+  unit?: string;
+  onChange: (v: number) => void;
 }> = ({ label, min, max, step = 1, value, unit = '', onChange }) => (
   <div className='flex items-center justify-between gap-2'>
     <span className='text-[10px] font-medium text-(--text-tertiary) w-14 shrink-0'>{label}</span>
@@ -92,7 +105,14 @@ interface ShadowLayer {
   color: string;
 }
 
-const DEFAULT_LAYER: ShadowLayer = { inset: false, x: 0, y: 4, blur: 12, spread: 0, color: 'rgba(15, 23, 42, 0.18)' };
+const DEFAULT_LAYER: ShadowLayer = {
+  inset: false,
+  x: 0,
+  y: 4,
+  blur: 12,
+  spread: 0,
+  color: 'rgba(15, 23, 42, 0.18)',
+};
 
 function parseShadowLayer(raw: string): ShadowLayer {
   const tokens = tokenize(raw);
@@ -100,8 +120,14 @@ function parseShadowLayer(raw: string): ShadowLayer {
   const lengths: number[] = [];
   let color = '';
   for (const t of tokens) {
-    if (/^inset$/i.test(t)) { inset = true; continue; }
-    if (isLength(t)) { lengths.push(parseFloat(t)); continue; }
+    if (/^inset$/i.test(t)) {
+      inset = true;
+      continue;
+    }
+    if (isLength(t)) {
+      lengths.push(parseFloat(t));
+      continue;
+    }
     if (!color) color = t;
   }
   const [x = 0, y = 0, blur = 0, spread = 0] = lengths;
@@ -112,16 +138,22 @@ function formatShadowLayer(l: ShadowLayer): string {
   return `${l.inset ? 'inset ' : ''}${l.x}px ${l.y}px ${l.blur}px ${l.spread}px ${l.color}`;
 }
 
-export const ShadowBuilder: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
+export const ShadowBuilder: React.FC<{ value: string; onChange: (v: string) => void }> = ({
+  value,
+  onChange,
+}) => {
   const layers = useMemo<ShadowLayer[]>(() => {
     const raw = (value || '').trim();
     if (!raw) return [];
     return splitTopLevel(raw, ',').map(parseShadowLayer);
   }, [value]);
 
-  const commit = useCallback((next: ShadowLayer[]) => {
-    onChange(next.map(formatShadowLayer).join(', '));
-  }, [onChange]);
+  const commit = useCallback(
+    (next: ShadowLayer[]) => {
+      onChange(next.map(formatShadowLayer).join(', '));
+    },
+    [onChange]
+  );
 
   const updateLayer = (idx: number, patch: Partial<ShadowLayer>) => {
     const next = layers.map((l, i) => (i === idx ? { ...l, ...patch } : l));
@@ -145,30 +177,72 @@ export const ShadowBuilder: React.FC<{ value: string; onChange: (v: string) => v
       )}
 
       {layers.map((layer, idx) => (
-        <div key={idx} className='rounded-lg border border-(--border-divider) bg-(--bg-input)/40 p-2.5 space-y-2'>
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: layers have no stable id
+          key={`layer-${idx}`}
+          className='rounded-lg border border-(--border-divider) bg-(--bg-input)/40 p-2.5 space-y-2'
+        >
           <div className='flex items-center justify-between'>
             <span className='text-[10px] font-bold text-(--text-secondary)'>Layer {idx + 1}</span>
             <div className='flex items-center gap-2'>
               <span className='text-[10px] text-(--text-tertiary)'>Inset</span>
-              <Switch checked={layer.inset} onChange={(checked) => updateLayer(idx, { inset: checked })} />
+              <Switch
+                checked={layer.inset}
+                onChange={(checked) => updateLayer(idx, { inset: checked })}
+              />
               <button
                 onClick={() => removeLayer(idx)}
                 className='w-5 h-5 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center'
                 title='Remove layer'
+                type='button'
               >
                 <span className='material-symbols-rounded text-[13px]'>close</span>
               </button>
             </div>
           </div>
 
-          <MiniSlider label='X' min={-50} max={50} value={layer.x} unit='px' onChange={(v) => updateLayer(idx, { x: v })} />
-          <MiniSlider label='Y' min={-50} max={50} value={layer.y} unit='px' onChange={(v) => updateLayer(idx, { y: v })} />
-          <MiniSlider label='Blur' min={0} max={100} value={layer.blur} unit='px' onChange={(v) => updateLayer(idx, { blur: v })} />
-          <MiniSlider label='Spread' min={-50} max={50} value={layer.spread} unit='px' onChange={(v) => updateLayer(idx, { spread: v })} />
+          <MiniSlider
+            label='X'
+            min={-50}
+            max={50}
+            value={layer.x}
+            unit='px'
+            onChange={(v) => updateLayer(idx, { x: v })}
+          />
+          <MiniSlider
+            label='Y'
+            min={-50}
+            max={50}
+            value={layer.y}
+            unit='px'
+            onChange={(v) => updateLayer(idx, { y: v })}
+          />
+          <MiniSlider
+            label='Blur'
+            min={0}
+            max={100}
+            value={layer.blur}
+            unit='px'
+            onChange={(v) => updateLayer(idx, { blur: v })}
+          />
+          <MiniSlider
+            label='Spread'
+            min={-50}
+            max={50}
+            value={layer.spread}
+            unit='px'
+            onChange={(v) => updateLayer(idx, { spread: v })}
+          />
 
           <div className='flex items-center gap-2'>
-            <span className='text-[10px] font-medium text-(--text-tertiary) w-14 shrink-0'>Color</span>
-            <ColorField value={layer.color} onChange={(v) => updateLayer(idx, { color: v })} className='flex-1' />
+            <span className='text-[10px] font-medium text-(--text-tertiary) w-14 shrink-0'>
+              Color
+            </span>
+            <ColorField
+              value={layer.color}
+              onChange={(v) => updateLayer(idx, { color: v })}
+              className='flex-1'
+            />
           </div>
         </div>
       ))}
@@ -176,6 +250,7 @@ export const ShadowBuilder: React.FC<{ value: string; onChange: (v: string) => v
       <button
         onClick={addLayer}
         className='w-full text-[11px] font-semibold text-primary-500 border border-dashed border-primary-500/40 rounded-lg py-1.5 hover:bg-primary-500/5 transition-colors flex items-center justify-center gap-1'
+        type='button'
       >
         <span className='material-symbols-rounded text-[14px]'>add</span>
         Add Shadow Layer
@@ -209,6 +284,7 @@ function parseFilterString(raw: string): Record<string, number> {
   const map: Record<string, number> = {};
   const re = /([\w-]+)\(([^)]*)\)/g;
   let m: RegExpExecArray | null;
+  // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
   while ((m = re.exec(raw || ''))) {
     map[m[1]] = parseFloat(m[2]);
   }
@@ -216,8 +292,7 @@ function parseFilterString(raw: string): Record<string, number> {
 }
 
 function formatFilterString(map: Record<string, number>): string {
-  return FILTER_FUNCTIONS
-    .filter((f) => map[f.key] !== undefined)
+  return FILTER_FUNCTIONS.filter((f) => map[f.key] !== undefined)
     .map((f) => `${f.key}(${map[f.key]}${f.unit})`)
     .join(' ');
 }
@@ -266,7 +341,9 @@ export const FilterBuilder: React.FC<{
           return (
             <div key={fn.key} className='flex items-center gap-2'>
               <Switch checked={isOn} onChange={(checked) => toggle(fn, checked)} />
-              <span className={`text-[10px] font-medium w-16 shrink-0 ${isOn ? 'text-(--text-primary)' : 'text-(--text-tertiary)'}`}>
+              <span
+                className={`text-[10px] font-medium w-16 shrink-0 ${isOn ? 'text-(--text-primary)' : 'text-(--text-tertiary)'}`}
+              >
                 {fn.label}
               </span>
               <div className={`flex-1 ${isOn ? '' : 'opacity-30 pointer-events-none'}`}>
@@ -292,11 +369,27 @@ export const FilterBuilder: React.FC<{
 };
 
 const BLEND_MODES = [
-  '', 'normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten',
-  'color-dodge', 'color-burn', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity',
+  '',
+  'normal',
+  'multiply',
+  'screen',
+  'overlay',
+  'darken',
+  'lighten',
+  'color-dodge',
+  'color-burn',
+  'difference',
+  'exclusion',
+  'hue',
+  'saturation',
+  'color',
+  'luminosity',
 ];
 
-export const BlendModePicker: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => (
+export const BlendModePicker: React.FC<{ value: string; onChange: (v: string) => void }> = ({
+  value,
+  onChange,
+}) => (
   <div className='grid grid-cols-3 gap-1.5'>
     {BLEND_MODES.map((mode) => {
       const isActive = (value || '') === mode;
@@ -305,8 +398,11 @@ export const BlendModePicker: React.FC<{ value: string; onChange: (v: string) =>
           key={mode || 'default'}
           onClick={() => onChange(mode)}
           className={`relative rounded-lg overflow-hidden border h-11 flex items-end justify-center transition-colors ${
-            isActive ? 'border-primary-500 ring-1 ring-primary-500' : 'border-(--border-divider) hover:border-primary-500/40'
+            isActive
+              ? 'border-primary-500 ring-1 ring-primary-500'
+              : 'border-(--border-divider) hover:border-primary-500/40'
           }`}
+          type='button'
         >
           <div className='absolute inset-0 bg-gradient-to-br from-rose-500 to-sky-500' />
           <div

@@ -11,7 +11,6 @@
 
 import { printerService } from '../../services/infrastructure/printerService';
 import { isTauri } from '../platform';
-import { getPrinterSettings } from '../qzPrinter';
 import type { PrintOrientation } from './printShell';
 import { mmToPopupSize, openPrintWindow } from './printWindow';
 

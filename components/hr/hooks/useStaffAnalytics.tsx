@@ -1,6 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { Customer, Employee, Sale, ThemeColor } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
 import {
   BASKET_SCORES,
@@ -33,7 +32,7 @@ export const useStaffAnalytics = ({
   employees,
   customers,
   language,
-  color,
+  color: _color,
   getInitials,
   getVerifiedDate,
 }: UseStaffAnalyticsParams): UseStaffAnalyticsReturn => {
@@ -655,10 +654,10 @@ export const useStaffAnalytics = ({
                         orange: 'badge-orange',
                       };
                       const badgeClass = badgeClassMap[title.color] || 'badge-neutral';
-                      const showIconOnly = staff.titles!.length > 1;
+                      const showIconOnly = staff.titles?.length > 1;
                       return (
                         <span
-                          key={i}
+                          key={`${title.type}-${i}`}
                           className={`gap-1 ${badgeClass} shadow-xs`}
                           title={title.label}
                         >
@@ -732,5 +731,5 @@ export const useStaffAnalytics = ({
     ];
 
     return { staffStats, achievements, performanceColumns };
-  }, [todaysSales, employees, customers, language, color, getInitials, getVerifiedDate]);
+  }, [todaysSales, employees, customers, language, getInitials, getVerifiedDate]);
 };

@@ -107,13 +107,14 @@ export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = (
         <div className='w-full bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md rounded-2xl border border-zinc-200/60 dark:border-zinc-800/50 p-6 shadow-sm mb-6'>
           {isAdmin ? (
             <div className={`space-y-4 ${isRtl ? 'text-right' : 'text-left'}`}>
-              <label className='block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2'>
+              <span className='block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2'>
                 {translations.selectBranch}
-              </label>
+              </span>
 
               {branches.length > 0 ? (
                 <div className='space-y-4'>
                   <div className='relative'>
+                    {/* biome-ignore lint/correctness/noRestrictedElements: project convention uses PosDropdown */}
                     <select
                       value={selectedBranchId}
                       onChange={(e) => setSelectedBranchId(e.target.value)}
@@ -139,6 +140,7 @@ export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = (
                     onClick={handleActivate}
                     disabled={!selectedBranchId || isActivating}
                     className='w-full h-11 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer'
+                    type='button'
                   >
                     {isActivating && (
                       <span className='material-symbols-rounded text-sm animate-spin'>
@@ -170,6 +172,7 @@ export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = (
           <button
             onClick={handleSwitchProfile}
             className='flex-1 min-w-[140px] h-10 px-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/30 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors flex items-center justify-center gap-2 cursor-pointer'
+            type='button'
           >
             <span className='material-symbols-rounded text-base'>switch_account</span>
             {translations.switchProfile}
@@ -178,6 +181,7 @@ export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = (
           <button
             onClick={handleSignOut}
             className='flex-1 min-w-[140px] h-10 px-5 rounded-xl border border-transparent bg-red-500/10 hover:bg-red-500/20 text-xs font-bold text-red-600 dark:text-red-400 transition-colors flex items-center justify-center gap-2 cursor-pointer'
+            type='button'
           >
             <span className='material-symbols-rounded text-base'>logout</span>
             {translations.signOut}

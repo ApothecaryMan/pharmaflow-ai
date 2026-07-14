@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { VIEW_NAVIGATION_MAP } from './shortcuts.constants';
-import type { KeyboardContextValue, PageShortcutMap, RegisteredShortcut, ShortcutScope } from './types';
-import { useBrowserOverride } from './useBrowserOverride';
+import type React from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useKeyboardStore } from '../../stores/keyboardStore';
+import { VIEW_NAVIGATION_MAP } from './shortcuts.constants';
+import type {
+  KeyboardContextValue,
+  PageShortcutMap,
+  RegisteredShortcut,
+  ShortcutScope,
+} from './types';
+import { useBrowserOverride } from './useBrowserOverride';
 
 export const KeyboardContext = createContext<KeyboardContextValue>(null as any);
 
@@ -40,9 +46,31 @@ const SPECIAL_KEYS: Record<string, string[]> = {
 function matchShortcut(e: KeyboardEvent, parsed: ParsedKey): boolean {
   if (e.ctrlKey !== parsed.ctrl) return false;
   if (e.altKey !== parsed.alt) return false;
-  
+
   if (e.shiftKey !== parsed.shift) {
-    const shiftChars = ['+', '?', ':', '{', '}', '"', '|', '<', '>', '~', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')'];
+    const shiftChars = [
+      '+',
+      '?',
+      ':',
+      '{',
+      '}',
+      '"',
+      '|',
+      '<',
+      '>',
+      '~',
+      '_',
+      '!',
+      '@',
+      '#',
+      '$',
+      '%',
+      '^',
+      '&',
+      '*',
+      '(',
+      ')',
+    ];
     if (!shiftChars.includes(parsed.key)) return false;
   }
 
@@ -108,10 +136,14 @@ export function KeyboardProvider({
         const { getCurrentWindow } = await import('@tauri-apps/api/window');
 
         await register('CommandOrControl+Shift+P', () => {
-          getCurrentWindow().show().then(() => getCurrentWindow().setFocus());
+          getCurrentWindow()
+            .show()
+            .then(() => getCurrentWindow().setFocus());
         });
         await register('CommandOrControl+Shift+K', () => {
-          getCurrentWindow().show().then(() => getCurrentWindow().setFocus());
+          getCurrentWindow()
+            .show()
+            .then(() => getCurrentWindow().setFocus());
           setCommandPaletteOpen(true);
         });
         cleanup = () => {
@@ -200,7 +232,7 @@ export function KeyboardProvider({
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [onNavigate, currentScopeProp]);
+  }, [onNavigate]);
 
   const contextValue = useMemo<KeyboardContextValue>(
     () => ({
@@ -212,7 +244,13 @@ export function KeyboardProvider({
       shortcutsOverlayOpen,
       setShortcutsOverlayOpen,
     }),
-    [currentScopeProp, registerShortcuts, getResolvedShortcut, commandPaletteOpen, shortcutsOverlayOpen]
+    [
+      currentScopeProp,
+      registerShortcuts,
+      getResolvedShortcut,
+      commandPaletteOpen,
+      shortcutsOverlayOpen,
+    ]
   );
 
   return <KeyboardContext.Provider value={contextValue}>{children}</KeyboardContext.Provider>;

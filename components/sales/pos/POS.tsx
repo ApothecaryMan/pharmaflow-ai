@@ -3,30 +3,29 @@ import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useAlert, useSettings } from '../../../context';
 import { useInventorySearch } from '../../../hooks/inventory/useInventorySearch';
+import { usePageShortcuts } from '../../../hooks/keyboard';
+import { useCustomers } from '../../../hooks/queries/useCustomersQuery';
+import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
+import { useInventory } from '../../../hooks/queries/useInventoryQuery';
+import { useRecentSales } from '../../../hooks/queries/useSalesQuery';
 import { usePOSTabs } from '../../../hooks/sales/usePOSTabs';
+import { useSalesHandlers } from '../../../hooks/sales/useSalesHandlers';
 import { useShift } from '../../../hooks/sales/useShift'; // Import useShift
+import { useHandlerInfrastructure } from '../../../hooks/useHandlerInfrastructure';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import { permissionsService } from '../../../services/auth/permissionsService';
-import { batchService, getGroupingKey } from '../../../services/inventory/batchService';
+import { batchService } from '../../../services/inventory/batchService';
 import { pricingService } from '../../../services/sales/pricingService';
 import { inventorySearchEngine } from '../../../services/search/drugSearchService';
 import { useAuthStore } from '../../../stores/authStore';
-import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
-import { useInventory } from '../../../hooks/queries/useInventoryQuery';
-import { useCustomers } from '../../../hooks/queries/useCustomersQuery';
-import { useRecentSales } from '../../../hooks/queries/useSalesQuery';
-import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
-import { useHandlerInfrastructure } from '../../../hooks/useHandlerInfrastructure';
-import { useSalesHandlers } from '../../../hooks/sales/useSalesHandlers';
-import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
+import type { Customer, Drug, Language } from '../../../types';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 import { formatExpiryDate, getExpiryColorClass } from '../../../utils/expiryUtils';
 import { formatStock } from '../../../utils/inventory';
 import { money } from '../../../utils/money';
 import { resolveDisplayStock } from '../../../utils/stockUtils';
-
 import { useContextMenu } from '../../common/ContextMenu';
 import { HoverDropdown } from '../../common/HoverDropdown';
-import { usePageShortcuts } from '../../../hooks/keyboard';
 import { usePosSounds } from '../../common/hooks/usePosSounds';
 import { Modal } from '../../common/Modal';
 import { SearchEngineInput } from '../../common/SearchEngineInput';
@@ -65,7 +64,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
   const { data: sales = [] } = useRecentSales(activeBranchId);
   const { success, error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
-  const { textTransform, darkMode } = useSettings();
+  const { textTransform, darkMode: _darkMode } = useSettings();
   const { getVerifiedDate, addNotification } = useStatusBar();
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
@@ -99,34 +98,34 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     search,
     setSearch,
     stockFilter,
-    setStockFilter,
+    setStockFilter: _setStockFilter,
     selectedCategory,
-    setSelectedCategory,
-    activeFilterDropdown,
-    setActiveFilterDropdown,
+    setSelectedCategory: _setSelectedCategory,
+    activeFilterDropdown: _activeFilterDropdown,
+    setActiveFilterDropdown: _setActiveFilterDropdown,
     posFilterConfigs,
     posActiveFilters,
     handlePosFilterUpdate,
-    getBroadCategory,
+    getBroadCategory: _getBroadCategory,
   } = usePOSSearchAndFilters({ t, activeTab, activeTabId, updateTab });
 
   const {
     customerName,
     setCustomerName,
     customerCode,
-    setCustomerCode,
+    setCustomerCode: _setCustomerCode,
     selectedCustomer,
-    setSelectedCustomer,
+    setSelectedCustomer: _setSelectedCustomer,
     showCustomerDropdown,
     setShowCustomerDropdown,
     filteredCustomers,
-    setFilteredCustomers,
+    setFilteredCustomers: _setFilteredCustomers,
     highlightedCustomerIndex,
     setHighlightedCustomerIndex,
-    showCodeDropdown,
-    setShowCodeDropdown,
-    filteredByCode,
-    setFilteredByCode,
+    showCodeDropdown: _showCodeDropdown,
+    setShowCodeDropdown: _setShowCodeDropdown,
+    filteredByCode: _filteredByCode,
+    setFilteredByCode: _setFilteredByCode,
     handleCustomerSelect,
     clearCustomerSelection,
     customerDropdownHook,
@@ -134,7 +133,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
 
   const {
     cart,
-    setCart,
+    setCart: _setCart,
     mergedCartItems,
     globalDiscount,
     setGlobalDiscount,
@@ -180,7 +179,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     [setSearch]
   );
 
-  const { isScanningRef } = useBarcodeScanner({
+  const { isScanningRef: _isScanningRef } = useBarcodeScanner({
     inventory,
     addToCart,
     playSuccess,
@@ -281,7 +280,11 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     refreshShifts,
   });
 
-  const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => {
+  const {
+    totalDiscountAmount: _totalDiscountAmount,
+    orderDiscountPercent,
+    totalItems,
+  } = useMemo(() => {
     const discountAmt = money.subtract(grossSubtotal, cartTotal);
     const discountPct =
       grossSubtotal > 0 ? money.multiply(money.divide(discountAmt, grossSubtotal), 100, 0) : 0;
@@ -329,7 +332,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
       }
     }
     prevCartLengthRef.current = cart.length;
-  }, [cart.length, mergedCartItems.length]);
+  }, [cart.length, mergedCartItems.length, mergedCartItems]);
 
   const { filteredDrugs, totalResults } = useInventorySearch({
     inventory,
@@ -351,7 +354,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
   }, [search]);
 
   const highlightMatch = useCallback(
-    (text: string, forceHighlight: boolean = true) => {
+    (text: string, _forceHighlight: boolean = true) => {
       // Only enable highlighting for scientific search (starting with @)
       if (!search.trimStart().startsWith('@')) return text;
 
@@ -363,6 +366,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
         let lastIndex = 0;
         let match: RegExpExecArray | null;
 
+        // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
         while ((match = regex.exec(text)) !== null) {
           if (match.index > lastIndex) segments.push(text.slice(lastIndex, match.index));
           segments.push(
@@ -378,8 +382,8 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
         }
 
         if (lastIndex < text.length) segments.push(text.slice(lastIndex));
-        return segments.length === 0 ? text : <>{segments}</>;
-      } catch (e) {
+        return segments.length === 0 ? text : segments;
+      } catch (_e) {
         return text;
       }
     },
@@ -497,7 +501,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
       totalStock: summary.totalStock,
       detailTabs,
     };
-  }, [viewingDrug, inventory, batchesMap, currentLang]);
+  }, [viewingDrug, batchesMap, currentLang]);
 
   // --- Keyboard Shortcuts & Navigation ---
   const isTableFocused = search.trim().length > 0 && tableData.length > 0;
@@ -655,7 +659,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
             ? drug.genericName.join(' + ')
             : String(drug.genericName || '');
 
-          const isScientificSearch = search.trimStart().startsWith('@');
+          const _isScientificSearch = search.trimStart().startsWith('@');
 
           return (
             <div className='flex flex-col w-full min-w-0 items-start text-start overflow-hidden'>
@@ -731,6 +735,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
                 trigger={
                   <div
                     id={`unit-dropdown-${row.id}`}
+                    role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === 'Tab') {
@@ -767,6 +772,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
                     <div
                       key={opt}
                       id={`unit-opt-${row.id}-${index}`}
+                      role="button"
                       tabIndex={-1}
                       onKeyDown={(e) => {
                         if (e.key === 'ArrowDown') {
@@ -862,6 +868,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
                 trigger={
                   <div
                     id={`batch-dropdown-${row.id}`}
+                    role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === 'Tab') {
@@ -909,6 +916,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
                     <div
                       key={batch.id}
                       id={`batch-opt-${row.id}-${index}`}
+                      role="button"
                       tabIndex={-1}
                       onKeyDown={(e) => {
                         if (e.key === 'ArrowDown') {
@@ -978,7 +986,19 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
         },
       }),
     ],
-    [color, t, language, selectedUnits, selectedBatches, textTransform, highlightMatch, search]
+    [
+      t,
+      language,
+      selectedUnits,
+      selectedBatches,
+      textTransform,
+      highlightMatch,
+      search,
+      addGroupToCart,
+      columnHelper,
+      setSelectedBatches,
+      setSelectedUnits,
+    ]
   );
 
   return (

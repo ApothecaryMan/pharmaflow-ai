@@ -16,8 +16,8 @@ interface OrgSettingsProps {
   color: string;
 }
 
-export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => {
-  const t = TRANSLATIONS[language];
+export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color: _color }) => {
+  const _t = TRANSLATIONS[language];
   const refreshAll = useAuthStore((s) => s.refreshAll);
 
   const [org, setOrg] = useState<Organization | null>(null);
@@ -134,12 +134,12 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
 
             <div className='p-6 space-y-6'>
               <div className='space-y-2'>
-                <label
+                <span
                   className='text-xs font-bold text-zinc-500 uppercase tracking-wider'
                   htmlFor='org-name'
                 >
                   {language === 'AR' ? 'اسم المنظمة' : 'Organization Name'}
-                </label>
+                </span>
                 <div className='flex gap-3'>
                   <SmartInput
                     id='org-name'
@@ -152,6 +152,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                     onClick={handleUpdateOrg}
                     disabled={isSubmitting || editingName === org.name}
                     className='px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:opacity-30 transition-all flex items-center gap-2'
+                    type='button'
                   >
                     {isSubmitting ? (
                       <div className='w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin' />
@@ -165,12 +166,12 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
 
               <div className='grid grid-cols-2 gap-6'>
                 <div className='space-y-1'>
-                  <label
+                  <span
                     className='text-xs font-bold text-zinc-500 uppercase tracking-wider'
                     htmlFor='org-id'
                   >
                     {language === 'AR' ? 'معرف المنظمة' : 'Organization ID'}
-                  </label>
+                  </span>
                   <p
                     id='org-id'
                     className='text-sm font-mono text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 select-all'
@@ -179,9 +180,9 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                   </p>
                 </div>
                 <div className='space-y-1'>
-                  <label className='text-xs font-bold text-zinc-500 uppercase tracking-wider'>
+                  <span className='text-xs font-bold text-zinc-500 uppercase tracking-wider'>
                     {language === 'AR' ? 'تاريخ الإنشاء' : 'Created At'}
-                  </label>
+                  </span>
                   <p className='text-sm text-zinc-600 dark:text-zinc-400 p-2'>
                     {new Date(org.createdAt).toLocaleDateString(
                       language === 'AR' ? 'ar-EG' : 'en-US'
@@ -214,6 +215,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                 <button
                   onClick={() => setIsInviteModalOpen(true)}
                   className='px-3 py-1.5 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm hover:shadow-lg transition-all active:scale-[0.98]'
+                  type='button'
                 >
                   {TRANSLATIONS[language].organization.inviteMember}
                 </button>
@@ -341,7 +343,10 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                           : 'Renewal date info not available'}
                     </p>
                   </div>
-                  <button className='text-xs font-bold text-primary-600 hover:underline'>
+                  <button
+                    className='text-xs font-bold text-primary-600 hover:underline'
+                    type='button'
+                  >
                     {language === 'AR' ? 'إدارة الفواتير' : 'Manage Billing'}
                   </button>
                 </div>
@@ -352,7 +357,10 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                       ? 'لم يتم العثور على بيانات اشتراك'
                       : 'No subscription data found'}
                   </p>
-                  <button className='px-4 py-2 bg-primary-600 text-white rounded-lg text-xs font-bold'>
+                  <button
+                    className='px-4 py-2 bg-primary-600 text-white rounded-lg text-xs font-bold'
+                    type='button'
+                  >
                     {language === 'AR' ? 'اختر خطة' : 'Choose a Plan'}
                   </button>
                 </div>
@@ -372,7 +380,10 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                 </span>
                 {language === 'AR' ? 'آخر النشاطات' : 'Organization Activity'}
               </h2>
-              <button className='text-[10px] font-bold text-primary-600 uppercase tracking-widest hover:underline'>
+              <button
+                className='text-[10px] font-bold text-primary-600 uppercase tracking-widest hover:underline'
+                type='button'
+              >
                 {language === 'AR' ? 'عرض السجل الكامل' : 'View Full Logs'}
               </button>
             </div>
@@ -383,7 +394,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                   {/* Vertical Line */}
                   <div className='absolute left-[39px] top-8 bottom-8 w-px bg-zinc-100 dark:bg-zinc-800'></div>
 
-                  {logs.map((log, idx) => {
+                  {logs.map((log, _idx) => {
                     const employee =
                       allEmployees.find((e) => e.id === log.userId) ||
                       allEmployees.find((e) => e.userId === log.userId);
@@ -456,7 +467,10 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
                   ? 'بصفتك مستخدمًا للمنظمة، لديك وصول مباشر لفريق الدعم التقني لدينا.'
                   : 'As an organization user, you have direct access to our priority technical support team.'}
               </p>
-              <button className='w-full py-3 bg-white text-zinc-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-colors'>
+              <button
+                className='w-full py-3 bg-white text-zinc-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-colors'
+                type='button'
+              >
                 {language === 'AR' ? 'تواصل مع الدعم' : 'Contact Support'}
               </button>
             </div>

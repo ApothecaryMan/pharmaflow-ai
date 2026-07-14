@@ -7,13 +7,8 @@ import type { Return, Sale, Shift } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { money, pricing } from '../../utils/money';
-import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
-import {
-  getActiveReceiptSettings,
-  type InvoiceTemplateOptions,
-  printInvoice,
-} from './InvoiceTemplate';
+import { getActiveReceiptSettings, printInvoice } from './InvoiceTemplate';
 import { ReturnModal } from './ReturnModal';
 
 interface SaleDetailModalProps {
@@ -200,7 +195,10 @@ const ListItem: React.FC<{
           : 'rounded-md';
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       className={`flex items-center justify-between py-1.5 px-3 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding} ${className}`}
     >
       {children}
@@ -343,8 +341,9 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   icon: 'payments',
                   value: sale.paymentMethod === 'visa' ? t.visa : t.cash,
                 },
-              ].map((item, i, arr) => (
-                <ListItem key={i} index={i} total={arr.length}>
+              ]// biome-ignore lint/suspicious/noArrayIndexKey: inline config objects have no id
+              .map((item, i, arr) => (
+                <ListItem key={`${item.label}-${i}`} index={i} total={arr.length}>
                   <div className='flex items-center gap-2 shrink-0'>
                     <span className='material-symbols-rounded text-base opacity-40'>
                       {item.icon}
@@ -378,6 +377,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       const publicPrice = item.publicPrice ?? item.public_price ?? 0;
                       const itemDiscount = item.discount ?? item.discount_percentage ?? 0;
 
+                      // biome-ignore lint/suspicious/noAssignInExpressions: nullish coalescing
                       const g: any = (groups[drugId] ||= {
                         id: drugId,
                         name: item.name,
@@ -534,7 +534,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       .reverse()
                       .map((r, i, arr) => (
                         <ListItem
-                          key={i}
+                          key={r.id}
                           index={i}
                           total={arr.length}
                           className='flex-col !items-stretch py-3'
@@ -560,7 +560,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                             </span>
                           </div>
                           <div className='flex flex-col gap-1.5'>
-                            {r.modifications.map((m, mi) => (
+                            {// biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
+                            r.modifications.map((m, mi) => (
                               <ModificationItem
                                 key={mi}
                                 mod={m}
@@ -664,6 +665,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       <button
                         onClick={() => setReturnModalOpen(true)}
                         className='flex-1 py-3 rounded-full font-bold text-white bg-orange-600 hover:opacity-90 cursor-pointer transition-opacity flex items-center justify-center gap-2'
+                        type='button'
                       >
                         <span className='material-symbols-rounded text-base'>
                           assignment_return
@@ -674,6 +676,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                     <button
                       onClick={handlePrint}
                       className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 cursor-pointer transition-colors flex items-center justify-center gap-2'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-base'>print</span>
                       {t.modal.print}

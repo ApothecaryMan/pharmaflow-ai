@@ -2,10 +2,10 @@ import { createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { type ExpenseFilterType, useExpenses } from '../../hooks/finance/useExpenses';
-import { useShift } from '../../hooks/sales/useShift';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useShift } from '../../hooks/sales/useShift';
 import { useAuthStore } from '../../stores/authStore';
-import type { Employee, Expense, ExpenseCategory } from '../../types';
+import type { Expense, ExpenseCategory } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
@@ -27,7 +27,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   t,
   language,
   currentEmployeeId,
-  onViewChange,
+  onViewChange: _onViewChange,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
@@ -225,12 +225,13 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           return (
             <button
               onClick={() => {
-                if (confirm(t.global.actions.delete + '?')) {
+                if (confirm(`${t.global.actions.delete}?`)) {
                   deleteExpense(row.id);
                 }
               }}
               className='w-7 h-7 rounded-full grid place-items-center text-red-500 hover:bg-red-500/10 transition-all'
               title={t.global.actions.delete}
+              type='button'
             >
               <span className='material-symbols-rounded text-base'>delete</span>
             </button>
@@ -238,7 +239,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
         },
       }),
     ],
-    [t, language, employees, currentEmployeeId, currentShift, deleteExpense, getEmployeeName]
+    [t, language, currentEmployeeId, currentShift, deleteExpense, getEmployeeName]
   );
 
   const categoryBreakdown = useMemo(() => {
@@ -284,6 +285,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           <button
             onClick={() => setIsRecordModalOpen(true)}
             className='h-10 px-4 text-sm font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl flex items-center gap-2 transition-all active:scale-95'
+            type='button'
           >
             <span className='material-symbols-rounded'>receipt_long</span>
             {t.expenses.recordExpense}

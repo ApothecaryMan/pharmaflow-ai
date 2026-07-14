@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import type { OrgMember, OrgRole } from '../../types';
+import type { OrgRole } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 
 export interface OrgInvite {

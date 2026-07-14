@@ -1,6 +1,6 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type {
   CategoryFinancialItem,
   FinancialKPIs,
@@ -13,11 +13,7 @@ const categoryColumnHelper = createColumnHelper<CategoryFinancialItem>();
 const productColumnHelper = createColumnHelper<ProductFinancialItem>();
 
 import { useSettings } from '../../../context';
-import { useFinancials } from '../../../hooks/sales/useFinancials';
-import type { FinancialPeriod } from '../../../services/intelligence/intelligenceService';
 import { getDisplayName } from '../../../utils/drugDisplayName';
-import { SegmentedControl } from '../../common/SegmentedControl';
-import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 
 interface FinancialsPageProps {
   t: Translations;
@@ -34,7 +30,7 @@ interface FinancialsPageProps {
 
 export const FinancialsPage: React.FC<FinancialsPageProps> = ({
   t,
-  kpis,
+  kpis: _kpis,
   products,
   categories,
   loading,

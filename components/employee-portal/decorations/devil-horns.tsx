@@ -1,6 +1,7 @@
 export function DevilHorns() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Devil horns</title>
       <g opacity='0.95'>
         <g transform='translate(10, -24)'>
           <path

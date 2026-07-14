@@ -11,7 +11,7 @@ interface SnowPileProps {
   };
 }
 
-export const SnowPile: React.FC<SnowPileProps> = ({ id, rect }) => {
+export const SnowPile: React.FC<SnowPileProps> = ({ id: _id, rect }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 5 }}
@@ -29,7 +29,8 @@ export const SnowPile: React.FC<SnowPileProps> = ({ id, rect }) => {
       <div className='relative w-full h-full flex justify-around items-end px-4'>
         {[...Array(Math.floor(Number(rect.width) / 50 || 10))].map((_, i) => (
           <motion.div
-            key={i}
+            // biome-ignore lint/suspicious/noArrayIndexKey: particles have no stable id
+            key={`pile-${i}`}
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 3, repeat: Infinity, delay: i * 0.2 }}
             className='text-blue-100/80 dark:text-white/40 select-none filter blur-[1px]'

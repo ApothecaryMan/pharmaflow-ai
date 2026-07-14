@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import type { FC } from 'react';
 import { useUI } from '../../context/UIContext';
 
 interface PresetStyle {
@@ -54,7 +54,8 @@ const PRESETS: Preset[] = [
     label: 'ورق ليلي',
     description: 'Dark ruled notebook with grid lines',
     style: {
-      background: 'repeating-linear-gradient(transparent, transparent 27px, rgba(255,255,255,0.04) 27px, rgba(255,255,255,0.04) 28px), #1e1e2e',
+      background:
+        'repeating-linear-gradient(transparent, transparent 27px, rgba(255,255,255,0.04) 27px, rgba(255,255,255,0.04) 28px), #1e1e2e',
       boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
       border: '2px solid #3a3a4e',
       borderRadius: '4px',
@@ -114,14 +115,12 @@ export const PresetSelector: FC = () => {
           onClick={() => setCustomCardCss(presetToCss(preset.style))}
           className='relative rounded-xl border border-(--border-divider) bg-(--bg-card) p-3 text-left hover:border-primary-500/40 transition-colors overflow-hidden'
           title={preset.description}
+          type='button'
         >
-          <div className='text-[11px] font-bold text-(--text-primary) mb-0.5'>
-            {preset.label}
-          </div>
-          <div className='text-[9px] text-(--text-tertiary) mb-2'>
-            {preset.description}
-          </div>
-          <div className='rounded-lg overflow-hidden h-10 bg-(--bg-input)'
+          <div className='text-[11px] font-bold text-(--text-primary) mb-0.5'>{preset.label}</div>
+          <div className='text-[9px] text-(--text-tertiary) mb-2'>{preset.description}</div>
+          <div
+            className='rounded-lg overflow-hidden h-10 bg-(--bg-input)'
             style={{
               ...preset.style,
               padding: '8px',

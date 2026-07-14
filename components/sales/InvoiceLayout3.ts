@@ -9,7 +9,7 @@ export function generateLayout3HTML(
   _defaults?: any
 ): string {
   const lang = opts.language || 'EN';
-  const isRTL = lang === 'AR';
+  const _isRTL = lang === 'AR';
   const currentDefaults = INVOICE_DEFAULTS[lang];
 
   return `

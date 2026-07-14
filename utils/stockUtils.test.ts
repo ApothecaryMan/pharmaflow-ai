@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CartItem } from '../types';
-import {
-  convertToPacks,
-  isStockConstraintMet,
-  resolveDisplayStock,
-  resolvePrice,
-  resolveUnits,
-} from './stockUtils';
+import { isStockConstraintMet, resolveUnits } from './stockUtils';
 
 describe('stockUtils', () => {
   describe('resolveUnits', () => {

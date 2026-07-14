@@ -21,7 +21,7 @@ export const usePOSSidebarResizer = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 
-  const startResizing = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const startResizing = useCallback((_e: React.MouseEvent | React.TouchEvent) => {
     isResizing.current = true;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
@@ -41,7 +41,7 @@ export const usePOSSidebarResizer = () => {
         document.documentElement.dir === 'rtl' ||
         document.documentElement.getAttribute('dir') === 'rtl';
 
-      let newWidth;
+      let newWidth: number;
       if (isRTL) {
         // In RTL, Sidebar is on the Left. Width expands to the Right.
         newWidth = clientX - rect.left;

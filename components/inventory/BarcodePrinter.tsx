@@ -1,9 +1,10 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import { useAuthStore } from '../../stores/authStore';
-import type { Drug, StockBatch } from '../../types';
+import { usePageShortcuts } from '../../hooks/keyboard';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useAuthStore } from '../../stores/authStore';
+import type { Drug } from '../../types';
 import {
   checkExpiryStatus,
   formatExpiryDate,
@@ -11,12 +12,10 @@ import {
   parseExpiryEndOfMonth,
 } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
-import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
-import { storage } from '../../utils/storage';
+import { parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { usePageShortcuts } from '../../hooks/keyboard';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
@@ -48,10 +47,10 @@ interface QueueItem extends PrintLabelItem {
 export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   color,
   t,
-  language,
+  language: _language,
   textTransform,
 }) => {
-  const { getVerifiedDate } = useStatusBar();
+  const { getVerifiedDate: _getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playBeep, playError } = usePosSounds();
   const branches = useAuthStore((s) => s.branches);
@@ -63,7 +62,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   );
   const [search, setSearch] = useState('');
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [isPrinting, setIsPrinting] = useState(false);
+  const [_isPrinting, setIsPrinting] = useState(false);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const printButtonRef = useRef<HTMLButtonElement>(null);
   const [printConfig, setPrintConfig] = useState({
@@ -87,7 +86,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   }, [inventory, selectedDrug]);
 
   // Smart direction for search
-  const dir = useSmartDirection(
+  const _dir = useSmartDirection(
     search,
     t.barcodePrinter?.searchPlaceholder || 'Search product to print...'
   );
@@ -149,42 +148,6 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     },
   });
 
-  // Auto-fill on exact barcode match
-  useEffect(() => {
-    let trimmed = search.trim();
-    let scanQty = 1;
-
-    // Support qty*barcode format (e.g. 10*123456)
-    if (trimmed.includes('*')) {
-      const parts = trimmed.split('*');
-      if (parts.length === 2 && !isNaN(parseInt(parts[0]))) {
-        scanQty = Math.max(1, parseInt(parts[0]));
-        trimmed = parts[1].trim();
-      }
-    }
-
-    if (trimmed.length < 4) return; // Min length for auto-detect
-
-    const match = inventory.find((d) => d.barcode === trimmed || d.internalCode === trimmed);
-
-    if (match) {
-      addToQueue(match, scanQty);
-      setSearch('');
-      setShowSuggestions(false);
-    }
-  }, [search, inventory]);
-
-  // Close suggestions on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const addToQueue = (drug: Drug, initialQty: number = 1) => {
     // Play sound callback
     playBeep();
@@ -227,10 +190,46 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     setShowSuggestions(false);
   };
 
+  // Auto-fill on exact barcode match
+  useEffect(() => {
+    let trimmed = search.trim();
+    let scanQty = 1;
+
+    // Support qty*barcode format (e.g. 10*123456)
+    if (trimmed.includes('*')) {
+      const parts = trimmed.split('*');
+      if (parts.length === 2 && !Number.isNaN(parseInt(parts[0], 10))) {
+        scanQty = Math.max(1, parseInt(parts[0], 10));
+        trimmed = parts[1].trim();
+      }
+    }
+
+    if (trimmed.length < 4) return; // Min length for auto-detect
+
+    const match = inventory.find((d) => d.barcode === trimmed || d.internalCode === trimmed);
+
+    if (match) {
+      addToQueue(match, scanQty);
+      setSearch('');
+      setShowSuggestions(false);
+    }
+  }, [search, inventory, addToQueue]);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const {
     highlightedIndex: selectedSuggestionIndex,
     onKeyDown,
-    setHighlightedIndex: setSelectedSuggestionIndex,
+    setHighlightedIndex: _setSelectedSuggestionIndex,
   } = useSearchKeyboardNavigation<Drug>({
     results: searchResults,
     onSelect: (drug) => {
@@ -349,7 +348,14 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       console.error('Failed to generate preview:', e);
       return '';
     }
-  }, [selectedDrug, printConfig]);
+  }, [
+    selectedDrug,
+    printConfig,
+    activeBranch?.name,
+    activeBranch?.phone,
+    activeBranch?.printSettings,
+    activeBranchId,
+  ]);
 
   // Calculate box dimensions (1mm = 3.78px)
   const previewDims = useMemo(() => {
@@ -369,7 +375,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       labelW: dims.w,
       labelH: h,
     };
-  }, []);
+  }, [activeBranch?.printSettings]);
 
   // Update scale when container size or label dimensions change
   useEffect(() => {
@@ -406,6 +412,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
             <button
               onClick={clearQueue}
               className='px-4 py-2 text-sm font-medium text-text-secondary hover:text-red-500 transition-colors'
+              type='button'
             >
               {t.barcodePrinter?.clearQueue || 'Clear Queue'}
             </button>
@@ -416,6 +423,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
             disabled={queue.length === 0}
             className='w-12 h-12 flex items-center justify-center bg-primary-600 hover:bg-blue-700 text-white rounded-xl transition-all active:scale-95 disabled:opacity-30 disabled:grayscale font-semibold'
             title={t.barcodePrinter?.printLabels || 'Print Labels'}
+            type='button'
           >
             <span className='material-symbols-rounded text-2xl'>print</span>
           </button>
@@ -476,7 +484,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   render: (drug: Drug) => {
                     if (!drug.expiryDate) return null;
                     const date = new Date(drug.expiryDate);
-                    if (isNaN(date.getTime())) return drug.expiryDate;
+                    if (Number.isNaN(date.getTime())) return drug.expiryDate;
                     return (
                       <span className='whitespace-nowrap'>
                         {`${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`}
@@ -504,16 +512,19 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               {queue.length > 0 ? (
                 <div className='flex flex-col gap-2'>
                   {queue.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                        selectedDrug?.id === item.drug.id || lastAddedId === item.id
-                          ? 'bg-primary-500/10 border-primary-500/40'
-                          : 'bg-bg-card border-border/40 hover:border-border/80'
-                      }`}
-                      dir='ltr'
-                      onClick={() => setSelectedDrug(item.drug)}
-                    >
+                  <div
+                    key={item.id}
+                    role="button"
+                    tabIndex={0}
+                    className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                      selectedDrug?.id === item.drug.id || lastAddedId === item.id
+                        ? 'bg-primary-500/10 border-primary-500/40'
+                        : 'bg-bg-card border-border/40 hover:border-border/80'
+                    }`}
+                    dir='ltr'
+                    onClick={() => setSelectedDrug(item.drug)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDrug(item.drug); } }}
+                  >
                       {/* Drag Handle or Indicator */}
                       <div className='w-1 h-6 rounded-full bg-border/40 transition-colors group-hover:bg-primary-500/50' />
 
@@ -571,6 +582,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                               }));
                             showMenu(e.clientX, e.clientY, batchMenuItems);
                           }}
+                          type='button'
                         >
                           {item.expiryDateOverride || 'N/A'}
                         </button>
@@ -581,19 +593,23 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           className='w-8 h-full flex items-center justify-center rounded-lg hover:bg-bg-secondary text-text-secondary transition-colors'
+                          type='button'
                         >
                           <span className='material-symbols-rounded text-base'>remove</span>
                         </button>
                         <input
                           type='number'
                           value={item.quantity}
-                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
+                          onChange={(e) =>
+                            updateQuantity(item.id, parseInt(e.target.value, 10) || 1)
+                          }
                           className='w-10 h-full text-center bg-transparent text-sm font-bold text-text-primary focus:outline-hidden'
                           min='1'
                         />
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           className='w-8 h-full flex items-center justify-center rounded-lg hover:bg-bg-secondary text-text-secondary transition-colors'
+                          type='button'
                         >
                           <span className='material-symbols-rounded text-base'>add</span>
                         </button>
@@ -603,6 +619,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                       <button
                         onClick={() => removeFromQueue(item.id)}
                         className='w-8 h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-red-500 hover:bg-bg-secondary transition-all opacity-60 group-hover:opacity-100'
+                        type='button'
                       >
                         <span className='material-symbols-rounded text-lg'>delete_outline</span>
                       </button>
@@ -741,12 +758,15 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               ].map((setting) => (
                 <div
                   key={setting.key}
+                  role="button"
+                  tabIndex={0}
                   onClick={() =>
                     setPrintConfig((p) => ({
                       ...p,
                       [setting.key]: !p[setting.key as keyof typeof p],
                     }))
                   }
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPrintConfig((p) => ({ ...p, [setting.key]: !p[setting.key as keyof typeof p] })); } }}
                   className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-150 select-none group/row ${
                     printConfig[setting.key as keyof typeof printConfig]
                       ? 'text-text-primary'
@@ -766,7 +786,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                     <span className='text-sm font-medium'>{setting.label}</span>
                   </div>
                   {/* Wrap Switch in a div that prevents double-toggling if the parent also has an onClick */}
-                  <div onClick={(e) => e.stopPropagation()}>
+                  <div role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
                     <Switch
                       checked={printConfig[setting.key as keyof typeof printConfig]}
                       onChange={() =>

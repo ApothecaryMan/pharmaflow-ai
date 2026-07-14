@@ -43,7 +43,7 @@ export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000
       const variant = variants[currentAlert.type];
 
       return {
-        key: 'alert-' + currentAlert.id,
+        key: `alert-${currentAlert.id}`,
         text: currentAlert.message,
         icon: variant.icon,
         iconColor: variant.color,
@@ -54,7 +54,7 @@ export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000
 
     const ad = ADS_LIST[currentAdIndex];
     return {
-      key: 'ad-' + ad.id,
+      key: `ad-${ad.id}`,
       text: ad.text,
       icon: ad.icon,
       iconColor: 'text-amber-500', // Standard ad color

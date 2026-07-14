@@ -1,8 +1,7 @@
-import React from 'react';
-
 export function GalacticBlackHole() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Galactic black hole</title>
       <style>{`
         @keyframes bh-spin { 100% { transform: rotate(360deg); } }
         @keyframes bh-pulse { 50% { filter: blur(4px) brightness(1.5); } }

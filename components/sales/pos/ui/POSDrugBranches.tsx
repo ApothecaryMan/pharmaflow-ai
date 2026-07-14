@@ -17,7 +17,10 @@ interface POSDrugBranchesProps {
   t: Translations;
 }
 
-export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t }) => {
+export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({
+  viewingDrug: _viewingDrug,
+  t: _t,
+}) => {
   const [otherBranches, setOtherBranches] = useState<Drug[]>([]);
   const [branchNames, setBranchNames] = useState<Record<string, string>>({});
   const [branchCodes, setBranchCodes] = useState<Record<string, string>>({});
@@ -38,7 +41,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
         const allItems = await inventoryService.getAllBranches();
 
         // Fetch all branches to get names
-        const targetOrgId = viewingDrug.orgId || appSettings.orgId;
+        const targetOrgId = _viewingDrug.orgId || appSettings.orgId;
         const allBranches = await branchService.getAll(targetOrgId);
         const namesMap: Record<string, string> = {};
         const codesMap: Record<string, string> = {};
@@ -52,7 +55,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
         // Filter for same drug (by barcode) in other branches
         const matches = allItems.filter(
           (d) =>
-            d.barcode === viewingDrug.barcode &&
+            d.barcode === _viewingDrug.barcode &&
             d.branchId !== activeBranchId &&
             d.branchId !== undefined
         );
@@ -65,7 +68,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
     };
 
     fetchBranches();
-  }, [viewingDrug.barcode, currentLang]);
+  }, [_viewingDrug.barcode, _viewingDrug.orgId]);
 
   const columns = useMemo<ColumnDef<Drug>[]>(
     () => [
@@ -119,7 +122,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
         meta: { align: 'center' },
       },
     ],
-    [currentLang, branchNames]
+    [currentLang, branchNames, branchCodes]
   );
 
   if (loading) {
@@ -178,7 +181,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
           {otherBranches.length > 0 ? (
             otherBranches.map((item, idx) => (
               <div
-                key={idx}
+                key={`${item.id || idx}`}
                 className='p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-primary-500 dark:hover:border-primary-400 transition-all group flex flex-col gap-3'
               >
                 <div className='flex justify-between items-start'>

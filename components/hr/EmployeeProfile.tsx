@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
@@ -6,7 +6,7 @@ import { useShift } from '../../hooks/sales/useShift';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import { useAuthStore } from '../../stores/authStore';
-import type { Employee, Sale, Shift, ThemeColor } from '../../types';
+import type { Employee, ThemeColor } from '../../types';
 import {
   type DateRangeFilter,
   type EmployeeSalesStats,
@@ -47,7 +47,7 @@ const AIPerformanceSummary: React.FC<{
     setShortSummary(null);
     setDetailedSummary(null);
     setAiError(null);
-  }, [employee?.id]);
+  }, []);
 
   // Generate static summary
   const staticSummary =
@@ -115,7 +115,7 @@ const AIPerformanceSummary: React.FC<{
       );
 
       setDetailedSummary(result);
-    } catch (e) {
+    } catch (_e) {
       setDetailedSummary(
         language === 'AR' ? 'فشل تحميل التحليل المفصل.' : 'Failed to load detailed analysis.'
       );
@@ -158,6 +158,7 @@ const AIPerformanceSummary: React.FC<{
               onClick={fetchShortSummary}
               disabled={loading}
               className={`px-4 h-[36px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all active:scale-95 flex items-center gap-2 text-sm font-medium shadow-xs ${loading ? 'opacity-80' : ''}`}
+              type='button'
             >
               <span
                 className={`material-symbols-rounded text-base ${loading ? 'animate-spin' : ''}`}
@@ -180,6 +181,7 @@ const AIPerformanceSummary: React.FC<{
               onClick={openDetailedModal}
               className='w-[36px] h-[36px] flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all active:scale-95 shadow-xs'
               title={language === 'AR' ? 'تحليل مفصل' : 'Detailed Analysis'}
+              type='button'
             >
               <span className='material-symbols-rounded text-base'>open_in_full</span>
             </button>
@@ -210,6 +212,7 @@ const AIPerformanceSummary: React.FC<{
           <button
             onClick={() => fetchDetailedSummary(true)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors ${loadingDetailed ? 'opacity-50 cursor-not-allowed' : ''}`}
+            type='button'
           >
             <span
               className={`material-symbols-rounded text-lg ${loadingDetailed ? 'animate-spin' : ''}`}
@@ -263,6 +266,7 @@ const AIPerformanceSummary: React.FC<{
               </p>
             </div>
           ) : (
+          /* biome-ignore lint/security/noDangerouslySetInnerHtml: rendered HTML from analysis engine */
             <div
               className='prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line'
               dangerouslySetInnerHTML={{
@@ -329,11 +333,11 @@ interface EmployeeProfileProps {
 // Helper for compact currency formatting
 const formatCompactCurrency = (value: number) => {
   if (value >= 1000000) {
-    return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    return `${(value / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
   }
   if (value >= 10000) {
     // Compact anything >= 10k to ensure max ~5 digits visually
-    return (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}K`;
   }
   return value.toLocaleString();
 };
@@ -376,7 +380,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       container.addEventListener('wheel', handleWheel, { passive: false });
       return () => container.removeEventListener('wheel', handleWheel);
     }
-  }, [dateFilterMode, employees]); // Re-attach when view might change logic
+  }, []); // Re-attach when view might change logic
 
   // Set default employee if not set
   React.useEffect(() => {
@@ -393,7 +397,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   }, [employees, selectedEmployeeId, currentEmployeeId]);
 
   const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
-  const chartColor = COLOR_HEX_MAP[color.name] || COLOR_HEX_MAP['blue'];
+  const chartColor = COLOR_HEX_MAP[color.name] || COLOR_HEX_MAP.blue;
 
   // Date Filter Logic
   const dateRange = useMemo<DateRangeFilter | undefined>(() => {
@@ -483,7 +487,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
           const endTime = selectedShift.closeTime ? new Date(selectedShift.closeTime) : new Date();
 
           // Ensure we don't go beyond "now" if open, or weird future dates
-          const safeEndTime = endTime > new Date() ? new Date() : endTime;
+          const _safeEndTime = endTime > new Date() ? new Date() : endTime;
           // If closed, strictly use closeTime. If open, use current time.
           const effectiveEndTime = selectedShift.closeTime
             ? new Date(selectedShift.closeTime)
@@ -620,7 +624,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
           profit: p.profit,
           ...Object.keys(p)
             .filter((k) => !['label', 'sales', 'profit', 'timestamp', 'date', 'hour'].includes(k))
-            .reduce((acc, empId) => ({ ...acc, [empId]: p[empId] }), {}),
+            .reduce((acc, empId) => Object.assign(acc, { [empId]: p[empId] }), {}),
         })),
         shiftsData: todayShifts.map((shift) => ({
           shiftId: shift.id,
@@ -649,7 +653,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         relevantSales.length > 0
           ? Math.min(...relevantSales.map((s) => new Date(s.date).getTime()))
           : new Date(new Date().getFullYear(), 0, 1).getTime();
-      const end = new Date().getTime();
+      const end = Date.now();
 
       // Ensure start < end
       if (start >= end) start = end - 86400000; // Force 1 day gap if same
@@ -844,7 +848,15 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       shiftsData: [],
       activeEmployees: [], // No comparison in other modes
     };
-  }, [selectedEmployeeId, sales, dateRange, language, dateFilterMode, selectedShiftId]);
+  }, [
+    selectedEmployeeId,
+    sales,
+    dateRange,
+    language,
+    dateFilterMode,
+    selectedShiftId,
+    allShiftsFromHook,
+  ]);
 
   const chartData = chartDataResult.chartData;
   const shiftsData = chartDataResult.shiftsData;
@@ -986,6 +998,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                       ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
                       : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
                   }`}
+                  type='button'
                 >
                   {period}
                 </button>
@@ -1130,7 +1143,10 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                   return (
                     <div
                       key={shift.shiftId}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setSelectedShiftId(isSelected ? null : shift.shiftId)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedShiftId(isSelected ? null : shift.shiftId); } }}
                       className={`flex items-center gap-1.5 shrink-0 cursor-pointer ${
                         idx > 0
                           ? language === 'AR'

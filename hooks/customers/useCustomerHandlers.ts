@@ -18,7 +18,7 @@ export interface UseCustomerHandlersParams {
 
 export function useCustomerHandlers({
   currentEmployeeId,
-  employees,
+  employees: _employees,
   activeBranchId,
   customers,
   setCustomers,

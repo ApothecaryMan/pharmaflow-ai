@@ -26,7 +26,7 @@
  * validateStock(NaN)   // Returns: 0 (invalid input)
  */
 export const validateStock = (stock: number): number => {
-  if (isNaN(stock)) return 0;
+  if (Number.isNaN(stock)) return 0;
   if (stock < 0) {
     console.warn(
       `[validateStock] Negative stock detected: ${stock}. Clamping to 0. This may indicate an oversell.`

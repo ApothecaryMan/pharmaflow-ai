@@ -2,15 +2,13 @@ import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import React, { useCallback, useMemo } from 'react';
-import type { UserRole } from '../../../../config/permissions';
 import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
 import { useAuthStore } from '../../../../stores/authStore';
-import type { CartItem, Drug, Employee, Language } from '../../../../types';
+import type { CartItem, Drug, Employee } from '../../../../types';
 import { formatCurrency, getCurrencySymbol } from '../../../../utils/currency';
 import { money } from '../../../../utils/money';
-import { resolvePrice } from '../../../../utils/stockUtils';
 import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
 import { useContextMenu, useContextMenuTrigger } from '../../../common/ContextMenu';
 import { Tooltip } from '../../../common/Tooltip';
@@ -22,7 +20,7 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
 
   const handleApply = () => {
     const dist = parseFloat(val);
-    if (!isNaN(dist)) {
+    if (!Number.isNaN(dist)) {
       setDeliveryFee(dist * globalDeliveryFee);
       hideMenu();
     }
@@ -45,6 +43,7 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
               hideMenu();
             }}
             className='flex flex-col items-center justify-center py-1.5 px-1 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-primary-50 dark:hover:bg-primary-900/20 border border-gray-100 dark:border-white/10 hover:border-primary-200 group'
+            type='button'
           >
             <span className='text-xs font-black text-gray-900 dark:text-white'>
               {dist} {t.deliveryCalculator.km}
@@ -64,13 +63,13 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
               if (current > 0) setVal((current - 1).toString());
             }}
             className='px-2 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 transition-colors'
+            type='button'
           >
             <span className='material-symbols-rounded text-lg'>remove</span>
           </button>
           <input
             type='number'
             step='1'
-            autoFocus
             value={val}
             onChange={(e) => setVal(e.target.value)}
             placeholder={t.deliveryCalculator.customDistance}
@@ -83,6 +82,7 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
               setVal((current + 1).toString());
             }}
             className='px-2 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 transition-colors border-l border-gray-100 dark:border-white/10'
+            type='button'
           >
             <span className='material-symbols-rounded text-lg'>add</span>
           </button>
@@ -90,6 +90,7 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
         <button
           onClick={handleApply}
           className='w-8 h-7 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center justify-center transition-colors'
+          type='button'
         >
           <span className='material-symbols-rounded text-sm'>arrow_forward</span>
         </button>
@@ -274,6 +275,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
           <button
             onClick={() => setMobileTab('cart')}
             className={`w-full p-3 rounded-2xl bg-primary-600 text-white shadow-xl shadow-primary-200 dark:shadow-none flex items-center justify-between animate-slide-up active:scale-95 transition-transform`}
+            type='button'
           >
             <div className='flex items-center gap-3'>
               <span className='bg-white/20 px-2 py-0.5 rounded-lg text-xs font-bold'>
@@ -321,6 +323,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       fill='none'
                       xmlns='http://www.w3.org/2000/svg'
                     >
+                      <title>Active</title>
                       <circle cx='4' cy='4' r='3' className='fill-emerald-500' />
                     </svg>
                     <Tooltip
@@ -354,6 +357,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       fill='none'
                       xmlns='http://www.w3.org/2000/svg'
                     >
+                      <title>Separator</title>
                       <circle cx='3' cy='3' r='2' className='fill-gray-300 dark:fill-gray-600' />
                     </svg>
                     <Tooltip
@@ -397,6 +401,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                             fill='none'
                             xmlns='http://www.w3.org/2000/svg'
                           >
+                            <title>Separator</title>
                             <circle
                               cx='3'
                               cy='3'
@@ -442,6 +447,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       fill='none'
                       xmlns='http://www.w3.org/2000/svg'
                     >
+                      <title>Inactive</title>
                       <circle cx='4' cy='4' r='3' className='fill-gray-400 dark:fill-gray-500' />
                     </svg>
                     <span className='whitespace-nowrap'>{t.emptyCart}</span>
@@ -455,6 +461,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
               <button
                 onClick={() => setMobileTab('products')}
                 className='lg:hidden w-9 h-9 rounded-xl bg-white dark:bg-[#3c3c3c] text-gray-500 flex items-center justify-center transition-all active:scale-95 border border-gray-200/50 dark:border-(--border-divider)'
+                type='button'
               >
                 <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                   close
@@ -469,7 +476,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
           >
             {isLoading ? (
               <div className='flex flex-col space-y-1'>
-                {[...Array(4)].map((_, i) => (
+                {// biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
+                [...Array(4)].map((_, i) => (
                   <SortableCartItem
                     key={`skeleton-${i}`}
                     isLoading={true}
@@ -502,6 +510,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                 <button
                   onClick={() => setMobileTab('products')}
                   className={`lg:hidden px-3 py-1.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium text-xs`}
+                  type='button'
                 >
                   {t.backToProducts}
                 </button>
@@ -517,7 +526,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                   items={mergedCartItems.map((group) => group.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {mergedCartItems.map((group, index) => {
+                  {mergedCartItems.map((group, _index) => {
                     const itemId = group.id;
                     return (
                       <React.Fragment key={itemId}>
@@ -691,6 +700,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                           ? 'bg-primary-600 hover:bg-blue-700 text-white cursor-pointer'
                           : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
                     } font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
+                    type='button'
                   >
                     {!isMobile && (
                       <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
@@ -720,6 +730,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                           : 'bg-emerald-100 dark:bg-[#3c3c3c] border border-(--border-divider) text-emerald-700 dark:text-gray-300 cursor-pointer'
                       } transition-colors flex justify-center items-center shrink-0`}
                       title={t.deliveryOrder}
+                      type='button'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                         local_shipping
@@ -798,6 +809,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                     }}
                     disabled={isProcessing}
                     className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    type='button'
                   >
                     {isProcessing ? (
                       <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
@@ -813,6 +825,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       setAmountPaid('');
                     }}
                     className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
+                    type='button'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                       close
@@ -858,7 +871,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       value={deliveryFee || ''}
                       onChange={(e) => {
                         const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
-                        if (!isNaN(val)) {
+                        if (!Number.isNaN(val)) {
                           setDeliveryFee(val);
                         }
                       }}
@@ -882,6 +895,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                     }}
                     disabled={isProcessing}
                     className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    type='button'
                   >
                     {isProcessing ? (
                       <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
@@ -896,6 +910,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       setIsDeliveryMode(false);
                     }}
                     className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
+                    type='button'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                       close

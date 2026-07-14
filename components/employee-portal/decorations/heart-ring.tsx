@@ -1,6 +1,7 @@
 export function HeartRing() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Heart ring</title>
       <g opacity='0.95'>
         <circle
           cx='64'

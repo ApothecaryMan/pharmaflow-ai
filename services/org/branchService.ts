@@ -65,7 +65,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
     const maxSerial = branches.reduce((max, b) => {
       const match = (b.code || '').match(/BR-(\d+)/);
       if (match) {
-        const num = parseInt(match[1]);
+        const num = parseInt(match[1], 10);
         return Math.max(max, num);
       }
       return max;

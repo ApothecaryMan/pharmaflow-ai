@@ -1,6 +1,7 @@
 export function EtherealHeavenVortex() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Ethereal heaven vortex</title>
       <style>{`
         @keyframes cloud-spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes cloud-spin-rev { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }

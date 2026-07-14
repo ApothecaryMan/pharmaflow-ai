@@ -1,16 +1,15 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
+import { useDailyAchievements } from '../../hooks/dashboard/useDailyAchievements';
 import { useBatches, useInventory } from '../../hooks/queries/useInventoryQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
-import { batchService } from '../../services/inventory/batchService';
 import { useAuthStore } from '../../stores/authStore';
-import type { Drug, ExpandedView, Purchase, Sale } from '../../types';
-import { formatCompactCurrency, formatCurrency, getCurrencySymbol } from '../../utils/currency';
+import type { Drug, ExpandedView } from '../../types';
+import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import {
@@ -21,15 +20,13 @@ import {
 import { ChartWidget } from '../common/ChartWidget';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { HasPermission } from '../common/HasPermission';
-import { CurrencyValue, InsightTooltip } from '../common/InsightTooltip';
-import { MaterialTabs } from '../common/MaterialTabs';
+import { InsightTooltip } from '../common/InsightTooltip';
 import { Modal } from '../common/Modal';
+import { MonthlyHeatmap } from '../common/MonthlyHeatmap';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { useDashboardAnalytics } from './useDashboardAnalytics';
-import { useDailyAchievements } from '../../hooks/dashboard/useDailyAchievements';
-import { MonthlyHeatmap } from '../common/MonthlyHeatmap';
 
 interface DashboardProps {
   color: string;
@@ -65,12 +62,12 @@ const exportToCSV = (data: any[], filename: string) => {
 };
 
 const getDaysUntilExpiry = (dateStr: string) => {
-  const diff = parseExpiryEndOfMonth(dateStr).getTime() - new Date().getTime();
+  const diff = parseExpiryEndOfMonth(dateStr).getTime() - Date.now();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
 const getRelativeTime = (d: Date, t: any, language: string) => {
-  const diff = new Date().getTime() - d.getTime();
+  const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(mins / 60);
   const isAR = language === 'AR';
@@ -88,6 +85,7 @@ const ExpandButton: React.FC<{ onClick: () => void; title?: string }> = ({ onCli
     onClick={onClick}
     className='w-10 h-10 flex items-center justify-center text-(--text-tertiary) hover:text-(--text-primary) transition-all rounded-xl hover:bg-(--bg-menu-hover) active:scale-95 opacity-0 group-hover:opacity-100'
     title={title || 'Expand'}
+    type='button'
   >
     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
       open_in_full
@@ -128,9 +126,9 @@ const MetricsGrid: React.FC<{ items: { label: string; value: string | number }[]
   items,
 }) => (
   <div className={`grid grid-cols-1 md:grid-cols-${items.length} gap-4`}>
-    {items.map((item, i) => (
+    {items.map((item, _i) => (
       <div
-        key={i}
+        key={item.label}
         className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider)'
       >
         <p className='text-xs font-bold text-(--text-tertiary) uppercase mb-1'>{item.label}</p>
@@ -193,6 +191,7 @@ const GenericListItem: React.FC<{
         <button
           onClick={onClick}
           className='text-xs px-3 py-1.5 rounded-xl font-bold bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white transition-all active:scale-95'
+          type='button'
         >
           {actionLabel}
         </button>
@@ -236,7 +235,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const filteredData = useMemo(() => {
     if (timeRange === 'ALL') return { sales, purchases };
-    const days = parseInt(timeRange);
+    const days = parseInt(timeRange, 10);
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
     cutoff.setHours(0, 0, 0, 0);
@@ -259,9 +258,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const parts = val.split('-');
         if (parts.length < 3) return val;
         const [yyyy, mm, w] = parts;
-        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, {
-          month: 'short',
-        });
+        const monthName = new Date(parseInt(yyyy, 10), parseInt(mm, 10) - 1, 1).toLocaleDateString(
+          locale,
+          {
+            month: 'short',
+          }
+        );
         return `${monthName} ${w.replace('W', language?.toUpperCase() === 'AR' ? 'أسبوع ' : 'W')}`;
       }
       const date = new Date(val);
@@ -283,10 +285,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const parts = val.split('-');
         if (parts.length < 3) return val;
         const [yyyy, mm, w] = parts;
-        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, {
-          month: 'long',
-          year: 'numeric',
-        });
+        const monthName = new Date(parseInt(yyyy, 10), parseInt(mm, 10) - 1, 1).toLocaleDateString(
+          locale,
+          {
+            month: 'long',
+            year: 'numeric',
+          }
+        );
         return `${language?.toUpperCase() === 'AR' ? 'الأسبوع' : 'Week'} ${w.replace('W', '')} - ${monthName}`;
       }
       const date = new Date(val);
@@ -339,25 +344,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [subView]);
+  }, []);
 
   // --- STATS & ANALYTICS ---
   const {
     totalRevenue,
-    totalReturns,
-    totalCogs,
-    inventoryValuation,
-    inventoryTurnoverRatio,
-    daysOfInventory,
-    grossProfit,
+    totalReturns: _totalReturns,
+    totalCogs: _totalCogs,
+    inventoryValuation: _inventoryValuation,
+    inventoryTurnoverRatio: _inventoryTurnoverRatio,
+    daysOfInventory: _daysOfInventory,
+    grossProfit: _grossProfit,
     netProfit,
-    profitMarginPercent,
-    averageOrderValue,
-    returnRate,
+    profitMarginPercent: _profitMarginPercent,
+    averageOrderValue: _averageOrderValue,
+    returnRate: _returnRate,
     movingItemsAnalysis,
-    profitGrade,
+    profitGrade: _profitGrade,
     revenueTooltip: revenueTooltipData,
-    inventoryTooltip: inventoryTooltipData,
+    inventoryTooltip: _inventoryTooltipData,
     expensesTooltip: expensesTooltipData,
     profitTooltip: profitTooltipData,
     lowStockTooltip: lowStockTooltipData,
@@ -437,7 +442,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           timeAgo: getRelativeTime(new Date(sale.date), t, language),
         };
       });
-  }, [sales, t, language]);
+  }, [t, language, filteredData.sales]);
 
   const recentSales20 = useMemo(() => {
     return [...filteredData.sales]
@@ -472,7 +477,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           timeAgo: getRelativeTime(new Date(sale.date), t, language),
         };
       });
-  }, [sales, t, language]);
+  }, [t, language, filteredData.sales]);
 
   const handleRestockSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -517,6 +522,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <button
         onClick={() => exportToCSV(data, view)}
         className='px-3 py-1.5 text-sm rounded-lg bg-(--bg-page-surface) hover:bg-(--bg-menu-hover) text-(--text-primary) border border-(--border-divider) transition-colors flex items-center gap-2'
+        type='button'
       >
         <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
           download
@@ -848,6 +854,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     achievementsLoading,
     currentYear,
     currentMonth,
+    formatTooltipLabel,
+    formatXAxis,
   ]);
 
   // --- CHART COLOR LOGIC ---
@@ -934,8 +942,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             type: 'number',
             tooltip: lowStockTooltip,
           },
-        ].map((card) => {
+          ].map((card, _idx) => {
           const cardContent = (
+            // biome-ignore lint/correctness/useJsxKeyInIterable: key provided by wrapper renderCard
             <SmallCard
               title={card.title}
               value={card.value}
@@ -952,7 +961,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           const renderCard = (key: string) => (
             <div
               key={key}
+              role="button"
+              tabIndex={0}
               onClick={() => setExpandedView(card.id as ExpandedView)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView(card.id as ExpandedView); } }}
               className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
             >
               {cardContent}
@@ -1043,8 +1055,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className='flex-1 overflow-y-auto space-y-1 pe-1' dir='ltr'>
             {isLoading || finLoading ? (
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className='flex items-center justify-between p-2 animate-pulse'>
+                <div
+                  key={`top-sk-${i}`}
+                  className='flex items-center justify-between p-2 animate-pulse'
+                >
+                  )
                   <div className='flex items-center gap-3 overflow-hidden'>
                     <div className='w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
                     <div className='h-4 w-32 bg-zinc-100 dark:bg-zinc-800 rounded' />
@@ -1115,6 +1132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <button
                       onClick={() => setRestockDrug(item)}
                       className='text-xs px-3 py-1.5 rounded-xl font-bold bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white transition-all active:scale-95'
+                      type='button'
                     >
                       {t.restock}
                     </button>
@@ -1167,8 +1185,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               />
               <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
                 {isLoading ? (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className='flex justify-between items-center p-2 animate-pulse'>
+                    <div
+                      key={`card-sk-${i}`}
+                      className='flex justify-between items-center p-2 animate-pulse'
+                    >
                       <div className='flex items-center gap-3 overflow-hidden'>
                         <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
                         <div className='space-y-1.5'>
@@ -1200,9 +1222,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           />
           <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
             {isLoading ? (
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
               Array.from({ length: 5 }).map((_, i) => (
                 <div
-                  key={i}
+                  key={`tx-sk-${i}`}
                   className='flex items-center justify-between p-2 rounded-xl animate-pulse'
                 >
                   <div className='flex items-center gap-3'>
@@ -1317,7 +1340,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <form onSubmit={handleRestockSubmit} className='space-y-5'>
             <div className='space-y-4'>
               <div className='flex items-center justify-between'>
-                <label className='text-xs font-bold text-gray-500 uppercase'>{t.modal.qty}</label>
+                <span className='text-xs font-bold text-gray-500 uppercase'>{t.modal.qty}</span>
                 <SegmentedControl
                   options={[
                     { label: t.pos?.pack || 'Pack', value: 'pack' },
@@ -1345,7 +1368,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className='flex-1 p-2 text-center text-lg font-bold rounded-xl bg-gray-50 dark:bg-gray-950 border-none focus:ring-2 focus:ring-inset transition-all'
                   style={{ '--tw-ring-color': `var(--primary-500)` } as any}
                   value={restockQty}
-                  onChange={(e) => setRestockQty(parseInt(e.target.value) || 0)}
+                  onChange={(e) => setRestockQty(parseInt(e.target.value, 10) || 0)}
                 />
                 <button
                   type='button'

@@ -1,13 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import { useAuthStore } from '../../stores/authStore';
-import type { Customer, Sale } from '../../types';
+import type { Customer } from '../../types';
 import { formatCurrency } from '../../utils/currency';
-import { CARD_BASE, CONTAINER_BASE } from '../../utils/themeStyles';
+import { CONTAINER_BASE } from '../../utils/themeStyles';
 import { PageHeader } from '../common/PageHeader';
 import {
   SearchDropdown,
@@ -27,7 +27,7 @@ interface CustomerLoyaltyLookupProps {
 }
 
 export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
-  color,
+  color: _color,
   t,
   language,
   onViewChange,
@@ -61,9 +61,9 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       .filter(
         (c) =>
           c.name.toLowerCase().includes(term) ||
-          (c.code && c.code.toLowerCase().includes(term)) ||
-          (c.serialId && c.serialId.toString().includes(term)) ||
-          (c.phone && c.phone.includes(term))
+          c.code?.toLowerCase().includes(term) ||
+          c.serialId?.toString().includes(term) ||
+          c.phone?.includes(term)
       )
       .slice(0, 10); // Limit results
   }, [customers, searchTerm]);
@@ -126,7 +126,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       totalPurchases: customerSales.reduce((sum, s) => sum + s.total, 0),
       totalOrders: customerSales.length,
     };
-  }, [selectedCustomer, sales]);
+  }, [customerSales]);
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
@@ -197,7 +197,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         meta: { align: 'start' },
       },
     ],
-    [t, color]
+    [t]
   );
 
   const getTierInfo = (points: number) => {
@@ -327,6 +327,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
               <button
                 onClick={handleClear}
                 className='px-4 py-2.5 rounded-xl font-medium text-xs text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 backdrop-blur-xs transition-all whitespace-nowrap'
+                type='button'
               >
                 {t.clear || 'Clear'}
               </button>

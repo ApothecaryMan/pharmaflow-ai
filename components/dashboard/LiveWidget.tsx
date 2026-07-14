@@ -1,8 +1,7 @@
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { formatCurrency } from '../../utils/currency';
+import { useEffect, useState } from 'react';
 import { isTauri } from '../../utils/platform';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 
@@ -135,6 +134,8 @@ export const LiveWidget = () => {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={`w-screen h-screen bg-transparent select-none overflow-hidden flex items-center justify-center p-2 ${isLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       dir='rtl'
       onContextMenu={(e) => e.preventDefault()}
@@ -216,6 +217,7 @@ export const LiveWidget = () => {
           onClick={() => getCurrentWebviewWindow().close()}
           className='flex items-center justify-center p-1.5 text-gray-400 hover:text-red-500 transition-colors duration-200 shrink-0'
           title='إغلاق'
+          type='button'
         >
           <span className='material-symbols-rounded text-[18px]'>close</span>
         </button>

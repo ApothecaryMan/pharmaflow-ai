@@ -175,7 +175,7 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
       <div className='bg-white/10 dark:bg-black/5 p-2 rounded-xl space-y-2 border border-white/10 dark:border-black/10 shadow-xs'>
         {calculations.map((calc, idx) => (
           <div
-            key={idx}
+            key={`${calc.label}-${idx}`}
             className={`space-y-1 ${idx > 0 ? 'border-t border-white/10 dark:border-black/10 pt-2' : ''}`}
           >
             <div className='flex justify-between text-[9px] text-white/60 dark:text-black/60 font-bold uppercase tracking-tighter opacity-80'>
@@ -195,7 +195,7 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
       {/* TIER 3: OPERATIONAL INSIGHTS (STRATEGIC ACTION) */}
       <div className='space-y-2 px-1 pt-0.5'>
         {details.map((detail, idx) => (
-          <div key={idx} className='group'>
+          <div key={`${detail.label}-${idx}`} className='group'>
             <div className='flex justify-between items-center text-[12.5px]'>
               <span className='text-white/80 dark:text-black/80 flex items-center gap-2 font-medium'>
                 <span className='material-symbols-rounded text-[16px] opacity-70 group-hover:opacity-100 transition-opacity'>

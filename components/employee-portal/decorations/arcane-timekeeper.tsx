@@ -1,6 +1,7 @@
 export function ArcaneTimekeeper() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Arcane timekeeper</title>
       <g opacity='0.98'>
         <circle cx='64' cy='64' r='58' stroke='#78350F' strokeWidth='4' strokeDasharray='6 6' />
         <circle cx='64' cy='64' r='58' stroke='#B45309' strokeWidth='1.5' strokeDasharray='6 6' />

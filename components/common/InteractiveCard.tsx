@@ -58,6 +58,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       onPageChange?.(nextIdx);
 
       // Safety timeout to reset isChanging
+      // biome-ignore lint/suspicious/noAssignInExpressions: intentional ref assignment
       const timeout = setTimeout(() => (isChanging.current = false), 450);
       return () => clearTimeout(timeout);
     },
@@ -81,6 +82,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
 
     if (Math.abs(delta) > 15) {
       navigate(delta > 0 ? 1 : -1, isHoriz ? 'x' : 'y');
+      // biome-ignore lint/suspicious/noAssignInExpressions: intentional ref reset
       wheelLock.current = setTimeout(() => (wheelLock.current = null), 600);
     }
   };
@@ -104,7 +106,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       <div className='grid grid-cols-1 grid-rows-1 w-full h-full'>
         {pages.map((p, i) => (
           <div
-            key={i}
+            key={`page-placeholder-${i}`}
             className='invisible pointer-events-none row-start-1 col-start-1 h-full w-full'
             aria-hidden='true'
           >
@@ -154,10 +156,11 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             role='tablist'
           >
-            {pages.map((_, i) => (
+            {// biome-ignore lint/suspicious/noArrayIndexKey: pages have no stable id
+            pages.map((_, i) => (
               <motion.button
                 layout
-                key={i}
+                key={`page-dot-${i}`}
                 role='tab'
                 aria-selected={activePage === i}
                 aria-label={`Page ${i + 1}`}

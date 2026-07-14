@@ -136,7 +136,7 @@ export const batchService = {
 
     const validBatches = [...batches].filter((b) => {
       const exp = parseExpiryEndOfMonth(b.expiryDate);
-      return !isNaN(exp.getTime()) && exp > referenceDate;
+      return !Number.isNaN(exp.getTime()) && exp > referenceDate;
     });
 
     // Sort logic: if preferredBatchId matches, it comes first. Otherwise sort by expiry.
@@ -266,7 +266,7 @@ export const batchService = {
         if (!b.expiryDate) return -1;
         const dateA = parseExpiryEndOfMonth(a.expiryDate).getTime();
         const dateB = parseExpiryEndOfMonth(b.expiryDate).getTime();
-        return isNaN(dateA) ? 1 : isNaN(dateB) ? -1 : dateA - dateB;
+        return Number.isNaN(dateA) ? 1 : Number.isNaN(dateB) ? -1 : dateA - dateB;
       });
 
       const earliest = sortedBatches[0];

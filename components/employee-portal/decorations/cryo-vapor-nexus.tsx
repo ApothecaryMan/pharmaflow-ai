@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function CryoVaporNexus() {
   const iceCrystals = [];
   const N = 12; // 12 ice crystals around the edge
@@ -25,6 +23,7 @@ export function CryoVaporNexus() {
 
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Cryo vapor nexus</title>
       <defs>
         {/* Steam blur filter */}
         <filter id='cvn-steam-blur'>
@@ -129,6 +128,7 @@ export function CryoVaporNexus() {
         <g className='cvn-origin cvn-spin-cw' style={{ animationDuration: '60s' }}>
           {steamOrbs.map((orb, i) => (
             <circle
+              // biome-ignore lint/suspicious/noArrayIndexKey: particles have no stable id
               key={`steam-${i}`}
               cx={orb.x}
               cy={orb.y}
@@ -142,6 +142,7 @@ export function CryoVaporNexus() {
           <g className='cvn-origin cvn-spin-ccw' style={{ animationDuration: '45s' }}>
             {steamOrbs.map((orb, i) => (
               <circle
+                // biome-ignore lint/suspicious/noArrayIndexKey: particles have no stable id
                 key={`steam2-${i}`}
                 cx={128 - orb.x}
                 cy={128 - orb.y}
@@ -182,6 +183,7 @@ export function CryoVaporNexus() {
 
           {iceCrystals.map((c) => (
             <g
+              // biome-ignore lint/suspicious/noArrayIndexKey: crystals have no stable id
               key={`ice-${c.index}`}
               transform={`translate(${c.x}, ${c.y}) rotate(${c.rotation})`}
               className='cvn-ice'
@@ -209,6 +211,7 @@ export function CryoVaporNexus() {
             const y = 64 - 61 * Math.cos(angle);
             return (
               <circle
+                // biome-ignore lint/suspicious/noArrayIndexKey: particles have no stable id
                 key={`frost-${i}`}
                 cx={x}
                 cy={y}

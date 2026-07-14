@@ -1,24 +1,11 @@
-import {
-  type DragEndEvent,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { type DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { batchService } from '../../../../services/inventory/batchService';
-import type { CartItem, Drug, GroupedDrug } from '../../../../types';
+import type { CartItem, Drug } from '../../../../types';
 import { money } from '../../../../utils/money';
-import {
-  convertToPacks,
-  isStockConstraintMet,
-  resolvePrice,
-  resolveUnits,
-} from '../../../../utils/stockUtils';
+import { isStockConstraintMet, resolvePrice } from '../../../../utils/stockUtils';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -89,7 +76,7 @@ export const usePOSCart = ({
       else entry.pack = item;
     });
     return Array.from(map.values()).map((entry) => ({
-      id: (entry.pack || entry.unit)!.id,
+      id: (entry.pack || entry.unit)?.id,
       pack: entry.pack,
       unit: entry.unit,
       common: (entry.pack || entry.unit)!,
@@ -199,7 +186,7 @@ export const usePOSCart = ({
         ];
       });
     },
-    [activeTab?.firstItemAt, activeTabId, updateTab, setCart]
+    [activeTab?.firstItemAt, activeTabId, updateTab, setCart, inventory, playBeep]
   );
 
   const addGroupToCart = useCallback(
@@ -500,11 +487,11 @@ export const usePOSCart = ({
               groups.set(item.id, []);
               order.push(item.id);
             }
-            groups.get(item.id)!.push(item);
+            groups.get(item.id)?.push(item);
           });
 
           const oldIndex = order.indexOf(active.id as string);
-          const newIndex = order.indexOf(over!.id as string);
+          const newIndex = order.indexOf(over?.id as string);
           const newOrder = arrayMove(order, oldIndex, newIndex);
 
           const newCart: CartItem[] = [];

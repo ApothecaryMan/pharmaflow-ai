@@ -1,10 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import type { AttendanceEvent } from '../../types/hr';
-import {
-  calculateWorkingHours,
-  checkLateness,
-  type EmployeeWorkSummary,
-} from '../../utils/attendanceUtils';
+import { calculateWorkingHours, checkLateness } from '../../utils/attendanceUtils';
 import { type BaseReportFilters, BaseReportService } from '../core/baseReportService';
 
 // ── Types ──

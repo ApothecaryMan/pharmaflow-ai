@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useTypography } from '../../context/TypographyContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { CartItem, Drug } from '../../types';
-import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import { formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { parsePriceRange, parseSearchTerm } from '../../utils/searchUtils';
 import { convertToPacks } from '../../utils/stockUtils';
@@ -11,7 +11,6 @@ import { MaterialTabs } from '../common/MaterialTabs';
 import { SearchInput } from '../common/SearchInput';
 import { CartItemQuantityControl } from '../sales/pos/CartItemControls';
 import { InlineBarcodeScanner } from './InlineBarcodeScanner';
-import { MobileSearchCartDrawer } from './MobileSearchCartDrawer';
 
 interface MobileMedicineSearchProps {
   inventory: Drug[];
@@ -25,13 +24,13 @@ interface MobileMedicineSearchProps {
 }
 
 export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
-  inventory,
-  color,
-  onScanClick,
-  cart,
-  setCart,
-  onAddToCart,
-  onRemoveFromCart,
+  inventory: _inventory,
+  color: _color,
+  onScanClick: _onScanClick,
+  cart: _cart,
+  setCart: _setCart,
+  onAddToCart: _onAddToCart,
+  onRemoveFromCart: _onRemoveFromCart,
   onUpdateQuantity,
 }) => {
   const { language, textTransform } = useTypography();
@@ -109,7 +108,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
     // Need at least 1 char of actual text when combined with price range
     if (priceRange && trimmedSearch.length < 1) return [];
 
-    return inventory
+    return _inventory
       .filter((drug) => {
         // Price range gate: reject immediately if outside range
         if (
@@ -150,7 +149,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         return regex.test(searchableText);
       })
       .slice(0, 100); // Limit results for mobile performance
-  }, [inventory, searchTerm, priceRange]);
+  }, [_inventory, searchTerm, priceRange]);
 
   const combinedFilteredDrugs = useMemo(() => {
     const combined = [...scannedDrugs];
@@ -188,6 +187,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
       let lastIndex = 0;
       let match: RegExpExecArray | null;
 
+      // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
       while ((match = regex.exec(text)) !== null) {
         if (match.index > lastIndex) segments.push(text.slice(lastIndex, match.index));
         segments.push(
@@ -205,7 +205,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
       if (lastIndex < text.length) segments.push(text.slice(lastIndex));
       if (segments.length === 0) return text;
       return <>{segments}</>;
-    } catch (e) {
+    } catch (_e) {
       return text;
     }
   };
@@ -213,6 +213,8 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   return (
     <div
       ref={containerRef}
+      role="button"
+      tabIndex={0}
       className='flex flex-col bg-(--bg-page-surface) overflow-hidden fixed inset-0'
       onContextMenu={(e) => e.preventDefault()}
       dir='ltr'
@@ -235,7 +237,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
             <div className='w-full max-w-2xl mx-auto px-2 pb-1'>
               <InlineBarcodeScanner
                 onScanSuccess={(decodedText) => {
-                  const foundDrug = inventory.find(
+                  const foundDrug = _inventory.find(
                     (d) =>
                       d.id === decodedText ||
                       d.barcode === decodedText ||
@@ -254,7 +256,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                   // Scanner remains open for continuous scanning
                 }}
                 onClose={() => setIsScannerOpen(false)}
-                color={color}
+                color={_color}
                 isActive={isScannerOpen}
               />
             </div>
@@ -272,12 +274,13 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                 setScannedDrugs([]);
               }}
               placeholder={t.pos.searchPlaceholder}
-              color={color}
+              color={_color}
               rounded='full'
               icon={
                 <button
                   onClick={() => setIsScannerOpen(true)}
                   className='flex items-center justify-center -ms-1 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95 text-gray-400'
+                  type='button'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: '22px' }}>
                     qr_code_scanner
@@ -352,10 +355,10 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                 highlightMatch={highlightMatch}
                 language={language}
                 textTransform={textTransform}
-                cart={cart}
-                onAddToCart={onAddToCart}
+                cart={_cart}
+                onAddToCart={_onAddToCart}
                 onUpdateQuantity={onUpdateQuantity}
-                inventory={inventory}
+                inventory={_inventory}
               />
             ))}
           </div>
@@ -469,6 +472,7 @@ const DrugActionPill: React.FC<{
           }}
           disabled={isOutOfStock}
           className={`h-full px-2.5 flex items-center justify-center active:scale-90 transition-all rounded-e-full ${isOutOfStock ? 'text-gray-300 dark:text-gray-600 opacity-50' : 'text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'}`}
+          type='button'
         >
           <span className='material-symbols-rounded font-fill text-[18px]'>
             {isOutOfStock ? 'block' : isExpanded ? 'shopping_cart_checkout' : 'add'}
@@ -499,9 +503,9 @@ const MedicineSearchItem: React.FC<{
   drug,
   index,
   searchTerm,
-  totalResults,
-  isExpanded,
-  onToggleExpand,
+  totalResults: _totalResults,
+  isExpanded: _isExpanded,
+  onToggleExpand: _onToggleExpand,
   onPointerDown,
   onPointerUp,
   highlightMatch,
@@ -525,23 +529,23 @@ const MedicineSearchItem: React.FC<{
     >
       <MaterialTabs
         index={index}
-        total={totalResults}
-        isSelected={isExpanded}
+        total={_totalResults}
+        isSelected={_isExpanded}
         onPointerDown={() => onPointerDown(drug.id)}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
-        className={`!px-0 !h-auto !min-h-[72px] border border-gray-100/30 dark:border-gray-800/20 transition-all bg-white dark:!bg-(--bg-secondary) ${isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}`}
+        className={`!px-0 !h-auto !min-h-[72px] border border-gray-100/30 dark:border-gray-800/20 transition-all bg-white dark:!bg-(--bg-secondary) ${_isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}`}
       >
         <div className='flex flex-col w-full px-4 text-left'>
           <div className='h-[60px] flex items-center justify-between w-full gap-2'>
             <div className='flex-1 min-w-0'>
               <h3
-                className={`font-bold text-gray-900 dark:text-gray-100 leading-tight ${isExpanded ? 'text-base' : 'line-clamp-2'}`}
+                className={`font-bold text-gray-900 dark:text-gray-100 leading-tight ${_isExpanded ? 'text-base' : 'line-clamp-2'}`}
               >
                 {highlightMatch(displayName, searchTerm, !searchTerm.startsWith('@'))}
               </h3>
               <p
-                className={`text-gray-400 dark:text-gray-600 text-xs mt-0.5 ${isExpanded ? '' : 'truncate'}`}
+                className={`text-gray-400 dark:text-gray-600 text-xs mt-0.5 ${_isExpanded ? '' : 'truncate'}`}
               >
                 {highlightMatch(
                   genericNameStr,
@@ -554,14 +558,14 @@ const MedicineSearchItem: React.FC<{
             <DrugActionPill
               drug={drug}
               cart={cart}
-              isExpanded={isExpanded}
+              isExpanded={_isExpanded}
               language={language}
               onAddToCart={onAddToCart}
             />
           </div>
 
           <div
-            className={`grid transition-all duration-300 ${isExpanded ? 'grid-rows-[1fr] pb-3' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}
+            className={`grid transition-all duration-300 ${_isExpanded ? 'grid-rows-[1fr] pb-3' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}
           >
             <div className='overflow-hidden'>
               <div className='flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800/50 mt-1'>

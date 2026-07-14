@@ -46,6 +46,7 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ titl
 
     return (
       <svg viewBox='0 0 100 55' className='w-full h-full'>
+        <title>Performance goals</title>
         {/* Unfilled background tracks */}
         {tracks.map((track) => (
           <path
@@ -118,6 +119,7 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ titl
                 ? 'bg-white dark:bg-gray-700 shadow-xs font-semibold text-gray-900 dark:text-white'
                 : 'text-gray-500 dark:text-gray-400'
             }`}
+            type='button'
           >
             {isRTL ? 'أفقي' : 'Horizontal'}
           </button>
@@ -128,6 +130,7 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ titl
                 ? 'bg-white dark:bg-gray-700 shadow-xs font-semibold text-gray-900 dark:text-white'
                 : 'text-gray-500 dark:text-gray-400'
             }`}
+            type='button'
           >
             {isRTL ? 'رأسي' : 'Vertical'}
           </button>

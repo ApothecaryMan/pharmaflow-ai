@@ -5,7 +5,7 @@ import type { PageShortcutMap, ShortcutScope } from './types';
 export function usePageShortcuts(
   scope: ShortcutScope,
   shortcutMap: PageShortcutMap,
-  deps: any[] = [shortcutMap],
+  deps: any[] = [shortcutMap]
 ): void {
   const { registerShortcuts } = useContext(KeyboardContext);
 

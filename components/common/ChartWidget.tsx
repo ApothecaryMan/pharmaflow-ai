@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
+import { formatCompactCurrencyParts } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
 
@@ -23,7 +23,7 @@ export const CustomTooltipContent = memo(
     label,
     unit,
     employees,
-    selectedEmployeeId,
+    selectedEmployeeId: _selectedEmployeeId,
     showComparison,
     primaryLabel,
     dataKeys,
@@ -78,7 +78,10 @@ export const CustomTooltipContent = memo(
                 const employee = employees?.find((e: any) => e.id === item.dataKey);
                 const name = secondaryDef?.name || employee?.name || item.name || item.dataKey;
                 return (
-                  <div key={idx} className='flex items-center justify-between gap-6'>
+                  <div
+                    key={`${item.dataKey}-${idx}`}
+                    className='flex items-center justify-between gap-6'
+                  >
                     <div className='flex items-center gap-1.5'>
                       <div
                         className='w-1.5 h-1.5 rounded-full'
@@ -123,7 +126,8 @@ const MultiLineTick = (props: any) => {
     return (
       <text x={x} y={y} dy={dy} textAnchor='middle' fill={fill} fontSize={fontSize}>
         {lines.map((line: string, i: number) => (
-          <tspan x={x} dy={i === 0 ? 0 : 14} key={i}>
+          // biome-ignore lint/suspicious/noArrayIndexKey: split lines have no stable id
+          <tspan x={x} dy={i === 0 ? 0 : 14} key={`tick-line-${i}`}>
             {line}
           </tspan>
         ))}
@@ -306,6 +310,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               onClick={onExpand}
               className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
               title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
+              type='button'
             >
               <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                 open_in_full

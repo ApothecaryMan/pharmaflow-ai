@@ -72,8 +72,9 @@ export const LandingPage: React.FC<{ language: 'EN' | 'AR'; darkMode: boolean }>
                   />
                 ),
               },
-            ].map((item, index) => (
-              <svg key={index} viewBox={item.viewBox} className='h-16 md:h-20 w-auto'>
+            ].map((item, _index) => (
+              <svg key={item.char} viewBox={item.viewBox} className='h-16 md:h-20 w-auto'>
+                <title>{item.char}</title>
                 {item.svgElement}
               </svg>
             ))}

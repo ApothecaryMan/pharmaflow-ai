@@ -116,7 +116,7 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
             {requests.map((req) => {
               const statusCfg = getStatusConfig(req.status);
               const profile = profilesByUsername.get(req.targetUsername);
-              const initials = profile?.fullName
+              const _initials = profile?.fullName
                 ? profile.fullName
                     .split(' ')
                     .map((s) => s[0])

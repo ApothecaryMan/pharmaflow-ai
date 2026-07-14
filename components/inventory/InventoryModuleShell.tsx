@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useSettings } from '../../context';
 import { storage } from '../../utils/storage';
 import { PageHeader } from '../common/PageHeader';

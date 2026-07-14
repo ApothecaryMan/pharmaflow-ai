@@ -1,26 +1,24 @@
+import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
+import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { purchaseService } from '../../services/purchases/purchaseService';
 import { returnService } from '../../services/returns/returnService';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '../../lib/queryKeys';
 import { useAuthStore } from '../../stores/authStore';
-import type { Drug, Employee, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
-import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
-import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
-import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
+import type { Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
-import { storage } from '../../utils/storage';
 import {
   CARD_BASE,
   INPUT_BASE,
@@ -32,8 +30,6 @@ import {
   PriceDisplay,
   SearchDropdown,
   SearchInput,
-  SegmentedControl,
-  SmartInput,
   SmartTextarea,
   TanStackTable,
   useContextMenu,
@@ -73,7 +69,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
     createPurchaseReturn: infra.createPurchaseReturn,
   });
   const { showMenu } = useContextMenu();
-  const [mode, setMode] = useState<'create' | 'history'>('create');
+  const [_mode, _setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
 
   // Pagination states for History Table
@@ -108,7 +104,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
     return () => {
       isMounted = false;
     };
-  }, [page, search, activeBranchId]);
+  }, [page, search]);
 
   // Create Return state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -126,7 +122,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
   };
 
   // Get available purchases (not fully returned)
-  const availablePurchases = purchases.filter((p) => {
+  const _availablePurchases = purchases.filter((p) => {
     if (p.status !== 'completed' && p.status !== 'received') return false;
 
     // Check if all items are fully returned
@@ -163,7 +159,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
   }, []);
 
   const [searchedPurchases, setSearchedPurchases] = useState<Purchase[]>([]);
-  const [isSearchingPo, setIsSearchingPo] = useState(false);
+  const [_isSearchingPo, setIsSearchingPo] = useState(false);
 
   // Instead of static filtering, we search the server dynamically
   useEffect(() => {
@@ -208,7 +204,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [poSearch, activeBranchId]);
+  }, [poSearch, getReturnedQuantity]);
 
   const { highlightedIndex, onKeyDown } = useSearchKeyboardNavigation({
     results: searchedPurchases,
@@ -357,13 +353,14 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
             }}
             className='p-1.5 text-gray-400 hover:text-primary-600 transition-colors outline-hidden'
             title='Actions'
+            type='button'
           >
             <span className='material-symbols-rounded text-[20px]'>more_vert</span>
           </button>
         ),
       },
     ],
-    [t, getRowActions, textTransform]
+    [t, getRowActions, showMenu]
   ); // getRowActions is stable component reference but we just in case include it
 
   // Submit return
@@ -483,6 +480,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className={`flex items-center gap-2 px-4 h-10 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95`}
+              type='button'
             >
               <span className='material-symbols-rounded text-[20px]'>add_circle</span>
               {t.purchaseReturns?.createReturn || 'Create Return'}
@@ -562,6 +560,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                 onClick={(e) => handleSubmitReturn(e as any)}
                 disabled={calculatedTotalRefund === 0}
                 className={MODAL_FOOTER_BTN_PRIMARY}
+                type='button'
               >
                 <span className='material-symbols-rounded'>check_circle</span>
                 {t.purchaseReturns?.submit || 'Submit Return'}
@@ -577,7 +576,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                 {t.purchaseReturns?.selectPurchase || 'Select Purchase Order'}
               </h3>
 
-              <div onKeyDown={onKeyDown}>
+              <div role="button" tabIndex={0} onKeyDown={onKeyDown}>
                 <SearchInput
                   value={
                     poSearch ||
@@ -737,7 +736,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                                     onChange={(e) => {
                                       const val = Math.min(
                                         maxQty,
-                                        Math.max(0, parseInt(e.target.value) || 0)
+                                        Math.max(0, parseInt(e.target.value, 10) || 0)
                                       );
                                       setReturnQuantities((prev) => ({
                                         ...prev,
@@ -853,9 +852,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
 
                 {/* Additional Notes */}
                 <div className='space-y-1.5'>
-                  <label className='block text-xs font-bold text-gray-700 dark:text-gray-300'>
+                  <span className='block text-xs font-bold text-gray-700 dark:text-gray-300'>
                     {t.purchaseReturns?.additionalNotes || 'Additional Notes'}
-                  </label>
+                  </span>
                   <SmartTextarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -892,7 +891,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
           disabled={isPageLoading}
           footer={
             <div className='flex justify-end'>
-              <button onClick={() => setViewingReturn(null)} className={MODAL_FOOTER_BTN_CANCEL}>
+              <button
+                onClick={() => setViewingReturn(null)}
+                className={MODAL_FOOTER_BTN_CANCEL}
+                type='button'
+              >
                 {t.modal?.close || 'Close'}
               </button>
             </div>
@@ -908,43 +911,43 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
 
               <div className='grid grid-cols-2 gap-y-6 gap-x-4'>
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
+                  <span className='block text-xs font-medium text-gray-500 mb-1'>
                     {t.purchaseReturns?.tableHeaders?.id || 'Return ID'}
-                  </label>
+                  </span>
                   <p className='font-bold text-gray-900 dark:text-white font-mono text-sm'>
                     {viewingReturn.id}
                   </p>
                 </div>
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
+                  <span className='block text-xs font-medium text-gray-500 mb-1'>
                     {t.purchaseReturns?.tableHeaders?.date || 'Date'}
-                  </label>
+                  </span>
                   <p className='font-bold text-gray-900 dark:text-white text-sm'>
                     {new Date(viewingReturn.date).toLocaleDateString()}
                   </p>
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
+                  <span className='block text-xs font-medium text-gray-500 mb-1'>
                     {t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID'}
-                  </label>
+                  </span>
                   <p className='font-bold text-gray-900 dark:text-white font-mono text-sm'>
                     {viewingReturn.purchaseId}
                   </p>
                 </div>
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
+                  <span className='block text-xs font-medium text-gray-500 mb-1'>
                     {t.purchaseReturns?.tableHeaders?.supplier || 'Supplier'}
-                  </label>
+                  </span>
                   <p className='font-bold text-gray-900 dark:text-white text-sm'>
                     {viewingReturn.supplierName}
                   </p>
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
+                  <span className='block text-xs font-medium text-gray-500 mb-1'>
                     {t.purchaseReturns?.tableHeaders?.status || 'Status'}
-                  </label>
+                  </span>
                   {(() => {
                     const status = viewingReturn.status;
                     let badgeClass = 'badge-warning';
@@ -966,9 +969,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                   })()}
                 </div>
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
+                  <span className='block text-xs font-medium text-gray-500 mb-1'>
                     {t.purchaseReturns?.totalRefund || 'Total Refund'}
-                  </label>
+                  </span>
                   <p className='font-bold text-red-600 text-sm'>
                     <PriceDisplay value={viewingReturn.totalRefund} />
                   </p>
@@ -986,7 +989,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
               <div className='space-y-2'>
                 {viewingReturn.items.map((item, index) => (
                   <div
-                    key={index}
+                    key={`${item.id || index}`}
                     className='p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex justify-between items-center group hover:border-gray-200 dark:hover:border-gray-700 transition-colors'
                   >
                     <div>

@@ -1,5 +1,5 @@
 import { pricingService } from '../services/sales/pricingService.ts';
-import { money, pricing, tax } from '../utils/money.ts';
+import { money, tax } from '../utils/money.ts';
 
 const runTests = () => {
   console.log('🚀 Starting Precision Financial Math Final Validation...');

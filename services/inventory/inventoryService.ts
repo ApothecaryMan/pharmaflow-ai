@@ -2,8 +2,6 @@ import { supabase } from '../../lib/supabase';
 import type { Drug } from '../../types';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
-import { authService } from '../auth/authService';
-import { permissionsService } from '../auth/permissionsService';
 import { BaseDomainService } from '../core/baseDomainService';
 import { settingsService } from '../settings/settingsService';
 import { batchService } from './batchService';
@@ -62,7 +60,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     return all.filter(
       (d) =>
         d.name.toLowerCase().includes(q) ||
-        (d.genericName && d.genericName.some((g) => g.toLowerCase().includes(q))) ||
+        d.genericName?.some((g) => g.toLowerCase().includes(q)) ||
         d.barcode?.includes(q) ||
         d.internalCode?.toLowerCase().includes(q)
     );
@@ -83,7 +81,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       results = results.filter(
         (d) =>
           d.name.toLowerCase().includes(q) ||
-          (d.genericName && d.genericName.some((g) => g.toLowerCase().includes(q)))
+          d.genericName?.some((g) => g.toLowerCase().includes(q))
       );
     }
     return results;

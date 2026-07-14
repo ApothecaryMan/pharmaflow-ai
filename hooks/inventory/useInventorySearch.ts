@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DrugSearchEngine, inventorySearchEngine } from '../../services/search/drugSearchService';
+import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
 
 interface UseInventorySearchProps {
@@ -50,7 +50,7 @@ export const useInventorySearch = ({
       filteredDrugs: results,
       totalResults: uniqueGroups.size,
     };
-  }, [search, category, stockFilter, activeBranchId, inventory]);
+  }, [search, category, stockFilter, activeBranchId]);
 
   return { filteredDrugs, totalResults };
 };

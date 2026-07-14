@@ -3,7 +3,7 @@ import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useCatalog } from '../../context/CatalogContext';
 import { useTypography } from '../../context/TypographyContext';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { DrugSearchEngine, inventorySearchEngine } from '../../services/search/drugSearchService';
+import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
 import { SearchInput } from './SearchInput';
 import { Tooltip } from './Tooltip';
@@ -204,6 +204,7 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
                 }}
                 className='flex items-center justify-center -ms-1 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95 text-gray-400'
                 title={language === 'AR' ? 'مسح باركود' : 'Scan Barcode'}
+                type='button'
               >
                 <span className='material-symbols-rounded' style={{ fontSize: '22px' }}>
                   qr_code_scanner

@@ -5,7 +5,6 @@ import { useShift } from '../../hooks/sales/useShift';
 import { useAuthStore } from '../../stores/authStore';
 import type { Sale, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -26,7 +25,7 @@ interface ReceiptDesignerProps {
   language: 'EN' | 'AR';
 }
 
-export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, language }) => {
+export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color: _color, t, language }) => {
   const branches = useAuthStore((s) => s.branches);
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const updateBranch = useAuthStore((s) => s.updateBranch);
@@ -34,9 +33,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     () => branches?.find((b: any) => b.id === activeBranchId),
     [branches, activeBranchId]
   );
-  const { getVerifiedDate } = useStatusBar();
+  const { getVerifiedDate: _getVerifiedDate } = useStatusBar();
   const [hasMounted, setHasMounted] = useState(false);
-  const { shifts } = useShift();
+  const { shifts: _shifts } = useShift();
   const [previewMode, setPreviewMode] = useState<'sale' | 'shift'>('sale');
 
   useEffect(() => {
@@ -131,7 +130,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     } catch (e) {
       console.error('Failed to load templates', e);
     }
-  }, [activeBranchId, branches, hasMounted]);
+  }, [activeBranchId, branches, hasMounted, activeBranch, defaultOptions]);
 
   const [options, setOptions] = useState<InvoiceTemplateOptions>(() => {
     const active = templates.find((t) => t.id === activeTemplateId) || templates[0];
@@ -143,7 +142,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const [isEditingName, setIsEditingName] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [_isSaving, setIsSaving] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [quotaError, setQuotaError] = useState(false);
 
@@ -239,7 +238,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const DUMMY_SALE: Sale = {
     id: 'TRX-998877',
     branchId: 'BR-001',
-    date: getVerifiedDate().toISOString(),
+    date: _getVerifiedDate().toISOString(),
     dailyOrderNumber: 42,
     status: 'completed',
     items: [
@@ -307,7 +306,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   };
 
   const DUMMY_SHIFT: Shift = useMemo(() => {
-    const now = getVerifiedDate();
+    const now = _getVerifiedDate();
     const openTime = new Date(now.getTime() - 8 * 60 * 60 * 1000); // 8 hours ago
     return {
       id: 'SHIFT-889900',
@@ -335,7 +334,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       printCount: showDuplicatePreview ? 2 : 1,
       transactions: [],
     };
-  }, [getVerifiedDate, showDuplicatePreview]);
+  }, [_getVerifiedDate, showDuplicatePreview]);
 
   // 3. Preview HTML Generation
   const [previewHtml, setPreviewHtml] = useState('');
@@ -354,7 +353,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         ? [
             {
               id: 'RET-1',
-              date: getVerifiedDate().toISOString(),
+              date: _getVerifiedDate().toISOString(),
               totalRefund: 15.5,
               items: [],
               originalSaleId: DUMMY_SALE.id,
@@ -378,6 +377,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     previewMode,
     DUMMY_SHIFT,
     highlightedField,
+    DUMMY_SALE,
+    _getVerifiedDate,
   ]);
 
   const payloadSize = useMemo(() => {
@@ -404,10 +405,10 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     };
 
     // Always includes Raqami for Arabic fallback in current template
-    dependencyBytes += fontSizes['raqami'];
+    dependencyBytes += fontSizes.raqami;
 
     if (options.receiptFont === 'receipt-basic') {
-      dependencyBytes += fontSizes['receiptional'];
+      dependencyBytes += fontSizes.receiptional;
     } else {
       dependencyBytes += fontSizes['fake-receipt'];
     }
@@ -438,9 +439,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         </div>
 
         <div className='flex flex-wrap xl:flex-nowrap items-center justify-end gap-2 md:gap-3 shrink-0 ms-auto max-w-full'>
-          <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 whitespace-nowrap shrink-0 hidden md:block'>
+          <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 whitespace-nowrap shrink-0 hidden md:block'>
             {isAddingTemplate ? t.receiptDesigner.newTemplate : t.receiptDesigner.activeTemplate}
-          </label>
+          </span>
           <div className='flex flex-wrap md:flex-nowrap items-center gap-2 min-w-0'>
             {isAddingTemplate || isEditingName ? (
               <div className='flex items-center gap-2 w-full '>
@@ -469,6 +470,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       isEditingName ? handleRenameTemplate(e as any) : handleCreateTemplate()
                     }
                     className='w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[20px]'>check</span>
                   </button>
@@ -480,6 +482,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       setIsEditingName(null);
                     }}
                     className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[20px]'>close</span>
                   </button>
@@ -548,6 +551,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                           }
                         }}
                         className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-accent transition-all group'
+                        type='button'
                       >
                         <span className='material-symbols-rounded text-[18px] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>
                           edit
@@ -563,6 +567,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                           <button
                             onClick={(e) => handleSetDefault(e as any, activeTemplateId)}
                             className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
+                            type='button'
                           >
                             <span className='material-symbols-rounded text-[18px]'>
                               bookmark_add
@@ -578,6 +583,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         <button
                           onClick={(e) => handleDeleteTemplate(e as any, activeTemplateId)}
                           className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-accent transition-all'
+                          type='button'
                         >
                           <span className='material-symbols-rounded text-[18px]'>delete</span>
                         </button>
@@ -608,6 +614,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         }
                       }}
                       className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0 border border-transparent '
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[20px]'>save</span>
                       <span className='hidden lg:inline text-[13px] font-bold'>
@@ -625,6 +632,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         }
                       }}
                       className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-600 dark:text-gray-400 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-500/50 dark:hover:bg-red-500/10 hover:bg-red-50 transition-all active:scale-95 shrink-0'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[20px]'>restart_alt</span>
                       <span className='hidden lg:inline text-[13px] font-bold'>
@@ -637,6 +645,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   <button
                     onClick={() => setIsAddingTemplate(true)}
                     className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all active:scale-95 shrink-0 hover:border-primary-500 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[20px]'>add</span>
                     <span className='hidden lg:inline text-[13px] font-bold'>
@@ -651,6 +660,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   <button
                     onClick={() => setIsGalleryOpen(true)}
                     className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all active:scale-95 shrink-0 border border-transparent'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[20px]'>storefront</span>
                     <span className='hidden xl:inline text-[13px] font-bold'>
@@ -672,10 +682,10 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         >
           {/* Layout Selection */}
           <div className='mt-4 mb-2'>
-            <label className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1'>
+            <span className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1'>
               <span className='material-symbols-rounded text-[14px]'>dashboard</span>
               {language === 'AR' ? 'شكل الفاتورة' : 'Receipt Layout'}
-            </label>
+            </span>
             <div className='grid grid-cols-5 gap-2'>
               {RECEIPT_TEMPLATES.map((t) => {
                 const isActive = (options.receiptLayout || 'layout-1') === t.id;
@@ -699,6 +709,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         : 'border-gray-200 dark:border-border hover:border-primary-300 dark:hover:border-primary-700 hover:bg-gray-50 dark:hover:bg-muted'
                     }`}
                     title={t.description}
+                    type='button'
                   >
                     <span className='text-[10px] font-medium leading-tight text-center break-words w-full'>
                       {translatedName}
@@ -714,7 +725,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
             <div className='grid grid-cols-2 gap-3'>
               {/* Logo Upload */}
               <div className='space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
                   <div className='flex items-center gap-1'>
                     <span className='material-symbols-rounded text-[14px]'>image</span>
                     {t.inventory.headers.images || 'Image'}
@@ -724,7 +735,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       {t.receiptDesigner.storage?.full || 'Storage Full!'}
                     </span>
                   )}
-                </label>
+                </span>
                 {options.logoBase64 && !options.logoSvgCode ? (
                   <div
                     className={`relative bg-gray-50 dark:bg-muted/30 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
@@ -753,6 +764,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                             setOptions({ ...options, hideLogo: !options.hideLogo });
                           }}
                           className={`w-5 h-5 ${options.hideLogo ? 'bg-gray-500 hover:bg-gray-600' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-full flex items-center justify-center shadow-xs`}
+                          type='button'
                         >
                           <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
                             {options.hideLogo ? 'visibility_off' : 'visibility'}
@@ -771,6 +783,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                             setQuotaError(false);
                           }}
                           className='w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs'
+                          type='button'
                         >
                           <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
                             close
@@ -790,7 +803,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     )}
                   </div>
                 ) : (
-                  <label
+                  <span
                     className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed ${quotaError ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-border hover:border-gray-400 dark:hover:border-border'} cursor-pointer transition-colors bg-gray-50 dark:bg-muted/30 h-24 w-full`}
                   >
                     {quotaError ? (
@@ -831,13 +844,13 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         reader.readAsDataURL(file);
                       }}
                     />
-                  </label>
+                  </span>
                 )}
               </div>
 
               {/* SVG Code Input */}
               <div className='space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
                   <div className='flex items-center gap-1'>
                     <span className='material-symbols-rounded text-[14px]'>code</span>
                     SVG Code
@@ -847,11 +860,12 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       {t.receiptDesigner.storage?.full || 'Storage Full!'}
                     </span>
                   )}
-                </label>
+                </span>
                 {options.logoSvgCode ? (
                   <div
                     className={`relative bg-gray-50 dark:bg-muted/30 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
                   >
+                    /* biome-ignore lint/security/noDangerouslySetInnerHtml: user-uploaded logo SVG */
                     <div
                       className={`w-full h-full flex items-center justify-center overflow-hidden ${options.hideLogo ? 'opacity-30 grayscale' : ''}`}
                       dangerouslySetInnerHTML={{ __html: options.logoSvgCode }}
@@ -875,6 +889,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                             setOptions({ ...options, hideLogo: !options.hideLogo });
                           }}
                           className={`w-5 h-5 ${options.hideLogo ? 'bg-gray-500 hover:bg-gray-600' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-full flex items-center justify-center shadow-xs`}
+                          type='button'
                         >
                           <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
                             {options.hideLogo ? 'visibility_off' : 'visibility'}
@@ -893,6 +908,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                             setQuotaError(false);
                           }}
                           className='w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs'
+                          type='button'
                         >
                           <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
                             close
@@ -923,9 +939,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
             <div className='grid grid-cols-2 gap-3'>
               {/* Font Selector */}
               <div className='col-span-2 space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.font}
-                </label>
+                </span>
                 <SegmentedControl
                   value={options.receiptFont || 'courier'}
                   onChange={(val) => setOptions({ ...options, receiptFont: val })}
@@ -938,9 +954,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </div>
 
               <div className='col-span-1 space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.storeName}
-                </label>
+                </span>
                 <SmartInput
                   value={options.storeName}
                   onChange={(e) => setOptions({ ...options, storeName: e.target.value })}
@@ -952,9 +968,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </div>
 
               <div className='col-span-1 space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.storeSubtitle}
-                </label>
+                </span>
                 <SmartInput
                   value={options.storeSubtitle}
                   onChange={(e) => setOptions({ ...options, storeSubtitle: e.target.value })}
@@ -966,9 +982,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </div>
 
               <div className='col-span-1 space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.hotline}
-                </label>
+                </span>
                 <SmartInput
                   value={options.headerHotline}
                   onChange={(e) => setOptions({ ...options, headerHotline: e.target.value })}
@@ -980,9 +996,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </div>
 
               <div className='col-span-1 space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.footer}
-                </label>
+                </span>
                 <SmartInput
                   value={options.footerMessage}
                   onChange={(e) => setOptions({ ...options, footerMessage: e.target.value })}
@@ -994,9 +1010,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </div>
 
               <div className='col-span-2 space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.inquiry}
-                </label>
+                </span>
                 <SmartInput
                   value={options.footerInquiry}
                   onChange={(e) => setOptions({ ...options, footerInquiry: e.target.value })}
@@ -1009,7 +1025,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
               <div className='col-span-2 grid grid-cols-2 gap-3'>
                 <div className='space-y-1'>
-                  <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+                  <span className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
                     <span>{t.receiptDesigner.options.address}</span>
                     {activeBranch?.address && options.headerAddress !== activeBranch.address && (
                       <button
@@ -1017,11 +1033,12 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                           setOptions({ ...options, headerAddress: activeBranch.address })
                         }
                         className='text-[10px] text-primary-500 hover:underline'
+                        type='button'
                       >
                         {t.receiptDesigner.options?.useBranchInfo || 'Use Branch Info'}
                       </button>
                     )}
-                  </label>
+                  </span>
                   <SmartInput
                     value={options.headerAddress}
                     onChange={(e) => setOptions({ ...options, headerAddress: e.target.value })}
@@ -1032,17 +1049,18 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   />
                 </div>
                 <div className='space-y-1'>
-                  <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+                  <span className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
                     <span>{t.receiptDesigner.options.area}</span>
                     {activeBranch?.area && options.headerArea !== activeBranch.area && (
                       <button
                         onClick={() => setOptions({ ...options, headerArea: activeBranch.area })}
                         className='text-[10px] text-primary-500 hover:underline'
+                        type='button'
                       >
                         {t.receiptDesigner.options?.useBranchInfo || 'Use Branch Info'}
                       </button>
                     )}
-                  </label>
+                  </span>
                   <SmartInput
                     value={options.headerArea}
                     onChange={(e) => setOptions({ ...options, headerArea: e.target.value })}
@@ -1055,9 +1073,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </div>
               {/* Printing Preferences */}
               <div className='col-span-2 pt-4 border-t border-gray-100 dark:border-gray-800'>
-                <label className='text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block'>
+                <span className='text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block'>
                   {t.receiptDesigner.printingPreferences || 'Printing Preferences'}
-                </label>
+                </span>
                 <SegmentedControl
                   value={
                     options.autoPrintOnComplete
@@ -1086,9 +1104,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </div>
 
               <div className='col-span-2 space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+                <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.terms}
-                </label>
+                </span>
                 <textarea
                   value={options.termsCondition?.replace(/\u003cbr\u003e/g, '\n')}
                   onChange={(e) =>
@@ -1111,7 +1129,10 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
             {/* Toggles */}
             <div className='grid grid-cols-3 gap-2 mt-2'>
-              <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
+              <label
+                htmlFor='field-1130'
+                className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'
+              >
                 <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
                   {t.receiptDesigner.options.addressBox}
                 </span>
@@ -1123,7 +1144,10 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 />
               </label>
 
-              <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
+              <label
+                htmlFor='field-1142'
+                className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'
+              >
                 <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
                   {t.pos.deliveryOrder}
                 </span>
@@ -1135,7 +1159,10 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 />
               </label>
 
-              <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
+              <label
+                htmlFor='field-1154'
+                className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'
+              >
                 <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
                   {t.salesHistory.returns.returned}
                 </span>
@@ -1224,7 +1251,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     // Add a small buffer just in case
                     iframe.style.height = `${height + 20}px`;
                     // Also ensure parent gets updated if needed
-                    iframe.parentElement!.style.height = `${height + 20}px`;
+                    if (iframe.parentElement) {
+                      iframe.parentElement.style.height = `${height + 20}px`;
+                    }
                   }
                 }}
               />
@@ -1247,7 +1276,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         }))}
         selectedId={options.receiptLayout || 'layout-1'}
         onSelect={(id) => setOptions({ ...options, receiptLayout: id as any })}
-        onUnlockPremium={(id) => {
+        onUnlockPremium={(_id) => {
           alert('Premium templates store coming soon!');
         }}
         t={t.receiptDesigner}

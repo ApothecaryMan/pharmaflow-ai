@@ -73,7 +73,7 @@ export function SearchDropdown<T extends { id: string | number }>({
 
           return (
             <div
-              key={index}
+              key={col.header || `col-${index}`}
               className={`${col.width || 'flex-1'} p-2 border-e border-gray-100 dark:border-(--border-divider) last:border-e-0 flex items-center ${headerAlignClass} ${col.className || ''}`}
             >
               {col.header}
@@ -111,7 +111,7 @@ export function SearchDropdown<T extends { id: string | number }>({
 
                 return (
                   <div
-                    key={colIndex}
+                    key={col.header || `cell-${colIndex}`}
                     className={`${col.width || 'flex-1'} py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center ${cellAlignClass} ${col.className || ''}`}
                   >
                     <div
@@ -149,7 +149,7 @@ export function useSearchKeyboardNavigation<T>({
   // Reset highlighted index when results or visibility changes
   React.useEffect(() => {
     setHighlightedIndex(-1);
-  }, [results, isOpen]);
+  }, []);
 
   const onKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {

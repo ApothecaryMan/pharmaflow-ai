@@ -1,7 +1,7 @@
 import { supabase } from '../../../lib/supabase';
 import { idGenerator } from '../../../utils/idGenerator';
 import { authService } from '../../auth/authService';
-import { BaseReportFilters, BaseReportService } from '../../core/baseReportService';
+import { BaseReportService } from '../../core/baseReportService';
 import { settingsService } from '../../settings/settingsService';
 import type {
   PaginatedStockMovements,

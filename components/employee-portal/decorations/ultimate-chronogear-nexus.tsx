@@ -1,6 +1,7 @@
 export function UltimateChronogearNexus() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Ultimate chronogear nexus</title>
       <style>{`
         @keyframes spin-cw { 100% { transform: rotate(360deg); } }
         @keyframes spin-ccw { 100% { transform: rotate(-360deg); } }

@@ -60,7 +60,7 @@ const PrescriptionPricing: React.FC = () => {
       observer.disconnect();
       document.documentElement.style.removeProperty('--mobile-cart-height');
     };
-  }, [prescriptionItems.length > 0]);
+  }, []);
 
   useEffect(() => {
     // Clean up if needed
@@ -120,6 +120,7 @@ const PrescriptionPricing: React.FC = () => {
       const segments: React.ReactNode[] = [];
       let lastIndex = 0;
       let match: RegExpExecArray | null;
+      // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
       while ((match = regex.exec(text)) !== null) {
         if (match.index > lastIndex) segments.push(text.slice(lastIndex, match.index));
         segments.push(
@@ -342,7 +343,7 @@ const PrescriptionPricing: React.FC = () => {
 
             {viewingDrug.barcode && viewingDrug.barcode !== '-' && (
               <div className='flex flex-col items-center justify-center pt-8 pb-3 bg-white dark:bg-white/90 border-t border-gray-100 dark:border-white/10 mt-2 overflow-hidden w-full rounded-b-2xl'>
-                <style dangerouslySetInnerHTML={{ __html: getBarcodeFontsCSS() }} />
+                <style>{getBarcodeFontsCSS()}</style>
                 <div
                   style={{
                     fontFamily: "'Libre Barcode 128', monospace",
@@ -414,6 +415,8 @@ const SearchResultItem: React.FC<{
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={`${index < 20 ? 'animate-stagger-fade-in' : ''} select-none touch-pan-y`}
       style={{ '--index': index } as React.CSSProperties}
       onPointerDown={handlePointerDown}
@@ -499,6 +502,7 @@ const PrescriptionAddButton: React.FC<{
             ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
             : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 shadow-sm'
         }`}
+        type='button'
       >
         <span className='material-symbols-rounded text-[20px]'>add</span>
       </button>
@@ -557,12 +561,14 @@ const PrescriptionSummary: React.FC<{
             onClick={onClearAll}
             className='p-1.5 rounded-xl text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-500/10 transition-colors'
             title={isArabic ? 'مسح السلة' : 'Clear Cart'}
+            type='button'
           >
             <span className='material-symbols-rounded text-[22px]'>delete</span>
           </button>
           <button
             onClick={onToggle}
             className='lg:hidden p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors'
+            type='button'
           >
             <span
               className={`material-symbols-rounded text-[22px] text-gray-500 dark:text-gray-400 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
@@ -639,6 +645,7 @@ const PrescriptionSummary: React.FC<{
                       onClick={() => onUpdateQuantity(item.drug.id, -1)}
                       disabled={item.quantity <= 1}
                       className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>
                         remove
@@ -650,6 +657,7 @@ const PrescriptionSummary: React.FC<{
                     <button
                       onClick={() => onUpdateQuantity(item.drug.id, 1)}
                       className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>
                         add
@@ -660,6 +668,7 @@ const PrescriptionSummary: React.FC<{
                   <button
                     onClick={() => onRemoveItem(item.drug.id)}
                     className='text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors shrink-0 p-0.5'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>
                       close

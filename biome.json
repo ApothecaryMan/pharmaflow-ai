@@ -21,6 +21,8 @@
     "rules": {
       "recommended": true,
       "correctness": {
+        "noUnusedFunctionParameters": "error",
+        "noUnusedVariables": "error",
         "noRestrictedElements": {
           "level": "error",
           "options": {
@@ -33,7 +35,8 @@
       },
 
       "style": {
-        "noNonNullAssertion": "warn"
+        "noNonNullAssertion": "warn",
+        "noUnusedTemplateLiteral": "off"
       }
     }
   },

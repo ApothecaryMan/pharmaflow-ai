@@ -24,7 +24,7 @@ export const orgService = {
     ownerId: string,
     plan: string = 'starter'
   ): Promise<{ org: Organization; membership: OrgMember; subscription: Subscription }> {
-    const slug = generateSlug(name) + '-' + Date.now().toString(36);
+    const slug = `${generateSlug(name)}-${Date.now().toString(36)}`;
 
     try {
       const data = await orgRepository.setupInitialOrg(name, slug, ownerId, plan);

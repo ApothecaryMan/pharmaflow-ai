@@ -3,8 +3,7 @@ import { useFinancialData } from '../../hooks/financials/useFinancialData';
 import { DashboardService } from '../../services/dashboard/dashboardService';
 import { dateRangeService, type FinancialPeriod } from '../../services/financials/dateRangeService';
 import type { Drug, Sale, StockBatch } from '../../types';
-import { money } from '../../utils/money';
-import { CalculationBlock, CurrencyValue, DetailMetric } from '../common/InsightTooltip';
+import { CurrencyValue } from '../common/InsightTooltip';
 
 interface AnalyticsProps {
   sales: Sale[];
@@ -90,7 +89,7 @@ export const useDashboardAnalytics = ({
   sales,
   inventory,
   batches,
-  totalExpenses,
+  totalExpenses: _totalExpenses,
   language = 'EN',
   branchId,
   timeRange,
@@ -112,7 +111,6 @@ export const useDashboardAnalytics = ({
         return 'last_30_days';
       case '90':
         return 'last_3_months';
-      case 'ALL':
       default:
         return 'this_year';
     }

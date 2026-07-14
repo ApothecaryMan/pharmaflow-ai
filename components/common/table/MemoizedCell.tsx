@@ -21,7 +21,7 @@ export const MemoizedCell = React.memo(
     dense,
     meta,
     isRtl,
-    isAR,
+    isAR: _isAR,
     isPending,
     rowsCount,
     todayTs,

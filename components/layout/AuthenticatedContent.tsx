@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { StorageKeys } from '../../config/storageKeys';
-import { useAlert, useSettings } from '../../context';
+import { useSettings } from '../../context';
 import type { AuthState } from '../../hooks/auth/useAuth';
 import { useSessionHandlers } from '../../hooks/auth/useSessionHandlers';
-
+import { KeyboardProvider } from '../../hooks/keyboard';
 import type { AppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
 import { useRealtimeSync } from '../../hooks/realtime/useRealtimeSync';
-import { KeyboardProvider } from '../../hooks/keyboard';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
@@ -41,16 +40,16 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   setWindowedView,
 
   // Auth State
-  isAuthenticated,
-  isAuthChecking,
+  isAuthenticated: _isAuthenticated,
+  isAuthChecking: _isAuthChecking,
   isLoggingOut,
   logoutReason,
   terminatorName,
   isRecoveringPassword,
   handleLogout,
   resolveView,
-  setIsAuthenticated,
-  user,
+  setIsAuthenticated: _setIsAuthenticated,
+  user: _user,
 }) => {
   // --- Global Secure Gate State ---
   const [pendingNavigation, setPendingNavigation] = useState<{
@@ -60,20 +59,20 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   // --- Settings from Context ---
   const {
-    theme,
-    setTheme,
+    theme: _theme,
+    setTheme: _setTheme,
     darkMode,
-    setDarkMode,
+    setDarkMode: _setDarkMode,
     language,
-    textTransform,
-    sidebarVisible,
-    setSidebarVisible,
+    textTransform: _textTransform,
+    sidebarVisible: _sidebarVisible,
+    setSidebarVisible: _setSidebarVisible,
     hideInactiveModules,
-    setHideInactiveModules,
+    setHideInactiveModules: _setHideInactiveModules,
     developerMode,
-    setDeveloperMode,
-    navStyle,
-    setNavStyle,
+    setDeveloperMode: _setDeveloperMode,
+    navStyle: _navStyle,
+    setNavStyle: _setNavStyle,
   } = useSettings();
 
   // --- Auth State ---
@@ -171,10 +170,10 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   // --- Login Success Handler ---
   const handleLoginSuccess = useCallback(() => {
-    setIsAuthenticated(true);
+    _setIsAuthenticated(true);
     setView('landing' as ViewState);
     setActiveModule('');
-  }, [setIsAuthenticated, setActiveModule, setView]);
+  }, [_setIsAuthenticated, setActiveModule, setView]);
 
   // --- TRANSITION SKELETON STATE ---
   if (isLoggingOut) {
@@ -268,7 +267,9 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
           isOpen={!!pendingNavigation}
           language={language}
           storageKey={
-            pendingNavigation ? PAGE_REGISTRY[pendingNavigation.viewId]?.storageKey : 'area_unlocked'
+            pendingNavigation
+              ? PAGE_REGISTRY[pendingNavigation.viewId]?.storageKey
+              : 'area_unlocked'
           }
           onUnlock={() => {
             if (pendingNavigation) {
@@ -279,7 +280,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
           onClose={() => setPendingNavigation(null)}
         />
       </MainLayout>
-
     </KeyboardProvider>
   );
 };

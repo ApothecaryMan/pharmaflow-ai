@@ -6,7 +6,7 @@ import type { ActionContext, Sale } from '../../types';
 
 export function useProcessSalesReturn() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
+  const _branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({
@@ -29,7 +29,7 @@ export function useProcessSalesReturn() {
 
 export function useCreatePurchaseReturn() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
+  const _branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({ ret, context }: { ret: any; context: ActionContext }) =>

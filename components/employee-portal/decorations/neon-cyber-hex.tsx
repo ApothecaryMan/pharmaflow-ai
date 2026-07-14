@@ -1,8 +1,7 @@
-import React from 'react';
-
 export function NeonCyberHex() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Neon cyber hex</title>
       <style>{`
         @keyframes ch-spin { 100% { transform: rotate(360deg); } }
         @keyframes ch-flicker { 0%, 100% { opacity: 0.8; } 50% { opacity: 0.2; } }

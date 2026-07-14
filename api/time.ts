@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default function handler(request: VercelRequest, response: VercelResponse) {
+export default function handler(_request: VercelRequest, response: VercelResponse) {
   const now = new Date();
 
   // Return standard time formats to be compatible with your TimeService

@@ -14,7 +14,9 @@ interface UseAttendanceReportsProps {
   onViewChange?: (view: string, params?: any) => void;
 }
 
-export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps = {}) => {
+export const useAttendanceReports = ({
+  onViewChange: _onViewChange,
+}: UseAttendanceReportsProps = {}) => {
   const { language } = useSettings();
   const activeBranch = useAuthStore((s) => s.branches.find((b) => b.id === s.activeBranchId));
   const isRTL = language === 'AR';

@@ -1,4 +1,4 @@
-import type { CartItem, Customer, Drug, Sale, StockBatch } from '../../types';
+import type { Customer, Drug, Sale, StockBatch } from '../../types';
 import { money } from '../../utils/money';
 
 export interface DashboardProfitability {
@@ -34,6 +34,7 @@ export interface TopProduct {
   revenue: number;
 }
 
+// biome-ignore lint/complexity/noStaticOnlyClass: legacy API, multiple callers
 export class DashboardService {
   /**
    * @deprecated Use financialService.calculateRevenueAndReturns instead.
@@ -322,7 +323,7 @@ export class DashboardService {
       hourly: {
         revenueMap: hourlyRevenue,
         transactionsMap: hourlyTransactions,
-        peakHour: peakHourEntry ? parseInt(peakHourEntry[0]) : null,
+        peakHour: peakHourEntry ? parseInt(peakHourEntry[0], 10) : null,
         peakRevenue: peakHourEntry ? peakHourEntry[1] : 0,
       },
       payments: {

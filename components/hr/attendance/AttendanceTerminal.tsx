@@ -178,7 +178,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
       } else {
         setTokenError(t.attendance.invalidToken);
       }
-    } catch (err) {
+    } catch (_err) {
       setTokenError(t.attendance.invalidToken);
     } finally {
       setIsValidating(false);
@@ -331,9 +331,9 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
           {/* If user CAN activate → show token input */}
           {canActivate ? (
             <div className='space-y-3'>
-              <label className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
                 {t.attendance.enterToken}
-              </label>
+              </span>
               <input
                 type='text'
                 value={tokenInput}
@@ -344,7 +344,6 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                 onKeyDown={(e) => e.key === 'Enter' && handleActivateTerminal()}
                 placeholder={t.attendance.tokenPlaceholder}
                 className='w-full px-4 py-3 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono'
-                autoFocus
                 dir='ltr'
               />
 
@@ -361,6 +360,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                 onClick={handleActivateTerminal}
                 disabled={!tokenInput.trim() || isValidating}
                 className='w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors flex items-center justify-center gap-2'
+                type='button'
               >
                 {isValidating ? (
                   <span className='material-symbols-rounded animate-spin text-lg'>
@@ -447,9 +447,9 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
           <div className='flex-1 flex flex-col gap-4 min-h-0'>
             {/* ─── Employee Selector ─── */}
             <div className='flex-1 min-h-[300px] flex flex-col p-4 rounded-xl bg-white dark:bg-gray-800/40 border border-gray-200 dark:border-white/10 shadow-sm overflow-hidden'>
-              <label className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block shrink-0'>
+              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block shrink-0'>
                 {t.attendance.selectEmployee}
-              </label>
+              </span>
 
               {/* Search Input */}
               <div className='mb-3 shrink-0'>
@@ -477,6 +477,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                           ? 'bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 ring-1 ring-blue-500/10'
                           : 'hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent'
                       }`}
+                      type='button'
                     >
                       {/* Avatar */}
                       <div className='w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200 dark:border-white/10'>
@@ -575,7 +576,6 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                       }}
                       placeholder={t.attendance.pinPlaceholder}
                       className='w-40 text-center text-3xl font-bold tracking-[0.6em] px-4 py-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all'
-                      autoFocus
                       dir='ltr'
                     />
                     {pinError && (
@@ -589,6 +589,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                         onClick={() => handleClock(pinInput)}
                         disabled={pinInput.length !== 4 || isClocking}
                         className='px-6 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm font-bold shadow-lg shadow-amber-500/20 transition-all'
+                        type='button'
                       >
                         {t.attendance.enterPin}
                       </button>
@@ -599,6 +600,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                           setPinError('');
                         }}
                         className='px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 text-sm font-bold transition-all hover:bg-gray-200 dark:hover:bg-white/10'
+                        type='button'
                       >
                         ✕
                       </button>
@@ -617,6 +619,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                             ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'
                             : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/30'
                       }`}
+                      type='button'
                     >
                       {/* Ripple Effect for Clock In */}
                       {isClockIn && !isClocking && (

@@ -1,11 +1,6 @@
 import type React from 'react';
 import type { Drug } from '../../types';
-import {
-  generateLabelHTML,
-  generatePageHTML,
-  generateTemplateCSS,
-  getLabelElementContent,
-} from './LabelPrinter';
+import { generateLabelHTML, generatePageHTML, generateTemplateCSS } from './LabelPrinter';
 import type { LabelDesign, LabelElement } from './studio/types';
 
 interface BarcodePreviewProps {
@@ -46,14 +41,14 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
   qrCodeDataUrl,
   onSelect,
   onDragStart,
-  printOffsetX = 0,
-  printOffsetY = 0,
+  printOffsetX: _printOffsetX = 0,
+  printOffsetY: _printOffsetY = 0,
   showVCenterGuide = false,
   showHCenterGuide = false,
   alignmentGuides = [],
 }) => {
   // Generate the HTML for the iframe (THE TRUTH)
-  const generatePrintHTML = (isSinglePreview: boolean, isSingleLabel: boolean) => {
+  const generatePrintHTML = (_isSinglePreview: boolean, isSingleLabel: boolean) => {
     // Construct a temporary design object for the generator
     const tempDesign: LabelDesign = {
       selectedPreset: 'custom',
@@ -159,11 +154,14 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
     return (
       <div
         key={`${el.id}-${offsetIndex}`}
+        role="button"
+        tabIndex={0}
         onMouseDown={(e) => onDragStart(e, el.id)}
         onClick={(e) => {
           e.stopPropagation();
           onSelect(el.id);
         }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect(el.id); } }}
         style={style}
         title={el.label}
       />
@@ -172,6 +170,8 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className='bg-white shadow-2xl overflow-hidden relative transition-transform duration-75 ease-linear'
       style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
       onMouseDown={() => onSelect(null)} // Deselect on background click
@@ -224,6 +224,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         {alignmentGuides.map((guide, idx) =>
           guide.x !== undefined ? (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: alignment guides have no stable id
               key={`v-${idx}`}
               className='absolute top-0 bottom-0 border-l border-emerald-500/40 border-dashed z-20'
               style={{
@@ -233,6 +234,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
             />
           ) : guide.y !== undefined ? (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: alignment guides have no stable id
               key={`h-${idx}`}
               className='absolute left-0 right-0 border-t border-emerald-500/40 border-dashed z-20'
               style={{ top: `${guide.y}mm`, width: `${dims.w}mm` }}

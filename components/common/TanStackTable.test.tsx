@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type * as React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ContextMenuProvider } from './ContextMenu';
 import { TanStackTable } from './TanStackTable';
 

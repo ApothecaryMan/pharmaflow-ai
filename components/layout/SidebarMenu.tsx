@@ -2,12 +2,10 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
-import { useSettings } from '../../context';
+import { preloadPage } from '../../hooks/layout/usePreloadPage';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { SearchInput } from '../common/SearchInput';
-import { useSmartDirection } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
-import { preloadPage } from '../../hooks/layout/usePreloadPage';
 
 interface SidebarMenuProps {
   menuItems: MenuItem[];
@@ -28,18 +26,18 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
   ({
     menuItems,
     activeModule,
-    currentView,
-    onNavigate,
-    onViewChange,
-    isMobile = false,
-    theme,
-    translations,
+    currentView: _currentView,
+    onNavigate: _onNavigate,
+    onViewChange: _onViewChange,
+    isMobile: _isMobile = false,
+    theme: _theme,
+    translations: _translations,
     language,
     hideInactiveModules = false,
     hideSearch = false,
     sidebarCollapsed,
   }) => {
-    const [expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
+    const [_expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
     const [searchQuery, setSearchQuery] = useState('');
     const navRef = useRef<HTMLElement>(null);
     const scrollPosRef = useRef(0);
@@ -48,7 +46,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
     useEffect(() => {
       scrollPosRef.current = 0;
       if (navRef.current) navRef.current.scrollTop = 0;
-    }, [activeModule]);
+    }, []);
 
     // Restore scroll after render
     useLayoutEffect(() => {
@@ -119,7 +117,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
     }, [searchQuery, filteredSubmenus]);
 
     // Toggle submenu with auto-collapse (only one open at a time)
-    const toggleSubmenu = useCallback((submenuId: string) => {
+    const _toggleSubmenu = useCallback((submenuId: string) => {
       setExpandedSubmenus((prev) => {
         const newExpanded = new Set<string>();
         // If clicking on already expanded submenu, collapse it
@@ -132,7 +130,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
     }, []);
 
     // Collapse all submenus
-    const collapseAll = useCallback(() => {
+    const _collapseAll = useCallback(() => {
       setExpandedSubmenus(new Set());
     }, []);
 
@@ -216,7 +214,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                     onSearchChange={setSearchQuery}
                     onClear={() => setSearchQuery('')}
                     placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
-                    color={theme}
+                    color={_theme}
                     wrapperClassName='!bg-(--bg-card)'
                     style={{
                       color: 'var(--text-primary)',
@@ -289,7 +287,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                   const itemIcon = typeof item === 'object' ? item.icon : 'radio_button_unchecked';
                   const itemView = typeof item === 'object' && item.view ? item.view : null;
                   const isImplemented = !!itemView;
-                  const isActive = !!itemView && itemView === currentView;
+                  const isActive = !!itemView && itemView === _currentView;
                   const translatedLabel = getMenuTranslation(itemLabel, language);
 
                   const buttonContent = (
@@ -297,8 +295,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                       disabled={!isImplemented}
                       onMouseEnter={() => itemView && preloadPage(itemView)}
                       onClick={() => {
-                        if (onViewChange && itemView) {
-                          onViewChange(itemView);
+                        if (_onViewChange && itemView) {
+                          _onViewChange(itemView);
                         } else {
                           handleItemClick(row.submenuLabel, itemLabel);
                         }
@@ -321,6 +319,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                                  ${sidebarCollapsed ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10' : 'hover:bg-(--bg-menu-hover)'}`
                         }
                       `}
+                      type='button'
                     >
                       {isActive && sidebarCollapsed && (
                         <motion.div

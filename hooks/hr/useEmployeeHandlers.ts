@@ -19,7 +19,7 @@ export interface UseEmployeeHandlersParams {
 
 export function useEmployeeHandlers({
   currentEmployeeId,
-  employees,
+  employees: _employees,
   setEmployees,
   activeBranchId,
   activeOrgId,

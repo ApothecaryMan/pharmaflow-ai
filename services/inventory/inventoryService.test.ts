@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Drug } from '../../types';
 import { settingsService } from '../settings/settingsService';
-import { batchService } from './batchService';
 import { inventoryService } from './inventoryService';
 import { inventoryRepository } from './repositories/inventoryRepository';
 

@@ -36,6 +36,7 @@ export const AnimationToggle: React.FC<AnimationToggleProps> = ({ animating, onT
     }`}
   >
     <svg width='12' height='12' viewBox='0 0 24 24' fill='currentColor'>
+      <title>{animating ? 'Pause animation' : 'Play animation'}</title>
       {animating ? (
         <>
           <rect x='6' y='4' width='4' height='16' rx='1' />
@@ -76,6 +77,7 @@ const AvatarRing: React.FC<AvatarRingProps> = ({
 
   return (
     <svg viewBox='0 0 128 128' fill='none' className={`w-full h-full ${className || ''}`}>
+      <title>Avatar ring</title>
       <defs>
         {style === 'rainbow' && (
           <linearGradient id='ring-rainbow-grad' x1='0%' y1='0%' x2='100%' y2='100%'>

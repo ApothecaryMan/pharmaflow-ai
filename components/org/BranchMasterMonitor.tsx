@@ -16,7 +16,7 @@ const BranchRow: React.FC<{
   language: 'en' | 'ar';
   color: string;
   isLoading?: boolean;
-}> = ({ branch, language, color, isLoading }) => {
+}> = ({ branch, language, color: _color, isLoading }) => {
   const isActive = branch?.status === 'active';
   const [copied, setCopied] = React.useState(false);
 
@@ -84,6 +84,7 @@ const BranchRow: React.FC<{
                   onClick={() => handleCopy(branch?.id)}
                   className='w-6 h-6 flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors group shrink-0'
                   title={language === 'ar' ? 'نسخ المعرف' : 'Copy ID'}
+                  type='button'
                 >
                   <span
                     className='material-symbols-rounded opacity-50 group-hover:opacity-100'
@@ -172,11 +173,14 @@ export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({
 
       <div className='flex-1 overflow-y-auto scrollbar-hide space-y-0 divide-y divide-zinc-100 dark:divide-zinc-800'>
         {isLoading ? (
-          <>
-            {[1, 2, 3, 4].map((i) => (
-              <BranchRow key={i} language={language} color={color} isLoading={true} />
-            ))}
-          </>
+          [1, 2, 3, 4].map((i) => (
+            <BranchRow
+              key={`branch-row-sk-${i}`}
+              language={language}
+              color={color}
+              isLoading={true}
+            />
+          ))
         ) : branches.length === 0 ? (
           <div className='h-full flex items-center justify-center text-zinc-400 text-sm italic py-8'>
             {language === 'ar' ? 'لا توجد فروع مضافة' : 'No branches added'}

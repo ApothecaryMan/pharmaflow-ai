@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
 import { useDebounce } from '../../hooks/common/useDebounce';
+import { usePageShortcuts } from '../../hooks/keyboard';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug } from '../../types';
@@ -17,7 +19,6 @@ import {
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { usePageShortcuts } from '../../hooks/keyboard';
 import { Modal } from '../common/Modal';
 import { ScreenCalibration } from '../common/ScreenCalibration';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
@@ -35,7 +36,6 @@ import {
 } from './LabelPrinter';
 import { PropertyInspector } from './studio/PropertyInspector';
 import { TemplateGalleryModal } from './studio/TemplateGalleryModal';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
 
 interface BarcodeStudioProps {
   color: string;
@@ -50,8 +50,8 @@ import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventory = [] } = useInventory(activeBranchId);
-  const { getVerifiedDate } = useStatusBar();
-  const { showMenu } = useContextMenu();
+  const { getVerifiedDate: _getVerifiedDate } = useStatusBar();
+  const { showMenu: _showMenu } = useContextMenu();
   const { playError } = usePosSounds();
   const branches = useAuthStore((s) => s.branches);
   const updateBranch = useAuthStore((s) => s.updateBranch);
@@ -102,7 +102,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
   const [customDims, setCustomDims] = useState<{ w: number; h: number }>({ w: 38, h: 25 });
   const [zoom, setZoom] = useState(5);
 
-  const [printMode, setPrintMode] = useState<'single' | 'sheet'>('single');
+  const [_printMode, _setPrintMode] = useState<'single' | 'sheet'>('single');
   const [barcodeSource, setBarcodeSource] = useState<'global' | 'internal'>('global');
   // Constants
   const [showPairedPreview, setShowPairedPreview] = useState(false);
@@ -179,7 +179,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [defaultTemplateId, setDefaultTemplateId] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState('');
+  const [_saveStatus, setSaveStatus] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
 
@@ -227,6 +227,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     debouncedShowPrintBorders,
     debouncedPrintOffsets,
     isLoaded,
+    activeBranch?.printSettings,
+    activeBranchId,
+    printerLanguage,
+    updateBranch,
   ]);
 
   // Dragging Refs
@@ -253,6 +257,62 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
       })
     );
   }, [dims.w, isLoaded]);
+
+  const applyDesignState = (state: any) => {
+    if (state.selectedPreset) setSelectedPreset(state.selectedPreset);
+    if (state.customDims) setCustomDims(state.customDims);
+    if (state.elements) {
+      const existingIds = new Set(state.elements.map((el: any) => el.id));
+      const missingElements = DEFAULT_LABEL_DESIGN.elements.filter((el) => !existingIds.has(el.id));
+
+      const activePreset = state.selectedPreset || '38x25';
+      const presetW =
+        activePreset === 'custom'
+          ? state.customDims?.w || 38
+          : (LABEL_PRESETS[activePreset] || LABEL_PRESETS['38x25']).w;
+
+      const sanitizedElements = [...state.elements, ...missingElements].map((el: any) => {
+        if (el.align === 'center') {
+          return {
+            ...el,
+            x: el.id === 'hotline' ? el.x : presetW / 2,
+            hitboxOffsetX: el.hitboxOffsetX === -1.1 ? 0.0 : el.hitboxOffsetX,
+            hitboxWidth: el.id === 'barcode' && el.hitboxWidth === 34 ? 36 : el.hitboxWidth,
+            hitboxHeight: el.id === 'barcode' && el.hitboxHeight === 3 ? 8 : el.hitboxHeight,
+          };
+        }
+        return el;
+      });
+
+      setElements(sanitizedElements);
+    }
+
+    if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
+    if (state.barcodeSource) setBarcodeSource(state.barcodeSource);
+    if (state.activeTemplateId) setActiveTemplateId(state.activeTemplateId);
+    if (typeof state.showPrintBorders !== 'undefined') setShowPrintBorders(state.showPrintBorders);
+    if (typeof state.printOffsetX !== 'undefined') setPrintOffsetX(state.printOffsetX);
+    if (typeof state.printOffsetY !== 'undefined') setPrintOffsetY(state.printOffsetY);
+    if (typeof state.labelGap !== 'undefined') setLabelGap(state.labelGap);
+    if (state.currency) setCurrency(state.currency);
+    if (state.printerLanguage) setPrinterLanguage(state.printerLanguage);
+    if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
+    if (state.currency) setCurrency(state.currency);
+  };
+
+  const initializeLayout = (presetKey: string) => {
+    const { w: _w, h: _h } =
+      presetKey === 'custom' ? customDims : LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25'];
+
+    const newElements = [...DEFAULT_LABEL_DESIGN.elements];
+    setElements(newElements);
+    setHistory([]);
+    setRedoStack([]);
+    setHistory([]);
+    setRedoStack([]);
+    setActiveTemplateId(null);
+    justLoaded.current = true;
+  };
 
   // Load Templates & Last State
   useEffect(() => {
@@ -303,7 +363,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     }
 
     setIsLoaded(true); // Enable autosave
-  }, []);
+  }, [activeBranch?.printSettings, applyDesignState, initializeLayout]);
 
   // Auto-select first drug if none selected
   useEffect(() => {
@@ -413,50 +473,6 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     currency,
   });
 
-  const applyDesignState = (state: any) => {
-    if (state.selectedPreset) setSelectedPreset(state.selectedPreset);
-    if (state.customDims) setCustomDims(state.customDims);
-    if (state.elements) {
-      // Merge missing elements from DEFAULT_LABEL_DESIGN
-      const existingIds = new Set(state.elements.map((el: any) => el.id));
-      const missingElements = DEFAULT_LABEL_DESIGN.elements.filter((el) => !existingIds.has(el.id));
-
-      const activePreset = state.selectedPreset || '38x25';
-      const presetW =
-        activePreset === 'custom'
-          ? state.customDims?.w || 38
-          : (LABEL_PRESETS[activePreset] || LABEL_PRESETS['38x25']).w;
-
-      const sanitizedElements = [...state.elements, ...missingElements].map((el: any) => {
-        if (el.align === 'center') {
-          return {
-            ...el,
-            x: el.id === 'hotline' ? el.x : presetW / 2,
-            hitboxOffsetX: el.hitboxOffsetX === -1.1 ? 0.0 : el.hitboxOffsetX,
-            hitboxWidth: el.id === 'barcode' && el.hitboxWidth === 34 ? 36 : el.hitboxWidth,
-            hitboxHeight: el.id === 'barcode' && el.hitboxHeight === 3 ? 8 : el.hitboxHeight,
-          };
-        }
-        return el;
-      });
-
-      setElements(sanitizedElements);
-    }
-
-    // storeName and hotline are now read from ReceiptDesigner storage
-    if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
-    if (state.barcodeSource) setBarcodeSource(state.barcodeSource);
-    if (state.activeTemplateId) setActiveTemplateId(state.activeTemplateId);
-    if (typeof state.showPrintBorders !== 'undefined') setShowPrintBorders(state.showPrintBorders);
-    if (typeof state.printOffsetX !== 'undefined') setPrintOffsetX(state.printOffsetX);
-    if (typeof state.printOffsetY !== 'undefined') setPrintOffsetY(state.printOffsetY);
-    if (typeof state.labelGap !== 'undefined') setLabelGap(state.labelGap);
-    if (state.currency) setCurrency(state.currency);
-    if (state.printerLanguage) setPrinterLanguage(state.printerLanguage);
-    if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
-    if (state.currency) setCurrency(state.currency);
-  };
-
   // Track unsaved changes
   useEffect(() => {
     const currentState = JSON.stringify(getDesignState());
@@ -465,35 +481,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
       justLoaded.current = false;
     }
     setHasUnsavedChanges(currentState !== lastSavedState.current);
-  }, [
-    selectedPreset,
-    customDims,
-    elements,
-    storeName,
-    hotline,
-    uploadedLogo,
-    barcodeSource,
-    activeTemplateId,
-    showPrintBorders,
-    printOffsetX,
-    printOffsetY,
-    labelGap,
-    currency,
-  ]);
-
-  const initializeLayout = (presetKey: string) => {
-    const { w, h } =
-      presetKey === 'custom' ? customDims : LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25'];
-
-    const newElements = [...DEFAULT_LABEL_DESIGN.elements];
-    setElements(newElements);
-    setHistory([]);
-    setRedoStack([]);
-    setHistory([]);
-    setRedoStack([]);
-    setActiveTemplateId(null); // Reset active template on fresh layout
-    justLoaded.current = true;
-  };
+  }, [getDesignState]);
 
   const saveToHistory = () => {
     setHistory((prev) => [...prev, elements]);
@@ -566,7 +554,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     setTimeout(() => setSaveStatus(''), 2000);
   };
 
-  const updateTemplate = (id: string, name: string) => {
+  const updateTemplate = (id: string, _name: string) => {
     const design = getDesignState();
     const updatedTemplates = templates.map((t) => (t.id === id ? { ...t, design } : t));
     setTemplates(updatedTemplates);
@@ -788,7 +776,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     if (elem) initialElemPos.current = { x: elem.x, y: elem.y };
   };
 
-  const handleTouchStart = (e: React.TouchEvent, id: string) => {
+  const _handleTouchStart = (e: React.TouchEvent, id: string) => {
     if (elements.find((el) => el.id === id)?.locked) return;
     e.stopPropagation();
     setSelectedElementId(id);
@@ -824,7 +812,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
@@ -850,7 +838,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     }
   };
 
-  const getElementContent = (el: LabelElement) => {
+  const _getElementContent = (el: LabelElement) => {
     if (!selectedDrug) return el.content || el.label;
     return getLabelElementContent(el, selectedDrug, { storeName, hotline });
   };
@@ -879,7 +867,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     );
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const _handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -899,20 +887,19 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     }
   }, [selectedDrug, barcodeSource]);
 
-  const handleCanvasMouseDown = () => {
+  const _handleCanvasMouseDown = () => {
     setSelectedElementId(null);
   };
 
   const filteredDrugs = inventory.filter(
     (d) =>
-      d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (d.barcode && d.barcode.includes(searchTerm))
+      d.name.toLowerCase().includes(searchTerm.toLowerCase()) || d.barcode?.includes(searchTerm)
   );
 
   const selectedElement = elements.find((el) => el.id === selectedElementId);
 
   // Helper: Get context menu actions for a label element
-  const getElementActions = (el: LabelElement) => [
+  const _getElementActions = (el: LabelElement) => [
     {
       label: t.inspector.remove,
       icon: 'delete',
@@ -1034,25 +1021,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
       const bytes = new TextEncoder().encode(html).length;
       if (bytes < 1024) return `${bytes} B`;
       return `${(bytes / 1024).toFixed(1)} KB`;
-    } catch (e) {
+    } catch (_e) {
       return '0 B';
     }
-  }, [
-    elements,
-    selectedDrug,
-    isLoaded,
-    selectedPreset,
-    customDims,
-    barcodeSource,
-    showPrintBorders,
-    printOffsetX,
-    printOffsetY,
-    labelGap,
-    qrCodeDataUrl,
-    uploadedLogo,
-    storeName,
-    hotline,
-  ]);
+  }, [selectedDrug, isLoaded, generatePrintHTML]);
 
   const handlePrint = async () => {
     if (!selectedDrug) return;
@@ -1080,6 +1052,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className='h-full flex flex-col space-y-4 '
       onMouseMove={handleMouseMove}
       onMouseUp={handleEnd}
@@ -1103,6 +1077,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
               onClick={() => setIsGalleryOpen(true)}
               className='h-10 px-3 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-muted/50 hover:bg-gray-50 dark:hover:bg-accent text-gray-600 dark:text-gray-300 transition-all group'
               title='معرض القوالب'
+              type='button'
             >
               <span className='material-symbols-rounded text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors'>
                 view_carousel
@@ -1125,6 +1100,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                 <button
                   onClick={handleRenameTemplate}
                   className='w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[20px]'>check</span>
                 </button>
@@ -1134,6 +1110,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                     setTempTemplateName('');
                   }}
                   className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[20px]'>close</span>
                 </button>
@@ -1171,7 +1148,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                         </span>
                       </div>
                     )}
-                    renderItem={(item, isSelected) => (
+                    renderItem={(item, _isSelected) => (
                       <div className='flex items-center gap-2'>
                         <span
                           className={`material-symbols-rounded text-lg ${!item.id ? 'text-primary-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
@@ -1203,6 +1180,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                         onClick={() => deleteTemplate(activeTemplateId)}
                         className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-accent transition-all'
                         title={t.deleteTemplate || 'Delete'}
+                        type='button'
                       >
                         <span className='material-symbols-rounded text-[18px]'>delete</span>
                       </button>
@@ -1213,6 +1191,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                           onClick={(e) => handleSetDefault(e, activeTemplateId)}
                           className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
                           title='Set Default'
+                          type='button'
                         >
                           <span className='material-symbols-rounded text-[18px]'>bookmark_add</span>
                         </button>
@@ -1227,6 +1206,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                       }}
                       className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-accent transition-all group'
                       title='Rename'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[18px] transition-all duration-300 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>
                         edit
@@ -1244,6 +1224,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                 disabled={history.length === 0}
                 className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 transition-all ${history.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
                 title={t.undo}
+                type='button'
               >
                 <span className='material-symbols-rounded text-[18px]'>undo</span>
               </button>
@@ -1252,6 +1233,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                 disabled={!hasUnsavedChanges}
                 className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 transition-all ${hasUnsavedChanges ? 'hover:bg-white dark:hover:bg-accent hover:text-green-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
                 title={t.saveTemplate}
+                type='button'
               >
                 <span className='material-symbols-rounded text-[18px]'>
                   {hasUnsavedChanges ? 'save' : 'check'}
@@ -1262,6 +1244,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                 disabled={redoStack.length === 0}
                 className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 transition-all ${redoStack.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
                 title={t.redo}
+                type='button'
               >
                 <span className='material-symbols-rounded text-[18px]'>redo</span>
               </button>
@@ -1269,6 +1252,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                 onClick={() => initializeLayout(selectedPreset)}
                 className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all'
                 title={t.toolbar.resetLayout}
+                type='button'
               >
                 <span className='material-symbols-rounded text-[18px]'>restart_alt</span>
               </button>
@@ -1288,6 +1272,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                     ? `bg-primary-500/10 text-primary-600 border-primary-200/50 dark:bg-accent dark:text-foreground dark:border-border/30`
                     : 'bg-transparent text-gray-400 border-transparent hover:bg-white dark:hover:bg-accent dark:text-muted-foreground transition-all'
                 }`}
+                type='button'
               >
                 {el.label}
               </button>
@@ -1307,6 +1292,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                   : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
               }`}
               title={t.toolbar.addText}
+              type='button'
             >
               <span className='material-symbols-rounded text-[20px] leading-none'>title</span>
             </button>
@@ -1331,6 +1317,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                   : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
               }`}
               title={t.toolbar.addImage}
+              type='button'
             >
               <span className='material-symbols-rounded text-[20px] leading-none'>image</span>
             </button>
@@ -1342,6 +1329,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                   : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
               }`}
               title='Add QR Code'
+              type='button'
             >
               <span className='material-symbols-rounded text-[20px] leading-none'>qr_code_2</span>
             </button>
@@ -1356,6 +1344,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
               onClick={() => setShowCalibrationModal(true)}
               className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
               title='Calibrate Orientation'
+              type='button'
             >
               <span className='material-symbols-rounded text-[20px] leading-none'>
                 aspect_ratio
@@ -1381,6 +1370,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
             <button
               onClick={() => setZoom(Math.max(1, zoom - 0.5))}
               className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
+              type='button'
             >
               <span className='material-symbols-rounded text-[18px]'>remove</span>
             </button>
@@ -1390,6 +1380,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
             <button
               onClick={() => setZoom(Math.min(8, zoom + 0.5))}
               className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
+              type='button'
             >
               <span className='material-symbols-rounded text-[18px]'>add</span>
             </button>
@@ -1402,6 +1393,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
             disabled={!selectedDrug}
             className={`h-9 w-9 flex items-center justify-center rounded-xl bg-primary-600 text-white font-black hover:opacity-90 disabled:grayscale disabled:opacity-50 transition-all ml-1`}
             title={t.print}
+            type='button'
           >
             <span className='material-symbols-rounded text-lg'>print</span>
           </button>
@@ -1415,6 +1407,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
           {/* Canvas */}
           <div
+            role="button"
+            tabIndex={0}
             className={`flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] overflow-hidden`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -1464,6 +1458,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                           <button
                             onClick={() => setShowBlueprint(false)}
                             className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all flex items-center justify-center'
+                            type='button'
                           >
                             <span className='material-symbols-rounded text-sm'>close</span>
                           </button>
@@ -1496,6 +1491,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
                       <button
                         onClick={() => setShowBlueprint(true)}
                         className='flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-muted/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-border shadow-md hover:bg-gray-50 dark:hover:bg-accent text-primary-600 dark:text-primary-400 text-[10px] font-black uppercase tracking-wider transition-all'
+                        type='button'
                       >
                         <span className='material-symbols-rounded text-sm'>square_foot</span>
                         <span>عرض مخطط الأبعاد (Live Blueprint)</span>
@@ -1557,11 +1553,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
           </h3>
 
           <div>
-            <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <span className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
               {t.templateName}
-            </label>
+            </span>
             <input
-              autoFocus
               type='text'
               value={newTemplateName}
               onChange={(e) => setNewTemplateName(e.target.value)}

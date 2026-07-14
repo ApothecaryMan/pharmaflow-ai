@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getRoleLabel, SYSTEM_ROLES } from '../../config/employeeRoles';
 import { useSettings } from '../../context';
 import { usePersistedState } from '../../hooks/common/usePersistedState';
@@ -37,7 +37,7 @@ const CountdownTimer = ({ expiresAt, language }: { expiresAt: string; language: 
     updateTimer();
     const int = setInterval(updateTimer, 1000);
     return () => clearInterval(int);
-  }, [expiresAt, language, t.expired]);
+  }, [expiresAt, t.expired]);
 
   return (
     <div
@@ -142,7 +142,14 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
       }
     };
     initialize();
-  }, []);
+  }, [
+    phase,
+    requestId,
+    setPhase,
+    setRequestExpiresAt, // Request was deleted, accepted, or rejected while we were away
+    setRequestId,
+    setTargetUser,
+  ]);
 
   // Realtime Subscription + Fallback Polling for Phase 2
   useEffect(() => {
@@ -212,7 +219,16 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [phase, requestId, isRTL]);
+  }, [
+    phase,
+    requestId,
+    setAcceptedEmployee,
+    setPhase,
+    setRequestExpiresAt,
+    setRequestId,
+    setTargetUser,
+    t.invitationRejected,
+  ]);
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -417,10 +433,10 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
           {phase === 'invite' && (
             <form onSubmit={handleSendInvite} className='space-y-4'>
               <div>
-                <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
+                <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
                   {t.globalEmailOrUsername}
                   <span className='text-red-500 ml-1'>*</span>
-                </label>
+                </span>
                 <SmartInput
                   required
                   value={targetUser}
@@ -432,9 +448,9 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
               </div>
 
               <div>
-                <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
+                <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
                   {t.role}
-                </label>
+                </span>
                 <FilterDropdown
                   className='w-full'
                   variant='input'
@@ -468,9 +484,9 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
               </div>
 
               <div>
-                <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
+                <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
                   {t.expirationTime}
-                </label>
+                </span>
                 <div className='grid grid-cols-3 gap-2'>
                   <button
                     type='button'
@@ -510,6 +526,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
                       fill='none'
                       viewBox='0 0 24 24'
                     >
+                      <title>Loading spinner</title>
                       <circle
                         className='opacity-25'
                         cx='12'
@@ -618,9 +635,9 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
               </div>
 
               <div>
-                <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
+                <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
                   {t.localUsernameAuto}
-                </label>
+                </span>
                 <div className='relative'>
                   <span className='absolute top-1/2 -translate-y-1/2 left-3 material-symbols-rounded text-zinc-400'>
                     badge
@@ -639,10 +656,10 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
 
               <div className='grid grid-cols-2 gap-3'>
                 <div>
-                  <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
+                  <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5'>
                     {t.localPassword}
                     <span className='text-red-500 ml-1'>*</span>
-                  </label>
+                  </span>
                   <div className='relative'>
                     <SmartPasswordInput
                       type={showPassword ? 'text' : 'password'}
@@ -664,10 +681,10 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
                   </div>
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 text-ellipsis overflow-hidden whitespace-nowrap'>
+                  <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 text-ellipsis overflow-hidden whitespace-nowrap'>
                     {t.confirmPassword}
                     <span className='text-red-500 ml-1'>*</span>
-                  </label>
+                  </span>
                   <div className='relative'>
                     <SmartPasswordInput
                       type={showConfirmPassword ? 'text' : 'password'}
@@ -704,6 +721,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
                       fill='none'
                       viewBox='0 0 24 24'
                     >
+                      <title>Loading</title>
                       <circle
                         className='opacity-25'
                         cx='12'

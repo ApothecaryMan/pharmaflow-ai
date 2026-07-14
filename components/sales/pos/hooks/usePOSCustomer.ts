@@ -63,8 +63,8 @@ export const usePOSCustomer = ({
           (c) =>
             c.name.toLowerCase().includes(term) ||
             c.phone.includes(term) ||
-            (c.code && c.code.toLowerCase().includes(term)) ||
-            (c.serialId && c.serialId.toString().includes(term))
+            c.code?.toLowerCase().includes(term) ||
+            c.serialId?.toString().includes(term)
         )
         .slice(0, 5);
       setFilteredCustomers(results);

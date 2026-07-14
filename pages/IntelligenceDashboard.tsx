@@ -129,6 +129,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
               )
             }
             className='flex items-center gap-2 px-4 py-2 bg-emerald-100/80 dark:bg-emerald-900/20 hover:bg-emerald-200/80 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-900/50 rounded-xl text-sm font-semibold transition-all active:scale-95'
+            type='button'
           >
             <span
               className='material-symbols-rounded font-icon'
@@ -355,7 +356,10 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
               fullWidth={false}
               shape='pill'
             />
-            <button className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'>
+            <button
+              className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
+              type='button'
+            >
               <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
                 file_download
               </span>
@@ -365,7 +369,10 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
         break;
       case 'audit':
         filters = (
-          <button className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'>
+          <button
+            className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
+            type='button'
+          >
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
               file_download
             </span>

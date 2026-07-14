@@ -2,7 +2,6 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TRANSLATIONS } from '@/i18n';
 import { permissionsService } from '../../../../services/auth/permissionsService';
-import { Tooltip } from '../../../common/Tooltip';
 import { StatusBarItem } from '../StatusBarItem';
 
 // --- Types ---
@@ -41,7 +40,7 @@ export interface DynamicTickerProps {
 
 // --- Constants & Helpers ---
 
-const variantColors: Record<string, string> = {
+const _variantColors: Record<string, string> = {
   success: 'text-emerald-600 dark:text-emerald-400',
   warning: 'text-amber-600 dark:text-amber-400',
   error: 'text-red-600 dark:text-red-400',
@@ -140,7 +139,21 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
       };
       return permissionsService.can(perms[s.id] as any);
     });
-  }, [data, language, showSales, showInventory, showCustomers, showTopSeller]);
+  }, [
+    data,
+    showSales,
+    showInventory,
+    showCustomers,
+    showTopSeller,
+    t.completed,
+    t.invoices,
+    t.lowStock,
+    t.newCustomers,
+    t.pending,
+    t.shortages,
+    t.todaySales,
+    t.topSeller,
+  ]);
 
   const rotate = useCallback(() => {
     if (isPaused || priorityMessage || !slides.length) return;
@@ -155,7 +168,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
     if (isPaused || priorityMessage || !slides.length) return;
     timeoutRef.current = setTimeout(rotate, interval);
     return () => timeoutRef.current && clearTimeout(timeoutRef.current);
-  }, [currentIndex, interval, isPaused, priorityMessage, rotate, slides.length]);
+  }, [interval, isPaused, priorityMessage, rotate, slides.length]);
 
   useEffect(() => {
     if (priorityMessage) {
@@ -187,6 +200,8 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
       onClick={() => setCurrentIndex((p) => (p + 1) % slides.length)}
     >
       <div
+        role="button"
+        tabIndex={0}
         className='flex items-center gap-1.5 h-full'
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}

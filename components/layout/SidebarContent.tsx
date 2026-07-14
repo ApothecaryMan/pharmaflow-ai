@@ -33,21 +33,19 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   sidebarCollapsed = false,
 }) => {
   return (
-    <>
-      <SidebarMenu
-        menuItems={menuItems}
-        activeModule={activeModule}
-        currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
-        onNavigate={onNavigate}
-        onViewChange={onViewChange}
-        isMobile={isMobile}
-        theme={theme.primary}
-        translations={t}
-        language={language}
-        hideInactiveModules={hideInactiveModules}
-        hideSearch={isMobile}
-        sidebarCollapsed={sidebarCollapsed}
-      />
-    </>
+    <SidebarMenu
+      menuItems={menuItems}
+      activeModule={activeModule}
+      currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
+      onNavigate={onNavigate}
+      onViewChange={onViewChange}
+      isMobile={isMobile}
+      theme={theme.primary}
+      translations={t}
+      language={language}
+      hideInactiveModules={hideInactiveModules}
+      hideSearch={isMobile}
+      sidebarCollapsed={sidebarCollapsed}
+    />
   );
 };

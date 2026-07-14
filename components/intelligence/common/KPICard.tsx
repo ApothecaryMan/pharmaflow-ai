@@ -26,7 +26,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   onClick,
   className = '',
 }) => {
-  const colorMap = {
+  const _colorMap = {
     emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
     zinc: 'bg-zinc-50 text-zinc-700 dark:bg-zinc-900/20 dark:text-zinc-400',
     amber: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
@@ -36,7 +36,10 @@ export const KPICard: React.FC<KPICardProps> = ({
 
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={`relative p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-xs hover:shadow-md transition-all ${onClick ? 'cursor-pointer hover:border-gray-200 dark:hover:border-gray-700' : ''} ${className}`}
     >
       <div className='flex justify-between items-start mb-2'>

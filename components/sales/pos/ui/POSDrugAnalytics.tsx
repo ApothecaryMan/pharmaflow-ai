@@ -4,7 +4,6 @@ import { useSettings } from '../../../../context';
 import { salesService } from '../../../../services/sales/salesService';
 import type { Drug } from '../../../../types';
 import { money } from '../../../../utils/currency';
-import { formatStockAmount } from '../../../../utils/inventory';
 import { resolveUnits } from '../../../../utils/stockUtils';
 import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
@@ -105,7 +104,7 @@ const InfoRow: React.FC<{
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
-export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug, t }) => {
+export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug, t: _t }) => {
   const [stats, setStats] = useState<DrugStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { language } = useSettings();
@@ -211,6 +210,9 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
     viewingDrug.costPrice,
     viewingDrug.stock,
     viewingDrug.publicPrice,
+    viewingDrug.expiryDate,
+    viewingDrug.unitCostPrice,
+    viewingDrug.unitsPerPack,
   ]);
 
   // Rule 7: Config-Driven UI
@@ -269,7 +271,7 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
       {/* 1. Profitability & Financials (Rule 4: Functional Iteration) */}
       <div className='grid grid-cols-2 lg:grid-cols-5 md:grid-cols-3 gap-4'>
         {metricsConfig.map((metric, i) => (
-          <StatCard key={i} {...metric} />
+          <StatCard key={`${metric.label || i}`} {...metric} />
         ))}
       </div>
 

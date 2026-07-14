@@ -2,7 +2,6 @@ import type { FilterFn } from '@tanstack/react-table';
 import { normalizeDigits } from '../../../utils/localization';
 import { createSearchRegex } from '../../../utils/searchUtils';
 import { storage } from '../../../utils/storage';
-import { getSmartDirection } from '../SmartInputs';
 import { getHeaderJustifyClass, getItemsAlignClass, getTextAlignClass } from '../TableAlignment';
 
 /**
@@ -128,7 +127,7 @@ export const getColumnWidth = (column: any, isFlex: boolean, columnSizing: any) 
   return isFlex && !isResized ? 'auto' : column.getSize();
 };
 
-export const getCellDirection = (columnId: string, meta: any, cellValue: any, isRtl: boolean) => {
+export const getCellDirection = (columnId: string, meta: any, _cellValue: any, isRtl: boolean) => {
   const id = columnId.toLowerCase();
   if (id === 'name') return 'ltr';
   if (meta?.isId || meta?.isAction) return isRtl ? 'rtl' : 'ltr';
@@ -144,7 +143,7 @@ export const formatSmartDate = (
   isRtl: boolean
 ) => {
   const date = new Date(dateVal);
-  if (isNaN(date.getTime())) return null;
+  if (Number.isNaN(date.getTime())) return null;
 
   const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   const isToday = targetTs === todayTs;

@@ -1,6 +1,7 @@
 export function OverlordChaosHorns() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Overlord chaos horns</title>
       <g opacity='0.98'>
         <g transform='translate(10, -24)'>
           <ellipse

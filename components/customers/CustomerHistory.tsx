@@ -1,11 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
-import type { TRANSLATIONS } from '../../i18n/translations';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import type { TRANSLATIONS } from '../../i18n/translations';
 import { useAuthStore } from '../../stores/authStore';
-import type { Customer, Return, Sale } from '../../types';
+import type { Return, Sale } from '../../types';
 import { DateRangePicker } from '../common/DatePicker';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
@@ -29,7 +29,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
   navigationParams,
   isLoading,
   onViewChange,
-  datePickerTranslations,
+  datePickerTranslations: _datePickerTranslations,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
@@ -39,7 +39,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [_selectedCustomerId, _setSelectedCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'sales' | 'returns'>('sales');
 
   // Unify Transactions (Sales & Returns) - Filtered for registered customers only

@@ -29,7 +29,7 @@ import {
   TEST_PASSWORD,
 } from '../config.js';
 import { loginAndGetToken } from '../helpers/auth.js';
-import { generateCheckoutPayload, generateDrug, randomInt } from '../helpers/data-generators.js';
+import { generateCheckoutPayload, randomInt } from '../helpers/data-generators.js';
 
 export function setup() {
   const token = loginAndGetToken(TEST_EMAIL, TEST_PASSWORD);
@@ -143,7 +143,7 @@ function doPharmacistWork(token) {
     check(res, { '✅ Inventory loaded': (r) => r.status === 200 });
 
     // Check expiring soon
-    const today = new Date().toISOString().split('T')[0];
+    const _today = new Date().toISOString().split('T')[0];
     const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     http.get(

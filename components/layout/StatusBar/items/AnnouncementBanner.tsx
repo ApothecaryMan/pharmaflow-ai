@@ -42,6 +42,8 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   return (
     <StatusBarItem className='flex-1 overflow-hidden mx-4 relative group p-0 hover:bg-transparent'>
       <div
+        role="button"
+        tabIndex={0}
         className='flex items-center justify-center w-full h-full'
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -51,6 +53,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
         <button
           onClick={() => setAnnouncement(null)}
           className='absolute right-0 p-1 text-(--text-tertiary) hover:text-(--text-primary) transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center'
+          type='button'
         >
           <span className='material-symbols-rounded' style={{ fontSize: '12px' }}>
             close

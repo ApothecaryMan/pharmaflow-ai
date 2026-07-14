@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 function generateTauriKeys() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');

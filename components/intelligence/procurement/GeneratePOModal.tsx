@@ -42,9 +42,9 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             {t?.intelligence?.procurement?.po?.notes || 'Notes'}
-          </label>
+          </span>
           <textarea
             className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-hidden transition-all resize-none h-24 text-sm'
             placeholder={
@@ -54,7 +54,7 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
         </div>
 
         <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto'>
-          <button onClick={onClose} className={MODAL_FOOTER_BTN_CANCEL}>
+          <button onClick={onClose} className={MODAL_FOOTER_BTN_CANCEL} type='button'>
             {t?.common?.cancel || 'Cancel'}
           </button>
           <button
@@ -63,6 +63,7 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
               onClose();
             }}
             className={MODAL_FOOTER_BTN_PRIMARY}
+            type='button'
           >
             {t?.intelligence?.procurement?.buttons?.sendPO || 'Send PO'}
           </button>

@@ -1,8 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import React, { useEffect, useMemo, useState } from 'react';
-import type { Drug } from '../../types';
+import React, { useMemo, useState } from 'react';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { useAuthStore } from '../../stores/authStore';
+import type { Drug } from '../../types';
 import { TanStackTable } from '../common/TanStackTable';
 
 interface InventoryManagementProps {

@@ -1,6 +1,7 @@
 export function FairyWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Fairy wings</title>
       <g opacity='0.9'>
         <path
           d='M28,68 C12,50 -10,32 6,10 C18,-4 38,4 38,32 C38,48 34,60 28,68 Z'

@@ -1,5 +1,5 @@
 import { getLocationName } from '../../../../data/locations';
-import type { CartItem, Customer, Drug, Sale } from '../../../../types';
+import type { CartItem, Customer, Sale } from '../../../../types';
 
 import { formatExpiryDate as formatExpiryDateShared } from '../../../../utils/expiryUtils';
 

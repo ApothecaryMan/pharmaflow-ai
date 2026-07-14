@@ -50,5 +50,5 @@ export const parseLocalizedNumber = (value: string | number | null | undefined):
   const normalized = normalizeDigits(value);
   const parsed = parseFloat(normalized.replace(/[^\d.-]/g, ''));
 
-  return isNaN(parsed) ? 0 : parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 };

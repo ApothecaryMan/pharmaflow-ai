@@ -16,64 +16,44 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { ColumnDef } from '@tanstack/react-table';
-import { AnimatePresence, motion } from 'framer-motion';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { TabBar } from '../../components/layout/TabBar';
-import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
 import { usePageShortcuts } from '../../hooks/keyboard';
-import { useLongPress } from '../../hooks/common/useLongPress';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 import { usePurchaseTabs } from '../../hooks/purchases/usePurchaseTabs';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
 import { settingsService } from '../../services';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import { useAuthStore } from '../../stores/authStore';
-import type {
-  Drug,
-  Purchase,
-  PurchaseItem,
-  PurchaseReturn,
-  PurchaseTab,
-  Supplier,
-} from '../../types';
-import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import type { Drug, Purchase, PurchaseItem, PurchaseTab, Supplier } from '../../types';
+import { formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   checkExpiryStatus,
   formatExpiryDate,
-  getExpiryStatusConfig,
   getExpiryStatusStyle,
   sanitizeExpiryInput,
 } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
-import { formatStock } from '../../utils/inventory';
 import { money, pricing, tax } from '../../utils/money';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
-import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
-import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
-import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 import {
-  DatePicker,
-  DateRangePicker,
   type FilterConfig,
-  FilterDropdown,
-  FilterPill,
   FloatingInput,
-  Modal,
   PageHeader,
   SearchDropdown,
   SearchInput,
   SegmentedControl,
-  TanStackTable,
   useContextMenu,
-  useContextMenuTrigger,
   useSearchKeyboardNavigation,
   useSmartDirection,
 } from '../common';
@@ -132,7 +112,14 @@ const SortableCartItem = React.memo(
     tax,
     taxMode,
   }: SortableCartItemProps) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition: _transition,
+      isDragging,
+    } = useSortable({
       id: item.id,
     });
 
@@ -152,9 +139,12 @@ const SortableCartItem = React.memo(
     return (
       <div
         ref={setNodeRef}
+        role="button"
+        tabIndex={0}
         style={style}
         dir='ltr'
         onClick={() => setSelectedCartIndex(index)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedCartIndex(index); } }}
         className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer border border-transparent ${
           selectedCartIndex === index
             ? `bg-primary-50 dark:bg-(--bg-navbar) border-primary-100 dark:border-primary-900/30`
@@ -202,6 +192,7 @@ const SortableCartItem = React.memo(
         <button
           onClick={() => removeItem(item.id)}
           className='absolute top-1/2 -translate-y-1/2 right-0 w-6 h-full flex items-center justify-center text-gray-400 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl'
+          type='button'
         >
           <span className='material-symbols-rounded text-lg'>close</span>
         </button>
@@ -503,7 +494,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   color,
   t,
   language,
-  navigationParams,
+  navigationParams: _navigationParams,
   onViewChange,
   isLoading,
 }) => {
@@ -668,7 +659,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     setSearch('');
     setSupplierSearch('');
     setIsSupplierOpen(false);
-  }, [activeTabId]);
+  }, []);
 
   // Handle add tab with alert
   const handleAddTab = () => {
@@ -711,6 +702,42 @@ export const Purchases: React.FC<PurchasesProps> = ({
     [cart.length, tabs.length]
   );
 
+  const handleAddItem = (drug: Drug) => {
+    playBeep();
+    setCart((prev) => {
+      const cost = drug.costPrice || 0;
+      const sale = drug.publicPrice || 0;
+      let initialDiscount = 0;
+
+      if (sale > 0 && cost >= 0) {
+        initialDiscount = pricing.actualMargin(cost, sale);
+      }
+
+      const initialTaxPercent = taxRate;
+
+      return [
+        ...prev,
+        {
+          id: idGenerator.generateSync('generic', activeBranchId),
+          drugId: drug.id,
+          name: getDisplayName(drug, textTransform),
+          quantity: 1,
+          costPrice: cost,
+          unitCostPrice: drug.unitCostPrice || 0,
+          dosageForm: drug.dosageForm,
+          publicPrice: sale,
+          unitPrice: drug.unitPrice || 0,
+          discount: parseFloat(initialDiscount.toFixed(2)),
+          expiryDate: '',
+          tax: initialTaxPercent,
+          unitsPerPack: drug.unitsPerPack || 1,
+        },
+      ];
+    });
+    setSelectedCartIndex(cart.length);
+    setSearch('');
+  };
+
   // Auto-add on barcode match
   useEffect(() => {
     const trimmed = search.trim();
@@ -723,7 +750,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       setSearch('');
       setShowSuggestions(false);
     }
-  }, [search, inventory]);
+  }, [search, inventory, handleAddItem]);
 
   // Close suggestions on click outside
   useEffect(() => {
@@ -791,11 +818,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
   };
 
   // Smart direction for inputs
-  const supplierSearchDir = useSmartDirection(
+  const _supplierSearchDir = useSmartDirection(
     supplierSearch,
     t.placeholders?.searchSupplier || 'Search and select supplier...'
   );
-  const drugSearchDir = useSmartDirection(search, t.searchDrug);
+  const _drugSearchDir = useSmartDirection(search, t.searchDrug);
 
   // Invoice ID State
   const [invoiceId, setInvoiceId] = useState('INV-000001');
@@ -810,7 +837,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [purchases]); // Keep listening to purchases prop changes to bump ID when new ones arrive via realtime
+  }, []); // Keep listening to purchases prop changes to bump ID when new ones arrive via realtime
 
   const externalInvoiceIdDir = useSmartDirection(
     externalInvoiceId,
@@ -830,7 +857,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     if (typeof window !== 'undefined' && activeBranchId) {
       const saved = localStorage.getItem(`purchases_cart_${activeBranchId}_width`);
-      return saved ? parseInt(saved) : 900;
+      return saved ? parseInt(saved, 10) : 900;
     }
     return 900;
   });
@@ -851,7 +878,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     });
   }, []);
 
-  const startResizing = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const _startResizing = useCallback((_e: React.MouseEvent | React.TouchEvent) => {
     isResizing.current = true;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
@@ -870,7 +897,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       const isRTL =
         document.dir === 'rtl' || document.documentElement.getAttribute('dir') === 'rtl';
 
-      let newWidth;
+      let newWidth: number;
       if (isRTL) {
         // In RTL, sidebar is on the Left. Draggable edge is on the Right.
         // Width = Mouse Position - Left Edge
@@ -918,45 +945,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSupplierOpen]);
-
-  const handleAddItem = (drug: Drug) => {
-    playBeep();
-    setCart((prev) => {
-      const cost = drug.costPrice || 0;
-      const sale = drug.publicPrice || 0;
-      let initialDiscount = 0;
-
-      // Auto-calculate discount if Sale > Cost
-      if (sale > 0 && cost >= 0) {
-        initialDiscount = pricing.actualMargin(cost, sale);
-      }
-
-      // Initial tax percentage from settings
-      const initialTaxPercent = taxRate;
-
-      return [
-        ...prev,
-        {
-          id: idGenerator.generateSync('generic', activeBranchId), // Unique ID for this row
-          drugId: drug.id,
-          name: getDisplayName(drug, textTransform),
-          quantity: 1,
-          costPrice: cost,
-          unitCostPrice: drug.unitCostPrice || 0,
-          dosageForm: drug.dosageForm,
-          publicPrice: sale,
-          unitPrice: drug.unitPrice || 0,
-          discount: parseFloat(initialDiscount.toFixed(2)),
-          expiryDate: '',
-          tax: initialTaxPercent, // Tax as percentage
-          unitsPerPack: drug.unitsPerPack || 1,
-        },
-      ];
-    });
-    // Select the newly added item (will be at the end of cart)
-    setSelectedCartIndex(cart.length);
-    setSearch(''); // Clear search on add
-  };
 
   const updateItem = (itemId: string, field: keyof PurchaseItem, value: number | string) => {
     setCart((prev) =>
@@ -1051,7 +1039,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     // 1. Validate Invoice ID
     if (!externalInvoiceId || externalInvoiceId.trim() === '') {
       alert(t.alerts?.enterInvoice || 'Please enter the Invoice Number (Inv #) from the supplier.');
-      inputRefs.current['externalInvoiceId']?.focus();
+      inputRefs.current.externalInvoiceId?.focus();
       return;
     }
 
@@ -1062,7 +1050,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         t.alerts?.duplicateInvoice ||
           'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
-      inputRefs.current['externalInvoiceId']?.focus();
+      inputRefs.current.externalInvoiceId?.focus();
       return;
     }
     // 2. Validate Cart Items
@@ -1177,7 +1165,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     // 1. Validate Invoice ID
     if (!externalInvoiceId || externalInvoiceId.trim() === '') {
       alert(t.alerts?.enterInvoice || 'Please enter the Invoice Number (Inv #) from the supplier.');
-      inputRefs.current['externalInvoiceId']?.focus();
+      inputRefs.current.externalInvoiceId?.focus();
       return;
     }
 
@@ -1188,7 +1176,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         t.alerts?.duplicateInvoice ||
           'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
-      inputRefs.current['externalInvoiceId']?.focus();
+      inputRefs.current.externalInvoiceId?.focus();
       return;
     }
     // 2. Validate Cart Items
@@ -1301,7 +1289,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     let result = [...(inventory || [])];
 
     // 1. Apply active filters first
-    const stockFilter = activeFilters['stockStatus']?.[0];
+    const stockFilter = activeFilters.stockStatus?.[0];
     if (stockFilter === 'in-stock') {
       result = result.filter((d) => d.stock > 0);
     } else if (stockFilter === 'out-stock') {
@@ -1332,7 +1320,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const {
     highlightedIndex: selectedSuggestionIndex,
     onKeyDown: onDrugSearchKeyDown,
-    setHighlightedIndex: setSelectedSuggestionIndex,
+    setHighlightedIndex: _setSelectedSuggestionIndex,
   } = useSearchKeyboardNavigation({
     results: filteredDrugs,
     onSelect: (drug) => {
@@ -1354,7 +1342,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const {
     highlightedIndex: selectedSupplierIndex,
     onKeyDown: onSupplierSearchKeyDown,
-    setHighlightedIndex: setSelectedSupplierIndex,
+    setHighlightedIndex: _setSelectedSupplierIndex,
   } = useSearchKeyboardNavigation({
     results: filteredSuppliers,
     onSelect: (supplier) => {
@@ -1514,6 +1502,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
               className='h-9 text-sm'
               icon={
                 <span
+                  role="button"
+                  tabIndex={0}
                   className='material-symbols-rounded cursor-pointer'
                   style={{ fontSize: '22px' }}
                   onMouseEnter={() => setIsSupplierIconHovered(true)}
@@ -1522,6 +1512,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     e.stopPropagation();
                     setIsSupplierModalOpen(true);
                   }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setIsSupplierModalOpen(true); } }}
                 >
                   {isSupplierIconHovered ? 'list' : 'search'}
                 </span>
@@ -1666,9 +1657,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {/* Session Timestamp */}
               {activeTab?.createdAt > 0 && (
                 <div className='group relative'>
-                  <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
+                  <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
                     {language === 'AR' ? 'وقت البدء' : 'Started at'}
-                  </label>
+                  </span>
                   <div className='flex items-center h-7 gap-1 text-base font-bold text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-white/5 px-2 rounded-lg border border-gray-100/50 dark:border-white/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
                     <span className='material-symbols-rounded text-lg opacity-60'>schedule</span>
                     {new Intl.DateTimeFormat(language === 'AR' ? 'ar-EG' : 'en-US', {
@@ -1682,9 +1673,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
               {/* System Order ID (Read Only) */}
               <div className='group relative'>
-                <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
+                <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                   {t.tableHeaders?.orderId || 'Order #'}
-                </label>
+                </span>
                 <div
                   dir='ltr'
                   className='relative h-10 flex items-center px-2 py-0.5 select-none text-xl font-mono font-bold text-gray-600 dark:text-gray-300'
@@ -1700,16 +1691,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
               {/* Manual Invoice ID */}
               <div className='group relative'>
-                <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
+                <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                   {t.tableHeaders?.invId || 'Invoice #'}
-                </label>
+                </span>
                 <div className='relative inline-grid items-center h-10'>
                   <span className='invisible text-xl font-mono font-bold px-2 py-0.5 whitespace-pre min-w-[6rem]'>
                     {externalInvoiceId || t.placeholders?.enterId || 'Enter ID'}
                   </span>
                   <input
                     ref={(el) => {
-                      inputRefs.current['externalInvoiceId'] = el;
+                      inputRefs.current.externalInvoiceId = el;
                     }}
                     type='text'
                     placeholder={t.placeholders?.enterId || 'Enter ID'}
@@ -1724,9 +1715,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {/* Payment Method Toggle */}
               {activeTab && (
                 <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                  <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
                     {t.paymentMethod || 'Payment Method'}
-                  </label>
+                  </span>
                   <SegmentedControl
                     value={paymentMethod}
                     onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
@@ -1744,9 +1735,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {/* Tax Mode Toggle */}
               {activeTab && (
                 <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                  <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
                     {language === 'AR' ? 'نظام الضريبة' : 'Tax Mode'}
-                  </label>
+                  </span>
                   <SegmentedControl
                     value={taxMode}
                     onChange={(val) => setTaxMode(val as 'exclusive' | 'inclusive')}
@@ -1778,7 +1769,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               <div className='space-y-2'>
                 {[1, 2, 3, 4].map((i) => (
                   <div
-                    key={i}
+                    key={`cart-sk-${i}`}
                     className='p-3 rounded-2xl bg-gray-50 dark:bg-(--bg-navbar) animate-pulse'
                   >
                     <div className='flex gap-2 items-center'>
@@ -1789,7 +1780,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <div className='flex gap-1.5 items-center'>
                         {[1, 2, 3, 4, 5].map((j) => (
                           <div
-                            key={j}
+                            key={`btn-sk-${j}`}
                             className={`${j === 1 ? 'w-12' : 'w-14'} h-8 bg-gray-200 dark:bg-neutral-800 rounded-lg`}
                           />
                         ))}
@@ -1949,6 +1940,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     onClick={handlePendingPO}
                     disabled={cart.length === 0 || !selectedSupplierId}
                     className='h-10 w-10 flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-800 transition-all active:scale-95 shadow-sm shadow-orange-200 dark:shadow-none'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-xl'>pending_actions</span>
                   </button>
@@ -1963,6 +1955,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       onClick={handleConfirm}
                       disabled={cart.length === 0 || !selectedSupplierId || isConfirming}
                       className={`h-10 px-10 justify-center rounded-xl flex items-center gap-2 shadow-sm ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95 text-sm relative overflow-hidden`}
+                      type='button'
                     >
                       {isConfirming ? (
                         <div className='flex items-center gap-2'>

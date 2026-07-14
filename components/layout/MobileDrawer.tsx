@@ -243,6 +243,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
               )}
             </div>
             <div
+              role='status'
               className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-(--bg-page-surface) rounded-full'
               aria-label='Online status'
             />

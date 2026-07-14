@@ -1,6 +1,4 @@
 import React, { lazy, Suspense, useCallback } from 'react';
-import { StorageKeys } from './config/storageKeys';
-import { branchService } from './services/org/branchService';
 import { storage } from './utils/storage';
 
 // EmployeeDashboard loaded lazily
@@ -38,19 +36,19 @@ const EmployeeSetupScreen = lazy(() =>
 import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
 
 import { ROUTES } from './config/routes';
-import { CatalogProvider, LANGUAGES, THEMES, useAlert, useSettings } from './context';
-import { type AuthState, useAuth } from './hooks/auth/useAuth';
+import { CatalogProvider, useAlert, useSettings } from './context';
+import { useAuth } from './hooks/auth/useAuth';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
 import { usePreventZoom } from './hooks/infrastructure/usePreventZoom';
 import { useSessionHeartbeat } from './hooks/infrastructure/useSessionHeartbeat';
 // App State Hooks
-import { type AppState, useAppState } from './hooks/layout/useAppState';
+import { useAppState } from './hooks/layout/useAppState';
 import { useTheme } from './hooks/layout/useTheme';
 import { useUrlSync } from './hooks/layout/useUrlSync';
 import { ROOT_STRINGS } from './i18n/rootStrings';
 import { authService } from './services/auth/authService';
 import { useAuthStore } from './stores/authStore';
-import type { Supplier, ViewState } from './types';
+import type { ViewState } from './types';
 import { useAutoSystemBarColor } from './utils/systemBars';
 
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
@@ -69,7 +67,7 @@ import { useAutoSystemBarColor } from './utils/systemBars';
  */
 
 // --- Authenticated Component ---
-const STANDALONE_VIEWS = [ROUTES.LOGIN];
+const _STANDALONE_VIEWS = [ROUTES.LOGIN];
 
 // AuthenticatedContent was moved to src/components/layout/AuthenticatedContent.tsx
 
@@ -85,6 +83,7 @@ const LogoAsterisk = ({
     className='w-12 h-12 text-zinc-900 dark:text-white animate-spin'
     style={{ animationDuration: '2s' }}
   >
+    <title>Loading</title>
     <g transform={`translate(70 70) scale(${scale})`} fill={color}>
       <rect x='-4' y='-35' width='8' height='70' rx='.5' transform='rotate(45)' />
       <rect x='-4' y='-35' width='8' height='20' rx='.5' />
@@ -171,7 +170,7 @@ const App: React.FC = () => {
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    const handleQuotaExceeded = (e: Event) => {
+    const handleQuotaExceeded = (_e: Event) => {
       alert.error(t.settings.storageQuota.criticalMessage, t.settings.storageQuota.criticalTitle);
     };
     window.addEventListener('pharma_storage_quota_exceeded', handleQuotaExceeded);
@@ -229,7 +228,7 @@ const App: React.FC = () => {
     activeStep,
     setActiveStep,
     isChecking: isCheckingOnboarding,
-    error: onboardingError,
+    error: _onboardingError,
   } = useOnboardingStatus(authState.isAuthenticated);
 
   // 5. Dynamic Theme Hook - Handles CSS variables & Global Dark Mode
@@ -255,7 +254,7 @@ const App: React.FC = () => {
 
   // 6. Stable Login Callbacks
   const { setIsAuthenticated } = authState;
-  const { setActiveModule, setView } = appState;
+  const { setActiveModule: _setActiveModule, setView } = appState;
   const reinitialize = useAuthStore((s) => s.reinitialize);
 
   // 6.1 Initialize auth data on mount (replaces old DataProvider.initData())
@@ -335,7 +334,7 @@ const App: React.FC = () => {
   );
 
   // Handle Onboarding Steps and Loading State
-  let finalContent;
+  let finalContent: React.ReactNode;
 
   if (authState.isAuthenticated && !isOnboardingReady) {
     // Show a clean loading state while checking database for onboarding status

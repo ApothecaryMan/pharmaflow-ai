@@ -77,11 +77,11 @@ export function useSalesHandlers({
   setInventory,
   sales,
   setSales,
-  setBatches,
-  setCustomers,
-  setReturns,
+  setBatches: _setBatches,
+  setCustomers: _setCustomers,
+  setReturns: _setReturns,
   currentShift,
-  addTransaction,
+  addTransaction: _addTransaction,
   getVerifiedDate,
   validateTransactionTime,
   updateLastTransactionTime,
@@ -206,7 +206,7 @@ export function useSalesHandlers({
         }
 
         const [updatedBatches] = await Promise.all([batchService.getAllBatches(activeBranchId)]);
-        setBatches(updatedBatches);
+        _setBatches(updatedBatches);
         const freshInventory = await inventoryService.getAll(activeBranchId);
         setInventory(freshInventory);
 
@@ -239,7 +239,7 @@ export function useSalesHandlers({
         }
 
         const [updatedBatches] = await Promise.all([batchService.getAllBatches(activeBranchId)]);
-        setBatches(updatedBatches);
+        _setBatches(updatedBatches);
         const freshInventory = await inventoryService.getAll(activeBranchId);
         setInventory(freshInventory);
 
@@ -286,7 +286,7 @@ export function useSalesHandlers({
       employees,
       activeBranchId,
       setInventory,
-      setBatches,
+      _setBatches,
       setSales,
       currentShift,
       error,

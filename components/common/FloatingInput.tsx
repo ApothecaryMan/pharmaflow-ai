@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useId } from 'react';
 
 export interface FloatingInputProps {
   label: string;
@@ -39,6 +40,8 @@ export const FloatingInput: React.FC<FloatingInputProps> = ({
   inputRef,
   isLoading,
 }) => {
+  const inputId = useId();
+
   if (isLoading) {
     return (
       <div className={`relative ${className} animate-pulse`}>
@@ -55,6 +58,7 @@ export const FloatingInput: React.FC<FloatingInputProps> = ({
     <div className={`relative ${className}`}>
       <input
         ref={inputRef}
+        id={inputId}
         type={type}
         onKeyDown={onKeyDown}
         className={`block px-2 pb-1 pt-2 w-full text-xs font-medium text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-primary-500 focus:outline-hidden focus:ring-0 focus:border-primary-600 peer ${inputClassName}`}
@@ -69,6 +73,7 @@ export const FloatingInput: React.FC<FloatingInputProps> = ({
         maxLength={maxLength}
       />
       <label
+        htmlFor={inputId}
         className={`absolute text-[11px] text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-2.5 scale-75 top-1 z-10 origin-left ${labelBgClassName} px-1 peer-focus:px-1 peer-focus:text-primary-600 dark:peer-focus:text-primary-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-2.5 left-1 pointer-events-none font-bold tracking-wide`}
       >
         {label}

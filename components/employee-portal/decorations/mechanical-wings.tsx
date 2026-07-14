@@ -1,6 +1,7 @@
 export function MechanicalWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Mechanical wings</title>
       <g opacity='0.85'>
         <path
           d='M16,68 C8,52 6,34 12,18 L18,22 L14,36 L24,30 L20,44 L30,38 L24,54 L34,48 L28,62Z'

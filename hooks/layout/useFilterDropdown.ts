@@ -67,7 +67,7 @@ export function useFilterDropdown<T>({
         ? items.findIndex((item) => keyExtractor(item) === currentKey)
         : -1;
 
-      let nextIndex;
+      let nextIndex: number;
       if (currentIndex === -1) {
         nextIndex = 0; // Start at 0 if nothing selected
       } else {

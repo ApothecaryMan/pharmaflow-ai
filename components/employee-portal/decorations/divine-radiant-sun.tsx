@@ -1,8 +1,7 @@
-import React from 'react';
-
 export function DivineRadiantSun() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Divine radiant sun</title>
       <style>{`
         @keyframes drs-spin { 100% { transform: rotate(360deg); } }
         @keyframes drs-spin-slow { 100% { transform: rotate(-360deg); } }
@@ -38,7 +37,8 @@ export function DivineRadiantSun() {
       <g className='drs-rays drs-center'>
         {Array.from({ length: 12 }).map((_, i) => (
           <polygon
-            key={'inner-' + i}
+            // biome-ignore lint/suspicious/noArrayIndexKey: generated rays have no stable id
+            key={`inner-${i}`}
             points='64,-5 68,20 60,20'
             fill='#fbbf24'
             transform={`rotate(${i * 30} 64 64)`}
@@ -50,7 +50,8 @@ export function DivineRadiantSun() {
       <g className='drs-rays-outer'>
         {Array.from({ length: 24 }).map((_, i) => (
           <line
-            key={'outer-' + i}
+            // biome-ignore lint/suspicious/noArrayIndexKey: generated rays have no stable id
+            key={`outer-${i}`}
             x1='64'
             y1='-10'
             x2='64'

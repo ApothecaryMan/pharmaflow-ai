@@ -1,6 +1,5 @@
 import type React from 'react';
 import { useRef, useState } from 'react';
-import { PageHeader } from '../common/PageHeader';
 
 interface InvoiceItem {
   id: string;
@@ -198,7 +197,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
   const [newItem, setNewItem] = useState<Partial<InvoiceItem>>({
     nameAr: '',
     nameEn: '',
-    batch: 'BAT-' + Math.random().toString(36).substring(3, 8).toUpperCase(),
+    batch: `BAT-${Math.random().toString(36).substring(3, 8).toUpperCase()}`,
     expiry: '2028-12',
     qty: 10,
     bonus: 0,
@@ -263,10 +262,10 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
     if (!newItem.nameAr || !newItem.nameEn) return;
 
     const added: InvoiceItem = {
-      id: 'med-' + Date.now(),
+      id: `med-${Date.now()}`,
       nameAr: newItem.nameAr || '',
       nameEn: newItem.nameEn || '',
-      batch: newItem.batch || 'B' + Date.now().toString().slice(-6),
+      batch: newItem.batch || `B${Date.now().toString().slice(-6)}`,
       expiry: newItem.expiry || '2028-12',
       qty: Number(newItem.qty) || 10,
       bonus: Number(newItem.bonus) || 0,
@@ -281,7 +280,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
     setNewItem({
       nameAr: '',
       nameEn: '',
-      batch: 'BAT-' + Math.random().toString(36).substring(3, 8).toUpperCase(),
+      batch: `BAT-${Math.random().toString(36).substring(3, 8).toUpperCase()}`,
       expiry: '2028-12',
       qty: 10,
       bonus: 0,
@@ -555,13 +554,14 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                       const isLastPage = pageIdx === pageChunks.length - 1;
                       const maxIntermediate = orientation === 'portrait' ? 14 : 7;
                       const maxLast = orientation === 'portrait' ? 8 : 3;
-                      const pageCapacity = isLastPage ? maxLast : maxIntermediate;
+                      const _pageCapacity = isLastPage ? maxLast : maxIntermediate;
                       const previousItemsCount = pageChunks
                         .slice(0, pageIdx)
                         .reduce((sum, chunk) => sum + chunk.length, 0);
 
                       return (
                         <div
+                          // biome-ignore lint/suspicious/noArrayIndexKey: page chunks have no stable id
                           key={pageIdx}
                           ref={pageIdx === 0 ? printAreaRef : undefined}
                           className={`bg-white text-black border border-zinc-300 shadow-2xl relative overflow-hidden select-none print:shadow-none print:border-none shrink-0 flex flex-col justify-between page-div ${
@@ -1031,8 +1031,8 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                                         : 'w-20 h-20 p-1 text-[7px]'
                                     }`}
                                     style={{
-                                      borderColor: accentColor + 'cc',
-                                      color: accentColor + 'cc',
+                                      borderColor: `${accentColor}cc`,
+                                      color: `${accentColor}cc`,
                                       fontFamily: 'monospace',
                                       transform: `rotate(${stampRotation}deg)`,
                                     }}
@@ -1078,7 +1078,8 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                                         const width = ((code + idx * 3) % 3) + 1; // 1 to 3px wide lines
                                         return (
                                           <div
-                                            key={idx}
+                                            // biome-ignore lint/suspicious/noArrayIndexKey: char positions have no stable id
+                                            key={`barcode-char-${idx}`}
                                             className='bg-zinc-700'
                                             style={{ width: `${width}px`, height: '14px' }}
                                           ></div>
@@ -1196,6 +1197,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
             <button
               onClick={handlePrint}
               className='flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-650 hover:from-emerald-400 hover:to-teal-500 text-white px-5 py-3 rounded-2xl font-black text-xs shadow-md shadow-emerald-950/20 active:scale-95 transition-all cursor-pointer'
+              type='button'
             >
               <span className='material-symbols-rounded text-lg'>print</span>
               {language === 'AR' ? 'اختبار طباعة الفاتورة' : 'Try Print A5'}
@@ -1211,11 +1213,11 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             {/* Supplier selector */}
             <div className='space-y-3'>
-              <label className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+              <span className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                 {language === 'AR'
                   ? 'اختر الشركة الموردة للأدوية (رئيسية بمصر)'
                   : 'Select Medicine Supplier Template'}
-              </label>
+              </span>
               <div className='space-y-2.5'>
                 {EGYPTIAN_SUPPLIERS.map((s) => (
                   <button
@@ -1226,6 +1228,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                         ? 'border-zinc-900 dark:border-white bg-zinc-50 dark:bg-[#1e1e1e]/50'
                         : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
                     }`}
+                    type='button'
                   >
                     <div className='flex items-center gap-3'>
                       <div
@@ -1268,9 +1271,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-1.5'>
-                <label className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                <span className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                   {language === 'AR' ? 'رقم الفاتورة' : 'Invoice Number'}
-                </label>
+                </span>
                 <input
                   type='text'
                   value={invoiceNumber}
@@ -1280,9 +1283,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
               </div>
 
               <div className='space-y-1.5'>
-                <label className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                <span className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                   {language === 'AR' ? 'تاريخ الفاتورة' : 'Invoice Date'}
-                </label>
+                </span>
                 <input
                   type='date'
                   value={invoiceDate}
@@ -1294,9 +1297,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-1.5'>
-                <label className='text-[10px] font-bold text-zinc-455 dark:text-zinc-550 uppercase tracking-wider block'>
+                <span className='text-[10px] font-bold text-zinc-455 dark:text-zinc-550 uppercase tracking-wider block'>
                   {language === 'AR' ? 'اسم الصيدلية المستلمة' : 'Pharmacy Name'}
-                </label>
+                </span>
                 <input
                   type='text'
                   value={pharmacyName}
@@ -1306,9 +1309,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
               </div>
 
               <div className='space-y-1.5'>
-                <label className='text-[10px] font-bold text-zinc-455 dark:text-zinc-550 uppercase tracking-wider block'>
+                <span className='text-[10px] font-bold text-zinc-455 dark:text-zinc-550 uppercase tracking-wider block'>
                   {language === 'AR' ? 'الرقم الضريبي للصيدلية' : 'Pharmacy Tax ID'}
-                </label>
+                </span>
                 <input
                   type='text'
                   value={pharmacyTaxId}
@@ -1319,11 +1322,11 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
             </div>
 
             <div className='space-y-1.5'>
-              <label className='text-[10px] font-bold text-zinc-455 dark:text-zinc-550 uppercase tracking-wider block'>
+              <span className='text-[10px] font-bold text-zinc-455 dark:text-zinc-550 uppercase tracking-wider block'>
                 {language === 'AR'
                   ? 'رقم الباركود (أسفل الفاتورة)'
                   : 'Barcode Number (Bottom Footer)'}
-              </label>
+              </span>
               <input
                 type='text'
                 value={barcodeNumber}
@@ -1344,9 +1347,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             {/* Accent hex tuning */}
             <div className='space-y-2'>
-              <label className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+              <span className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                 {language === 'AR' ? 'اللون المميز للفاتورة' : 'Primary Hex Accent'}
-              </label>
+              </span>
               <div className='flex items-center gap-3'>
                 <input
                   type='color'
@@ -1365,9 +1368,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             {/* Font size selectors */}
             <div className='space-y-2 pt-1.5'>
-              <label className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+              <span className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                 {language === 'AR' ? 'حجم الخط في جدول الأدوية' : 'Table Font Sizing'}
-              </label>
+              </span>
               <div className='flex gap-2'>
                 {(['xs', 'sm', 'base'] as const).map((sz) => (
                   <button
@@ -1378,6 +1381,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                         ? 'border-zinc-900 dark:border-white bg-zinc-50 dark:bg-[#1e1e1e] text-zinc-900 dark:text-white font-black'
                         : 'border-zinc-200 dark:border-zinc-800 text-zinc-450 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
                     }`}
+                    type='button'
                   >
                     {sz === 'xs'
                       ? 'Ultra Compact (8px)'
@@ -1391,11 +1395,11 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             {/* Medicine Name Language Selector */}
             <div className='space-y-2 pt-1.5'>
-              <label className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+              <span className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                 {language === 'AR'
                   ? 'لغة عرض أسماء الأدوية بالفاتورة'
                   : 'Medicine Display Language'}
-              </label>
+              </span>
               <div className='flex gap-2'>
                 {(['AR', 'EN', 'BOTH'] as const).map((lang) => (
                   <button
@@ -1426,11 +1430,11 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             {/* Toggles list */}
             <div className='space-y-3 pt-2'>
-              <label className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+              <span className='text-[10px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                 {language === 'AR'
                   ? 'إظهار وإخفاء حقول الفاتورة التفصيلية'
                   : 'Toggle Visual Components'}
-              </label>
+              </span>
 
               <div className='grid grid-cols-2 gap-3.5'>
                 <button
@@ -1440,6 +1444,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                       ? 'border-emerald-500 bg-emerald-500/5 text-emerald-800 dark:text-emerald-350'
                       : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'
                   }`}
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-base'>
                     {showBatchNumber ? 'check_box' : 'check_box_outline_blank'}
@@ -1456,6 +1461,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                       ? 'border-emerald-500 bg-emerald-500/5 text-emerald-800 dark:text-emerald-350'
                       : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'
                   }`}
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-base'>
                     {showBonusColumn ? 'check_box' : 'check_box_outline_blank'}
@@ -1472,6 +1478,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                       ? 'border-emerald-500 bg-emerald-500/5 text-emerald-800 dark:text-emerald-350'
                       : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'
                   }`}
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-base'>
                     {showStamp ? 'check_box' : 'check_box_outline_blank'}
@@ -1488,6 +1495,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                       ? 'border-emerald-500 bg-emerald-500/5 text-emerald-800 dark:text-emerald-350'
                       : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'
                   }`}
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-base'>
                     {showSignature ? 'check_box' : 'check_box_outline_blank'}
@@ -1504,6 +1512,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                       ? 'border-emerald-500 bg-emerald-500/5 text-emerald-800 dark:text-emerald-350'
                       : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'
                   }`}
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-base'>
                     {showDisclaimers ? 'check_box' : 'check_box_outline_blank'}
@@ -1526,9 +1535,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
               <div className='grid grid-cols-2 gap-3'>
                 <div className='space-y-1 col-span-2'>
-                  <label className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                  <span className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                     {language === 'AR' ? 'حالة الختم (أعلى)' : 'Stamp Status (Top)'}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={stampStatus}
@@ -1538,9 +1547,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                 </div>
 
                 <div className='space-y-1 col-span-2'>
-                  <label className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                  <span className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                     {language === 'AR' ? 'اسم الموزع (الوسط)' : 'Supplier Name (Middle)'}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={stampSupplier}
@@ -1550,9 +1559,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                 </div>
 
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                  <span className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                     {language === 'AR' ? 'الفرع (عربي)' : 'Location (Arabic)'}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={stampLocationAR}
@@ -1562,9 +1571,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                 </div>
 
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                  <span className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                     {language === 'AR' ? 'الفرع (إنجليزي)' : 'Location (English)'}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={stampLocationEN}
@@ -1574,9 +1583,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                 </div>
 
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                  <span className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                     {language === 'AR' ? 'تاريخ الختم' : 'Stamp Date'}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={stampDate}
@@ -1586,16 +1595,16 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                 </div>
 
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
+                  <span className='text-[9px] font-bold text-zinc-450 dark:text-zinc-550 uppercase tracking-wider block'>
                     {language === 'AR' ? 'درجة الدوران (°)' : 'Rotation Degree (°)'}
-                  </label>
+                  </span>
                   <div className='flex items-center gap-2'>
                     <input
                       type='range'
                       min='-45'
                       max='45'
                       value={stampRotation}
-                      onChange={(e) => setStampRotation(parseInt(e.target.value))}
+                      onChange={(e) => setStampRotation(parseInt(e.target.value, 10))}
                       className='w-full accent-amber-600 cursor-pointer h-1 bg-zinc-200 rounded-lg appearance-none'
                     />
                     <span className='text-[10px] font-mono font-bold w-8 text-right text-zinc-650 dark:text-zinc-350'>
@@ -1618,7 +1627,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             {/* List of current items */}
             <div className='space-y-2 max-h-48 overflow-y-auto pr-1'>
-              {items.map((item, idx) => (
+              {items.map((item, _idx) => (
                 <div
                   key={item.id}
                   className='flex items-center justify-between p-2.5 bg-zinc-50 dark:bg-[#1e1e1e] rounded-xl border border-zinc-150 dark:border-zinc-850'
@@ -1635,6 +1644,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                   <button
                     onClick={() => removeItem(item.id)}
                     className='p-1.5 text-zinc-400 hover:text-red-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-base'>delete</span>
                   </button>
@@ -1692,9 +1702,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
               {/* Qty & Bonus */}
               <div className='grid grid-cols-2 gap-3'>
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-450 uppercase block'>
+                  <span className='text-[9px] font-bold text-zinc-450 uppercase block'>
                     {language === 'AR' ? 'الكمية (علبة)' : 'Qty (Boxes)'}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     value={newItem.qty || ''}
@@ -1705,9 +1715,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                   />
                 </div>
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-450 uppercase block'>
+                  <span className='text-[9px] font-bold text-zinc-450 uppercase block'>
                     {language === 'AR' ? 'بونص إضافي' : 'Bonus Boxes'}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     value={newItem.bonus || 0}
@@ -1722,9 +1732,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
               {/* Public & Buy Prices */}
               <div className='grid grid-cols-3 gap-3'>
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-455 uppercase block'>
+                  <span className='text-[9px] font-bold text-zinc-455 uppercase block'>
                     {language === 'AR' ? 'سعر الجمهور' : 'Public Price'}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     step='0.01'
@@ -1739,9 +1749,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                   />
                 </div>
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-455 uppercase block'>
+                  <span className='text-[9px] font-bold text-zinc-455 uppercase block'>
                     {language === 'AR' ? 'سعر الشراء' : 'Buy Price'}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     step='0.01'
@@ -1753,9 +1763,9 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                   />
                 </div>
                 <div className='space-y-1'>
-                  <label className='text-[9px] font-bold text-zinc-455 uppercase block'>
+                  <span className='text-[9px] font-bold text-zinc-455 uppercase block'>
                     {language === 'AR' ? 'الخصم %' : 'Disc. %'}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     value={newItem.discount || 0}
@@ -1784,9 +1794,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
       </div>
 
       {/* Fallback CSS specifically for native Ctrl+P */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
         @media print {
           /* Fallback simple layout for native Ctrl+P */
           body * {
@@ -1805,9 +1813,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
             box-shadow: none !important;
           }
         }
-      `,
-        }}
-      />
+      `}</style>
     </div>
   );
 };

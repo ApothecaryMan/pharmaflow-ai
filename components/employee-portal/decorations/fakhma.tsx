@@ -1,6 +1,7 @@
 export function Fakhma() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Fakhma crown</title>
       <g className='main-crown-group' opacity='0.95'>
         <path
           d='M 22,34 Q 64,41 106,34 L 112,18 Q 94,28 84,14 Q 74,26 64,4 Q 54,26 44,14 Q 34,28 16,18 Z'

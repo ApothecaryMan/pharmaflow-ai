@@ -38,7 +38,7 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({ currentSte
         {steps.map((step) => {
           const isCompleted = currentStep > step.id;
           const isActive = currentStep === step.id;
-          const isUpcoming = currentStep < step.id;
+          const _isUpcoming = currentStep < step.id;
 
           return (
             <div key={step.id} className='flex flex-col items-center'>

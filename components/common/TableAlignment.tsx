@@ -36,6 +36,7 @@ export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onCli
       className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-200 ${
         isActive ? activeClass : inactiveClass
       }`}
+      type='button'
     >
       <span className='material-symbols-rounded text-[20px]'>{iconName}</span>
     </button>

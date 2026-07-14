@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { SHORTCUT_CATEGORIES, useKeyboardContext } from '@/hooks/keyboard';
 import type { ShortcutCategory } from '@/hooks/keyboard';
+import { SHORTCUT_CATEGORIES, useKeyboardContext } from '@/hooks/keyboard';
 import { INPUT_BASE } from '@/utils/themeStyles';
 import { Modal } from './Modal';
 
@@ -20,7 +20,7 @@ export function ShortcutsOverlay({ language }: ShortcutsOverlayProps) {
         (s) =>
           s.label.toLowerCase().includes(q) ||
           s.labelAr.includes(filter) ||
-          s.keys.toLowerCase().includes(q),
+          s.keys.toLowerCase().includes(q)
       );
       if (filteredShortcuts.length > 0) {
         acc.push({ ...cat, shortcuts: filteredShortcuts });
@@ -83,9 +83,9 @@ export function ShortcutsOverlay({ language }: ShortcutsOverlayProps) {
                         else if (k.endsWith('++')) parts = [...k.slice(0, -2).split('+'), '+'];
                         else if (k.endsWith('+')) parts = [...k.slice(0, -1).split('+'), '+'];
                         else parts = k.split('+');
-                        const validParts = parts.filter(p => p.trim() !== '');
+                        const validParts = parts.filter((p) => p.trim() !== '');
                         return validParts.map((part, index) => (
-                          <div key={index} className='flex items-center gap-1.5'>
+                          <div key={part} className='flex items-center gap-1.5'>
                             {index > 0 && (
                               <span className='text-sm font-medium text-(--text-tertiary)'>+</span>
                             )}

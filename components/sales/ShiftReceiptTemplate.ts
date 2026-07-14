@@ -1,5 +1,4 @@
 import type { Employee, Language, Shift } from '../../types';
-import { formatCurrency } from '../../utils/currency';
 
 export const generateShiftReceiptHTML = (
   shift: Shift,
@@ -28,7 +27,7 @@ export const generateShiftReceiptHTML = (
     return str;
   };
 
-  const openTime = formatTime(shift.openTime);
+  const _openTime = formatTime(shift.openTime);
   const closeTime = shift.closeTime ? formatTime(shift.closeTime) : '-';
   const printTime = formatTime(new Date().toISOString());
 
@@ -312,7 +311,7 @@ export const generateShiftReceiptHTML = (
   <div class="divider"></div>
 
   <div class="dt-row">
-    <span class="dt-label">${isAr ? 'الفرق (' + varianceText + ')' : 'Variance (' + varianceText + ')'}</span>
+    <span class="dt-label">${isAr ? `الفرق (${varianceText})` : `Variance (${varianceText})`}</span>
     <span class="dt-val">
       ${f(Math.abs(varianceNum))}
       ${Math.abs(varianceNum) > 50 ? ' *' : ''}

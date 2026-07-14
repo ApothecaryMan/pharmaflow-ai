@@ -4,6 +4,7 @@ import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
+import type { Language } from '../../types';
 import { useAutoSystemBarColor } from '../../utils/systemBars';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { PricingPage } from '../settings/PricingPage';
@@ -129,7 +130,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
               <div className='z-50'>
                 <SegmentedControl
                   value={language}
-                  onChange={(val) => setLanguage(val as any)}
+                  onChange={(val) => setLanguage(val as Language)}
                   options={[
                     { label: 'EN', value: 'EN' },
                     { label: 'AR', value: 'AR' },

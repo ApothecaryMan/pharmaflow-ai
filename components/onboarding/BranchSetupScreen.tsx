@@ -8,7 +8,6 @@ import { settingsService } from '../../services/settings/settingsService';
 import type { AppSettings } from '../../services/settings/types';
 import { storage } from '../../utils/storage';
 import { LocationSelector } from '../common/LocationSelector';
-import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput } from '../common/SmartInputs';
 import { OnboardingStepper } from './OnboardingStepper';
 
@@ -25,7 +24,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
   onComplete,
   onBack,
 }) => {
-  const { availableThemes, darkMode, setDarkMode } = useSettings();
+  const { availableThemes, darkMode: _darkMode, setDarkMode: _setDarkMode } = useSettings();
   const [branchName, setBranchName] = useState('');
   const [branchCode, setBranchCode] = useState('');
   const [governorate, setGovernorate] = useState<string | undefined>();
@@ -54,7 +53,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
   }, []);
 
   // Initialize with the current theme from props or default to first available
-  const [selectedTheme, setSelectedTheme] = useState(
+  const [selectedTheme, _setSelectedTheme] = useState(
     availableThemes.find((t) => t.primary === color) || availableThemes[0]
   );
 
@@ -68,7 +67,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
       // Get Latin characters if they exist
       const latinOnly = name.replace(/[^a-zA-Z0-9]/g, '');
       const prefix = latinOnly.substring(0, 4).toUpperCase() || 'PH';
-      setBranchCode(prefix + '01');
+      setBranchCode(`${prefix}01`);
     }
   };
 
@@ -155,9 +154,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       {/* Custom Animations */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
         @keyframes subtle-float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-8px) rotate(1deg); }
@@ -165,9 +162,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
         .animate-float {
           animation: subtle-float 4s ease-in-out infinite;
         }
-      `,
-        }}
-      />
+      `}</style>
 
       <div className='max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative'>
         {onBack && (
@@ -217,10 +212,10 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
         {/* Form elements */}
         <form onSubmit={handleSubmit} className='p-8 space-y-6'>
           <div>
-            <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
+            <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
               {isRTL ? 'اسم الصيدلية / الفرع' : 'Pharmacy / Branch Name'}
               <span className='text-red-500 ms-1'>*</span>
-            </label>
+            </span>
             <SmartInput
               required
               value={branchName}
@@ -231,10 +226,10 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
+            <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
               {isRTL ? 'كود الفرع' : 'Branch Code'}
               <span className='text-red-500 ms-1'>*</span>
-            </label>
+            </span>
             <SmartInput
               required
               value={branchCode}
@@ -255,10 +250,10 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
           </div>
 
           <div className='space-y-4'>
-            <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300'>
+            <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300'>
               {isRTL ? 'موقع الفرع' : 'Branch Location'}
               <span className='text-red-500 ms-1'>*</span>
-            </label>
+            </span>
             <LocationSelector
               language={language as 'EN' | 'AR'}
               selectedGovernorate={governorate}
@@ -271,10 +266,10 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
+            <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
               {isRTL ? 'العنوان بالتفصيل' : 'Street Address'}
               <span className='text-red-500 ms-1'>*</span>
-            </label>
+            </span>
             <SmartInput
               required
               value={streetAddress}
@@ -307,6 +302,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({
                 fill='none'
                 viewBox='0 0 24 24'
               >
+                <title>Loading</title>
                 <circle
                   className='opacity-25'
                   cx='12'

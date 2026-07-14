@@ -15,8 +15,18 @@ export function useRawInventory(branchId: string) {
 }
 
 export function useInventory(branchId: string) {
-  const { data: rawInventory = [], isLoading: isInvLoading, error: invError, refetch: refetchInv } = useRawInventory(branchId);
-  const { data: batches = [], isLoading: isBatchesLoading, error: batchesError, refetch: refetchBatches } = useBatches(branchId);
+  const {
+    data: rawInventory = [],
+    isLoading: isInvLoading,
+    error: invError,
+    refetch: refetchInv,
+  } = useRawInventory(branchId);
+  const {
+    data: batches = [],
+    isLoading: isBatchesLoading,
+    error: batchesError,
+    refetch: refetchBatches,
+  } = useBatches(branchId);
 
   const computedInventory = useComputedInventory(rawInventory, batches, branchId);
 

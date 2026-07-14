@@ -30,7 +30,7 @@ export const KPICardSkeleton = () => (
 export const KPIGridSkeleton = () => (
   <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 '>
     {[1, 2, 3, 4].map((i) => (
-      <KPICardSkeleton key={i} />
+      <KPICardSkeleton key={`kpi-sk-${i}`} />
     ))}
   </div>
 );

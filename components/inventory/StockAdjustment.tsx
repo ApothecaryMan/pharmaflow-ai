@@ -1,15 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
-import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { usePageShortcuts } from '../../hooks/keyboard';
+import { useBatches, useInventory } from '../../hooks/queries/useInventoryQuery';
+import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
-import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
-import { useBatches } from '../../hooks/queries/useInventoryQuery';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '../../lib/queryKeys';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockBatch } from '../../types';
 import { formatCurrency } from '../../utils/currency';
@@ -20,15 +18,13 @@ import { money } from '../../utils/money';
 import { parseSearchTerm } from '../../utils/searchUtils';
 import { storage } from '../../utils/storage';
 import { CARD_BASE, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
-import { DatePicker, DateRangePicker } from '../common/DatePicker';
+import { DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { usePageShortcuts } from '../../hooks/keyboard';
 import { Modal } from '../common/Modal';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 // UI Redesign Imports
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { StockAdjustmentPrint } from './StockAdjustmentPrint';
@@ -52,7 +48,7 @@ interface AdjustmentItem {
   expiryDate?: string; // Optional: for display
 }
 
-interface BatchSelectionModalProps {
+interface _BatchSelectionModalProps {
   drug: Drug;
   batches: StockBatch[];
   onSelect: (batch: StockBatch | null) => void;
@@ -60,7 +56,7 @@ interface BatchSelectionModalProps {
 }
 
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue', t }) => {
-  const { branchCode, language, textTransform } = useSettings();
+  const { branchCode: _branchCode, language, textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const branches = useAuthStore((s) => s.branches);
@@ -162,7 +158,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
       // 4. Sync Drug.stock with React state
       const drug = inventory.find((d) => d.id === movement.drugId);
       if (drug) {
-        const updatedDrug = { ...drug, stock: movement.newStock };
+        const _updatedDrug = { ...drug, stock: movement.newStock };
         queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
       }
 
@@ -433,7 +429,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
       handleScan(searchTerm);
       setSearchTerm(''); // Clear after scan
     }
-  }, [searchTerm, inventory]);
+  }, [searchTerm, inventory, handleScan]);
 
   const addAdjustmentItem = (drug: Drug, batch: StockBatch | null) => {
     // If batch provided, use its current stock. Otherwise use drug total stock.
@@ -609,7 +605,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
         // Create map of changes
         const updates = new Map(adjustments.map((a) => [a.drugId, a.newStock]));
 
-        const updatedInventory = inventory.map((drug) => {
+        const _updatedInventory = inventory.map((drug) => {
           if (updates.has(drug.id)) {
             return { ...drug, stock: updates.get(drug.id)! };
           }
@@ -781,6 +777,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
           <button
             onClick={() => setEditingNoteIndex(info.row.index)}
             className='w-full text-start text-xs px-2 py-1.5 bg-transparent border-0 border-b border-(--border-divider) hover:border-primary-500 rounded-none transition-colors text-(--text-secondary) truncate cursor-pointer italic'
+            type='button'
           >
             {(info.getValue() as string) || t.stockAdjustment.notes}
           </button>
@@ -794,6 +791,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
             onClick={() => removeAdjustment(info.row.index)}
             className='flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors p-1'
             title={t.common?.delete || 'Delete'}
+            type='button'
           >
             <span className='material-symbols-rounded text-lg'>delete</span>
           </button>
@@ -961,12 +959,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                   <button
                     onClick={() => handleApprove(item)}
                     className='p-1 px-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-transparent text-emerald-700 dark:text-emerald-400 text-xs font-bold transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 cursor-pointer'
+                    type='button'
                   >
                     {t.pendingApproval.approve}
                   </button>
                   <button
                     onClick={() => handleReject(item)}
                     className='p-1 px-2 rounded-lg border border-red-200 dark:border-red-500/30 bg-transparent text-red-700 dark:text-red-400 text-xs font-bold transition-all hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95 cursor-pointer'
+                    type='button'
                   >
                     {t.pendingApproval.reject}
                   </button>
@@ -978,7 +978,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
         meta: { align: 'end', width: 160 },
       },
     ],
-    [t, handleApprove, handleReject, inventory, textTransform]
+    [t, handleApprove, handleReject, inventory, textTransform, language]
   );
 
   const handlePrint = () => {
@@ -1110,6 +1110,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:enabled:scale-95 cursor-pointer'
+                  type='button'
                 >
                   {t.global.actions.import}
                   <span className='material-symbols-rounded text-base'>upload_file</span>
@@ -1119,6 +1120,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                   onClick={handlePrint}
                   disabled={adjustments.length === 0}
                   className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:enabled:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer'
+                  type='button'
                 >
                   {t.global.actions.print}
                   <span className='material-symbols-rounded text-base'>print</span>
@@ -1130,6 +1132,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                   onClick={setAdjustments.bind(null, [])}
                   disabled={adjustments.length === 0}
                   className='text-xs font-bold text-(--text-tertiary) enabled:hover:text-red-600 disabled:opacity-30 transition-colors px-2 cursor-pointer'
+                  type='button'
                 >
                   {t.stockAdjustment.clear}
                 </button>
@@ -1137,6 +1140,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                   onClick={handleSave}
                   disabled={adjustments.length === 0}
                   className={`px-6 py-2 rounded-xl text-xs font-extrabold text-white dark:text-black bg-black dark:bg-white enabled:hover:bg-black/80 dark:enabled:hover:bg-white/80 disabled:opacity-40 transition-all active:enabled:scale-95 cursor-pointer`}
+                  type='button'
                 >
                   {t.stockAdjustment.save}
                 </button>
@@ -1175,6 +1179,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
               <button
                 onClick={loadHistory}
                 className='w-8 h-8 flex items-center justify-center rounded-lg text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) transition-colors'
+                type='button'
               >
                 <span className='material-symbols-rounded text-lg'>refresh</span>
               </button>
@@ -1185,6 +1190,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                 onClick={handlePrint}
                 disabled={history.length === 0}
                 className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:scale-95 h-8 disabled:opacity-50 disabled:grayscale'
+                type='button'
               >
                 {t.global.actions.print}
                 <span className='material-symbols-rounded text-base'>print</span>
@@ -1209,6 +1215,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                       onClick={handleApproveAll}
                       title={language === 'AR' ? 'موافقة الكل' : 'Approve All'}
                       className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-transparent text-emerald-700 dark:text-emerald-400 font-bold text-xs transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 cursor-pointer'
+                      type='button'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                         done_all
@@ -1219,6 +1226,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                       onClick={handleRejectAll}
                       title={language === 'AR' ? 'رفض الكل' : 'Reject All'}
                       className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 dark:border-red-500/30 bg-transparent text-red-700 dark:text-red-400 font-bold text-xs transition-all hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95 cursor-pointer'
+                      type='button'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                         close
@@ -1304,6 +1312,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                   key={batch.id}
                   onClick={() => addAdjustmentItem(batchSelectionDrug, batch)}
                   className='w-full text-start p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex justify-between items-center group'
+                  type='button'
                 >
                   <div>
                     <div className='text-sm font-bold text-gray-800 dark:text-gray-200'>
@@ -1326,6 +1335,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
               <button
                 onClick={() => addAdjustmentItem(batchSelectionDrug, null)}
                 className='w-full text-center p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 hover:text-primary-600 hover:border-blue-300 transition-colors text-sm font-medium'
+                type='button'
               >
                 {t.inventory.actionsMenu.adjustStock} ({t.global.actions.all})
               </button>
@@ -1348,11 +1358,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
           <div className='flex flex-col gap-2'>
             <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800/50'>
               <div className='flex flex-col gap-1'>
-                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
                   {t.stockAdjustment.table.notes}
-                </label>
+                </span>
                 <textarea
-                  autoFocus
                   className='w-full bg-transparent border-0 outline-hidden !py-1.5 text-sm min-h-[100px] text-(--text-primary) resize-none'
                   value={adjustments[editingNoteIndex]?.notes || ''}
                   onChange={(e) => updateAdjustment(editingNoteIndex, 'notes', e.target.value)}
@@ -1365,12 +1374,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
               <button
                 onClick={() => setEditingNoteIndex(null)}
                 className='px-4 py-1.5 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-all cursor-pointer'
+                type='button'
               >
                 {t.common?.cancel || 'Cancel'}
               </button>
               <button
                 onClick={() => setEditingNoteIndex(null)}
                 className={MODAL_FOOTER_BTN_PRIMARY}
+                type='button'
               >
                 {t.common?.save || 'Save'}
               </button>

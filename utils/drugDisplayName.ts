@@ -24,7 +24,7 @@ const shouldCapitalize = (): boolean => {
 
   // 1. Try unified settings
   const settings = storage.get<SettingsState | null>('pharma_settings', null);
-  if (settings && settings.textTransform) {
+  if (settings?.textTransform) {
     return settings.textTransform === 'uppercase';
   }
 

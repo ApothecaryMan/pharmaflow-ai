@@ -23,16 +23,19 @@ export const DynamicEventLayer: React.FC<{ view?: string }> = ({ view }) => {
   const mouseY = useMotionValue(0);
 
   const isRTL = language === 'AR';
-  const context: EventContext = {
-    currentPath,
-    view,
-    branchId: activeBranchId,
-  };
+  const context: EventContext = React.useMemo(
+    () => ({
+      currentPath,
+      view,
+      branchId: activeBranchId,
+    }),
+    [currentPath, view, activeBranchId]
+  );
 
   const activeEvents = React.useMemo(() => {
     if (typeof window === 'undefined') return [];
     return EventManager.getActiveEvents(context);
-  }, [currentPath, view, activeBranchId]);
+  }, [context]);
 
   const navbarIconsEvent = activeEvents.find((e) => e.type === 'NAVBAR_ICONS');
   const customIcons = navbarIconsEvent?.payload as Record<string, any> | undefined;
@@ -62,7 +65,7 @@ export const DynamicEventLayer: React.FC<{ view?: string }> = ({ view }) => {
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
     };
-  }, [isMouseInWindow]);
+  }, [isMouseInWindow, mouseX, mouseY]);
 
   // 2. Location Tracking
   useEffect(() => {
@@ -148,7 +151,7 @@ export const DynamicEventLayer: React.FC<{ view?: string }> = ({ view }) => {
       const el = document.getElementById(styleId);
       if (el) el.remove();
     };
-  }, [currentPath, activeBranchId, language, view]);
+  }, [context, isRTL]);
 
   return (
     <div className='fixed inset-0 pointer-events-none z-[9999]' id='dynamic-overlay-layer'>

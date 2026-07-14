@@ -105,7 +105,7 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
    * Generic method to apply custom filters.
    * To be overridden or extended by child classes.
    */
-  protected applyCustomFilters(query: any, filters: TFilters): any {
+  protected applyCustomFilters(query: any, _filters: TFilters): any {
     return query;
   }
 

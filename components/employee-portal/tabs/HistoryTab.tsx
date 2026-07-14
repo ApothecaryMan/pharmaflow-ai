@@ -1,15 +1,13 @@
 import { Briefcase, Building2, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import type React from 'react';
-import { useMemo } from 'react';
 import type { Employee, EmploymentRequest } from '../../../types';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 
-const PROFILE_GLASS_CARD_NO_BORDER =
-  PROFILE_GLASS_CARD_BASE.split(' ')
-    .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
-    .join(' ') + ' border border-transparent';
+const PROFILE_GLASS_CARD_NO_BORDER = `${PROFILE_GLASS_CARD_BASE.split(' ')
+  .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+  .join(' ')} border border-transparent`;
 
-const statusIcon = (status: string) => {
+const _statusIcon = (status: string) => {
   switch (status) {
     case 'accepted':
       return <CheckCircle2 className='w-3.5 h-3.5' />;
@@ -20,7 +18,7 @@ const statusIcon = (status: string) => {
   }
 };
 
-const statusColor = (status: string) => {
+const _statusColor = (status: string) => {
   switch (status) {
     case 'accepted':
       return 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20';
@@ -50,8 +48,9 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
     <div className=' space-y-6'>
       {isLoading ? (
         <div className='relative before:absolute before:top-2 before:bottom-2 before:start-3.5 before:w-0.5 before:bg-(--border-divider) space-y-4 animate-pulse'>
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className='relative ps-8 flex items-start gap-3'>
+          {// biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
+          [...Array(3)].map((_, i) => (
+            <div key={`skeleton-${i}`} className='relative ps-8 flex items-start gap-3'>
               <div className='absolute start-1.5 top-2 w-4 h-4 rounded-full border-4 border-(--bg-page-surface) bg-black/10 dark:bg-white/10 shadow-sm' />
               <div className={`${PROFILE_GLASS_CARD_NO_BORDER} flex-1 h-20`}></div>
             </div>

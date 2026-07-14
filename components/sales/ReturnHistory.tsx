@@ -2,21 +2,18 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
+import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { RETURN_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { CartItem, type Return, type Sale } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import type { Return, Sale } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate } from '../../utils/expiryUtils';
-import { CARD_BASE } from '../../utils/themeStyles';
-import { useAuthStore } from '../../stores/authStore';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
 import { useContextMenu } from '../common/ContextMenu';
-import { DatePicker, DateRangePicker } from '../common/DatePicker';
-import { MaterialTabs } from '../common/MaterialTabs';
+import { DatePicker } from '../common/DatePicker';
 import { Modal } from '../common/Modal';
-import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
 import { SaleDetailModal } from './SaleDetailModal';
 
@@ -58,7 +55,10 @@ const ListItem: React.FC<{
           : 'rounded-md';
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       className={`flex items-center justify-between py-1.5 px-3 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding} ${className}`}
     >
       {children}
@@ -175,7 +175,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [page, serverFilters, returns]);
+  }, [page, serverFilters]);
 
   const totalPages = Math.max(1, Math.ceil(totalReturns / pageSize));
 
@@ -208,6 +208,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                 if (sale) setViewedSale(sale);
               }}
               className='text-primary-600 dark:text-primary-400 hover:underline font-bold text-xs'
+              type='button'
             >
               #{sales.find((s) => s.id === sid)?.serialId || sid}
             </button>
@@ -305,7 +306,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         meta: { width: 132, align: 'center' },
       },
     ],
-    [t, locale, sales, color, textTransform]
+    [t, sales, language]
   );
 
   return (
@@ -461,6 +462,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                             }
                           }}
                           className='text-primary-600 dark:text-primary-400 hover:underline font-bold text-xs'
+                          type='button'
                         >
                           #{sale?.serialId || selectedReturn.saleId}
                         </button>
@@ -494,8 +496,9 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                       );
                     })(),
                   },
-                ].map((item, i, arr) => (
-                  <ListItem key={i} index={i} total={arr.length}>
+                ]// biome-ignore lint/suspicious/noArrayIndexKey: inline config objects have no id
+                .map((item, i, arr) => (
+                  <ListItem key={`return-info-${i}`} index={i} total={arr.length}>
                     <div className='flex items-center gap-2 shrink-0'>
                       <span className='material-symbols-rounded text-base opacity-40'>
                         {item.icon}
@@ -516,8 +519,13 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                 {t.modal?.itemsReturned || 'Items Returned'}
               </p>
               <ListWrapper>
-                {selectedReturn.items.map((item, idx) => (
-                  <ListItem key={idx} index={idx} total={selectedReturn.items.length}>
+                {// biome-ignore lint/suspicious/noArrayIndexKey: return items have no unique id
+                selectedReturn.items.map((item, idx) => (
+                  <ListItem
+                    key={`return-item-${idx}`}
+                    index={idx}
+                    total={selectedReturn.items.length}
+                  >
                     <div className='flex justify-between items-center w-full min-w-0' dir='ltr'>
                       <div className='flex items-center gap-2.5 min-w-0 flex-1'>
                         <ReturnQuantityBadge

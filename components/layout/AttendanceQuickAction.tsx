@@ -7,7 +7,6 @@ import { attendanceService } from '../../services/hr/attendanceService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Employee } from '../../types/hr';
 import { isWebAuthnSupported } from '../../utils/webAuthnUtils';
-import { Icons } from '../common/Icons';
 import { Tooltip } from '../common/Tooltip';
 
 interface AttendanceQuickActionProps {
@@ -210,6 +209,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
           <button
             onClick={handleStart}
             className='w-9 h-9 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition-colors'
+            type='button'
           >
             <span className='material-symbols-rounded text-[22px]'>schedule</span>
           </button>
@@ -235,6 +235,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
           onClick={handleBiometric}
           disabled={isLoading}
           className='w-9 h-9 rounded-full flex items-center justify-center bg-primary-500 text-white shadow-lg shadow-primary-500/30 animate-pulse active:scale-95 transition-all'
+          type='button'
         >
           <span className='material-symbols-rounded text-[22px]'>
             {isLoading ? 'progress_activity' : 'fingerprint'}
@@ -252,7 +253,6 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
         >
           <input
             ref={inputRef}
-            autoFocus
             type='password'
             inputMode='numeric'
             maxLength={4}

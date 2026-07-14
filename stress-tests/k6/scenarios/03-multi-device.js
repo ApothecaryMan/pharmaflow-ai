@@ -30,11 +30,7 @@ import {
   TEST_PASSWORD,
 } from '../config.js';
 import { loginAndGetToken } from '../helpers/auth.js';
-import {
-  generateCheckoutPayload,
-  generateCustomerName,
-  randomInt,
-} from '../helpers/data-generators.js';
+import { generateCheckoutPayload, randomInt } from '../helpers/data-generators.js';
 
 export function setup() {
   const token = loginAndGetToken(TEST_EMAIL, TEST_PASSWORD);

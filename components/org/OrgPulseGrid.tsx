@@ -12,7 +12,7 @@ interface OrgPulseGridProps {
 
 export const OrgPulseGrid: React.FC<OrgPulseGridProps> = ({
   metrics,
-  color = 'primary',
+  color: _color = 'primary',
   language,
   isLoading,
 }) => {

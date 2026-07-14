@@ -99,18 +99,12 @@ function loadState(): ThemeState {
       'pharma_backgroundPatternScale',
       null
     );
-    const backgroundPatternBlur = storage.get<number | null>(
-      'pharma_backgroundPatternBlur',
-      null
-    );
+    const backgroundPatternBlur = storage.get<number | null>('pharma_backgroundPatternBlur', null);
     const backgroundPatternUseThemeColor = storage.get<boolean | null>(
       'pharma_backgroundPatternUseThemeColor',
       null
     );
-    const tooltipStyle = storage.get<'default' | 'box' | null>(
-      'pharma_tooltipStyle',
-      null
-    );
+    const tooltipStyle = storage.get<'default' | 'box' | null>('pharma_tooltipStyle', null);
 
     return {
       theme: theme ?? defaultState.theme,
@@ -165,7 +159,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     storage.set('pharma_backgroundPatternBlur', state.backgroundPatternBlur);
     // Apply CSS variable for blur
-    document.documentElement.style.setProperty('--bg-pattern-blur', `${state.backgroundPatternBlur}px`);
+    document.documentElement.style.setProperty(
+      '--bg-pattern-blur',
+      `${state.backgroundPatternBlur}px`
+    );
   }, [state.backgroundPatternBlur]);
 
   useEffect(() => {
@@ -247,6 +244,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setBackgroundPatternScale,
       setBackgroundPatternBlur,
       setBackgroundPatternUseThemeColor,
+      setTooltipStyle,
     ]
   );
 

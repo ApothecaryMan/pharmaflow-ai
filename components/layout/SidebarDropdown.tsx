@@ -1,10 +1,10 @@
 import React from 'react';
 import type { MenuItem } from '../../config/menuData';
+import { preloadPage } from '../../hooks/layout/usePreloadPage';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { ViewState } from '../../types';
 import { ContextMenuTrigger } from '../common/ContextMenu';
-import { preloadPage } from '../../hooks/layout/usePreloadPage';
 
 interface SidebarDropdownProps {
   module: MenuItem;
@@ -27,8 +27,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
   currentView,
   onNavigate,
   onClose,
-  theme,
-  language,
+  theme: _theme,  language,
   hideInactiveModules,
   anchorEl,
   blur = false,
@@ -168,6 +167,8 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={`fixed ${isMulti ? 'min-w-[300px]' : 'w-64'} rounded-2xl shadow-xl border border-(--border-divider) overflow-hidden z-[99999] origin-top ${
         blur ? 'glass-surface' : 'bg-(--bg-menu)'
       }`}
@@ -185,6 +186,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
           <div className='flex gap-3'>
             {columns.map((col, colIdx) => (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: columns have no stable id
                 key={colIdx}
                 className='flex flex-col gap-0'
                 style={{ minWidth: 220, maxWidth: 280, flex: '1 1 0%' }}
@@ -204,7 +206,8 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
                         return (
                           <ContextMenuTrigger
-                            key={idx}
+                            // biome-ignore lint/suspicious/noArrayIndexKey: submenu items may share labels
+                            key={`${itemLabel}-${idx}`}
                             actions={[
                               {
                                 label: TRANSLATIONS[language].global.actions.openInWindow,
@@ -229,6 +232,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                                     ? `bg-(--bg-menu-hover) text-primary-900 dark:text-primary-400 font-semibold`
                                     : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-(--bg-menu-hover)'
                               }`}
+                              type='button'
                             >
                               <div className='flex items-center gap-2.5'>
                                 {itemIcon && (
@@ -257,7 +261,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
             ))}
           </div>
         ) : (
-          submenusToRender!.map((submenu, submenuIdx) => (
+          submenusToRender?.map((submenu, submenuIdx) => (
             <div key={submenu.id}>
               <div className='px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider'>
                 {getMenuTranslation(submenu.label, language)}
@@ -272,7 +276,8 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
                   return (
                     <ContextMenuTrigger
-                      key={idx}
+                      // biome-ignore lint/suspicious/noArrayIndexKey: submenu items may share labels
+                      key={`${itemLabel}-${idx}`}
                       actions={[
                         {
                           label: TRANSLATIONS[language].global.actions.openInWindow,
@@ -297,6 +302,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                               ? `bg-(--bg-menu-hover) text-primary-900 dark:text-primary-400 font-semibold`
                               : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-(--bg-menu-hover)'
                         }`}
+                        type='button'
                       >
                         <div className='flex items-center gap-2.5'>
                           {itemIcon && (
@@ -319,7 +325,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                   );
                 })}
               </div>
-              {submenuIdx < (submenusToRender!.length || 0) - 1 && (
+              {submenuIdx < (submenusToRender?.length || 0) - 1 && (
                 <div className='border-b border-(--border-divider) mx-4 my-1' />
               )}
             </div>

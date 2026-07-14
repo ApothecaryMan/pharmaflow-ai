@@ -1,13 +1,12 @@
 'use client';
 
-import type { MarkerOptions, PopupOptions } from 'maplibre-gl';
+import type { PopupOptions } from 'maplibre-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Loader2, Locate, Maximize, Minus, Plus, X } from 'lucide-react';
 import {
   createContext,
   forwardRef,
-  type Key,
   type ReactNode,
   useCallback,
   useContext,
@@ -19,7 +18,6 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import Icons from '@/components/common/Icons';
 
 import { cn } from '@/lib/utils';
 
@@ -187,6 +185,7 @@ function getViewport(map: maplibregl.Map): MapViewport {
   };
 }
 
+// biome-ignore lint/suspicious/noShadowRestrictedNames: component name matches convention
 const Map = forwardRef<MapRef, MapProps>(function Map(
   {
     children,
@@ -309,7 +308,15 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       setMapInstance(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    clearStyleTimeout,
+    mapStyles.dark,
+    mapStyles.light,
+    projection,
+    props,
+    resolvedTheme,
+    viewport,
+  ]);
 
   // Sync controlled viewport to map
   useEffect(() => {
@@ -594,7 +601,7 @@ function MapMarker({
     return markerInstance;
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [draggable, latitude, longitude, markerOptions]);
 
   useEffect(() => {
     if (!map) return;
@@ -606,7 +613,7 @@ function MapMarker({
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, marker]);
 
   if (marker.getLngLat().lng !== longitude || marker.getLngLat().lat !== latitude) {
     marker.setLngLat([longitude, latitude]);
@@ -693,7 +700,7 @@ function MarkerPopup({
 
     return popupInstance;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [container, popupOptions]);
 
   useEffect(() => {
     if (!map) return;
@@ -705,7 +712,7 @@ function MarkerPopup({
       marker.setPopup(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, container, marker, popup]);
 
   if (popup.isOpen()) {
     const prev = prevPopupOptions.current;
@@ -768,7 +775,7 @@ function MarkerTooltip({ children, className, ...popupOptions }: MarkerTooltipPr
 
     return tooltipInstance;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [popupOptions]);
 
   useEffect(() => {
     if (!map) return;
@@ -789,7 +796,7 @@ function MarkerTooltip({ children, className, ...popupOptions }: MarkerTooltipPr
       tooltip.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, container, marker, tooltip]);
 
   if (tooltip.isOpen()) {
     const prev = prevTooltipOptions.current;
@@ -1074,6 +1081,7 @@ function CompassButton({ onClick }: { onClick: () => void }) {
         className='size-5 transition-transform duration-200'
         style={{ transformStyle: 'preserve-3d' }}
       >
+        <title>Compass</title>
         <path d='M12 2L16 12H12V2Z' className='fill-red-500' />
         <path d='M12 2L8 12H12V2Z' className='fill-red-300' />
         <path d='M12 22L16 12H12V22Z' className='fill-muted-foreground/60' />
@@ -1124,7 +1132,7 @@ function MapPopup({
 
     return popupInstance;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [latitude, longitude, popupOptions]);
 
   useEffect(() => {
     if (!map) return;
@@ -1143,7 +1151,7 @@ function MapPopup({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, container, popup]);
 
   if (popup.isOpen()) {
     const prev = popupOptionsRef.current;
@@ -1241,7 +1249,7 @@ function MapRoute({
     try {
       if (map.getLayer(layerId)) map.removeLayer(layerId);
       if (map.getSource(sourceId)) map.removeSource(sourceId);
-    } catch (e) {}
+    } catch (_e) {}
 
     map.addSource(sourceId, {
       type: 'geojson',
@@ -1278,7 +1286,7 @@ function MapRoute({
     };
     // Re-run on map/isLoaded/sourceId change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, map, sourceId, layerId]);
+  }, [isLoaded, map, sourceId, layerId, color, coordinates, dashArray, opacity, width]);
 
   // When coordinates change, update the source data (if source already exists)
   useEffect(() => {
@@ -1465,7 +1473,20 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, map, sourceId]);
+  }, [
+    isLoaded,
+    map,
+    sourceId,
+    clusterColors[0],
+    clusterCountLayerId,
+    clusterLayerId,
+    clusterMaxZoom,
+    clusterRadius,
+    clusterThresholds[0],
+    data,
+    pointColor,
+    unclusteredLayerId,
+  ]);
 
   // Update source data when data prop changes (only for non-URL data)
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase';
-import type { Purchase, PurchaseStatus } from '../../../types';
+import type { Purchase } from '../../../types';
 import type { PurchaseFilters, PurchasesPageOptions } from '../types';
 
 export const purchaseRepository = {

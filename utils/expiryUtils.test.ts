@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  checkExpiryStatus,
-  formatExpiryDisplay,
-  parseExpiryDisplay,
-  sanitizeExpiryInput,
-} from './expiryUtils';
+import { checkExpiryStatus, formatExpiryDisplay, sanitizeExpiryInput } from './expiryUtils';
 
 describe('ExpiryUtils', () => {
   describe('sanitizeExpiryInput', () => {

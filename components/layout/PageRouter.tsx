@@ -1,9 +1,9 @@
 import React, { Suspense } from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { useSettings } from '../../context';
+import { useShift } from '../../hooks/sales/useShift';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
-import { useShift } from '../../hooks/sales/useShift';
 import type { ViewState } from '../../types';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { PageLoader } from '../common/PageLoader';
@@ -30,8 +30,8 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   isLoading,
   t,
   setView,
-  handleNavigate,
-  handleLoginSuccess,
+  handleNavigate: _handleNavigate,
+  handleLoginSuccess: _handleLoginSuccess,
   navigationParams,
   onSelectEmployee,
   onLogout,
@@ -127,8 +127,8 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   const dataMap: Record<string, any> = {
     currentShift: currentShift,
     navigationParams: navigationParams,
-    onViewChange: handleNavigate,
-    handleNavigate: handleNavigate,
+    onViewChange: _handleNavigate,
+    handleNavigate: _handleNavigate,
   };
 
   const requiredProps = pageConfig.requiredProps || [];
@@ -185,7 +185,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
 
   if (['inventory', 'add-product', 'stock-movement', 'shortages'].includes(view)) {
     return (
-      <InventoryModuleShell activeView={view} onViewChange={handleNavigate} t={t}>
+      <InventoryModuleShell activeView={view} onViewChange={_handleNavigate} t={t}>
         <ErrorBoundary onReset={() => setView('dashboard')}>
           <Suspense fallback={<PageLoader />}>
             <PageComponent {...props} />

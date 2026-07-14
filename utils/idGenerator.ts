@@ -10,9 +10,7 @@
  * - No circular dependencies (reads storage directly)
  */
 
-import { StorageKeys } from '../config/storageKeys';
 import { supabase } from '../lib/supabase';
-import type { AppSettings } from '../services/settings/types';
 
 // Supported Entity Types
 export type EntityType =
@@ -50,11 +48,11 @@ const GLOBAL_PREFIX = 'PF'; // Systems/Branches use PF instead of BranchCode
  * @param id The ID string (e.g., "B1-0042")
  * @returns The sequence number (e.g., 42) or 0 if invalid
  */
-const extractSequence = (id: string): number => {
+const _extractSequence = (id: string): number => {
   if (!id || typeof id !== 'string') return 0;
   const parts = id.split('-');
   const seq = parseInt(parts[parts.length - 1], 10);
-  return isNaN(seq) ? 0 : seq;
+  return Number.isNaN(seq) ? 0 : seq;
 };
 
 // Sequences are now handled atomically in Supabase via increment_sequence RPC
@@ -116,7 +114,7 @@ export const idGenerator = {
    * Synchronous generator for non-critical IDs (tabs, notifications, etc.)
    * Uses timestamp + random to ensure uniqueness without DB roundtrip.
    */
-  generateSync: (type: EntityType, branchCode?: string): string => {
+  generateSync: (_type: EntityType, branchCode?: string): string => {
     const prefix = branchCode || GLOBAL_PREFIX;
     // Use full timestamp in Base36 (unlikely to wrap around for centuries)
     const timePart = Date.now().toString(36).toUpperCase();

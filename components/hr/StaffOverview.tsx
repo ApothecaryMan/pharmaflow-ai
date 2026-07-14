@@ -1,14 +1,14 @@
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useAuthStore } from '../../stores/authStore';
-import { useStatusBar } from '../layout/StatusBar';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { TanStackTable } from '../common/TanStackTable';
+import { useStatusBar } from '../layout/StatusBar';
 import { useStaffAnalytics } from './hooks/useStaffAnalytics';
 import { StaffSpotlightTicker } from './StaffSpotlightTicker';
 import type { StaffOverviewProps } from './types/staffOverview.types';
@@ -19,7 +19,7 @@ import type { StaffOverviewProps } from './types/staffOverview.types';
  */
 const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
   color,
-  t,
+  t: _t,
   language,
   isLoading = false,
   onViewChange,

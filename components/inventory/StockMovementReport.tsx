@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSettings } from '../../context';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
-import { type Drug, StockMovement } from '../../types';
+import type { Drug } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
 import {
@@ -243,6 +243,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
           onClick={toggleShowAll}
           title={showAll ? t.stockMovement.todayOnly : t.stockMovement.showAll}
           className={ICON_BTN(showAll)}
+          type='button'
         >
           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
             {showAll ? 'filter_alt_off' : 'all_inclusive'}
@@ -262,6 +263,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
           disabled={history.length === 0}
           title={isRTL ? 'تصدير' : 'Export'}
           className={`${ICON_BTN(false)} disabled:opacity-30 disabled:cursor-not-allowed`}
+          type='button'
         >
           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
             download
@@ -359,6 +361,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     setRightContent,
     setBottomContent,
     setShowStatsToggle,
+    setShowSearch,
   ]);
 
   return (
@@ -429,6 +432,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         )
                       }
                       className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'sale' ? 'bg-rose-50 dark:bg-rose-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                      type='button'
                     >
                       <span
                         className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'sale' ? 'text-rose-700 dark:text-rose-300' : 'text-rose-600 dark:text-rose-400'}`}
@@ -449,6 +453,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         )
                       }
                       className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'purchase' ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                      type='button'
                     >
                       <span
                         className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'purchase' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`}
@@ -469,6 +474,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         )
                       }
                       className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'adjustment' ? 'bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                      type='button'
                     >
                       <span
                         className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'adjustment' ? 'text-blue-700 dark:text-blue-300' : 'text-blue-600 dark:text-blue-400'}`}
@@ -489,6 +495,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         )
                       }
                       className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'damage' ? 'bg-orange-50 dark:bg-orange-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                      type='button'
                     >
                       <span
                         className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'damage' ? 'text-orange-700 dark:text-orange-300' : 'text-orange-600 dark:text-orange-400'}`}
@@ -505,6 +512,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                       onClick={() => handleUpdateFilter('type', [])}
                       className='px-4 py-1.5 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2 transition-all cursor-pointer'
                       title={isRTL ? 'عرض الكل' : 'Show All'}
+                      type='button'
                     >
                       <span className='text-[10px] font-black tracking-widest uppercase text-primary-600 dark:text-primary-400'>
                         {filteredHistory.length}
@@ -549,7 +557,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                   </div>
                 ) : viewType === 'timeline' ? (
                   <div className='max-w-3xl mx-auto py-4'>
-                    {filteredHistory.map((m, idx) => (
+                    {filteredHistory.map((m, _idx) => (
                       <TimelineItem
                         key={m.id}
                         type={m.type}
@@ -826,6 +834,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                               ? 'text-primary-600 dark:text-blue-400 hover:underline cursor-pointer'
                                               : 'text-gray-700 dark:text-gray-200 cursor-default'
                                           }`}
+                                          type='button'
                                         >
                                           {m.referenceId}
                                           {['sale', 'purchase', 'return_customer'].includes(

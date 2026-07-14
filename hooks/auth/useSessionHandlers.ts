@@ -1,14 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { MODULE_VIEW_MAPPING, PHARMACY_MENU } from '../../config/menuData';
 import { ROUTES } from '../../config/routes';
 import { StorageKeys } from '../../config/storageKeys';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { sessionRepository } from '../../services/auth/repositories/sessionRepository';
-import type { Branch, UserSession, ViewState } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
-import { useEmployees } from '../queries/useEmployeesQuery';
+import type { Branch, UserSession, ViewState } from '../../types';
 import { storage } from '../../utils/storage';
+import { useEmployees } from '../queries/useEmployeesQuery';
 
 interface ExtendedSession extends UserSession {
   _originalRole?: UserSession['role'];

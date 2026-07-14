@@ -345,10 +345,10 @@
 
 .graphic-mode-sans[dir='rtl'],
 .graphic-mode-sans [dir='rtl'] {
-  --page-title-font-family: var(--page-title-font-family-sans) !important;
+  --page-title-font-family: var(--page-title-font-family-sans);
 }
 
 .page-title {
-  font-size: var(--page-title-font-size) !important;
-  font-family: var(--page-title-font-family) !important;
+  font-size: var(--page-title-font-size);
+  font-family: var(--page-title-font-family);
 }

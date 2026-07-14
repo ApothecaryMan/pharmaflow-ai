@@ -114,6 +114,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                   : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300'
               }`}
               title={showOnlyPresent ? t.global.table.showAll : t.attendance.showPresentOnly}
+              type='button'
             >
               <span className='material-symbols-rounded text-xl'>
                 {showOnlyPresent ? 'person_check' : 'group'}
@@ -127,7 +128,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
               columns={columns.map((c) => ({
                 key: c.key as any,
                 header: c.label,
-                format: (val, row) => {
+                format: (val, _row) => {
                   if (c.id === 'duration') return formatDuration(val, language);
                   if (c.id === 'status')
                     return val ? t.attendance.lateStatusLate : t.attendance.lateStatusOk;
@@ -151,6 +152,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                   : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
               }`}
               title={showStats ? t.global.actions.hideStats : t.global.actions.showStats}
+              type='button'
             >
               <span className={`material-symbols-rounded ${showStats ? 'rotate-180' : ''}`}>
                 expand_more
@@ -210,14 +212,17 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                         </span>
                       </td>
                       <td className='py-3 px-4 text-center'>
-                        <span
-                          className='font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer'
-                          onClick={() =>
-                            onViewChange?.('employee-attendance-profile', {
-                              employeeId: emp.employeeId,
-                            })
-                          }
-                        >
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className='font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer'
+                        onClick={() =>
+                          onViewChange?.('employee-attendance-profile', {
+                            employeeId: emp.employeeId,
+                          })
+                        }
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onViewChange?.('employee-attendance-profile', { employeeId: emp.employeeId }); } }}
+                      >
                           {emp.employeeName}
                         </span>
                       </td>

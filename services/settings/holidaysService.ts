@@ -336,7 +336,7 @@ export const holidaysService = {
       updated_at: new Date().toISOString(),
     };
 
-    let result;
+    let result: Record<string, any> | null;
     if (holiday.id && !holiday.id.includes('-offline-')) {
       const { data, error } = await supabase
         .from('holidays')

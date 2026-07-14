@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { getGroupingKey } from '../../services/inventory/batchService';
 import type { Drug, StockBatch } from '../../types';
 import { useComputedInventory } from './useComputedInventory';
 

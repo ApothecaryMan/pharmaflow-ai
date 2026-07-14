@@ -70,7 +70,7 @@ describe('SalesService', () => {
     } as any);
     vi.mocked(idGenerator.generate).mockResolvedValue('SALE_NEW');
     vi.mocked(salesRepository.getAll).mockResolvedValue([...mockSales]);
-    vi.mocked(salesRepository.insert).mockImplementation(async (s) => {
+    vi.mocked(salesRepository.insert).mockImplementation(async (_s) => {
       return;
     });
   });

@@ -12,7 +12,7 @@ import { StorageKeys } from '../config/storageKeys';
 import { supabase } from '../lib/supabase';
 import { storage } from '../utils/storage';
 
-interface TimeResponse {
+interface _TimeResponse {
   datetime: string;
   unixtime: number;
 }
@@ -44,12 +44,12 @@ class TimeService {
       if (storedOffset !== null) {
         const parsedOffset =
           typeof storedOffset === 'number' ? storedOffset : parseInt(storedOffset, 10);
-        this.offset = isNaN(parsedOffset) ? 0 : parsedOffset;
+        this.offset = Number.isNaN(parsedOffset) ? 0 : parsedOffset;
       }
 
       if (storedSync !== null) {
         const parsedSync = typeof storedSync === 'number' ? storedSync : parseInt(storedSync, 10);
-        this.lastSyncTime = isNaN(parsedSync) ? 0 : parsedSync;
+        this.lastSyncTime = Number.isNaN(parsedSync) ? 0 : parsedSync;
       }
     } catch (error) {
       console.warn('Failed to load time offset from storage:', error);
@@ -83,14 +83,14 @@ class TimeService {
 
         console.log(`Time synced via Supabase RPC. Offset: ${this.offset}ms`);
         this.isSyncing = false;
-        
+
         // Notify app if local clock is wrong by more than 5 minutes
         if (Math.abs(this.offset) > 5 * 60 * 1000) {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('pharma_clock_skew', { detail: this.offset }));
           }
         }
-        
+
         return true;
       }
     } catch (err) {

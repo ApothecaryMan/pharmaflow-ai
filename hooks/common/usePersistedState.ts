@@ -48,7 +48,7 @@ export function usePersistedState<T>(
               if (JSON.stringify(prev) === e.newValue) return prev;
               return newValue;
             });
-          } catch (err) {
+          } catch (_err) {
             // Handle string fallback if JSON.parse fails
             if (typeof initialValueRef.current === 'string') {
               setState(e.newValue as unknown as T);

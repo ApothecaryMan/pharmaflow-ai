@@ -1,5 +1,4 @@
 import type React from 'react';
-import { useMemo } from 'react';
 import type { Drug } from '../../../types';
 import { Modal } from '../../common/Modal';
 import {
@@ -29,9 +28,9 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
   onSelectTemplate,
   onDeleteTemplate,
   selectedDrug,
-  receiptSettings,
+  receiptSettings: _receiptSettings,
   t,
-  color,
+  color: _color,
 }) => {
   const generatePreview = (template: SavedTemplate) => {
     if (!selectedDrug || !template.design) return '';
@@ -52,7 +51,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
         selectedDrug,
         design,
         renderDims,
-        receiptSettings,
+        _receiptSettings,
         undefined,
         undefined,
         design.uploadedLogo,
@@ -90,11 +89,14 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
       >
         {/* Preview Area */}
         <div
+          role="button"
+          tabIndex={0}
           className='h-44 bg-gray-100 dark:bg-black/20 flex items-center justify-center p-4 relative overflow-hidden bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[10px_10px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] cursor-pointer'
           onClick={() => {
             onSelectTemplate(template.id);
             onClose();
           }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectTemplate(template.id); onClose(); } }}
         >
           {html ? (
             <div
@@ -163,6 +165,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                 }}
                 className='w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100'
                 title={t.delete}
+                type='button'
               >
                 <span className='material-symbols-rounded text-[18px]'>delete</span>
               </button>

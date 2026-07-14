@@ -21,7 +21,7 @@ const AR_IMAGE_MAP: Record<string, string> = {
 export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
   achievements,
   language,
-  color,
+  color: _color,
   isLoading = false,
 }) => {
   const { darkMode } = useSettings();
@@ -64,7 +64,7 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4'>
-      {itemsToRender.map((item: any, idx) => (
+      {itemsToRender.map((item: any, _idx) => (
         <div
           key={item.id || item.type}
           className={`

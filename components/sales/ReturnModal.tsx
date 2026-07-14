@@ -9,7 +9,7 @@ import type { Return, ReturnItem, ReturnReason, Sale, Shift } from '../../types'
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { idGenerator } from '../../utils/idGenerator';
-import { money, pricing, tax } from '../../utils/money';
+import { money, pricing } from '../../utils/money';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
@@ -103,7 +103,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         } as any;
       })
       .filter((item) => item.availableQty > 0);
-  }, [sale, inventory, inventoryMap]);
+  }, [sale, inventoryMap]);
 
   const reasonOptions = [
     { id: 'customer_request', label: t.returns.reasons.customer_request, icon: 'person' },
@@ -169,6 +169,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   const isAllSelected =
     availableItems.length > 0 && availableItems.every((item) => selectedItems.has(item.lineKey));
 
+  // biome-ignore lint/correctness/useHookAtTopLevel: at top level, not conditional
   const calculateRefund = useMemo(() => {
     return pricingService.calculateRefundAmount(sale, selectedItems, inventoryMap);
   }, [selectedItems, sale, inventoryMap]);
@@ -357,7 +358,12 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       footer={
         <div dir='ltr' className='flex gap-3'>
           {step > 1 && (
-            <button onClick={handleBack} className={MODAL_FOOTER_BTN_CANCEL} title={t.returns.back}>
+            <button
+              onClick={handleBack}
+              className={MODAL_FOOTER_BTN_CANCEL}
+              title={t.returns.back}
+              type='button'
+            >
               <span className='material-symbols-rounded text-lg'>arrow_back</span>
             </button>
           )}
@@ -369,12 +375,13 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               onClick={handleNext}
               disabled={step === 1 && selectedItems.size === 0}
               className={MODAL_FOOTER_BTN_PRIMARY}
+              type='button'
             >
               {t.returns.next}
               <span className='material-symbols-rounded text-lg'>arrow_forward</span>
             </button>
           ) : (
-            <button onClick={handleConfirm} className={MODAL_FOOTER_BTN_PRIMARY}>
+            <button onClick={handleConfirm} className={MODAL_FOOTER_BTN_PRIMARY} type='button'>
               {isProcessing ? (
                 <span className='material-symbols-rounded text-[20px] animate-spin'>sync</span>
               ) : (
@@ -442,6 +449,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                     ? 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
                     : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50`
                 }`}
+                type='button'
               >
                 {isAllSelected
                   ? t.returns.deselectAll || 'Deselect All'
@@ -546,7 +554,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         </div>
 
                         {/* Right Side: Selection Indicator OR Counter */}
-                        <div onClick={(e) => e.stopPropagation()}>
+                        <div role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
                           {isSelected ? (
                             <div className='flex items-center gap-3 '>
                               <div className='flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 border border-gray-200 dark:border-gray-700 shadow-xs'>
@@ -556,6 +564,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                   }
                                   disabled={selectedQty <= 1}
                                   className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
+                                  type='button'
                                 >
                                   <span className='material-symbols-rounded text-lg'>remove</span>
                                 </button>
@@ -569,7 +578,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                       item.lineKey,
                                       Math.min(
                                         item.availableQty,
-                                        Math.max(1, parseInt(e.target.value) || 1)
+                                        Math.max(1, parseInt(e.target.value, 10) || 1)
                                       )
                                     )
                                   }
@@ -584,6 +593,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                   }
                                   disabled={selectedQty >= item.availableQty}
                                   className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
+                                  type='button'
                                 >
                                   <span className='material-symbols-rounded text-lg'>add</span>
                                 </button>
@@ -618,9 +628,9 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         {step === 2 && (
           <div className='space-y-6'>
             <div>
-              <label className='block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 ml-1'>
+              <span className='block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 ml-1'>
                 {t.returns.returnReason} <span className='text-red-500'>*</span>
-              </label>
+              </span>
               <FilterDropdown
                 items={reasonOptions}
                 selectedItem={reasonOptions.find((r) => r.id === returnReason)}
@@ -666,13 +676,13 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 style={{ '--tw-ring-color': `var(--color-primary-500)` } as any}
                 placeholder='Additional Notes'
               />
-              <label
+              <span
                 htmlFor='returnNotes'
                 className={`absolute top-2 inset-s-4 text-xs font-bold text-gray-400 pointer-events-none transition-all 
  peer-focus:text-primary-600 peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs`}
               >
                 {t.returns.notes}
-              </label>
+              </span>
             </div>
           </div>
         )}

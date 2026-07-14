@@ -94,7 +94,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
       {/* Governorate */}
       <div className='space-y-1'>
-        {showLabels && <label className={labelClass}>{labels.governorate}</label>}
+        {showLabels && <span className={labelClass}>{labels.governorate}</span>}
         <FilterDropdown
           items={GOVERNORATES}
           selectedItem={currentGov}
@@ -124,7 +124,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
       {/* City */}
       <div className='space-y-1'>
-        {showLabels && <label className={labelClass}>{labels.city}</label>}
+        {showLabels && <span className={labelClass}>{labels.city}</span>}
         <FilterDropdown
           items={availableCities}
           selectedItem={currentCity}
@@ -150,7 +150,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
       {/* Area */}
       <div className='space-y-1'>
-        {showLabels && <label className={labelClass}>{labels.area}</label>}
+        {showLabels && <span className={labelClass}>{labels.area}</span>}
         <FilterDropdown
           items={availableAreas}
           selectedItem={currentArea}

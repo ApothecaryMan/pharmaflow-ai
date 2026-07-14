@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AnimatedCounterTest } from '../common/AnimatedCounterTest';
 
 export const AnimatedCounterLab = () => {
@@ -16,10 +16,10 @@ export const AnimatedCounterLab = () => {
 
         <div className='flex-[2] bg-[var(--bg-card)] p-6 rounded-3xl shadow-sm border border-[var(--border-divider)]'>
           <div className='flex justify-between items-center mb-4'>
-            <label className='text-sm font-bold flex items-center gap-2'>
+            <span className='text-sm font-bold flex items-center gap-2'>
               <span className='material-symbols-rounded text-primary-500 text-sm'>tune</span>
               Value Control
-            </label>
+            </span>
             <div className='text-2xl font-black text-primary-500 tabular-nums bg-primary-50 dark:bg-primary-900/10 px-4 py-1 rounded-xl'>
               {value.toLocaleString()}
             </div>
@@ -39,18 +39,21 @@ export const AnimatedCounterLab = () => {
             <button
               className='flex-1 min-w-[120px] py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95'
               onClick={() => setValue(Math.floor(Math.random() * 1000))}
+              type='button'
             >
               Random Value
             </button>
             <button
               className='flex-1 min-w-[120px] py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95'
               onClick={() => setValue(0)}
+              type='button'
             >
               Reset to 0
             </button>
             <button
               className='flex-1 min-w-[120px] py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95'
               onClick={() => setValue(500)}
+              type='button'
             >
               Set to 500
             </button>

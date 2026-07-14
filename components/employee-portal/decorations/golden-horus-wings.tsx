@@ -1,6 +1,7 @@
 export function GoldenHorusWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Golden Horus wings</title>
       <g opacity='0.98'>
         <circle cx='64' cy='64' r='54' stroke='#F59E0B' strokeWidth='3' />
         <circle cx='64' cy='64' r='51' stroke='#1E3A8A' strokeWidth='2' strokeDasharray='4 2' />

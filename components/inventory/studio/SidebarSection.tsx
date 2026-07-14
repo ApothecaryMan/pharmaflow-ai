@@ -1,5 +1,4 @@
 import type React from 'react';
-import { useState } from 'react';
 
 interface SidebarSectionProps {
   title: string;
@@ -16,13 +15,14 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   children,
   isOpen,
   onToggle,
-  color = 'emerald',
+  color: _color = 'emerald',
 }) => {
   return (
     <div className='bg-white/50 dark:bg-muted/40 rounded-2xl border border-gray-100 dark:border-border/50 shadow-xs transition-all duration-300 group overflow-hidden'>
       <button
         onClick={onToggle}
         className={`w-full flex items-center justify-between p-3.5 bg-gray-50/30 dark:bg-muted/20 hover:bg-gray-100/50 dark:hover:bg-accent transition-all relative ${isOpen ? 'border-b border-gray-100 dark:border-border/50' : ''}`}
+        type='button'
       >
         {/* Left Accent */}
         <div

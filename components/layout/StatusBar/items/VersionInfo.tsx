@@ -18,7 +18,7 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
 }) => {
   const { hasUpdate, updateInfo, performUpdate } = useUpdateCheck();
   const { language } = useSettings();
-  const t = TRANSLATIONS[language];
+  const _t = TRANSLATIONS[language];
 
   const updateContent =
     hasUpdate && updateInfo ? (
@@ -41,6 +41,7 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
               performUpdate();
             }}
             className='flex-1 px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-[10px] font-medium transition-colors cursor-pointer'
+            type='button'
           >
             {language === 'AR' ? 'تحديث الآن' : 'Update Now'}
           </button>

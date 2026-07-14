@@ -117,7 +117,7 @@ export const loadQzTray = (): Promise<void> => {
       // Setup QZ Security for Silent Printing only if WebCrypto is available
       const qzGlobal = (window as any).qz;
       if (qzGlobal) {
-        if (window.crypto && window.crypto.subtle) {
+        if (window.crypto?.subtle) {
           qzGlobal.security.setCertificatePromise((resolve: any) => {
             resolve(QZ_CERTIFICATE);
           });
@@ -161,7 +161,7 @@ export const loadQzTray = (): Promise<void> => {
  */
 export const isConnected = (): boolean => {
   try {
-    return typeof qz !== 'undefined' && qz.websocket.isActive();
+    return qz?.websocket.isActive();
   } catch {
     return false;
   }
@@ -329,7 +329,7 @@ export const printRaw = async (printerName: string, commands: string[]): Promise
   const data = commands.map((cmd) => ({
     type: 'raw',
     format: 'plain',
-    data: cmd + '\r\n',
+    data: `${cmd}\r\n`,
   }));
 
   await qz.print(printerConfig, data);
@@ -366,7 +366,7 @@ export const savePrinterSettings = (settings: Partial<PrinterSettings>): Printer
  */
 export const printLabelSilently = async (
   html: string,
-  labelSize: { width: number; height: number; orientation?: PrinterOrientation }
+  _labelSize: { width: number; height: number; orientation?: PrinterOrientation }
 ): Promise<boolean> => {
   const settings = getPrinterSettings();
 

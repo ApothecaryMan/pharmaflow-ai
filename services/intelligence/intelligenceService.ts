@@ -4,8 +4,6 @@
  * Real data functions for Procurement, Risk, Financials, and Audit
  */
 
-import { supabase } from '../../lib/supabase';
-import type { Drug, Sale } from '../../types';
 import type {
   AuditTransaction,
   CategoryFinancialItem,
@@ -20,7 +18,7 @@ import type {
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { money, pricing } from '../../utils/money';
-import { dateRangeService, type FinancialPeriod } from '../financials/dateRangeService';
+import type { FinancialPeriod } from '../financials/dateRangeService';
 import { financialService } from '../financials/financialService';
 import { employeeService } from '../hr/employeeService';
 import { batchService } from '../inventory/batchService';
@@ -65,7 +63,7 @@ function calculateParetoABC<T extends { revenue: number }>(
 
 // === Internal Data Loaders ===
 
-async function _loadCoreData(branchId?: string, options?: { signal?: AbortSignal }) {
+async function _loadCoreData(branchId?: string, _options?: { signal?: AbortSignal }) {
   const fetchDrugs = inventoryService.getAll(branchId);
   const fetchBatches = batchService.getAllBatches(branchId);
 
@@ -122,7 +120,12 @@ export const intelligenceService = {
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<ProcurementItem[]> => {
-    const { drugs, drugMap, allBatches, stockMap } = await _loadCoreData(branchId, options);
+    const {
+      drugs,
+      drugMap,
+      allBatches: _allBatches,
+      stockMap,
+    } = await _loadCoreData(branchId, options);
 
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -344,7 +347,7 @@ export const intelligenceService = {
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<ExpiryRiskItem[]> => {
-    const { drugs, drugMap, allBatches } = await _loadCoreData(branchId, options);
+    const { drugs: _drugs, drugMap, allBatches } = await _loadCoreData(branchId, options);
 
     const now = new Date();
     const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -453,7 +456,7 @@ export const intelligenceService = {
   getFinancialKPIs: async (
     period: FinancialPeriod = 'this_month',
     branchId?: string,
-    options?: { signal?: AbortSignal }
+    _options?: { signal?: AbortSignal }
   ): Promise<FinancialKPIs> => {
     return financialService.getFinancialKPIs(period, branchId);
   },
@@ -464,7 +467,7 @@ export const intelligenceService = {
   getProductFinancials: async (
     period: FinancialPeriod = 'this_month',
     branchId?: string,
-    options?: { signal?: AbortSignal }
+    _options?: { signal?: AbortSignal }
   ): Promise<ProductFinancialItem[]> => {
     return financialService.getTopProducts(period, branchId, 1000);
   },
@@ -475,7 +478,7 @@ export const intelligenceService = {
   getCategoryFinancials: async (
     period: FinancialPeriod = 'this_month',
     branchId?: string,
-    options?: { signal?: AbortSignal }
+    _options?: { signal?: AbortSignal }
   ): Promise<CategoryFinancialItem[]> => {
     const rawCategories = await financialService.getCategoryBreakdown(period, branchId);
     const topProducts = await financialService.getTopProducts(period, branchId, 1000);
@@ -510,7 +513,7 @@ export const intelligenceService = {
   getAuditTransactions: async (
     limit: number = 100,
     branchId?: string,
-    options?: { signal?: AbortSignal }
+    _options?: { signal?: AbortSignal }
   ): Promise<AuditTransaction[]> => {
     // Optimized: Use filter/limit if possible, or at least only fetch recent
     const thirtyDaysAgo = new Date();
@@ -588,7 +591,7 @@ export const intelligenceService = {
     dateFrom: string,
     dateTo: string,
     branchId?: string,
-    options?: { signal?: AbortSignal }
+    _options?: { signal?: AbortSignal }
   ): Promise<FinancialReport> => {
     return financialService.getFinancialReport(dateFrom, dateTo, branchId);
   },

@@ -55,6 +55,8 @@ export const TemplateMarketplaceModal: React.FC<TemplateMarketplaceModalProps> =
 
                 {/* Preview Area */}
                 <div
+                  role="button"
+                  tabIndex={0}
                   className='flex-1 bg-white dark:bg-gray-900 overflow-y-auto custom-scrollbar flex justify-center cursor-pointer'
                   onClick={() => {
                     if (template.isPremium && onUnlockPremium) {
@@ -64,6 +66,7 @@ export const TemplateMarketplaceModal: React.FC<TemplateMarketplaceModalProps> =
                       onClose();
                     }
                   }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (template.isPremium && onUnlockPremium) { onUnlockPremium(template.id); } else { onSelect(template.id); onClose(); } } }}
                 >
                   <iframe
                     srcDoc={template.previewHtml}

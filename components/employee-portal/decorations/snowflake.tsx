@@ -1,11 +1,12 @@
 export function Snowflake() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Snowflake</title>
       <g opacity='0.95'>
         <g transform='translate(64, 12)'>
           <circle cx='0' cy='0' r='8' fill='#93C5FD' opacity='0.25' filter='blur(1px)' />
-          {[0, 60, 120, 180, 240, 300].map((angle, i) => (
-            <g key={i} transform={`rotate(${angle})`}>
+          {[0, 60, 120, 180, 240, 300].map((angle) => (
+            <g key={`arm-${angle}`} transform={`rotate(${angle})`}>
               <line
                 x1='0'
                 y1='0'
@@ -44,8 +45,8 @@ export function Snowflake() {
           <circle cx='0' cy='0' r='1' fill='var(--svg-color, #60A5FA)' />
         </g>
         <g transform='translate(26, 26) rotate(15)'>
-          {[0, 60, 120, 180, 240, 300].map((angle, i) => (
-            <g key={i} transform={`rotate(${angle})`}>
+          {[0, 60, 120, 180, 240, 300].map((angle) => (
+            <g key={`arm-${angle}`} transform={`rotate(${angle})`}>
               <line
                 x1='0'
                 y1='0'
@@ -66,8 +67,8 @@ export function Snowflake() {
           <circle cx='0' cy='0' r='1.2' fill='#FFFFFF' />
         </g>
         <g transform='translate(102, 26) rotate(-15)'>
-          {[0, 60, 120, 180, 240, 300].map((angle, i) => (
-            <g key={i} transform={`rotate(${angle})`}>
+          {[0, 60, 120, 180, 240, 300].map((angle) => (
+            <g key={`arm-${angle}`} transform={`rotate(${angle})`}>
               <line
                 x1='0'
                 y1='0'
@@ -88,8 +89,8 @@ export function Snowflake() {
           <circle cx='0' cy='0' r='1.2' fill='#FFFFFF' />
         </g>
         <g transform='translate(10, 52)'>
-          {[0, 60, 120, 180, 240, 300].map((angle, i) => (
-            <g key={i} transform={`rotate(${angle})`}>
+          {[0, 60, 120, 180, 240, 300].map((angle) => (
+            <g key={`arm-${angle}`} transform={`rotate(${angle})`}>
               <line
                 x1='0'
                 y1='0'
@@ -103,8 +104,8 @@ export function Snowflake() {
           <circle cx='0' cy='0' r='1' fill='#FFFFFF' />
         </g>
         <g transform='translate(118, 52)'>
-          {[0, 60, 120, 180, 240, 300].map((angle, i) => (
-            <g key={i} transform={`rotate(${angle})`}>
+          {[0, 60, 120, 180, 240, 300].map((angle) => (
+            <g key={`arm-${angle}`} transform={`rotate(${angle})`}>
               <line
                 x1='0'
                 y1='0'

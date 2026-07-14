@@ -11,11 +11,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import { useAuthStore } from '../../stores/authStore';
-import type { Customer, Sale } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { PageHeader } from '../common/PageHeader';
@@ -30,7 +29,7 @@ interface CustomerLoyaltyOverviewProps {
 }
 
 export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = ({
-  color,
+  color: _color,
   t,
   language,
   onViewChange,

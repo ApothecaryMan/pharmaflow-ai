@@ -28,7 +28,7 @@ export const getAllShardKeys = (baseKey: string): string[] => {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     // improved regex to match exact pattern strictly
-    if (key && key.startsWith(`${baseKey}_`) && /_\d{4}_\d{2}$/.test(key)) {
+    if (key?.startsWith(`${baseKey}_`) && /_\d{4}_\d{2}$/.test(key)) {
       keys.push(key);
     }
   }

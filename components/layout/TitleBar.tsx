@@ -53,7 +53,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
 
   const {
     currentEmployeeId,
-    setCurrentEmployeeId,
+    setCurrentEmployeeId: _setCurrentEmployeeId,
     setView,
     setActiveModule,
     setDashboardSubView,
@@ -69,7 +69,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   const isDataLoading = useAuthStore((s) => s.isLoading);
   const { data: employees = [] } = useEmployees(activeBranchId);
 
-  const user = auth.user || authService.getCurrentUserSync();
+  const _user = auth.user || authService.getCurrentUserSync();
   const isAuthenticated = auth.isAuthenticated;
 
   const {
@@ -111,7 +111,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   const [isWindowMaximized, setIsWindowMaximized] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [hasUpdate, setHasUpdate] = useState(false);
-  const [printerReady, setPrinterReady] = useState(true); // Default to true, update later if possible
+  const [printerReady, _setPrinterReady] = useState(true); // Default to true, update later if possible
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -204,8 +204,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   if (!isTauri()) return null;
 
   const activeBranch = branches.find((b) => b.id === activeBranchId);
-  const orgName = activeOrg?.name || '';
-  const branchName = activeBranch?.name || '';
+  const _orgName = activeOrg?.name || '';
+  const _branchName = activeBranch?.name || '';
   const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
   const currentView =
     activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view;
@@ -275,6 +275,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className='h-11 backdrop-blur-md flex items-center justify-between px-1 select-none z-[9999] relative overflow-visible'
       onContextMenu={handleSystemMenu}
       style={{
@@ -284,6 +286,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     >
       {/* Background Drag Region - Captures events in empty areas */}
       <div
+        role="button"
+        tabIndex={0}
         data-tauri-drag-region
         className='absolute inset-0 z-0'
         onDoubleClick={handleMaximize}
@@ -296,6 +300,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           onClick={handleClose}
           className='w-8 h-7 flex items-center justify-center hover:bg-red-500 text-gray-500 hover:text-white transition-all rounded-md'
           title='إغلاق'
+          type='button'
         >
           <span className='material-symbols-rounded text-[16px]'>close</span>
         </button>
@@ -303,6 +308,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           onClick={handleMaximize}
           className='w-8 h-7 flex items-center justify-center hover:bg-gray-500/10 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all rounded-md'
           title={isWindowMaximized ? 'استعادة' : 'تكبير'}
+          type='button'
         >
           <span className='material-symbols-rounded text-[14px]'>
             {isWindowMaximized ? 'filter_none' : 'check_box_outline_blank'}
@@ -312,6 +318,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           onClick={handleMinimize}
           className='w-8 h-7 flex items-center justify-center hover:bg-gray-500/10 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all rounded-md'
           title='تصغير'
+          type='button'
         >
           <span className='material-symbols-rounded text-[16px]'>remove</span>
         </button>
@@ -380,6 +387,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                     <button
                       onClick={() => handleNavigate('desktop-settings')}
                       className='flex items-center gap-1 text-[10px] font-bold text-emerald-500 animate-pulse'
+                      type='button'
                     >
                       <Icons.Download size={14} />
                       UPDT
@@ -411,6 +419,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                     e.currentTarget.style.backgroundColor = 'transparent';
                     e.currentTarget.style.color = 'var(--text-secondary)';
                   }}
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[20px]'>
                     {darkMode ? 'light_mode' : 'dark_mode'}

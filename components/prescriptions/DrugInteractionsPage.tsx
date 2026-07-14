@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { type FdaDrugLabel, openFdaService } from '../../services/inventory/openFdaService';
 import { inventorySearchEngine } from '../../services/search/drugSearchService';
-import type { Drug } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import type { Drug } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FDA } from '../common/Icons';
@@ -145,7 +145,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
           if (isCrossReference) {
             return (
               <span
-                key={i}
+                // biome-ignore lint/suspicious/noArrayIndexKey: source parts have no stable id
+                key={`source-ref-${i}`}
                 className='font-bold text-(--text-primary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-md mx-0.5'
               >
                 {part}
@@ -154,14 +155,16 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
           }
           if (isExample) {
             return (
-              <span key={i} className='font-semibold text-(--text-primary) italic'>
+              // biome-ignore lint/suspicious/noArrayIndexKey: source parts have no stable id
+              <span key={`source-ex-${i}`} className='font-semibold text-(--text-primary) italic'>
                 {part}
               </span>
             );
           }
           return (
             <span
-              key={i}
+              // biome-ignore lint/suspicious/noArrayIndexKey: source parts have no stable id
+              key={`source-tag-${i}`}
               className='text-[10px] font-bold text-(--text-tertiary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-sm mx-1 tracking-tight inline-block leading-none translate-y-[-1px]'
             >
               {part}
@@ -204,16 +207,16 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
             if (isHeader || isBullet || endsWithRef) {
               paragraphs.push(trimmed);
             } else {
-              currentPara = trimmed + ' ';
+              currentPara = `${trimmed} `;
             }
             return;
           }
 
           if (currentPara.length + trimmed.length > 400 && currentPara.length > 0) {
             paragraphs.push(currentPara.trim());
-            currentPara = trimmed + ' ';
+            currentPara = `${trimmed} `;
           } else {
-            currentPara += trimmed + ' ';
+            currentPara += `${trimmed} `;
           }
         });
         if (currentPara) paragraphs.push(currentPara.trim());
@@ -225,7 +228,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
             const match = p.match(/^(\d+\.\d+)\s+(.*)/is);
             if (match) {
               return (
-                <div key={i} className='mt-6 mb-2 first:mt-0 flex gap-3'>
+                // biome-ignore lint/suspicious/noArrayIndexKey: paragraphs have no stable id
+                <div key={`para-header-${i}`} className='mt-6 mb-2 first:mt-0 flex gap-3'>
                   <span className='font-black text-(--text-primary) bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-md text-xs h-fit shrink-0 mt-0.5 border border-black/5 dark:border-white/10'>
                     {match[1]}
                   </span>
@@ -255,7 +259,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
 
             return (
               <p
-                key={i}
+                // biome-ignore lint/suspicious/noArrayIndexKey: paragraphs have no stable id
+                key={`para-text-${i}`}
                 className={`text-sm leading-[1.75] text-left ${p.startsWith('•') || p.startsWith('-') ? 'ps-4' : ''} ${textClassName}`}
                 dir='auto'
               >
@@ -294,7 +299,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
 
           if (!impact && !intervention) {
             return (
-              <div key={i} className='max-w-4xl'>
+              // biome-ignore lint/suspicious/noArrayIndexKey: blocks have no stable id
+              <div key={`para-div-${i}`} className='max-w-4xl'>
                 {renderStructuredText(block.trim())}
               </div>
             );
@@ -302,7 +308,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
 
           return (
             <div
-              key={i}
+              // biome-ignore lint/suspicious/noArrayIndexKey: blocks have no stable id
+              key={`block-div-${i}`}
               className='group relative border-s-[3px] border-(--border-divider) ps-6 pt-1 pb-12 transition-all duration-300 hover:border-(--text-primary)'
             >
               {header && (
@@ -342,7 +349,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
   const renderLoadingSkeleton = () => (
     <div className='space-y-10 pt-8'>
       {[1, 2].map((i) => (
-        <div key={i} className='space-y-5 animate-pulse'>
+        <div key={`skel-${i}`} className='space-y-5 animate-pulse'>
           <div className='flex items-center gap-3'>
             <div className='h-4 w-16 bg-(--border-divider) rounded' />
             <div className='h-6 w-48 bg-(--border-divider) rounded' />
@@ -466,7 +473,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
               </div>
               <div className='grid gap-4'>
                 {detectedIssues.map((issue, i) => (
-                  <div key={i} className='flex flex-col gap-1.5'>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: issues have no stable id
+                  <div key={`issue-${i}`} className='flex flex-col gap-1.5'>
                     <div className='flex items-center gap-2 text-xs font-black uppercase tracking-[0.04em] text-(--text-primary)'>
                       <span>{issue.source}</span>
                       <span
@@ -502,7 +510,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
         )}
 
         {ingredientResults.map(({ name, data }, idx) => (
-          <motion.div key={`${name}-${idx}`} variants={itemVariants} className='pb-16'>
+          <motion.div key={name} variants={itemVariants} className='pb-16'>
             <div className='sticky top-0 z-20 bg-(--bg-card) py-4 -mx-8 px-8'>
               <div className='flex items-center gap-3'>
                 <div className='flex items-baseline gap-2 shrink-0'>

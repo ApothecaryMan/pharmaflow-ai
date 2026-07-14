@@ -13,8 +13,7 @@ export const PRESETS: Preset[] = [
     label: 'ورق دفتر',
     description: 'Notebook paper with ruled lines and handwritten-style borders',
     properties: {
-      background:
-        'repeating-linear-gradient(#fdfbf3 0 27px, #d8e0e8 27px 28px) #fdfbf3',
+      background: 'repeating-linear-gradient(#fdfbf3 0 27px, #d8e0e8 27px 28px) #fdfbf3',
       padding: '24px',
       'box-shadow': '0 3px 10px rgba(0,0,0,0.15)',
       transform: 'rotate(0deg)',
@@ -27,8 +26,7 @@ export const PRESETS: Preset[] = [
     label: 'ورق مقطع',
     description: 'Torn-edge paper with jagged clip-path edges',
     properties: {
-      background:
-        'repeating-linear-gradient(#fdfbf3 0 27px, #d8e0e8 27px 28px), #fdfbf3',
+      background: 'repeating-linear-gradient(#fdfbf3 0 27px, #d8e0e8 27px 28px), #fdfbf3',
       padding: '30px',
       'box-shadow': '0 4px 12px rgba(0,0,0,0.15)',
       transform: 'rotate(-0.5deg)',

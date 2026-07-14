@@ -21,7 +21,6 @@ import {
   isDesktopAppUserAgent,
 } from '../../utils/platform';
 import { Icons } from '../common/Icons';
-import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
 import { Tooltip } from '../common/Tooltip';
 
@@ -33,7 +32,7 @@ interface ActiveSessionsPageProps {
 
 type SortKey = 'user' | 'device' | 'browser' | 'started' | 'duration' | 'ip' | 'lastSeen';
 
-const SORT_LABELS: Record<SortKey, { en: string; ar: string }> = {
+const _SORT_LABELS: Record<SortKey, { en: string; ar: string }> = {
   user: { en: 'User', ar: 'المستخدم' },
   device: { en: 'Device', ar: 'الجهاز' },
   browser: { en: 'Browser', ar: 'المتصفح' },
@@ -44,7 +43,7 @@ const SORT_LABELS: Record<SortKey, { en: string; ar: string }> = {
 };
 
 export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
-  color = 'blue',
+  color: _color = 'blue',
   t,
   language = 'EN',
 }) => {
@@ -128,7 +127,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       supabase.removeChannel(dbChannel);
       clearInterval(tickInterval);
     };
-  }, [currentUser?.userId]);
+  }, [currentUser?.userId, loadSessions]);
 
   const handleLogout = async (sessionId: string) => {
     setEndingSessions((prev) => new Set(prev).add(sessionId));
@@ -265,7 +264,6 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
           case 'ip':
             cmp = (a.ip_address || '').localeCompare(b.ip_address || '');
             break;
-          case 'lastSeen':
           default:
             cmp = new Date(a.last_seen_at).getTime() - new Date(b.last_seen_at).getTime();
             break;
@@ -327,6 +325,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
             className='inline-block align-middle'
             fill='currentColor'
           >
+            <title>Sort</title>
             <polygon points='5,1 9,5 1,5' opacity='0.4' />
             <polygon points='5,11 9,7 1,7' opacity='0.4' />
           </svg>
@@ -342,6 +341,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
             className='inline-block align-middle'
             fill='currentColor'
           >
+            <title>Sort ascending</title>
             <polygon points='5,1 9,6 1,6' />
           </svg>
         </span>
@@ -355,6 +355,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
           className='inline-block align-middle'
           fill='currentColor'
         >
+          <title>Sort descending</title>
           <polygon points='5,11 9,6 1,6' />
         </svg>
       </span>
@@ -480,6 +481,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     >
                       <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium'>
                         <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
+                          <title>Current</title>
                           <circle cx='5' cy='5' r='4' />
                         </svg>
                         <span>{currentCount}</span>
@@ -518,6 +520,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     >
                       <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium'>
                         <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
+                          <title>Stale</title>
                           <circle cx='5' cy='5' r='4' />
                         </svg>
                         <span>{staleCount}</span>
@@ -548,6 +551,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       onClick={refreshSessions}
                       disabled={refreshing}
                       className='p-2 border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
+                      type='button'
                     >
                       <svg
                         className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`}
@@ -555,6 +559,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         stroke='currentColor'
                         viewBox='0 0 24 24'
                       >
+                        <title>Refresh</title>
                         <polyline points='23 4 23 10 17 10' />
                         <polyline points='1 20 1 14 7 14' />
                         <path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15' />
@@ -567,6 +572,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       onClick={handleEndAllOther}
                       disabled={isEndingAll}
                       className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0'
+                      type='button'
                     >
                       {isEndingAll && (
                         <div className='animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-red-700 dark:border-red-300'></div>
@@ -577,6 +583,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         stroke='currentColor'
                         viewBox='0 0 24 24'
                       >
+                        <title>End all other sessions</title>
                         <path
                           strokeLinecap='round'
                           strokeLinejoin='round'
@@ -661,7 +668,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
                           let IconComponent = Icons.Desktop;
                           let iconColor = 'text-primary-600';
-                          const iconBg = 'bg-primary-50 dark:bg-primary-900/20';
+                          const _iconBg = 'bg-primary-50 dark:bg-primary-900/20';
 
                           if (displayDeviceName.includes('Android')) {
                             IconComponent = Icons.Android;
@@ -804,44 +811,42 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                                 language
                                               );
                                               return (
-                                                <>
-                                                  <div className='border-t border-(--border-divider) pt-2 mt-2'>
-                                                    <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                                                      {t.activeSessions.previously}
+                                                <div className='border-t border-(--border-divider) pt-2 mt-2'>
+                                                  <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                                                    {t.activeSessions.previously}
+                                                  </div>
+                                                  <div className='flex items-center gap-2 mt-1.5'>
+                                                    <div className='shrink-0'>
+                                                      {prevImg ? (
+                                                        <img
+                                                          src={prevImg}
+                                                          alt={prevName}
+                                                          className='w-6 h-6 rounded-full object-cover border border-(--border-divider)'
+                                                        />
+                                                      ) : (
+                                                        <div className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'>
+                                                          {prevName.charAt(0).toUpperCase()}
+                                                        </div>
+                                                      )}
                                                     </div>
-                                                    <div className='flex items-center gap-2 mt-1.5'>
-                                                      <div className='shrink-0'>
-                                                        {prevImg ? (
-                                                          <img
-                                                            src={prevImg}
-                                                            alt={prevName}
-                                                            className='w-6 h-6 rounded-full object-cover border border-(--border-divider)'
-                                                          />
-                                                        ) : (
-                                                          <div className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'>
-                                                            {prevName.charAt(0).toUpperCase()}
-                                                          </div>
-                                                        )}
-                                                      </div>
-                                                      <div className='flex flex-col min-w-0'>
-                                                        <span className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate'>
-                                                          {prevName}
-                                                        </span>
-                                                        <span className='text-[11px] text-gray-500 dark:text-gray-400'>
-                                                          {getDeviceName(
-                                                            prevSession.user_agent || '',
-                                                            prevSession.device_info || ''
-                                                          )}{' '}
-                                                          ·{' '}
-                                                          {getRelativeTime(
-                                                            prevSession.created_at,
-                                                            language
-                                                          ) || prevStartedLabel.label}
-                                                        </span>
-                                                      </div>
+                                                    <div className='flex flex-col min-w-0'>
+                                                      <span className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate'>
+                                                        {prevName}
+                                                      </span>
+                                                      <span className='text-[11px] text-gray-500 dark:text-gray-400'>
+                                                        {getDeviceName(
+                                                          prevSession.user_agent || '',
+                                                          prevSession.device_info || ''
+                                                        )}{' '}
+                                                        ·{' '}
+                                                        {getRelativeTime(
+                                                          prevSession.created_at,
+                                                          language
+                                                        ) || prevStartedLabel.label}
+                                                      </span>
                                                     </div>
                                                   </div>
-                                                </>
+                                                </div>
                                               );
                                             })()}
                                         </div>
@@ -942,27 +947,23 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                           {lastSeenInfo.time}
                                         </span>
                                       </div>
+                                    ) : relativeTime ? (
+                                      <div className='text-gray-500'>
+                                        <span className='text-gray-900 dark:text-gray-100'>
+                                          {relativeTime}
+                                        </span>
+                                        <span className='text-xs text-gray-500 block'>
+                                          {lastSeenInfo.time}
+                                        </span>
+                                      </div>
                                     ) : (
                                       <>
-                                        {relativeTime ? (
-                                          <div className='text-gray-500'>
-                                            <span className='text-gray-900 dark:text-gray-100'>
-                                              {relativeTime}
-                                            </span>
-                                            <span className='text-xs text-gray-500 block'>
-                                              {lastSeenInfo.time}
-                                            </span>
-                                          </div>
-                                        ) : (
-                                          <>
-                                            <div className='text-gray-900 dark:text-gray-100'>
-                                              {lastSeenInfo.label}
-                                            </div>
-                                            <div className='text-xs text-gray-500'>
-                                              {lastSeenInfo.time}
-                                            </div>
-                                          </>
-                                        )}
+                                        <div className='text-gray-900 dark:text-gray-100'>
+                                          {lastSeenInfo.label}
+                                        </div>
+                                        <div className='text-xs text-gray-500'>
+                                          {lastSeenInfo.time}
+                                        </div>
                                       </>
                                     )}
                                   </div>
@@ -981,6 +982,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                       disabled={endingSessions.has(session.id)}
                                       className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
                                       title={t.activeSessions.terminate}
+                                      type='button'
                                     >
                                       {endingSessions.has(session.id) ? (
                                         <div className='animate-spin rounded-full h-3.5 w-3.5 border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>

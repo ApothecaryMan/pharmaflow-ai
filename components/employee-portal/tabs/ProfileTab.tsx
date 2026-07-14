@@ -6,16 +6,15 @@ import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
 
-const PROFILE_GLASS_CARD_NO_BORDER =
-  PROFILE_GLASS_CARD_BASE.split(' ')
-    .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
-    .join(' ') + ' border border-transparent';
+const PROFILE_GLASS_CARD_NO_BORDER = `${PROFILE_GLASS_CARD_BASE.split(' ')
+  .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+  .join(' ')} border border-transparent`;
 
 import { EmployeeAvatar } from '../../common/EmployeeAvatar';
 import { ColorPicker, FRAME_COLORS } from '../avatar-color-settings';
 import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES } from '../avatar-decorations';
 import type { RingStyle } from '../avatar-ring';
-import AvatarRing, { AnimationToggle, RING_STYLES } from '../avatar-ring';
+import { AnimationToggle, RING_STYLES } from '../avatar-ring';
 
 type BannerId = (typeof BANNER_STYLES)[number]['id'];
 
@@ -178,8 +177,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     if (!startDateStr) return '—';
     const start = new Date(startDateStr);
     const end = endDateStr ? new Date(endDateStr) : new Date();
-    if (isNaN(start.getTime())) return '—';
-    if (isNaN(end.getTime())) return '—';
+    if (Number.isNaN(start.getTime())) return '—';
+    if (Number.isNaN(end.getTime())) return '—';
 
     let years = end.getFullYear() - start.getFullYear();
     let months = end.getMonth() - start.getMonth();
@@ -222,7 +221,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           container: 'bg-blue-500/10 text-blue-500',
           icon: 'pending',
         };
-      case 'inactive':
       default:
         return {
           container: 'bg-red-500/10 text-red-500',
@@ -297,7 +295,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const bannerRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef({ x: 0, y: 0 });
   const offsetStart = useRef({ x: 0, y: 0 });
-  const lastPinchDist = useRef(0);
+  const _lastPinchDist = useRef(0);
   const readerRef = useRef<FileReader | null>(null);
 
   const originalDesignSettings = useRef({
@@ -366,7 +364,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         y: Math.max(-maxY, Math.min(maxY, bannerOffset.y)),
       });
     }
-  }, [bannerZoom]); // Re-bound when zoom changes
+  }, [bannerZoom, bannerOffset.x, bannerOffset.y]); // Re-bound when zoom changes
 
   const handleBannerPointerUp = useCallback(() => {
     setIsDragging(false);
@@ -856,6 +854,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                             fill='currentColor'
                             className='text-white'
                           >
+                            <title>{decorationAnimated ? 'Pause animation' : 'Play animation'}</title>
                             {decorationAnimated ? (
                               <>
                                 <rect x='6' y='4' width='4' height='16' rx='1' />
@@ -1059,7 +1058,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
                   return (
                     <div
-                      key={index}
+                      // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading, no stable id
+                      key={`skeleton-info-${index}`}
                       className={`${PROFILE_GLASS_CARD_NO_BORDER.replace('rounded-xl', '').trim()} ${roundedClass} flex items-center gap-2.5 h-12`}
                     >
                       <div className='w-4 h-4 rounded bg-black/10 dark:bg-white/10 shrink-0'></div>
@@ -1155,44 +1155,43 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               </h4>
               <div className='flex flex-col gap-4'>
                 {isLoading ? (
-                  <>
-                    <div className={`${PROFILE_GLASS_CARD_NO_BORDER} p-4 space-y-3 animate-pulse`}>
-                      <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-3'>
-                        <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-1/3'></div>
-                        <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-16'></div>
-                      </div>
-                      <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-3 gap-x-4 border-b border-black/10 dark:border-white/5 pb-3'>
-                        {[...Array(5)].map((_, i) => (
-                          <div key={i}>
+                  <div className={`${PROFILE_GLASS_CARD_NO_BORDER} p-4 space-y-3 animate-pulse`}>
+                    <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-3'>
+                      <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-1/3'></div>
+                      <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-16'></div>
+                    </div>
+                    <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-3 gap-x-4 border-b border-black/10 dark:border-white/5 pb-3'>
+                      {[...Array(5)].map((_, i) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading, no stable id
+                        <div key={`cred-skeleton-${i}`}>
+                          <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
+                          <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-24'></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className='border-b border-black/10 dark:border-white/5 pb-3'>
+                      <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-20 mb-2'></div>
+                      <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-full'></div>
+                    </div>
+                    <div className='flex flex-col gap-2 pt-3'>
+                      <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                        <div className='flex gap-4'>
+                          <div>
                             <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
-                            <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-24'></div>
+                            <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-20'></div>
                           </div>
-                        ))}
-                      </div>
-                      <div className='border-b border-black/10 dark:border-white/5 pb-3'>
-                        <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-20 mb-2'></div>
-                        <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-full'></div>
-                      </div>
-                      <div className='flex flex-col gap-2 pt-3'>
-                        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
-                          <div className='flex gap-4'>
-                            <div>
-                              <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
-                              <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-20'></div>
-                            </div>
-                            <div>
-                              <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
-                              <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-20'></div>
-                            </div>
+                          <div>
+                            <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
+                            <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-20'></div>
                           </div>
-                          <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
-                            <div className='h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28'></div>
-                            <div className='h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28'></div>
-                          </div>
+                        </div>
+                        <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
+                          <div className='h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28'></div>
+                          <div className='h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28'></div>
                         </div>
                       </div>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   workspaces.map((ws) => (
                     <div
@@ -1200,8 +1199,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                       className={`${PROFILE_GLASS_CARD_NO_BORDER} p-5 ${!expandedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}
                     >
                       <div
+                        role="button"
+                        tabIndex={0}
                         className={`flex items-center justify-between cursor-pointer select-none group transition-colors ${!expandedWorkspaces.has(ws.id) ? '' : 'border-b border-black/10 dark:border-white/5 pb-4'}`}
                         onClick={() => toggleWorkspace(ws.id)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleWorkspace(ws.id); } }}
                       >
                         <span className='text-sm font-bold text-(--text-primary) flex items-center gap-2'>
                           {ws.orgName ? (
@@ -1329,10 +1331,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                                   </div>
                                 }
                               >
-                                <div
-                                  tabIndex={0}
-                                  className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'
-                                >
+                                <div className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
                                   <span className='material-symbols-rounded text-[16px] text-emerald-500'>
                                     point_of_sale
                                   </span>
@@ -1362,10 +1361,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                                   </div>
                                 }
                               >
-                                <div
-                                  tabIndex={0}
-                                  className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'
-                                >
+                                <div className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
                                   <span className='material-symbols-rounded text-[16px] text-blue-500'>
                                     package_2
                                   </span>
@@ -1395,10 +1391,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                                   </div>
                                 }
                               >
-                                <div
-                                  tabIndex={0}
-                                  className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'
-                                >
+                                <div className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
                                   <span className='material-symbols-rounded text-[16px] text-blue-400'>
                                     schedule
                                   </span>
@@ -1576,7 +1569,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               <div className='grid grid-cols-2 sm:grid-cols-3 gap-2 animate-pulse'>
                 {[...Array(3)].map((_, i) => (
                   <div
-                    key={i}
+                    // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading, no stable id
+                    key={`overview-sk-${i}`}
                     className={`${PROFILE_GLASS_CARD_NO_BORDER} flex flex-col items-center justify-center py-3 ${i === 2 ? 'col-span-2 sm:col-span-1' : ''}`}
                   >
                     <div className='w-6 h-6 bg-black/10 dark:bg-white/10 rounded-full mb-2'></div>

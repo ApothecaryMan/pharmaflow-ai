@@ -1,5 +1,4 @@
 import { ArrowRight, Building2 } from 'lucide-react';
-import React from 'react';
 import type { Employee } from '../../types';
 
 interface Props {
@@ -29,6 +28,7 @@ export function WorkspaceSwitcher({ workspaces, onSelect, onCancel, t }: Props) 
             key={workspace.id}
             onClick={() => handleSelect(workspace)}
             className='w-full bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/50 rounded-xl p-4 flex items-center justify-between group transition-all'
+            type='button'
           >
             <div className='flex items-center gap-4 text-left'>
               <div className='w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors'>
@@ -59,6 +59,7 @@ export function WorkspaceSwitcher({ workspaces, onSelect, onCancel, t }: Props) 
         <button
           onClick={onCancel}
           className='mt-6 text-zinc-500 hover:text-white transition-colors'
+          type='button'
         >
           {t.common?.cancel || 'Cancel'}
         </button>

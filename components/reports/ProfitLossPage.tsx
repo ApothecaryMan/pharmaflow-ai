@@ -1,5 +1,4 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
@@ -7,21 +6,15 @@ import { useSettings } from '../../context';
 import { dateRangeService } from '../../services/financials/dateRangeService';
 import { financialService } from '../../services/financials/financialService';
 import { useAuthStore } from '../../stores/authStore';
-import type {
-  CategoryFinancialReport,
-  DailyFinancialData,
-  FinancialReport,
-} from '../../types/intelligence';
-import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import type { CategoryFinancialReport, FinancialReport } from '../../types/intelligence';
+import { formatCurrencyParts } from '../../utils/currency';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ChartWidget } from '../common/ChartWidget';
-import { Icons } from '../common/Icons';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { TanStackTable } from '../common/TanStackTable';
-import { DashboardPageSkeleton } from '../intelligence/common/IntelligenceSkeletons';
 
 const categoryHelper = createColumnHelper<CategoryFinancialReport>();
 
@@ -39,7 +32,7 @@ export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = 
   t,
   language = 'ar',
 }) => {
-  const { theme } = useSettings();
+  const { theme: _theme } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const [report, setReport] = useState<FinancialReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,7 +94,7 @@ export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = 
         abortControllerRef.current.abort();
       }
     };
-  }, [period, activeBranchId]);
+  }, [period, activeBranchId, report]);
 
   const categoryColumns = useMemo(
     () => [
@@ -368,10 +361,11 @@ export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = 
           }
           if (period === 'last_3_months') {
             const [yyyy, mm, w] = val.split('-');
-            const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(
-              locale,
-              { month: 'short' }
-            );
+            const monthName = new Date(
+              parseInt(yyyy, 10),
+              parseInt(mm, 10) - 1,
+              1
+            ).toLocaleDateString(locale, { month: 'short' });
             return `${monthName} ${w.replace('W', language === 'ar' ? 'أسبوع ' : 'W')}`;
           }
           const date = new Date(val);
@@ -385,10 +379,11 @@ export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = 
           }
           if (period === 'last_3_months') {
             const [yyyy, mm, w] = val.split('-');
-            const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(
-              locale,
-              { month: 'long', year: 'numeric' }
-            );
+            const monthName = new Date(
+              parseInt(yyyy, 10),
+              parseInt(mm, 10) - 1,
+              1
+            ).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
             return `${language === 'ar' ? 'الأسبوع' : 'Week'} ${w.replace('W', '')} - ${monthName}`;
           }
           const date = new Date(val);
@@ -413,24 +408,24 @@ const PLRow: React.FC<{
   isNegative?: boolean;
   isFinal?: boolean;
   isLoading?: boolean;
-}> = ({ label, value, isBold, isNegative, isFinal, isLoading }) => (
+}> = ({ label, value, isBold, isNegative: _isNegative, isFinal: _isFinal, isLoading }) => (
   <div
-    className={`flex items-center justify-between py-1 ${isBold ? 'font-bold py-2' : 'text-sm'} ${isFinal ? 'text-lg mt-2' : ''}`}
+    className={`flex items-center justify-between py-1 ${isBold ? 'font-bold py-2' : 'text-sm'} ${_isFinal ? 'text-lg mt-2' : ''}`}
   >
     <span
-      className={`${isBold ? 'text-gray-900 dark:text-white' : 'text-gray-500'} ${isFinal ? 'text-primary-600' : ''}`}
+      className={`${isBold ? 'text-gray-900 dark:text-white' : 'text-gray-500'} ${_isFinal ? 'text-primary-600' : ''}`}
     >
       {label}
     </span>
     <span
       className={`
       ${isBold ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}
-      ${isFinal ? 'text-2xl font-black' : ''}
+      ${_isFinal ? 'text-2xl font-black' : ''}
     `}
     >
       {isLoading ? (
         <div
-          className={`h-4 ${isFinal ? 'h-8 w-32' : 'w-20'} bg-gray-100 dark:bg-gray-800 rounded-md animate-pulse`}
+          className={`h-4 ${_isFinal ? 'h-8 w-32' : 'w-20'} bg-gray-100 dark:bg-gray-800 rounded-md animate-pulse`}
         />
       ) : (
         <CurrencyDisplay value={value} />

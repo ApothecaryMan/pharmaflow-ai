@@ -17,12 +17,10 @@
  */
 
 import { check, group, sleep } from 'k6';
-import { SharedArray } from 'k6/data';
 import http from 'k6/http';
 import { Counter, Rate, Trend } from 'k6/metrics';
 import {
   getHeaders,
-  SUPABASE_ANON_KEY,
   SUPABASE_REST_URL,
   SUPABASE_RPC_URL,
   TEST_DATA,
@@ -197,7 +195,7 @@ export function teardown(data) {
       console.log(`   Total units deducted: ${totalDeducted}`);
       console.log(`   Negative stock anomalies: ${anomalies}`);
       console.log(`   Result: ${anomalies === 0 ? '✅ CLEAN' : '❌ INTEGRITY FAILURE'}`);
-    } catch (e) {
+    } catch (_e) {
       console.warn('⚠️ Could not verify post-test stock');
     }
   }

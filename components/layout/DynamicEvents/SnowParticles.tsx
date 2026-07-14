@@ -10,7 +10,8 @@ export const SnowParticles: React.FC<SnowParticlesProps> = ({ id }) => {
     <div key={id} className='absolute inset-0 overflow-hidden pointer-events-none'>
       {[...Array(30)].map((_, i) => (
         <motion.div
-          key={i}
+          // biome-ignore lint/suspicious/noArrayIndexKey: particles have no stable id
+          key={`snow-${i}`}
           initial={{ top: '-10%', left: `${Math.random() * 100}%`, opacity: 0 }}
           animate={{
             top: '110vh',

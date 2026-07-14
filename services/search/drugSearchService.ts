@@ -90,7 +90,7 @@ export class DrugSearchEngine {
    * O(1) Incremental Removal.
    */
   public removeItem(id: string) {
-    const item = this.idMap.get(id);
+    const _item = this.idMap.get(id);
     this.idMap.delete(id);
     this.nameSearchKeys.delete(id);
     this.ingredientSearchKeys.delete(id);
@@ -295,8 +295,8 @@ export class DrugSearchEngine {
       // Both start with or both include -> Sort by Item Rank first
       const rankA = parseInt(((a as any).itemRank as string) || '999999', 10);
       const rankB = parseInt(((b as any).itemRank as string) || '999999', 10);
-      const valA = isNaN(rankA) ? 999999 : rankA;
-      const valB = isNaN(rankB) ? 999999 : rankB;
+      const valA = Number.isNaN(rankA) ? 999999 : rankA;
+      const valB = Number.isNaN(rankB) ? 999999 : rankB;
 
       if (valA !== valB) {
         return valA - valB;

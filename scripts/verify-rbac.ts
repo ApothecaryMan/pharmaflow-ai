@@ -1,6 +1,6 @@
 import { type MenuItem, PHARMACY_MENU } from '../config/menuData.ts';
 import { PAGE_REGISTRY } from '../config/pageRegistry.ts';
-import { PermissionAction, ROLE_PERMISSIONS } from '../config/permissions.ts';
+import { ROLE_PERMISSIONS } from '../config/permissions.ts';
 
 // 1. Extract Defined Permissions
 const DEFINED_PERMISSIONS = new Set<string>();

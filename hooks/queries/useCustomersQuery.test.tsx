@@ -1,11 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Customer, Sale } from '../../types';
-import * as useSalesQuery from './useSalesQuery';
-import * as useCustomersQuery from './useCustomersQuery';
 import { useCustomers } from './useCustomersQuery';
-
-import { useQuery } from '@tanstack/react-query';
+import * as useSalesQuery from './useSalesQuery';
 
 // Mock the internal hook since it's exported from the same file, we can spy on it
 // Or better yet, mock React Query
@@ -24,14 +22,26 @@ describe('useCustomers (Enrichment Logic)', () => {
   ];
 
   const mockSales: Sale[] = [
-    { id: 's1', customerCode: 'CUST-001', branchId: 'branch-1', total: 100, date: '2026-07-01T10:00:00Z' } as Sale,
-    { id: 's2', customerCode: 'CUST-001', branchId: 'branch-1', total: 50, date: '2026-07-02T10:00:00Z' } as Sale,
+    {
+      id: 's1',
+      customerCode: 'CUST-001',
+      branchId: 'branch-1',
+      total: 100,
+      date: '2026-07-01T10:00:00Z',
+    } as Sale,
+    {
+      id: 's2',
+      customerCode: 'CUST-001',
+      branchId: 'branch-1',
+      total: 50,
+      date: '2026-07-02T10:00:00Z',
+    } as Sale,
     // CUST-002 has no sales
   ];
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock useQuery for useRawCustomers
     (useQuery as any).mockReturnValue({
       data: mockCustomers,

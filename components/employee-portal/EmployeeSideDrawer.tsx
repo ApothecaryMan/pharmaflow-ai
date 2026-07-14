@@ -30,7 +30,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
   t,
   requestsCount,
 }) => {
-  const { theme, setTheme, setLanguage } = useSettings();
+  const { theme: _theme, setTheme: _setTheme, setLanguage: _setLanguage } = useSettings();
   const isRTL = language === 'AR';
   const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = React.useState(false);
@@ -100,8 +100,11 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
     <>
       <div
         ref={overlayRef}
+        role="button"
+        tabIndex={0}
         className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}
       />
 
       <div
@@ -126,6 +129,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
             <button
               onClick={onClose}
               className='flex items-center justify-center w-10 h-10 text-(--text-tertiary) hover:text-(--text-primary) transition-colors shrink-0'
+              type='button'
             >
               <Menu size='var(--icon-navbar-mobile)' />
             </button>
@@ -146,6 +150,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
                       ? 'bg-white dark:bg-white/10 text-(--text-primary) shadow-xs'
                       : 'text-(--text-secondary) hover:text-(--text-primary)'
                   }`}
+                  type='button'
                 >
                   <item.icon className='w-5 h-5' />
                   <span className='flex-1 text-start truncate'>{item.label}</span>
@@ -173,6 +178,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
               onClick={handleSignOut}
               disabled={isLoggingOut}
               className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-red-500 dark:disabled:hover:text-red-400 rounded-lg flex items-center justify-center gap-2 transition-colors'
+              type='button'
             >
               {isLoggingOut ? (
                 <Loader2 className='w-4 h-4 animate-spin' />
@@ -216,13 +222,14 @@ const SettingsToggle: React.FC<{
 // LanguageToggle sub-component
 // ---------------------------------------------------------------------------
 
-const LanguageToggle: React.FC<{ isRTL: boolean; t: Translations }> = ({ isRTL, t }) => {
+const LanguageToggle: React.FC<{ isRTL: boolean; t: Translations }> = ({ isRTL: _isRTL, t }) => {
   const { language: currentLang, setLanguage } = useSettings();
 
   return (
     <button
       onClick={() => setLanguage(currentLang === 'AR' ? 'EN' : 'AR')}
       className='w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-(--text-secondary) hover:text-(--text-primary) transition-all'
+      type='button'
     >
       <span className='flex items-center gap-3'>
         <Globe className='w-5 h-5' />

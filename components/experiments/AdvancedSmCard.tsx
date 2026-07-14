@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-} from 'recharts';
+import { Area, AreaChart, Bar, BarChart, Cell, ResponsiveContainer, XAxis } from 'recharts';
 import { CARD_BASE } from '../../utils/themeStyles';
 
 import { ExpandedChartModal } from './ExpandedChartModal'; // Import the new modal
@@ -147,7 +138,10 @@ export const MicroSegmentedProgressCard = ({
 // 2. Sparkline Card (Area Chart)
 export const SparklineCard = ({ title, value, data, color, onClick }: any) => (
   <div
+    role="button"
+    tabIndex={0}
     onClick={onClick}
+    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
     className={`p-0 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 relative overflow-hidden flex flex-col cursor-pointer transition-transform active:scale-[0.98] group`}
   >
     <div className='absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity'>
@@ -193,7 +187,8 @@ export const BarChartCard = ({ title, value, data, color }: any) => (
       <ResponsiveContainer width='100%' height='100%'>
         <BarChart data={data}>
           <Bar dataKey='value' radius={[4, 4, 0, 0]}>
-            {data.map((entry: any, index: number) => (
+            {data.map((_entry: any, index: number) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: recharts Cell needs index for animation
               <Cell key={`cell-${index}`} fill={color} />
             ))}
           </Bar>
@@ -204,7 +199,7 @@ export const BarChartCard = ({ title, value, data, color }: any) => (
 );
 
 // 5. Action Card
-export const ActionCard = ({ title, icon, color, actionLabel }: any) => (
+export const ActionCard = ({ title, icon, color: _color, actionLabel }: any) => (
   <div
     className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 flex flex-col items-center justify-center text-center group cursor-pointer border border-transparent hover:border-primary-200 dark:hover:border-primary-800`}
   >
@@ -243,7 +238,8 @@ const IconGridCard = ({ items }: any) => (
   <div className={`p-4 rounded-3xl ${CARD_BASE} h-36 grid grid-cols-2 gap-2`}>
     {items.map((item: any, idx: number) => (
       <div
-        key={idx}
+        // biome-ignore lint/suspicious/noArrayIndexKey: items may share labels
+        key={`${item.label}-${idx}`}
         className='flex flex-col items-center justify-center p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer text-center'
       >
         <span className={`material-symbols-rounded text-xl mb-1 text-${item.color}-500`}>
@@ -259,7 +255,11 @@ const IconGridCard = ({ items }: any) => (
 
 // === Main Component ===
 
-export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({ color, t, language }) => {
+export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({
+  color: _color,
+  t: _t,
+  language,
+}) => {
   const isRTL = language === 'AR';
 
   const [testProgress, setTestProgress] = React.useState(20);

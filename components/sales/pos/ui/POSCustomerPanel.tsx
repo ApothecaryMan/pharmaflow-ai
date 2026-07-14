@@ -76,9 +76,9 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
     return customers.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
-        (c.code && c.code.toLowerCase().includes(q)) ||
-        (c.phone && c.phone.toLowerCase().includes(q)) ||
-        (c.streetAddress && c.streetAddress.toLowerCase().includes(q))
+        c.code?.toLowerCase().includes(q) ||
+        c.phone?.toLowerCase().includes(q) ||
+        c.streetAddress?.toLowerCase().includes(q)
     );
   }, [customers, customerListSearch]);
 
@@ -179,13 +179,14 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
 
           <div className='flex flex-col gap-2 min-w-[140px]'>
             <div className='flex items-center justify-between gap-2'>
-              <label className='block text-xs font-bold text-gray-400 uppercase'>
+              <span className='block text-xs font-bold text-gray-400 uppercase'>
                 {t.paymentMethod}
-              </label>
+              </span>
               <button
                 onClick={clearCustomerSelection}
                 className='text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-5 h-5 rounded-md'
                 title={t.changeCustomer}
+                type='button'
               >
                 <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                   close
@@ -205,9 +206,9 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
         // Search Inputs
         <div className='flex flex-col sm:flex-row gap-3'>
           <div className='flex-1 relative' onBlur={customerDropdownHook.handleBlur}>
-            <label className='block text-xs font-bold text-gray-400 uppercase mb-1'>
+            <span className='block text-xs font-bold text-gray-400 uppercase mb-1'>
               {t.customerInfo}
-            </label>
+            </span>
             <SearchInput
               value={customerName}
               onSearchChange={(val) => {
@@ -245,9 +246,9 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
 
           <div className='flex flex-col gap-2 min-w-[140px]'>
             <div className='flex items-center justify-between h-5'>
-              <label className='block text-xs font-bold text-gray-400 uppercase'>
+              <span className='block text-xs font-bold text-gray-400 uppercase'>
                 {t.paymentMethod}
-              </label>
+              </span>
             </div>
             <SegmentedControl
               value={paymentMethod}
@@ -296,6 +297,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
                     setCustomerListSearch('');
                   }}
                   className='w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-start border-b border-gray-100 dark:border-gray-800 last:border-0'
+                  type='button'
                 >
                   <div className='h-9 min-w-9 px-1.5 rounded-lg bg-primary-100 dark:bg-primary-700 flex items-center justify-center text-primary-600 dark:text-primary-100 shrink-0'>
                     <span className='text-xl font-mono font-bold'>

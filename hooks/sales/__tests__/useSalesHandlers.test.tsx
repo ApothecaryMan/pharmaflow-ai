@@ -6,10 +6,9 @@ const { mockSuccess, mockError } = vi.hoisted(() => ({
   mockError: vi.fn(),
 }));
 
-import { useAlert } from '../../../context';
 import { permissionsService } from '../../../services/auth/permissionsService';
-import { type SaleData, useSalesHandlers } from '../useSalesHandlers';
 import type { Drug, Employee, Sale, Shift, StockBatch } from '../../../types';
+import { type SaleData, useSalesHandlers } from '../useSalesHandlers';
 
 vi.mock('../../../context', () => ({
   useAlert: vi.fn().mockReturnValue({
@@ -64,10 +63,18 @@ vi.mock('../../../utils/monitoring', () => ({
 }));
 
 const mockEmployee: Employee = {
-  id: 'emp1', name: 'Test Admin', role: 'admin',
-  email: '', phone: '', branchId: 'B1', orgId: 'O1',
-  employeeCode: 'EMP-001', position: 'Pharmacist', department: 'pharmacy',
-  startDate: '2024-01-01', status: 'active',
+  id: 'emp1',
+  name: 'Test Admin',
+  role: 'admin',
+  email: '',
+  phone: '',
+  branchId: 'B1',
+  orgId: 'O1',
+  employeeCode: 'EMP-001',
+  position: 'Pharmacist',
+  department: 'pharmacy',
+  startDate: '2024-01-01',
+  status: 'active',
 };
 
 const defaultProps = {
@@ -150,7 +157,8 @@ describe('useSalesHandlers — handleCompleteSale', () => {
   it('rejects when sale data validation fails', async () => {
     const { validateSaleData } = await import('../../../utils/validation');
     (validateSaleData as any).mockReturnValueOnce({
-      success: false, message: 'Cart is empty',
+      success: false,
+      message: 'Cart is empty',
     });
 
     const { result } = renderHook(() => useSalesHandlers(defaultProps));
@@ -164,7 +172,8 @@ describe('useSalesHandlers — handleCompleteSale', () => {
 
   it('rejects when transaction time is invalid', async () => {
     defaultProps.validateTransactionTime.mockReturnValueOnce({
-      valid: false, message: 'Outside business hours',
+      valid: false,
+      message: 'Outside business hours',
     });
 
     const { result } = renderHook(() => useSalesHandlers(defaultProps));

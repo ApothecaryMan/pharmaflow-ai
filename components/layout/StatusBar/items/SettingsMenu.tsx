@@ -8,11 +8,10 @@ import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useAuthStore } from '../../../../stores/authStore';
-import type { Language } from '../../../../types';
+import { PillSlider } from '../../../common/PillSlider';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { Tooltip } from '../../../common/Tooltip';
-import { PillSlider } from '../../../common/PillSlider';
 import { StatusBarItem } from '../StatusBarItem';
 
 // --- Module-level Style Constants ---
@@ -31,10 +30,13 @@ const SettingsRow = React.memo<{
   onClick?: () => void;
 }>(({ icon, label, children, className = '', onClick }) => (
   <div
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
     className={`flex items-center justify-between transition-colors px-2 ${
       onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
     } ${className}`}
     onClick={onClick}
+    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
   >
     <div className='flex items-center gap-2'>
       <span
@@ -89,9 +91,9 @@ const SubmenuWrapper = React.memo<{
         style={isMobile ? undefined : desktopStyle}
       >
         {title && (
-          <label className='text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1'>
+          <span className='text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1'>
             {title}
-          </label>
+          </span>
         )}
         {children}
       </div>
@@ -175,8 +177,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   dropDirection = 'up',
   showTrigger = true,
   align = 'start',
-  triggerVariant = 'statusBar',
-  triggerSize = 24,
+  triggerVariant: _triggerVariant = 'statusBar',
+  triggerSize: _triggerSize = 24,
   defaultOpen = false,
   onClose,
   onNavigate,
@@ -218,8 +220,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setModalPresentationMode,
     sidebarModalWidth,
     setSidebarModalWidth,
-    customCardCss,
-    setCustomCardCss,
+    customCardCss: _customCardCss,
+    setCustomCardCss: _setCustomCardCss,
     enableCustomCardCss,
     setEnableCustomCardCss,
     hideInactiveModules,
@@ -366,11 +368,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   return (
     <div
-      className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`}
+      className={`relative ${showTrigger && _triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`}
       ref={dropdownRef}
     >
       {showTrigger &&
-        (triggerVariant === 'statusBar' ? (
+        (_triggerVariant === 'statusBar' ? (
           <StatusBarItem
             icon='settings'
             tooltip={t.settings}
@@ -381,6 +383,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           <button
             onClick={() => setIsOpen(!isOpen)}
             className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-primary) opacity-85 hover:opacity-100'}`}
+            type='button'
           >
             <span className='material-symbols-rounded' style={iconFontSizeStyle}>
               settings
@@ -392,11 +395,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         <>
           {isMobile && (
             <div
+              role="button"
+              tabIndex={0}
               className='fixed inset-0 bg-black/40 z-140 '
               onClick={() => {
                 setIsOpen(false);
                 onClose?.();
               }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(false); onClose?.(); } }}
             />
           )}
           <div className={menuContainerClasses}>
@@ -527,7 +533,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       setIsOpen(false);
                     }}
                   >
-                    <div onClick={(e) => e.stopPropagation()}>
+                    <div role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
                       <Switch
                         checked={enableCustomCardCss}
                         onChange={setEnableCustomCardCss}
@@ -590,6 +596,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             ? 'border-(--primary-500) bg-(--primary-500)/10'
                             : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
                         }`}
+                        type='button'
                       >
                         <div
                           className={`w-10 h-10 rounded-md overflow-hidden ${p !== 'none' ? `bg-pattern-${p}` : 'border border-dashed border-(--border-divider)'}`}
@@ -940,12 +947,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 isMobile={isMobile}
               >
                 <div className='space-y-1'>
-                  <label className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
+                  <span className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
                     <span className='material-symbols-rounded' style={iconFontSizeStyle}>
                       text_fields
                     </span>
                     {t.fontEN}
-                  </label>
+                  </span>
                   <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
                     {AVAILABLE_FONTS_EN.map((f) => (
                       <button
@@ -953,6 +960,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         onClick={() => setFontFamilyEN(f.value)}
                         className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyEN === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`}
                         style={{ fontFamily: f.value }}
+                        type='button'
                       >
                         {f.label}
                       </button>
@@ -960,12 +968,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   </div>
                 </div>
                 <div className='space-y-1'>
-                  <label className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
+                  <span className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
                     <span className='material-symbols-rounded' style={iconFontSizeStyle}>
                       translate
                     </span>
                     {t.fontAR}
-                  </label>
+                  </span>
                   <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
                     {AVAILABLE_FONTS_AR.map((f) => (
                       <button
@@ -973,6 +981,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         onClick={() => setFontFamilyAR(f.value)}
                         className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyAR === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`}
                         style={{ fontFamily: f.value }}
+                        type='button'
                       >
                         {f.label}
                       </button>
@@ -1169,9 +1178,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
               {showTicker !== undefined && (
                 <div className='space-y-1'>
-                  <label className='text-[10px] font-bold uppercase text-(--text-tertiary)'>
+                  <span className='text-[10px] font-bold uppercase text-(--text-tertiary)'>
                     {t.statusBarSettings}
-                  </label>
+                  </span>
                   <SettingsRow icon='notifications' label={t.showNotificationBell}>
                     <Switch
                       checked={showNotificationBell ?? true}
@@ -1194,7 +1203,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       label={t.quickStatuses}
                       onClick={() => showTicker && toggleSubmenu('status')}
                     >
-                      <div onClick={(e) => e.stopPropagation()}>
+                      <div role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
                         <Switch
                           checked={showTicker || false}
                           onChange={setShowTicker}

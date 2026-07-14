@@ -84,7 +84,7 @@ console.log('Running Search Logic Tests...\n');
 let passed = 0;
 let failed = 0;
 
-testCases.forEach(({ term, target, expected, desc }) => {
+testCases.forEach(({ term, target, expected, desc: _desc }) => {
   const { regex } = parseSearchTerm(term);
   const result = regex.test(target);
   const status = result === expected ? 'PASS' : 'FAIL';

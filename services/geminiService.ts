@@ -236,7 +236,7 @@ export const analyzeDrugInteraction = async (
 ): Promise<string> => {
   try {
     return await callAI('analyzeDrugInteraction', { drugName, context });
-  } catch (error) {
+  } catch (_error) {
     return "Sorry, I couldn't retrieve the drug information right now.";
   }
 };
@@ -244,7 +244,7 @@ export const analyzeDrugInteraction = async (
 export const generateHealthTip = async (): Promise<string> => {
   try {
     return await callAI('generateHealthTip', {});
-  } catch (e) {
+  } catch (_e) {
     return 'Health is wealth.';
   }
 };

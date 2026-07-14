@@ -1,4 +1,4 @@
-import { emit, listen } from '@tauri-apps/api/event';
+import { emit } from '@tauri-apps/api/event';
 import { useEffect, useMemo, useRef } from 'react';
 import { useSettings } from '../../context';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';

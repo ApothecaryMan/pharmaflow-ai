@@ -144,8 +144,7 @@ export const printViaIframe = (html: string): void => {
   };
 
   // Wait for all fonts (local and Google Fonts) to load before printing
-  const ready =
-    (contentWindow.document.fonts && contentWindow.document.fonts.ready) || Promise.resolve();
+  const ready = contentWindow.document.fonts?.ready || Promise.resolve();
   Promise.all([
     ready,
     new Promise((resolve) => setTimeout(resolve, 200)), // Small extra tick to guarantee rendering

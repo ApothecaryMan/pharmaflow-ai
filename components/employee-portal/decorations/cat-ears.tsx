@@ -1,6 +1,7 @@
 export function CatEars() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Cat ears</title>
       <style>{`
         @keyframes cat-twitch-left { 0%, 90%, 94%, 98%, 100% { transform: rotate(0deg); } 92%, 96% { transform: rotate(-5deg) scaleY(0.96); } }
         @keyframes cat-twitch-right { 0%, 86%, 90%, 94%, 100% { transform: rotate(0deg); } 88%, 92% { transform: rotate(5deg) scaleY(0.96); } }

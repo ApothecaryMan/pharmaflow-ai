@@ -1,5 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authService } from '../../services/auth/authService';
 import { Login } from './Login';
@@ -55,8 +54,15 @@ describe('Login Component', () => {
   });
 
   it('handles successful login and redirect', async () => {
-    const mockUser = { id: 'u1', name: 'User' };
-    (authService.login as any).mockResolvedValue(mockUser);
+    const mockUser = {
+      userId: 'u1',
+      employeeName: 'User',
+      username: 'admin',
+      branchId: 'b1',
+      department: 'sales' as const,
+      role: 'admin' as const,
+    };
+    vi.mocked(authService.login).mockResolvedValue(mockUser);
     const onViewChange = vi.fn();
     const onLoginSuccess = vi.fn();
 
@@ -85,7 +91,7 @@ describe('Login Component', () => {
   });
 
   it('handles login failure', async () => {
-    (authService.login as any).mockResolvedValue(null); // Invalid credentials
+    vi.mocked(authService.login).mockResolvedValue(null); // Invalid credentials
 
     render(<Login />);
 

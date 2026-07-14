@@ -60,7 +60,7 @@ export const parsePriceRange = (
 
   const a = parseFloat(match[1]);
   const b = parseFloat(match[2]);
-  if (isNaN(a) || isNaN(b)) return null;
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
 
   return {
     minPrice: Math.min(a, b),

@@ -85,7 +85,7 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
     setValidationError(null);
 
     const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount)) {
+    if (Number.isNaN(parsedAmount)) {
       setValidationError(t.expenses.validation.amountRequired);
       return;
     }

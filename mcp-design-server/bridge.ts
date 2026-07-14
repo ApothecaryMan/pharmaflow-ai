@@ -1,4 +1,4 @@
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import type { ThemeState } from './state.js';
 
 export type BroadcastFn = (state: ThemeState) => void;

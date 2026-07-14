@@ -1,6 +1,7 @@
 export function SakuraBlossomWind() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Sakura blossom wind</title>
       <g opacity='0.95'>
         <path
           d='M 16,110 C 64,130 110,96 122,56'

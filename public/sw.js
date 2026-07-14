@@ -3,7 +3,7 @@
  * Enables offline functionality and caching for PWA
  */
 
-const CACHE_NAME = 'zinc-v2';
+const _CACHE_NAME = 'zinc-v2';
 const STATIC_CACHE = 'zinc-static-v2';
 const DYNAMIC_CACHE = 'zinc-dynamic-v2';
 
@@ -23,7 +23,7 @@ const STATIC_ASSETS = [
 ];
 
 // External resources to cache
-const EXTERNAL_ASSETS = [
+const _EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0',
   'https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap',
   'https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap',
@@ -38,7 +38,7 @@ self.addEventListener('install', (event) => {
       // Cache static assets, ignore failures for missing files
       return Promise.allSettled(
         STATIC_ASSETS.map((url) =>
-          cache.add(url).catch((err) => console.log(`[SW] Failed to cache: ${url}`))
+          cache.add(url).catch((_err) => console.log(`[SW] Failed to cache: ${url}`))
         )
       );
     })

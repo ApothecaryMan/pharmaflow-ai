@@ -70,7 +70,7 @@ const ProgressBar: React.FC<{
 
 export const QuotaMonitor: React.FC<QuotaMonitorProps> = ({
   metrics,
-  color = 'primary',
+  color: _color = 'primary',
   language,
   isLoading,
   onUpgrade,
@@ -136,6 +136,7 @@ export const QuotaMonitor: React.FC<QuotaMonitorProps> = ({
         <button
           onClick={(e) => onUpgrade?.(e.currentTarget.getBoundingClientRect())}
           className='relative group overflow-hidden text-xs font-bold uppercase tracking-wider px-8 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] dark:shadow-[0_10px_20px_-5px_rgba(255,255,255,0.1)]'
+          type='button'
         >
           {/* Subtle Shine Effect */}
           <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000' />

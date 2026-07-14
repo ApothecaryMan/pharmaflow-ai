@@ -94,8 +94,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
   show,
   onClose,
   helpContent,
-  color,
-  language,
+  color: _color,
+  language: _language,
 }) => {
   return (
     <Modal
@@ -154,7 +154,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                       </h4>
                       <ol className='space-y-1.5 list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 ml-1'>
                         {sectionData.steps?.map((step: string, i: number) => (
-                          <li key={i} className='leading-relaxed'>
+                          // biome-ignore lint/suspicious/noArrayIndexKey: steps have no stable id
+                          <li key={`${key}-step-${i}`} className='leading-relaxed'>
                             {step}
                           </li>
                         ))}
@@ -181,7 +182,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                 const parts = shortcut.split(':');
                 if (parts.length === 2) {
                   return (
-                    <div key={i} className='flex items-center gap-3'>
+                    // biome-ignore lint/suspicious/noArrayIndexKey: shortcuts have no stable id
+                    <div key={`shortcut-${i}`} className='flex items-center gap-3'>
                       <kbd className='px-3 py-1.5 bg-gradient-to-b from-white to-gray-100 dark:from-gray-700 dark:to-gray-800 border border-gray-200 dark:border-gray-600 border-b-[3px] rounded-lg text-sm font-mono font-extrabold text-indigo-700 dark:text-indigo-300 shadow-sm'>
                         {parts[0].trim()}
                       </kbd>
@@ -191,7 +193,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                     </div>
                   );
                 }
-                return <li key={i}>{shortcut}</li>;
+                // biome-ignore lint/suspicious/noArrayIndexKey: shortcuts have no stable id
+                return <li key={`shortcut-li-${i}`}>{shortcut}</li>;
               })}
             </div>
           </div>
@@ -210,7 +213,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
             <ul className='space-y-3 list-none'>
               {helpContent.visualCues.items?.map((item: string, i: number) => (
                 <li
-                  key={i}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: visual cues have no stable id
+                  key={`visual-cue-${i}`}
                   className='flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300'
                 >
                   <span className='material-symbols-rounded text-pink-500 text-lg mt-0.5'>
@@ -239,7 +243,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                 if (isQA) {
                   const [q, a] = tip.split(':');
                   return (
-                    <li key={i} className='bg-white/60 dark:bg-black/20 p-3 rounded-lg'>
+                    <li
+                      // biome-ignore lint/suspicious/noArrayIndexKey: troubleshooting items have no stable id
+                      key={`trouble-${i}`}
+                      className='bg-white/60 dark:bg-black/20 p-3 rounded-lg'
+                    >
                       <strong className='block text-amber-900 dark:text-amber-400 mb-1'>
                         {q.trim()}:
                       </strong>
@@ -248,7 +256,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                   );
                 }
                 return (
-                  <li key={i} className='flex items-start gap-2'>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: troubleshooting items have no stable id
+                  <li key={`trouble-alt-${i}`} className='flex items-start gap-2'>
                     <span className='text-amber-500 mt-1'>•</span>
                     <span className='leading-relaxed'>{tip}</span>
                   </li>
@@ -296,7 +305,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                       </h4>
                       <ol className='space-y-1.5 list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 ml-3'>
                         {sectionData.steps?.map((step: string, i: number) => (
-                          <li key={i}>{step}</li>
+                          // biome-ignore lint/suspicious/noArrayIndexKey: steps have no stable id
+                          <li key={`${key}-step-${i}`}>{step}</li>
                         ))}
                       </ol>
                     </div>
@@ -317,7 +327,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
             </h3>
             <ul className='space-y-2 list-disc list-inside text-gray-700 dark:text-gray-300 text-sm columns-1 md:columns-2'>
               {helpContent.features.items.map((item: string, i: number) => (
-                <li key={i} className='leading-relaxed break-inside-avoid'>
+                // biome-ignore lint/suspicious/noArrayIndexKey: features have no stable id
+                <li key={`feature-${i}`} className='leading-relaxed break-inside-avoid'>
                   {item}
                 </li>
               ))}
@@ -337,7 +348,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
             <ul className='space-y-2 list-disc list-inside text-gray-700 dark:text-gray-300 text-sm mb-3'>
               {(helpContent.understanding.columns || helpContent.understanding.cards || []).map(
                 (item: string, i: number) => (
-                  <li key={i} className='leading-relaxed'>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: understanding items have no stable id
+                  <li key={`understanding-${i}`} className='leading-relaxed'>
                     {item}
                   </li>
                 )
@@ -368,7 +380,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({
             </h3>
             <ul className='space-y-2 list-disc list-inside text-gray-700 dark:text-gray-300 text-sm columns-1 md:columns-2'>
               {helpContent.tips.items.map((tip: string, i: number) => (
-                <li key={i} className='leading-relaxed break-inside-avoid'>
+                // biome-ignore lint/suspicious/noArrayIndexKey: tips have no stable id
+                <li key={`tip-${i}`} className='leading-relaxed break-inside-avoid'>
                   {tip}
                 </li>
               ))}

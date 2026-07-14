@@ -86,9 +86,9 @@ html[lang="ar"] nav {
 /* Adjust padding/height for Arabic Navigation to accommodate font weight/size */
 html[dir="rtl"] nav .main-nav-tab,
 html[lang="ar"] nav .main-nav-tab {
-  padding-top: 0.4rem !important;
-  padding-bottom: 0.4rem !important;
-  line-height: 1.5 !important;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  line-height: 1.5;
 }
 
 /* --- Contextual Typography Classes --- */
@@ -173,6 +173,6 @@ We force the variable update for these utility classes. */
 /* Force Arabic Bold Buttons - Using Full Firewall Stack */
 html[dir="rtl"] .font-bold,
 html[lang="ar"] .font-bold {
-  font-weight: 700 !important;
+  font-weight: 700;
   font-family: var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif;
 }

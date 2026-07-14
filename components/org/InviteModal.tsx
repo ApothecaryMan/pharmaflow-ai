@@ -71,9 +71,9 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, orgId
       {!inviteLink ? (
         <form onSubmit={handleSubmit} className='space-y-6'>
           <div className='space-y-2'>
-            <label className='text-[10px] font-black uppercase tracking-widest text-zinc-400'>
+            <span className='text-[10px] font-black uppercase tracking-widest text-zinc-400'>
               {t.email}
-            </label>
+            </span>
             <SmartInput
               type='email'
               value={email}
@@ -84,9 +84,9 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, orgId
           </div>
 
           <div className='space-y-2'>
-            <label className='text-[10px] font-black uppercase tracking-widest text-zinc-400'>
+            <span className='text-[10px] font-black uppercase tracking-widest text-zinc-400'>
               {t.role}
-            </label>
+            </span>
             <div className='grid grid-cols-2 gap-2'>
               {ORG_ROLES.filter((r) => r.id !== 'owner').map((r) => {
                 const roleLabel = getRoleLabel(r.id, tParents);
@@ -132,6 +132,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, orgId
             <button
               onClick={copyToClipboard}
               className='px-3 py-1 bg-primary-600 text-white rounded-lg text-[10px] font-bold shrink-0'
+              type='button'
             >
               {copied ? t.copied : t.copy}
             </button>
@@ -140,6 +141,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, orgId
           <button
             onClick={reset}
             className='text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'
+            type='button'
           >
             {language === 'AR' ? 'إغلاق' : 'Close'}
           </button>

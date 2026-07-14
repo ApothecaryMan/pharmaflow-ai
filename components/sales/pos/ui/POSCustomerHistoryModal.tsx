@@ -3,11 +3,10 @@ import { ar } from 'date-fns/locale/ar';
 import { enUS } from 'date-fns/locale/en-US';
 import React, { useMemo, useState } from 'react';
 import type { CartItem, Customer, Language, Sale } from '../../../../types';
-import { formatCurrency, money, pricing } from '../../../../utils/currency';
+import { formatCurrency, pricing } from '../../../../utils/currency';
 import { getDisplayName } from '../../../../utils/drugDisplayName';
 import { MaterialTabs } from '../../../common/MaterialTabs';
 import { Modal } from '../../../common/Modal';
-import { SegmentedControl } from '../../../common/SegmentedControl';
 
 interface POSCustomerHistoryModalProps {
   isOpen: boolean;
@@ -23,9 +22,9 @@ interface POSCustomerHistoryModalProps {
 export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = ({
   isOpen,
   onClose,
-  customer,
+  customer: _customer,
   sales,
-  color,
+  color: _color,
   t,
   language,
   onAddToCart,
@@ -44,11 +43,11 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
 
   // Filter sales for this customer
   const customerSales = useMemo(() => {
-    if (!customer) return [];
+    if (!_customer) return [];
     return sales
-      .filter((s) => s.customerCode === customer.code)
+      .filter((s) => s.customerCode === _customer.code)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [customer, sales]);
+  }, [_customer, sales]);
 
   // Aggregate favorite drugs by frequency of orders
   const favoriteDrugs = useMemo(() => {
@@ -82,7 +81,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
     return Object.values(counts).sort((a, b) => b.frequency - a.frequency);
   }, [customerSales]);
 
-  if (!customer) return null;
+  if (!_customer) return null;
 
   return (
     <Modal
@@ -118,11 +117,11 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                 </span>
               </div>
               <div className='flex flex-col min-w-0 truncate'>
-                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
+                <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
                   {t.customer || 'Customer'}
-                </label>
+                </span>
                 <h3 className='text-[15px] font-black text-zinc-900 dark:text-zinc-100 leading-none truncate'>
-                  {customer.name}
+                  {_customer.name}
                 </h3>
               </div>
             </div>
@@ -133,20 +132,20 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                 {language === 'AR' ? 'كود العميل' : 'CUSTOMER CODE'}
               </div>
               <div className='text-3xl font-black text-zinc-900 dark:text-zinc-100 font-mono tracking-tighter leading-none'>
-                {customer.code}
+                {_customer.code}
               </div>
             </div>
 
             {/* Right: Phone */}
             <div className='flex flex-col items-end w-1/3'>
-              <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
+              <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
                 {t.phone || 'Phone'}
-              </label>
+              </span>
               <span
                 className='text-xs font-bold text-zinc-600 dark:text-zinc-400 font-mono'
                 dir='ltr'
               >
-                {customer.phone || '---'}
+                {_customer.phone || '---'}
               </span>
             </div>
           </div>
@@ -255,7 +254,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                           <div className='bg-white dark:bg-zinc-950/40 rounded-lg border border-zinc-100 dark:border-zinc-800/50 p-1 space-y-0.5'>
                             {sale.items.map((item, idx) => (
                               <div
-                                key={idx}
+                                key={`${item.id || idx}`}
                                 className='flex items-center justify-between text-[11px] py-1.5 px-2 border-b border-zinc-50 dark:border-zinc-900/50 last:border-0'
                               >
                                 <div className='flex flex-col'>
@@ -378,6 +377,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                               onAddToCart(item.internalCode || item.barcode || item.id)
                             }
                             className='flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 transition-all shadow-sm'
+                            type='button'
                           >
                             <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                               add_shopping_cart

@@ -1,6 +1,7 @@
 export function FeatheryWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Feathery wings</title>
       <g opacity='0.85'>
         <path
           d='M6,66 C-6,48 -4,26 8,10 Q12,4 18,8 Q16,18 14,28 Q20,16 28,12 Q32,10 34,16 Q28,26 22,36 Q30,24 38,20 Q42,18 42,24 Q34,36 26,48 Q18,58 10,66Z'

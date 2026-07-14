@@ -1,8 +1,7 @@
-import React from 'react';
-
 export function EtherealSpiritDragons() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Ethereal spirit dragons</title>
       <style>{`
         @keyframes esd-spin { 100% { transform: rotate(360deg); } }
         @keyframes esd-tail { 0%, 100% { opacity: 0.8; stroke-width: 4; } 50% { opacity: 0.3; stroke-width: 1; } }

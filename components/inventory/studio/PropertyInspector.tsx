@@ -62,8 +62,8 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
   filteredDrugs,
   showPairedPreview,
   setShowPairedPreview,
-  showPrintBorders,
-  setShowPrintBorders,
+  showPrintBorders: _showPrintBorders,
+  setShowPrintBorders: _setShowPrintBorders,
   printOffsetX,
   setPrintOffsetX,
   printOffsetY,
@@ -116,9 +116,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
             >
               {inventory.length > 1 && (
                 <div>
-                  <label className='text-xs font-bold text-gray-500 uppercase block mb-2'>
+                  <span className='text-xs font-bold text-gray-500 uppercase block mb-2'>
                     {t.selectProduct}
-                  </label>
+                  </span>
                   <div className='relative'>
                     <SearchInput
                       value={searchTerm}
@@ -132,7 +132,10 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         {filteredDrugs.map((d) => (
                           <div
                             key={d.id}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => onSelectDrug(d)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectDrug(d); } }}
                             className='p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-sm'
                           >
                             {d.name}
@@ -156,9 +159,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
 
               <div className='pt-2 space-y-3'>
                 <div>
-                  <label className='text-xs font-bold text-gray-500 uppercase block mb-2'>
+                  <span className='text-xs font-bold text-gray-500 uppercase block mb-2'>
                     Printer Language
-                  </label>
+                  </span>
                   <FilterDropdown
                     items={[
                       { id: 'html', name: 'HTML (Standard)' },
@@ -193,7 +196,10 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                   />
                 </div>
                 <div>
-                  <label className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-muted rounded-xl border border-gray-100 dark:border-border hover:bg-gray-100 dark:hover:bg-accent transition-colors'>
+                  <label
+                    htmlFor='field-195'
+                    className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-muted rounded-xl border border-gray-100 dark:border-border hover:bg-gray-100 dark:hover:bg-accent transition-colors'
+                  >
                     <input
                       type='checkbox'
                       checked={showPairedPreview}
@@ -292,6 +298,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     ? 'bg-gray-100 dark:bg-muted text-gray-400 cursor-not-allowed'
                     : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40`
                 }`}
+                type='button'
               >
                 <span className='material-symbols-rounded text-sm'>restart_alt</span>
                 {t.printSettings.resetCalibration}
@@ -350,9 +357,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
             <>
               <div className='grid grid-cols-2 gap-3'>
                 <div className='space-y-1.5'>
-                  <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                  <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                     {t.inspector.x}
-                  </label>
+                  </span>
                   <div className='relative'>
                     <input
                       type='number'
@@ -365,9 +372,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                   </div>
                 </div>
                 <div className='space-y-1.5'>
-                  <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                  <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                     {t.inspector.y}
-                  </label>
+                  </span>
                   <div className='relative'>
                     <input
                       type='number'
@@ -382,23 +389,23 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               </div>
               {(selectedElement.type === 'text' || selectedElement.type === 'barcode') && (
                 <div className='space-y-1.5'>
-                  <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                  <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                     {t.inspector.fontSize}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     inputMode='numeric'
                     value={selectedElement.fontSize}
-                    onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))}
+                    onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value, 10))}
                     className='w-full p-2 rounded-xl bg-gray-50 dark:bg-muted border border-gray-200 dark:border-border text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                   />
                 </div>
               )}
               {selectedElement.type === 'barcode' && (
                 <div className='mt-2'>
-                  <label className='text-[10px] font-bold text-gray-400 uppercase block mb-1'>
+                  <span className='text-[10px] font-bold text-gray-400 uppercase block mb-1'>
                     Barcode Style
-                  </label>
+                  </span>
                   <div className='p-2.5 rounded-xl bg-gray-50/50 dark:bg-muted/30 border border-gray-100 dark:border-border flex items-center gap-2'>
                     <span className='material-symbols-rounded text-base text-primary-500 dark:text-muted-foreground'>
                       barcode
@@ -411,9 +418,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               )}
               {selectedElement.type === 'text' && (
                 <div>
-                  <label className='text-[10px] font-bold text-gray-400 uppercase block mb-1'>
+                  <span className='text-[10px] font-bold text-gray-400 uppercase block mb-1'>
                     {t.inspector.fontWeight || 'Font Weight'}
-                  </label>
+                  </span>
                   <SegmentedControl
                     value={selectedElement.fontWeight || 'normal'}
                     onChange={(val) => handlePropertyChange('fontWeight', val)}
@@ -427,9 +434,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               )}
               {selectedElement.type === 'text' && !selectedElement.field && (
                 <div>
-                  <label className='text-[10px] font-bold text-gray-400 uppercase'>
+                  <span className='text-[10px] font-bold text-gray-400 uppercase'>
                     {t.inspector.content}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={selectedElement.content || ''}
@@ -442,9 +449,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               {(selectedElement.type === 'qrcode' || selectedElement.type === 'image') && (
                 <div className='grid grid-cols-2 gap-3'>
                   <div className='space-y-1.5'>
-                    <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                    <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                       {t.inspector.width}
-                    </label>
+                    </span>
                     <input
                       type='number'
                       inputMode='decimal'
@@ -454,9 +461,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     />
                   </div>
                   <div className='space-y-1.5'>
-                    <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                    <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                       {t.inspector.height}
-                    </label>
+                    </span>
                     <input
                       type='number'
                       inputMode='decimal'
@@ -470,9 +477,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
 
               <div className='space-y-3'>
                 <div className='space-y-2'>
-                  <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                  <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                     {t.inspector.align}
-                  </label>
+                  </span>
                   <SegmentedControl
                     value={selectedElement.align || 'center'}
                     onChange={(val) => handlePropertyChange('align', val)}
@@ -487,9 +494,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 </div>
                 {/* Rotation Toggle */}
                 <div className='space-y-2'>
-                  <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                  <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                     {t.inspector.rotate90}
-                  </label>
+                  </span>
                   <SegmentedControl
                     value={selectedElement.rotation || 0}
                     onChange={(val) => handlePropertyChange('rotation', val)}
@@ -502,9 +509,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 </div>
                 {selectedElement.type === 'barcode' && (
                   <div className='space-y-2'>
-                    <label className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
+                    <span className='text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1'>
                       {t.barcodeSource}
-                    </label>
+                    </span>
                     <SegmentedControl
                       value={barcodeSource}
                       onChange={(val) => setBarcodeSource(val as 'global' | 'internal')}
@@ -543,12 +550,14 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       }}
                       className='p-1 text-gray-400 hover:text-primary-500 transition-colors'
                       title='Reset Calibration'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-xs'>restart_alt</span>
                     </button>
                     <button
                       onClick={() => setShowHitboxCalibration(!showHitboxCalibration)}
                       className='p-1 text-gray-400 hover:text-primary-500 transition-colors'
+                      type='button'
                     >
                       <span
                         className={`material-symbols-rounded text-sm transform transition-transform ${showHitboxCalibration ? 'rotate-180' : ''}`}
@@ -564,7 +573,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       <div className='flex items-center justify-between text-[10px] text-gray-400 mb-1.5'>
                         <span className='uppercase tracking-wider'>OFFSET X</span>
                         <span className='font-mono text-gray-600 dark:text-gray-300'>
-                          {(selectedElement as any).hitboxOffsetX || 0 > 0 ? '+' : ''}
+                          {((selectedElement as any).hitboxOffsetX || 0) > 0 ? '+' : ''}
                           {((selectedElement as any).hitboxOffsetX || 0).toFixed(1)}
                         </span>
                       </div>
@@ -584,7 +593,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       <div className='flex items-center justify-between text-[10px] text-gray-400 mb-1.5'>
                         <span className='uppercase tracking-wider'>OFFSET Y</span>
                         <span className='font-mono text-gray-600 dark:text-gray-300'>
-                          {(selectedElement as any).hitboxOffsetY || 0 > 0 ? '+' : ''}
+                          {((selectedElement as any).hitboxOffsetY || 0) > 0 ? '+' : ''}
                           {((selectedElement as any).hitboxOffsetY || 0).toFixed(1)}
                         </span>
                       </div>
@@ -657,6 +666,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               <button
                 onClick={() => toggleVisibility(selectedElement.id)}
                 className='w-full py-2.5 bg-red-500/10 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white dark:hover:bg-red-500 dark:hover:text-white transition-all duration-300 border border-red-200 dark:border-red-500/30 shadow-sm active:scale-95'
+                type='button'
               >
                 {t.inspector.remove}
               </button>

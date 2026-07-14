@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * ZINC Version Bumper
@@ -32,12 +32,12 @@ function bumpVersion() {
     const lastPartIndex = versionParts.length - 1;
     const lastPart = versionParts[lastPartIndex];
 
-    if (isNaN(Number(lastPart))) {
+    if (Number.isNaN(Number(lastPart))) {
       console.error(`❌ Error: Last part of version "${lastPart}" is not a number.`);
       process.exit(1);
     }
 
-    const newLastPart = (parseInt(lastPart) + 1).toString().padStart(lastPart.length, '0');
+    const newLastPart = (parseInt(lastPart, 10) + 1).toString().padStart(lastPart.length, '0');
     versionParts[lastPartIndex] = newLastPart;
     const newVersion = versionParts.join('.');
 
@@ -45,24 +45,24 @@ function bumpVersion() {
 
     // 2. Update package.json
     pkg.version = newVersion;
-    fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + '\n');
+    fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
     console.log('✅ Updated package.json');
 
     // 3. Update package-lock.json
     if (fs.existsSync(packageLockPath)) {
       const lock = JSON.parse(fs.readFileSync(packageLockPath, 'utf8'));
       lock.version = newVersion;
-      if (lock.packages && lock.packages['']) {
+      if (lock.packages?.['']) {
         lock.packages[''].version = newVersion;
       }
-      fs.writeFileSync(packageLockPath, JSON.stringify(lock, null, 2) + '\n');
+      fs.writeFileSync(packageLockPath, `${JSON.stringify(lock, null, 2)}\n`);
       console.log('✅ Updated package-lock.json');
     }
 
     // 4. Update public/version.json
     if (fs.existsSync(versionJsonPath)) {
       const versionJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
-      const oldReleaseDate = versionJson.releaseDate;
+      const _oldReleaseDate = versionJson.releaseDate;
       const newReleaseDate = new Date().toISOString().split('T')[0];
 
       versionJson.version = newVersion;
@@ -75,7 +75,7 @@ function bumpVersion() {
         EN: 'General improvements and system stability updates.',
       };
 
-      fs.writeFileSync(versionJsonPath, JSON.stringify(versionJson, null, 2) + '\n');
+      fs.writeFileSync(versionJsonPath, `${JSON.stringify(versionJson, null, 2)}\n`);
       console.log(`✅ Updated public/version.json (Date: ${newReleaseDate})`);
     }
 
@@ -97,7 +97,7 @@ function bumpVersion() {
       } else {
         tauriConf.version = newVersion;
       }
-      fs.writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + '\n');
+      fs.writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`);
       console.log(`✅ Updated src-tauri/tauri.conf.json (Version: ${tauriConf.version})`);
     }
     // 5. Update src-tauri/Cargo.toml

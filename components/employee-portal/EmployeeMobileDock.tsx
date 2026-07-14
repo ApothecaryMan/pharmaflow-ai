@@ -18,7 +18,7 @@ export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
   t,
   requestsCount,
 }) => {
-  const isRTL = language === 'AR';
+  const _isRTL = language === 'AR';
 
   return (
     <nav

@@ -3,22 +3,13 @@ import { isAfter, isToday, parseISO, subHours } from 'date-fns';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAlert, useSettings } from '../../../context';
 import { useShift } from '../../../hooks/sales/useShift';
-import { batchService } from '../../../services/inventory/batchService';
 import { pricingService } from '../../../services/sales/pricingService';
 import { useAuthStore } from '../../../stores/authStore';
-import {
-  type CartItem,
-  type Customer,
-  type Drug,
-  type Employee,
-  type Language,
-  OrderModificationRecord,
-  type Sale,
-} from '../../../types';
+import type { CartItem, Customer, Drug, Employee, Language, Sale } from '../../../types';
 import { formatCurrency, money, pricing } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { idGenerator } from '../../../utils/idGenerator';
-import { resolvePrice, resolveUnits } from '../../../utils/stockUtils';
+import { resolveUnits } from '../../../utils/stockUtils';
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
 import { InsightTooltip } from '../../common/InsightTooltip';
@@ -141,7 +132,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   const branches = useAuthStore((s) => s.branches);
   const hasOpenShift = !!currentShift;
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
-  const { error: showToastError } = useAlert();
+  const { error: _showToastError } = useAlert();
   const { textTransform, language: settingsLanguage } = useSettings();
   const currentLanguage = language || settingsLanguage;
   const [searchQuery, setSearchQuery] = useState('');
@@ -320,7 +311,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         },
       ]);
     },
-    [showMenu, t.printReceipt, t.editOrder, setSelectedSaleId, setIsEditMode]
+    [showMenu, t.printReceipt, t.editOrder, activeBranchId, branches, hasOpenShift]
   );
 
   // Get current quantity for an item (considering pending changes)
@@ -416,7 +407,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   );
 
   // Check if we can increase quantity (Used for + button disable state)
-  const canIncreaseQuantity = useCallback(
+  const _canIncreaseQuantity = useCallback(
     (itemId: string, isUnit: boolean): boolean => {
       // We can simulate a +1 change and see if it passes validation
       // Or just check strictly against stock.
@@ -668,7 +659,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   ]);
 
   // Handle discard changes
-  const handleDiscardChanges = useCallback(() => {
+  const _handleDiscardChanges = useCallback(() => {
     setEditHistory({
       stack: [{ changes: new Map(), discounts: new Map() }],
       index: 0,
@@ -746,12 +737,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
           return (
             <span
+              role={isClickable ? 'button' : undefined}
+              tabIndex={isClickable ? 0 : undefined}
               onClick={(e) => {
                 if (isClickable) {
                   e.stopPropagation();
                   onViewCustomerHistory(customer);
                 }
               }}
+              onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onViewCustomerHistory(customer); } } : undefined}
               className={`font-mono font-bold text-sm select-none ${
                 isClickable
                   ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95'
@@ -773,7 +767,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const s = info.row.original;
           const name = info.getValue();
           const isGuest = !s.customerCode || s.customerCode === '-';
-          const hasTempInfo = (s as any).isTemporaryInfo;
+          const _hasTempInfo = (s as any).isTemporaryInfo;
           // Support both English and Arabic identifiers for Guest Customer
           const isGuestName =
             name === 'Guest Customer' || name === 'عميل غير مسجل' || name === t.guestCustomer;
@@ -802,6 +796,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   className='p-1 transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30'
                   title={t.editGuestInfo || 'Edit Guest Info'}
                   disabled={!hasOpenShift}
+                  type='button'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                     edit_note
@@ -870,7 +865,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const isSelectDisabled = s.status === 'completed' || s.status === 'cancelled';
 
           return (
-            <div onClick={(e) => e.stopPropagation()}>
+            <div role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
               <DriverSelect
                 driverId={info.getValue()}
                 drivers={deliveryDrivers}
@@ -896,8 +891,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           if (!hasOpenShift && s.status !== 'completed' && s.status !== 'cancelled') {
             return (
               <div
+                role="button"
+                tabIndex={0}
                 className='flex items-center justify-end h-full'
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
               >
                 <ShiftWarning t={t} compact={true} />
               </div>
@@ -906,8 +904,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
           return (
             <div
+              role="button"
+              tabIndex={0}
               className='flex items-center justify-end gap-1.5'
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
             >
               {/* Slot 1: Cancel Button (Fixed Width) */}
               <div className='w-8 flex justify-center shrink-0'>
@@ -921,6 +922,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     }}
                     className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
                     title={t.cancel || 'Cancel'}
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[20px]'>block</span>
                   </button>
@@ -936,6 +938,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       onUpdateSale(s.id, { status: 'with_delivery' });
                     }}
                     className='h-7 w-full bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 transition-colors flex items-center justify-center whitespace-nowrap'
+                    type='button'
                   >
                     {t.start || 'Start'}
                   </button>
@@ -947,6 +950,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       onUpdateSale(s.id, { status: 'on_way' });
                     }}
                     className='h-7 w-full bg-orange-100 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-200 transition-colors flex items-center justify-center whitespace-nowrap'
+                    type='button'
                   >
                     {t.onWay || 'On Way'}
                   </button>
@@ -958,6 +962,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       onUpdateSale(s.id, { status: 'completed' });
                     }}
                     className='h-7 w-full bg-green-100 text-green-700 rounded-lg text-xs font-bold hover:bg-green-200 transition-colors flex items-center justify-center whitespace-nowrap'
+                    type='button'
                   >
                     {t.complete || 'Complete'}
                   </button>
@@ -995,6 +1000,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     }}
                     className='p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20'
                     title={t.undo || 'Undo'}
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[20px]'>undo</span>
                   </button>
@@ -1007,7 +1013,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         },
       }),
     ],
-    [t, deliveryDrivers, onUpdateSale, activeTab, customers, onViewCustomerHistory]
+    [
+      t,
+      deliveryDrivers,
+      onUpdateSale,
+      customers,
+      onViewCustomerHistory, // Action column for status changes
+      columnHelper,
+      hasOpenShift,
+    ]
   );
 
   return (
@@ -1060,6 +1074,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     onClick={() => setSelectedSaleId(null)}
                     className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group shrink-0'
                     title={t.back || 'Back'}
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors text-[20px]'>
                       arrow_back
@@ -1155,6 +1170,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                               disabled={editHistory.index <= 0}
                               className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
                               title={t.undo || 'Undo'}
+                              type='button'
                             >
                               <span className='material-symbols-rounded text-[20px]'>undo</span>
                             </button>
@@ -1165,6 +1181,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                               disabled={editHistory.index >= editHistory.stack.length - 1}
                               className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
                               title={t.redo || 'Redo'}
+                              type='button'
                             >
                               <span className='material-symbols-rounded text-[20px]'>redo</span>
                             </button>
@@ -1176,6 +1193,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                               onClick={handleSaveChanges}
                               disabled={!hasChanges}
                               className='h-8 px-4 text-[11px] font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-30 flex items-center gap-1.5 shadow-sm shadow-emerald-500/20'
+                              type='button'
                             >
                               <span
                                 className='material-symbols-rounded text-sm'
@@ -1321,7 +1339,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       onChange={(e) => {
                                         const val =
                                           e.target.value === '' ? 0 : parseFloat(e.target.value);
-                                        if (isNaN(val)) return;
+                                        if (Number.isNaN(val)) return;
                                         // Use common as target if packItem missing (e.g. adding pack to unit-only)
                                         const targetItem = packItem || common;
                                         // Delta MUST be calculated against CURRENT DISPLAYED QTY (packQty), not original
@@ -1345,8 +1363,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                         value={unitQty === 0 ? '' : unitQty}
                                         onChange={(e) => {
                                           const val =
-                                            e.target.value === '' ? 0 : parseInt(e.target.value);
-                                          if (isNaN(val)) return;
+                                            e.target.value === ''
+                                              ? 0
+                                              : parseInt(e.target.value, 10);
+                                          if (Number.isNaN(val)) return;
                                           const targetItem = unitItem || common;
                                           // Delta MUST be calculated against CURRENT DISPLAYED QTY (unitQty)
                                           if (targetItem)
@@ -1419,6 +1439,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                               ? 'text-green-600 dark:text-green-400'
                                               : 'text-gray-400'
                                           }`}
+                                          type='button'
                                         >
                                           <span
                                             className='material-symbols-rounded'
@@ -1434,7 +1455,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                           onClick={(e) => e.stopPropagation()}
                                           onChange={(e) => {
                                             const val = parseFloat(e.target.value);
-                                            let finalVal = !isNaN(val) && val >= 0 ? val : 0;
+                                            let finalVal = !Number.isNaN(val) && val >= 0 ? val : 0;
                                             if (finalVal > effectiveMax) finalVal = effectiveMax;
                                             handleDiscountChange(common.id, finalVal);
                                           }}
@@ -1470,6 +1491,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       onClick={() => handleRestoreFullItem(common.id)}
                                       className='w-8 h-8 flex items-center justify-center rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors'
                                       title={t.restore || 'Restore'}
+                                      type='button'
                                     >
                                       <span className='material-symbols-rounded'>undo</span>
                                     </button>
@@ -1480,6 +1502,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       }
                                       className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors'
                                       title={t.delete || 'Delete'}
+                                      type='button'
                                     >
                                       <span className='material-symbols-rounded text-xl'>
                                         delete
@@ -1520,7 +1543,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           const diff = now.getTime() - d.getTime();
                           const mins = Math.floor(diff / 60000);
                           const hours = Math.floor(mins / 60);
-                          const days = Math.floor(hours / 24);
+                          const _days = Math.floor(hours / 24);
 
                           if (mins < 1) return t.justNow || 'Just now';
                           if (mins < 60)
@@ -1543,7 +1566,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                         const hasDeletions = record.modifications.some(
                           (m) => m.type === 'item_removed'
                         );
-                        const nodeColor = hasDeletions ? 'red' : 'orange';
+                        const _nodeColor = hasDeletions ? 'red' : 'orange';
 
                         return (
                           <div key={record.id} className='relative z-10'>
@@ -1592,7 +1615,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                           </span>
                                         </div>
                                         <div className='flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 flex-wrap'>
-                                          {record.modifications.map((m, mIdx) => {
+                                          {// biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
+                                          record.modifications.map((m, mIdx) => {
                                             const drug = inventory.find((d) => d.id === m.itemId);
                                             const displayName = getDisplayName(
                                               {
@@ -1709,7 +1733,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       </div>
 
                                       <div className='space-y-1'>
-                                        {record.modifications.map((mod, modIdx) => {
+                                        {// biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
+                                        record.modifications.map((mod, modIdx) => {
                                           const isIncrease =
                                             (mod.newQuantity || 0) > (mod.previousQuantity || 0);
                                           const isDeletion = mod.type === 'item_removed';
@@ -1921,6 +1946,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 <button
                   onClick={() => setIsEditMode(true)}
                   className='px-6 py-2 bg-primary-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors'
+                  type='button'
                 >
                   {t.editOrder || 'Edit Order'}
                 </button>
@@ -1928,6 +1954,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               <button
                 onClick={onClose}
                 className='px-6 py-2 bg-transparent border border-transparent hover:border-gray-200 dark:hover:border-gray-700 text-gray-500 dark:text-gray-400 font-bold rounded-xl transition-all cursor-pointer'
+                type='button'
               >
                 {t.close || 'Close'}
               </button>
@@ -1953,6 +1980,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               <button
                 onClick={() => setOrderToCancelId(null)}
                 className='px-4 py-2 font-bold text-zinc-500 dark:text-zinc-400 bg-transparent border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 rounded-lg transition-all cursor-pointer'
+                type='button'
               >
                 {t.keepOrder}
               </button>
@@ -1962,6 +1990,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   setOrderToCancelId(null);
                 }}
                 className='px-4 py-2 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2'
+                type='button'
               >
                 <span className='material-symbols-rounded text-sm'>block</span>
                 {t.cancel || 'Yes, Cancel'}
@@ -1985,9 +2014,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           <div className='flex flex-col gap-2'>
             <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
               <div className='flex flex-col gap-1'>
-                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
                   {t.tempCustomerName || 'Temporary Name'}
-                </label>
+                </span>
                 <SmartInput
                   type='text'
                   value={tempGuestName}
@@ -2001,9 +2030,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
             <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
               <div className='flex flex-col gap-1'>
-                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
                   {t.tempCustomerAddress || 'Temporary Address'}
-                </label>
+                </span>
                 <SmartTextarea
                   value={tempGuestAddress}
                   onChange={(e) => setTempGuestAddress(e.target.value)}
@@ -2022,12 +2051,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     tempGuestAddress === originalGuestInfo.address)
                 }
                 className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-lg transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer'
+                type='button'
               >
                 {t.saveChanges || 'Save'}
               </button>
               <button
                 onClick={() => setOrderToEditGuestId(null)}
                 className='px-4 py-1.5 bg-transparent text-zinc-500 dark:text-zinc-400 text-xs font-black rounded-lg transition-all uppercase tracking-widest border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer'
+                type='button'
               >
                 {t.cancel || 'Cancel'}
               </button>

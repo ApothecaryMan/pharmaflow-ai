@@ -1,6 +1,4 @@
 import type React from 'react';
-import { useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import type { TRANSLATIONS } from '../../../../i18n/translations';
 import type { SaleTab } from '../../../../types';
 import { MaterialTabs } from '../../../common/MaterialTabs';
@@ -44,6 +42,7 @@ const ClosedTabRow: React.FC<ClosedTabRowProps> = ({ tab, index, total, onRestor
             onRestore(tab.id);
           }}
           className='flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 dark:bg-primary-400/10 dark:hover:bg-primary-400/20 rounded-lg transition-all active:scale-95'
+          type='button'
         >
           <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
             restore
@@ -85,15 +84,11 @@ const ClosedTabRow: React.FC<ClosedTabRowProps> = ({ tab, index, total, onRestor
                     {tab.cart.length}
                   </span>
                 </div>
-                <ul
-                  className='flex flex-col gap-1.5 max-h-[160px] overflow-y-auto no-scrollbar'
-                  role='list'
-                >
+                <ul className='flex flex-col gap-1.5 max-h-[160px] overflow-y-auto no-scrollbar'>
                   {tab.cart.map((item, itemIdx) => (
                     <li
                       key={`${item.id}-${itemIdx}`}
                       className='text-[11px] flex items-center justify-between gap-3 font-semibold'
-                      role='listitem'
                     >
                       <span className='truncate flex-1' dir='auto'>
                         {item.name} {item.dosageForm}

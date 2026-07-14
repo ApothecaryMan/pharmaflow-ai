@@ -1,25 +1,22 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSettings } from '../../context';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { useAuthStore } from '../../stores/authStore';
-import type { Drug, Employee, Purchase, PurchaseReturn, Shift, Supplier } from '../../types';
-import { getDisplayName } from '../../utils/drugDisplayName';
-import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
-import { money, tax } from '../../utils/money';
-import { parseSearchTerm } from '../../utils/searchUtils';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
-import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
-import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
+import type { Purchase } from '../../types';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
+import { money } from '../../utils/money';
 import {
   DateRangePicker,
   type FilterConfig,
-  FilterPill,
   Modal,
   PageHeader,
   PriceDisplay,
@@ -28,7 +25,6 @@ import {
   Switch,
   TanStackTable,
   useContextMenu,
-  useSmartDirection,
 } from '../common';
 
 interface PurchaseHistoryProps {
@@ -52,8 +48,8 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   const { textTransform } = useSettings();
   const { data: purchases = [] } = usePurchases(activeBranchId);
   const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
-  const { data: inventory = [] } = useInventory(activeBranchId);
-  const { data: suppliers = [] } = useSuppliers(activeBranchId);
+  const { data: _inventory = [] } = useInventory(activeBranchId);
+  const { data: _suppliers = [] } = useSuppliers(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
@@ -119,7 +115,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   // Copy helper with fallback
   const copyToClipboard = async (text: string) => {
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
       } else {
         const textArea = document.createElement('textarea');
@@ -201,7 +197,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [activeBranchId, showAllBranches, page, serverFilters, purchases]);
+  }, [activeBranchId, showAllBranches, page, serverFilters]);
 
   const totalPages = Math.max(1, Math.ceil(totalPurchases / pageSize));
 
@@ -344,7 +340,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
         },
       },
     ],
-    [t, purchaseReturns, language]
+    [t, formatTime, getPurchaseReturns, purchasesWithReturns]
   );
 
   // Helper: Get context menu actions for a purchase row
@@ -427,12 +423,12 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               color='gray'
               locale={language === 'AR' ? 'ar-EG' : 'en-US'}
             />
-            <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
+            <span className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
               <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
                 {t.globalView || 'Global'}
               </span>
               <Switch checked={showAllBranches} onChange={setShowAllBranches} activeColor={color} />
-            </label>
+            </span>
 
             <div className='h-9 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
               <button
@@ -508,6 +504,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                   <button
                     onClick={() => copyToClipboard(selectedPurchase.supplierName)}
                     className='p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[14px]'>content_copy</span>
                   </button>
@@ -526,6 +523,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                     <button
                       onClick={() => copyToClipboard(selectedPurchase.externalInvoiceId)}
                       className='p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[14px]'>content_copy</span>
                     </button>
@@ -609,7 +607,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                 <tbody className='divide-y divide-gray-50 dark:divide-gray-900 text-sm'>
                   {selectedPurchase.items.map((item, idx) => (
                     <tr
-                      key={idx}
+                      key={`${item.id || idx}`}
                       className='hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'
                     >
                       <td className='px-4 py-3'>
@@ -684,6 +682,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                     setSelectedPurchase(null);
                   }}
                   className='flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-lg shadow-emerald-200 dark:shadow-none'
+                  type='button'
                 >
                   <span className='material-symbols-rounded'>inventory</span>
                   {t.contextMenu?.markAsReceived || 'Mark as Received'}

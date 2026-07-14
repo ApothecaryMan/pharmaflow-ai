@@ -2,11 +2,10 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { usePageHelp } from '../../context/HelpContext';
-import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import { useAuthStore } from '../../stores/authStore';
-import type { CashTransaction, CashTransactionType, Employee, Language } from '../../types';
-import { formatCurrencyParts } from '../../utils/currency';
+import type { CashTransaction, CashTransactionType, Language } from '../../types';
 import {
   CARD_BASE,
   INPUT_BASE,
@@ -17,7 +16,6 @@ import { AnimatedCounter } from '../common/AnimatedCounter';
 import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { PriceDisplay } from '../common/table/PriceDisplay';
 import { useCashRegister } from './useCashRegister';
@@ -167,7 +165,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           if (!reason) return '-';
           const match = reason.match(/^(Sale|Return|Return for Sale|Refund)\s*#(\d+)$/i);
 
-          let content;
+          let content: React.ReactNode;
           if (match) {
             content = (
               <span className='flex items-center gap-1.5 font-medium'>
@@ -282,6 +280,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <button
                     onClick={() => setModalMode('in')}
                     className={`px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
+                    type='button'
                   >
                     <span
                       className='material-symbols-rounded'
@@ -296,6 +295,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <button
                     onClick={() => setModalMode('out')}
                     className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
+                    type='button'
                   >
                     <span
                       className='material-symbols-rounded'
@@ -310,6 +310,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <button
                     onClick={() => setModalMode('close')}
                     className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
+                    type='button'
                   >
                     <span
                       className='material-symbols-rounded'
@@ -326,6 +327,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 <button
                   onClick={() => setModalMode('open')}
                   className={`px-6 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-950 dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2`}
+                  type='button'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                     lock_open
@@ -376,7 +378,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                       <span className='badge-neutral gap-1.5'>
                         <span className='material-symbols-rounded'>schedule</span>
                         {(() => {
-                          const timeStr = new Date(currentShift!.openTime).toLocaleTimeString(
+                          const timeStr = new Date(currentShift?.openTime).toLocaleTimeString(
                             'en-US',
                             {
                               hour: '2-digit',
@@ -404,7 +406,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         })()}
                       </span>
                       <span className='text-xs text-gray-400'>
-                        {new Date(currentShift!.openTime).toLocaleDateString(
+                        {new Date(currentShift?.openTime).toLocaleDateString(
                           language === 'AR' ? 'ar-EG-u-nu-latn' : 'en-GB',
                           { day: 'numeric', month: 'short' }
                         )}
@@ -423,8 +425,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   ) : (
                     <span className='badge-purple gap-1.5'>
                       <span className='material-symbols-rounded'>person</span>
-                      {employees?.find((e) => e.id === currentShift!.openedBy)?.name ||
-                        currentShift!.openedBy}
+                      {employees?.find((e) => e.id === currentShift?.openedBy)?.name ||
+                        currentShift?.openedBy}
                     </span>
                   )}
                 </div>
@@ -439,7 +441,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   ) : (
                     <span className='badge-neutral gap-1.5'>
                       <span className='material-symbols-rounded'>tag</span>
-                      {currentShift!.id.slice(-6)}
+                      {currentShift?.id.slice(-6)}
                     </span>
                   )}
                 </div>
@@ -777,7 +779,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           disabled={isLoading}
           footer={
             <div className='flex gap-3'>
-              <button onClick={closeModal} className={MODAL_FOOTER_BTN_CANCEL}>
+              <button onClick={closeModal} className={MODAL_FOOTER_BTN_CANCEL} type='button'>
                 {t.cashRegister.modal.cancel}
               </button>
               <button
@@ -787,6 +789,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   if (modalMode === 'in' || modalMode === 'out') handleCashTransaction();
                 }}
                 className={MODAL_FOOTER_BTN_PRIMARY}
+                type='button'
               >
                 {t.cashRegister.modal.confirm}
               </button>
@@ -806,11 +809,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         >
           <div className='space-y-4'>
             <div>
-              <label className='text-xs font-bold text-gray-500 uppercase mb-1 block'>
+              <span className='text-xs font-bold text-gray-500 uppercase mb-1 block'>
                 {modalMode === 'close'
                   ? t.cashRegister.messages.countedCash
                   : t.cashRegister.modal.amount}
-              </label>
+              </span>
               <div className='relative'>
                 <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold'>
                   $
@@ -846,14 +849,14 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </div>
 
             <div>
-              <label className='text-xs font-bold text-gray-500 uppercase mb-1 block'>
+              <span className='text-xs font-bold text-gray-500 uppercase mb-1 block'>
                 {modalMode === 'in' || modalMode === 'out'
                   ? t.cashRegister.transactions.reason || 'Reason'
                   : t.cashRegister.modal.notes}
                 {(modalMode === 'in' || modalMode === 'out') && (
                   <span className='text-red-500 ml-1'>*</span>
                 )}
-              </label>
+              </span>
               <textarea
                 className={INPUT_BASE}
                 rows={3}
@@ -878,7 +881,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     <PriceDisplay value={currentBalance} />
                   </span>
                 </div>
-                {amountInput && !isNaN(parseFloat(amountInput)) && (
+                {amountInput && !Number.isNaN(parseFloat(amountInput)) && (
                   <div className='flex justify-between mt-1 pt-1 border-t border-yellow-200 dark:border-yellow-900'>
                     <span>{t.cashRegister.summary.variance}</span>
                     <span

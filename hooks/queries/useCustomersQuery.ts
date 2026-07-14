@@ -15,8 +15,18 @@ export function useRawCustomers(branchId: string) {
 }
 
 export function useCustomers(branchId: string) {
-  const { data: rawCustomers = [], isLoading: isCustLoading, error: custError, refetch: refetchCust } = useRawCustomers(branchId);
-  const { data: sales = [], isLoading: isSalesLoading, error: salesError, refetch: refetchSales } = useRecentSales(branchId);
+  const {
+    data: rawCustomers = [],
+    isLoading: isCustLoading,
+    error: custError,
+    refetch: refetchCust,
+  } = useRawCustomers(branchId);
+  const {
+    data: sales = [],
+    isLoading: isSalesLoading,
+    error: salesError,
+    refetch: refetchSales,
+  } = useRecentSales(branchId);
 
   const enrichedCustomers = useMemo(() => {
     return rawCustomers.map((customer: Customer) => {

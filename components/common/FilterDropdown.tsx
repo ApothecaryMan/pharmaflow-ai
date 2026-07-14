@@ -56,12 +56,12 @@ export function FilterDropdown<T>({
   onEnter,
   className = '',
   transparentIfSingle = false,
-  color = 'primary',
+  color: _color = 'primary',
   variant = 'minimal',
   minHeight,
   style,
   disabled = false,
-  centered = false,
+  centered: _centered = false,
   rounded = 'xl',
   zIndexHigh = 'z-40',
   floating = true,
@@ -95,7 +95,7 @@ export function FilterDropdown<T>({
     }
   }, [effectiveIsOpen]);
 
-  const handleFocus = (e: React.FocusEvent) => {
+  const handleFocus = (_e: React.FocusEvent) => {
     if (!isClickingRef.current && !effectiveIsOpen && !disabled) {
       handleToggle();
     }
@@ -167,6 +167,7 @@ export function FilterDropdown<T>({
                 .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
             `}</style>
       <div
+        role="button"
         tabIndex={disabled ? -1 : 0}
         onKeyDown={disabled ? undefined : handleKeyDown}
         onBlur={handleBlur}
@@ -252,8 +253,11 @@ export function FilterDropdown<T>({
                 .map((item) => (
                   <div
                     key={keyExtractor(item)}
+                    role="button"
+                    tabIndex={0}
                     className='w-full cursor-pointer hover:bg-(--bg-menu-hover) px-3 py-1 transition-colors'
                     onClick={(e) => handleOptionClick(e, item)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOptionClick(e as unknown as React.MouseEvent<HTMLDivElement>, item); } }}
                   >
                     {renderItem(item, false)}
                   </div>

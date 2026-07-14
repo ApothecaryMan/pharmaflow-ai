@@ -7,19 +7,18 @@ import {
   getLocalizedProductType,
   getProductTypes,
 } from '../../data/productCategories';
+import { usePageShortcuts } from '../../hooks/keyboard';
+import { useAddProduct } from '../../hooks/mutations/useInventoryMutations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { validationService } from '../../services/validation/validationService';
-import { useAuthStore } from '../../stores/authStore';
 import type { Drug } from '../../types';
 import { validateStock } from '../../utils/inventory';
-import { useAddProduct } from '../../hooks/mutations/useInventoryMutations';
 import { pricing } from '../../utils/money';
 import { resolveUnits } from '../../utils/stockUtils';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
-import { usePageShortcuts } from '../../hooks/keyboard';
 import { Tooltip } from '../common/Tooltip';
 
 interface AddProductProps {
@@ -34,10 +33,10 @@ export const AddProduct: React.FC<AddProductProps> = ({
   color,
   t,
   language = 'EN',
-  onViewChange,
+  onViewChange: _onViewChange,
   onCancel,
 }) => {
-  const { getVerifiedDate } = useStatusBar();
+  const { getVerifiedDate: _getVerifiedDate } = useStatusBar();
   const addProduct = useAddProduct();
   const currentLang = language.toLowerCase() as 'en' | 'ar';
   const isRTL = currentLang === 'ar';
@@ -70,10 +69,10 @@ export const AddProduct: React.FC<AddProductProps> = ({
     status: 'active',
   });
 
-  const scannerBuffer = useRef<string>('');
-  const lastKeyTime = useRef<number>(0);
-  const fastKeyCount = useRef<number>(0);
-  const scannerTimeout = useRef<NodeJS.Timeout | null>(null);
+  const _scannerBuffer = useRef<string>('');
+  const _lastKeyTime = useRef<number>(0);
+  const _fastKeyCount = useRef<number>(0);
+  const _scannerTimeout = useRef<NodeJS.Timeout | null>(null);
 
   usePageShortcuts('add-product', {});
 
@@ -222,12 +221,12 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4'>
               <div className='space-y-1.5 flex-1'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 flex justify-between'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 flex justify-between'>
                   <span>{t.fields?.brandName} *</span>
                   <span className='text-primary-500 lowercase font-medium'>
                     {t.placeholders?.langDetect}
                   </span>
-                </label>
+                </span>
                 <SmartInput
                   required
                   placeholder={t.placeholders?.brandName}
@@ -238,9 +237,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
               </div>
 
               <div className='space-y-1.5 flex-1'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.nameArabic}
-                </label>
+                </span>
                 <SmartInput
                   placeholder={t.placeholders?.nameArabic}
                   value={formData.nameAr}
@@ -251,9 +250,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
               </div>
 
               <div className='space-y-1.5 md:col-span-2'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.genericName} *
-                </label>
+                </span>
                 <SmartInput
                   required
                   dir='auto'
@@ -273,9 +272,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
               </div>
 
               <div className='space-y-1.5'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.barcode}
-                </label>
+                </span>
                 <div
                   className={`${INPUT_BASE} flex flex-wrap gap-2 p-1.5 min-h-[44px] focus-within:ring-2 focus-within:ring-blue-500 transition-all`}
                 >
@@ -293,7 +292,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   )}
                   {formData.additionalBarcodes?.map((code, idx) => (
                     <span
-                      key={idx}
+                      key={code}
                       className='inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-[11px] font-bold border border-gray-200 dark:border-gray-600'
                     >
                       {code}
@@ -334,9 +333,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
               </div>
 
               <div className='space-y-1.5'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.internalCode}
-                </label>
+                </span>
                 <div className='relative'>
                   <SmartInput
                     placeholder={t.placeholders?.internalCode}
@@ -369,9 +368,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
               {/* Classification Fields (Left 2/3) */}
               <div className='lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {t.fields?.category}
-                  </label>
+                  </span>
                   <FilterDropdown
                     variant='input'
                     minHeight='44px'
@@ -392,9 +391,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </div>
 
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {t.fields?.dosageForm}
-                  </label>
+                  </span>
                   <FilterDropdown
                     variant='input'
                     minHeight='44px'
@@ -417,9 +416,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </div>
 
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {t.fields?.manufacturer}
-                  </label>
+                  </span>
                   <SmartInput
                     placeholder={t.placeholders?.manufacturer}
                     value={formData.manufacturer}
@@ -429,9 +428,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </div>
 
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {t.fields?.origin}
-                  </label>
+                  </span>
                   <SegmentedControl
                     value={formData.origin as 'local' | 'imported'}
                     onChange={(val) => setFormData({ ...formData, origin: val })}
@@ -444,9 +443,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </div>
 
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {t.fields?.status || 'Product Status'}
-                  </label>
+                  </span>
                   <SegmentedControl
                     value={formData.status || 'active'}
                     onChange={(val) => setFormData({ ...formData, status: val })}
@@ -466,9 +465,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
               {/* Usage / Additional Details (Right 1/3) */}
               <div className='h-full flex flex-col space-y-1.5'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.description}
-                </label>
+                </span>
                 <SmartTextarea
                   placeholder={t.placeholders?.description}
                   value={formData.description}
@@ -493,9 +492,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-1.5 col-span-2'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.stock} *
-                </label>
+                </span>
                 <input
                   type='number'
                   required
@@ -509,38 +508,38 @@ export const AddProduct: React.FC<AddProductProps> = ({
               </div>
 
               <div className='space-y-1.5'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.unitsPerPack}
-                </label>
+                </span>
                 <input
                   type='number'
                   min='1'
                   className={INPUT_BASE}
                   value={formData.unitsPerPack}
                   onChange={(e) =>
-                    setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
+                    setFormData({ ...formData, unitsPerPack: parseInt(e.target.value, 10) || 1 })
                   }
                 />
               </div>
 
               <div className='space-y-1.5'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.minStock}
-                </label>
+                </span>
                 <input
                   type='number'
                   className={INPUT_BASE}
                   value={formData.minStock}
                   onChange={(e) =>
-                    setFormData({ ...formData, minStock: parseInt(e.target.value) || 0 })
+                    setFormData({ ...formData, minStock: parseInt(e.target.value, 10) || 0 })
                   }
                 />
               </div>
 
               <div className='space-y-1.5'>
-                <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                   {t.fields?.expiryDate} *
-                </label>
+                </span>
                 <SmartDateInput
                   required
                   value={formData.expiryDate}
@@ -563,9 +562,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
             <div className='space-y-4'>
               <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 flex justify-between'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 flex justify-between'>
                     <span>{t.fields?.publicPrice} *</span>
-                  </label>
+                  </span>
                   <input
                     type='number'
                     required
@@ -579,9 +578,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </div>
 
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {t.fields?.costPrice} *
-                  </label>
+                  </span>
                   <input
                     type='number'
                     step='0.01'
@@ -597,9 +596,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
               <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {language === 'AR' ? 'سعر الشريط/الوحدة' : 'Unit Price'}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     step='0.01'
@@ -617,9 +616,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </div>
 
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {language === 'AR' ? 'تكلفة الشريط/الوحدة' : 'Unit Cost'}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     step='0.01'
@@ -639,9 +638,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
               <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-1.5'>
-                  <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
+                  <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1'>
                     {t.fields?.tax}
-                  </label>
+                  </span>
                   <input
                     type='number'
                     step='0.1'

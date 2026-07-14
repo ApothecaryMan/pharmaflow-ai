@@ -26,7 +26,10 @@ export const CompactProgressCard: React.FC<CompactProgressCardProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       // h-[68px] is calculated to match h-36 (144px) when two are stacked with gap-2 (8px).
       // 68 + 68 + 8 = 144.
       className={`px-4 py-3 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-[68px] flex flex-col justify-center cursor-pointer transition-transform active:scale-[0.98]`}

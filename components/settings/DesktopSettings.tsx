@@ -12,8 +12,6 @@ import { useEffect, useState } from 'react';
 import { list_thermal_printers, test_thermal_printer } from 'tauri-plugin-thermal-printer';
 import { isTauri } from '../../utils/platform';
 import { FilterDropdown } from '../common/FilterDropdown';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { Switch } from '../common/Switch';
 
 interface DesktopSettingsProps {
   t: Translations;
@@ -56,12 +54,6 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
     memory: '16GB',
   };
 
-  useEffect(() => {
-    if (isTauri()) {
-      refreshPrinters();
-    }
-  }, []);
-
   const refreshPrinters = async () => {
     if (!isTauri()) return;
     setIsLoadingPrinters(true);
@@ -74,6 +66,12 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
       setIsLoadingPrinters(false);
     }
   };
+
+  useEffect(() => {
+    if (isTauri()) {
+      refreshPrinters();
+    }
+  }, [refreshPrinters]);
 
   const handleTestPrint = async () => {
     if (!selectedPrinter || !isTauri()) return;
@@ -166,6 +164,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
               onClick={refreshPrinters}
               disabled={isLoadingPrinters}
               className='p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-gray-400'
+              type='button'
             >
               <span
                 className={`material-symbols-rounded text-[18px] ${isLoadingPrinters ? 'animate-spin' : ''}`}
@@ -177,9 +176,9 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
 
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <label className='text-xs font-bold text-gray-500 uppercase'>
+              <span className='text-xs font-bold text-gray-500 uppercase'>
                 {language === 'AR' ? 'طابعة الفواتير (Receipts)' : 'Receipt Printer'}
-              </label>
+              </span>
               <FilterDropdown<string>
                 items={printers}
                 selectedItem={selectedPrinter || undefined}
@@ -208,9 +207,9 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
             </div>
 
             <div className='space-y-2'>
-              <label className='text-xs font-bold text-gray-500 uppercase'>
+              <span className='text-xs font-bold text-gray-500 uppercase'>
                 {language === 'AR' ? 'طابعة الملصقات (Labels)' : 'Label Printer'}
-              </label>
+              </span>
               <FilterDropdown<string>
                 items={printers}
                 selectedItem={selectedLabelPrinter || undefined}
@@ -246,6 +245,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-600 hover:bg-${color}-100`
               }`}
+              type='button'
             >
               <span
                 className={`material-symbols-rounded text-[18px] ${printerStatus === 'testing' ? 'animate-spin' : ''}`}
@@ -290,6 +290,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                   onClick={installUpdate}
                   disabled={updateStatus === 'downloading'}
                   className='w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20'
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[18px]'>download</span>
                   {updateStatus === 'downloading' ? dt.downloading : dt.installNow}
@@ -299,6 +300,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                   onClick={checkUpdates}
                   disabled={updateStatus === 'checking'}
                   className='w-full py-2.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all'
+                  type='button'
                 >
                   <span
                     className={`material-symbols-rounded text-[18px] ${updateStatus === 'checking' ? 'animate-spin' : ''}`}
@@ -325,9 +327,9 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
               { label: dt.arch, value: systemInfo.arch, icon: 'memory' },
               { label: dt.memory, value: systemInfo.memory, icon: 'rebase_edit' },
               { label: dt.version, value: `v${systemInfo.version}`, icon: 'new_releases' },
-            ].map((item, i) => (
+            ].map((item, _i) => (
               <div
-                key={i}
+                key={item.label}
                 className='p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-transparent hover:border-(--border-divider) transition-all group'
               >
                 <span
@@ -375,6 +377,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
             <button
               onClick={() => onViewChange?.('browser-settings')}
               className={`w-full md:w-auto px-6 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors shadow-sm`}
+              type='button'
             >
               {language === 'AR' ? 'الانتقال للإعدادات' : 'Go to Settings'}
             </button>

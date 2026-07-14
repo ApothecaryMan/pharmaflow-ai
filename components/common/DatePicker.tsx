@@ -145,6 +145,8 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
           return (
             <div
               key={`${item.value}-${i}`}
+              role="button"
+              tabIndex={0}
               className='h-[40px] flex items-center justify-center snap-center cursor-pointer transition-all duration-200'
               style={{
                 opacity,
@@ -154,6 +156,7 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
                 if (containerRef.current)
                   containerRef.current.scrollTo({ top: i * ITEM_HEIGHT, behavior: 'smooth' });
               }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (containerRef.current) containerRef.current.scrollTo({ top: i * ITEM_HEIGHT, behavior: 'smooth' }); } }}
             >
               <span
                 className='text-sm whitespace-nowrap px-2'
@@ -201,7 +204,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   value,
   onChange,
   label,
-  color,
+  color: _color,
   placeholder,
   icon = 'edit_calendar',
   iconPosition = 'start',
@@ -232,9 +235,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   // Dates
   // selectedDate: The actual value committed
-  const [selectedDate, setSelectedDate] = useState<Date | null>(value ? new Date(value) : null);
+  const [_selectedDate, setSelectedDate] = useState<Date | null>(value ? new Date(value) : null);
   // viewDate: The month currently being viewed in the calendar
-  const [viewDate, setViewDate] = useState<Date>(new Date());
+  const [_viewDate, setViewDate] = useState<Date>(new Date());
   // tempDate: The date currently being manipulated inside the open picker (before OK)
   const [tempDate, setTempDate] = useState<Date | null>(value ? new Date(value) : null);
 
@@ -595,7 +598,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
         {value && (
           <div
+            role="button"
+            tabIndex={0}
             onClick={clearSelection}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clearSelection(e); } }}
             className='hidden sm:flex items-center justify-center w-4 h-4 rounded -ml-[5px] text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-[#1F1F1F] transition-colors cursor-pointer'
           >
             <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>

@@ -76,7 +76,7 @@ export const ScreenCalibration: React.FC<ScreenCalibrationProps> = ({
             {/* Ruler marks simulation */}
             <div className='absolute bottom-0 left-0 right-0 h-4 flex justify-between px-2'>
               {[...Array(10)].map((_, i) => (
-                <div key={i} className='w-px h-full bg-white/30'></div>
+                <div key={`ruler-mark-${i}`} className='w-px h-full bg-white/30'></div>
               ))}
             </div>
           </div>
@@ -103,18 +103,21 @@ export const ScreenCalibration: React.FC<ScreenCalibrationProps> = ({
           <button
             onClick={handleReset}
             className='px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium text-sm'
+            type='button'
           >
             {t.calibration?.reset || 'Reset Default'}
           </button>
           <button
             onClick={onClose}
             className='px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 rounded-xl font-bold text-sm'
+            type='button'
           >
             {t.cancel || 'Cancel'}
           </button>
           <button
             onClick={handleSave}
             className='px-6 py-2 bg-primary-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30'
+            type='button'
           >
             {t.save || 'Save Calibration'}
           </button>

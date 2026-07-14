@@ -136,8 +136,8 @@ export const authService = {
             ...existingSession!,
             accountType,
             destination: accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal',
-            orgRole: (existingSession!.orgRole || 'unassigned') as OrgRole,
-            orgId: memberData?.orgId || existingSession!.orgId,
+            orgRole: (existingSession?.orgRole || 'unassigned') as OrgRole,
+            orgId: memberData?.orgId || existingSession?.orgId,
           }
         : {
             userId,
@@ -300,7 +300,7 @@ export const authService = {
       // In Tauri desktop mode, redirect to the production web URL
       const origin = isTauri() ? 'https://pharmaflow-ai.vercel.app' : window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: origin + '/reset-password',
+        redirectTo: `${origin}/reset-password`,
       });
       if (error) throw error;
       return { success: true };
@@ -319,7 +319,7 @@ export const authService = {
         if (resolvedEmail) {
           loginEmail = resolvedEmail;
         }
-      } catch (err) {
+      } catch (_err) {
         // Fallback to what they typed if resolution fails
       }
     }
@@ -497,7 +497,7 @@ export const authService = {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key && key.endsWith(`_${userId}`)) {
+          if (key?.endsWith(`_${userId}`)) {
             keysToRemove.push(key);
           }
         }
@@ -525,7 +525,7 @@ export const authService = {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key && key.endsWith(`_${userId}`)) {
+          if (key?.endsWith(`_${userId}`)) {
             keysToRemove.push(key);
           }
         }
@@ -537,12 +537,12 @@ export const authService = {
         const sbKeys = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          if (key?.startsWith('sb-') && key.endsWith('-auth-token')) {
             sbKeys.push(key);
           }
         }
         sbKeys.forEach((key) => localStorage.removeItem(key));
-      } catch (e) {
+      } catch (_e) {
         // Ignore loop iteration errors
       }
 
@@ -606,7 +606,7 @@ export const authService = {
     try {
       const { auditRepository } = await import('./repositories/auditRepository');
       await auditRepository.insert(finalEntry);
-    } catch (e) {
+    } catch (_e) {
       // Optional logging for debugging
     }
 

@@ -132,7 +132,7 @@ export const UpgradeTunnelTransition: React.FC<UpgradeTunnelTransitionProps> = (
 
                 {[0, 1, 2, 3, 4].map((i) => (
                   <motion.div
-                    key={i}
+                    key={`ring-${i}`}
                     initial={{ width: 0, height: 0, opacity: 0, rotate: 0 }}
                     animate={{
                       width: [0, 400 + i * 250],
@@ -220,7 +220,7 @@ export const UpgradeTunnelTransition: React.FC<UpgradeTunnelTransitionProps> = (
                   <div className='flex gap-1 mt-4'>
                     {[0, 1, 2].map((i) => (
                       <motion.div
-                        key={i}
+                        key={`dot-${i}`}
                         animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
                         transition={{ duration: 1, delay: i * 0.2, repeat: Infinity }}
                         className={`w-2 h-2 ${darkMode ? 'bg-white' : 'bg-zinc-900'} rounded-full`}

@@ -17,7 +17,7 @@ export interface UseSupplierHandlersParams {
 export function useSupplierHandlers({
   currentEmployeeId,
   activeBranchId,
-  suppliers,
+  suppliers: _suppliers,
   setSuppliers,
   purchases,
 }: UseSupplierHandlersParams) {

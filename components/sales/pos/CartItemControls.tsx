@@ -1,14 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { UserRole } from '../../../config/permissions';
 import { permissionsService } from '../../../services/auth/permissionsService';
 import { pricingService } from '../../../services/sales/pricingService';
 import type { CartItem, Drug } from '../../../types';
-import {
-  formatExpiryDate,
-  getExpiryColorClass,
-  parseExpiryEndOfMonth,
-} from '../../../utils/expiryUtils';
-import { money, pricing } from '../../../utils/money';
+import { formatExpiryDate, getExpiryColorClass } from '../../../utils/expiryUtils';
+import { pricing } from '../../../utils/money';
 import { PopupAlert } from '../../common/PopupAlert';
 
 export interface CartItemExpiryBadgeProps {
@@ -135,6 +130,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
         className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
           hasDiscount ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
         }`}
+        type='button'
       >
         <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
           percent
@@ -149,7 +145,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
         onWheel={(e) => (e.target as HTMLInputElement).blur()}
         onChange={(e) => {
           const val = parseFloat(e.target.value);
-          const valid = !isNaN(val) && val >= 0;
+          const valid = !Number.isNaN(val) && val >= 0;
           let finalVal = valid ? val : 0;
           if (finalVal > effectiveMax) finalVal = effectiveMax;
 
@@ -200,7 +196,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   onSelectBatch,
 }) => {
   const unitsPerPack = item.unitsPerPack || 1;
-  const isRTL = currentLang === 'ar';
+  const _isRTL = currentLang === 'ar';
 
   // stock is already stored in units (per type definition) — no multiplication needed
   const totalStockUnits = React.useMemo(() => {
@@ -226,8 +222,8 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setLocalPack(formatQty(packItem?.quantity)), [packItem?.quantity]);
-  useEffect(() => setLocalUnit(formatQty(unitItem?.quantity)), [unitItem?.quantity]);
+  useEffect(() => setLocalPack(formatQty(packItem?.quantity)), [packItem?.quantity, formatQty]);
+  useEffect(() => setLocalUnit(formatQty(unitItem?.quantity)), [unitItem?.quantity, formatQty]);
 
   const handleQtyChange = (valStr: string, isUnit: boolean) => {
     const setLocal = isUnit ? setLocalUnit : setLocalPack;
@@ -240,8 +236,8 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
     }
 
     // Integer-only — reject NaN/negative
-    const val = parseInt(valStr);
-    if (isNaN(val) || val < 0) return;
+    const val = parseInt(valStr, 10);
+    if (Number.isNaN(val) || val < 0) return;
 
     // Zero = remove this mode's entry from cart
     if (val === 0) {
@@ -362,6 +358,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
             }}
             disabled={q <= 0}
             className='w-5 h-full flex items-center justify-center hover:bg-black/5 text-gray-400 active:scale-90 disabled:opacity-30'
+            type='button'
           >
             <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
               remove
@@ -388,6 +385,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
             }}
             disabled={isMaxed}
             className={`w-5 h-full flex items-center justify-center active:scale-90 ${isMaxed ? 'opacity-30 text-gray-400' : 'text-primary-600'}`}
+            type='button'
           >
             <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
               add

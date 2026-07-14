@@ -1,6 +1,7 @@
 export function FlowerCrown() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Flower crown</title>
       <g transform='translate(0, -10)'>
         <path
           d='M 18,40 Q 64,12 110,40'

@@ -63,11 +63,11 @@ export const SmartDateInput: React.FC<{
     try {
       const [y, m] = s.split('-');
       return edit ? `${m}${y.slice(2)}` : `${m}/${y.slice(2)}`;
-    } catch (e) {
+    } catch (_e) {
       return s;
     }
   };
-  useEffect(() => setDisp(fmt(value, foc)), [value, foc]);
+  useEffect(() => setDisp(fmt(value, foc)), [value, foc, fmt]);
   return (
     <input
       type='text'
@@ -84,8 +84,8 @@ export const SmartDateInput: React.FC<{
         const v = disp.replace(/\D/g, '');
         if (v.length === 4) {
           const m = v.slice(0, 2),
-            y = 2000 + parseInt(v.slice(2));
-          if (parseInt(m) >= 1 && parseInt(m) <= 12) return onChange(`${y}-${m}`);
+            y = 2000 + parseInt(v.slice(2), 10);
+          if (parseInt(m, 10) >= 1 && parseInt(m, 10) <= 12) return onChange(`${y}-${m}`);
         }
         v ? setDisp(fmt(value, false)) : onChange('');
       }}

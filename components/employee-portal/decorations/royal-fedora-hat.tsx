@@ -1,6 +1,7 @@
 export function RoyalFedoraHat() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Royal fedora hat</title>
       <g transform='translate(0, -34) rotate(-5, 64, 40)'>
         <g transform='translate(36, 12) rotate(-25)'>
           <path d='M0,25 Q-6,12 2,0 Q6,12 0,25 Z' fill='var(--svg-color, #3B82F6)' opacity='0.5' />

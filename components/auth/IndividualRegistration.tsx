@@ -41,8 +41,8 @@ export function IndividualRegistration({ onSuccess, onLoginClick, t, language = 
       }
 
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || t.login?.errorGeneric);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t.login?.errorGeneric);
     } finally {
       setIsLoading(false);
     }
@@ -164,6 +164,7 @@ export function IndividualRegistration({ onSuccess, onLoginClick, t, language = 
               fill='none'
               viewBox='0 0 24 24'
             >
+              <title>Loading</title>
               <circle
                 className='opacity-25'
                 cx='12'

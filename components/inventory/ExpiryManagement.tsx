@@ -1,20 +1,18 @@
+import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
+import { useBatches, useInventory } from '../../hooks/queries/useInventoryQuery';
+import { queryKeys } from '../../lib/queryKeys';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockBatch } from '../../types';
-import { useInventory, useBatches } from '../../hooks/queries/useInventoryQuery';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '../../lib/queryKeys';
 import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
 import { formatStock } from '../../utils/inventory';
-import { storage } from '../../utils/storage';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { ContextMenuItem, useContextMenu } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
@@ -36,7 +34,11 @@ interface BatchWithDrug extends StockBatch {
   drug: Drug;
 }
 
-export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, language }) => {
+export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
+  color,
+  t,
+  language: _language,
+}) => {
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventory = [] } = useInventory(activeBranchId);
@@ -44,7 +46,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, la
   const queryClient = useQueryClient();
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const currentEmployee = useAuthStore((s) => s.currentEmployee);
-  const [loading, setLoading] = useState(true);
+  const [_loading, _setLoading] = useState(true);
   const { getVerifiedDate } = useStatusBar();
   const { success, error } = useAlert();
   const { showMenu, hideMenu } = useContextMenu();
@@ -104,12 +106,12 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, la
         ],
       });
 
-      const updatedDrug = {
+      const _updatedDrug = {
         ...selectedActionBatch.drug,
         stock: Math.max(0, selectedActionBatch.drug.stock - qty),
       };
 
-      const updatedBatch = {
+      const _updatedBatch = {
         ...selectedActionBatch,
         quantity: Math.max(0, selectedActionBatch.quantity - qty),
       };
@@ -423,7 +425,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, la
               { label: t.expiryManagement?.nearExpiry30 || '< 30 Days', value: 'near30' },
               { label: t.expiryManagement?.nearExpiry90 || '< 90 Days', value: 'near90' },
             ]}
-            value={activeFilters['expiryDate']?.[0] || 'all'}
+            value={activeFilters.expiryDate?.[0] || 'all'}
             onChange={(val) =>
               setActiveFilters((prev) => ({ ...prev, expiryDate: val === 'all' ? [] : [val] }))
             }
@@ -497,9 +499,9 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, la
 
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.expiryManagement?.quantity || 'Quantity'}
-              </label>
+              </span>
               <input
                 type='number'
                 max={selectedActionBatch?.quantity}
@@ -510,10 +512,10 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, la
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.expiryManagement?.notes || 'Notes'} ({t.expiryManagement?.optional || 'Optional'}
                 )
-              </label>
+              </span>
               <SmartInput
                 value={actionNotes}
                 onChange={(e) => setActionNotes(e.target.value)}
@@ -524,10 +526,14 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({ color, t, la
           </div>
 
           <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800'>
-            <button onClick={() => setActiveModal(null)} className={MODAL_FOOTER_BTN_CANCEL}>
+            <button
+              onClick={() => setActiveModal(null)}
+              className={MODAL_FOOTER_BTN_CANCEL}
+              type='button'
+            >
               {t.expiryManagement?.cancel || 'Cancel'}
             </button>
-            <button onClick={handleSaveAction} className={MODAL_FOOTER_BTN_PRIMARY}>
+            <button onClick={handleSaveAction} className={MODAL_FOOTER_BTN_PRIMARY} type='button'>
               {t.expiryManagement?.confirm || 'Confirm'}
             </button>
           </div>

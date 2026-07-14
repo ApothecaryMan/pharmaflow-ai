@@ -93,6 +93,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
               {/* Modern Progress Circle */}
               <div className='w-40 h-40 relative mx-auto mb-4 flex items-center justify-center'>
                 <svg className='w-full h-full -rotate-90 transform' viewBox='0 0 100 100'>
+                  <title>Progress</title>
                   {/* Track */}
                   <circle
                     cx='50'
@@ -201,7 +202,10 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
             />
           </div>
 
-          <button className='flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition-colors'>
+          <button
+            className='flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition-colors'
+            type='button'
+          >
             <span className='material-symbols-rounded text-base'>edit</span>
             Edit Goals
           </button>

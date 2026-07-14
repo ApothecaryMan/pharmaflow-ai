@@ -1,6 +1,7 @@
 export function CosmicRingStars() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Cosmic ring stars</title>
       <circle
         cx='64'
         cy='64'

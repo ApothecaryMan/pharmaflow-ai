@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSettings } from '../../context';
 import {
   getCategories,
@@ -170,12 +170,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         {activeTab === 'general' ? (
           <div className={`${innerGridClass} gap-y-4`}>
             <div>
-              <label
+              <span
                 htmlFor='brand-name'
                 className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
               >
                 {t.modal.brand} *
-              </label>
+              </span>
               <SmartInput
                 id='brand-name'
                 required
@@ -184,12 +184,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               />
             </div>
             <div>
-              <label
+              <span
                 htmlFor='name-arabic'
                 className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
               >
                 {t.modal.nameArabic || 'Arabic Name'}
-              </label>
+              </span>
               <SmartInput
                 id='name-arabic'
                 value={formData.nameAr || ''}
@@ -198,12 +198,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               />
             </div>
             <div className='md:col-span-2 space-y-1'>
-              <label
+              <span
                 htmlFor='generic-name'
                 className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
               >
                 Generic Name
-              </label>
+              </span>
               <SmartInput
                 id='generic-name'
                 value={
@@ -224,9 +224,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
 
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <span className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.modal.category} *
-              </label>
+              </span>
               <FilterDropdown
                 variant='input'
                 items={getCategories(currentLangCode)}
@@ -245,9 +245,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               />
             </div>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <span className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 Product Type
-              </label>
+              </span>
               <FilterDropdown
                 variant='input'
                 items={getProductTypes(formData.category || 'General', currentLangCode)} // English IDs
@@ -271,9 +271,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
 
             <div className='md:col-span-2 space-y-1.5'>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <span className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.fields?.status || 'Product Status'}
-              </label>
+              </span>
               <div className='flex bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700'>
                 <button
                   type='button'
@@ -301,12 +301,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
             {/* Multi-Barcode Input */}
             <div className='md:col-span-2 space-y-1'>
-              <label
+              <span
                 htmlFor='barcode-input'
                 className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
               >
                 {t.modal.barcode}
-              </label>
+              </span>
               <div className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]'>
                 {formData.barcode && (
                   <span className='badge-info gap-1'>
@@ -322,7 +322,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   </span>
                 )}
                 {formData.additionalBarcodes?.map((code, idx) => (
-                  <span key={idx} className='badge-neutral gap-1'>
+                  <span key={code} className='badge-neutral gap-1'>
                     {code}
                     <button
                       type='button'
@@ -360,12 +360,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
 
             <div className='md:col-span-2 space-y-1'>
-              <label
+              <span
                 htmlFor='internal-code'
                 className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
               >
                 {t.modal.internalCode}
-              </label>
+              </span>
               <div className='relative'>
                 <SmartInput
                   id='internal-code'
@@ -386,12 +386,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
 
             <div className='md:col-span-2 flex flex-col min-h-[100px]'>
-              <label
+              <span
                 htmlFor='description-input'
                 className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
               >
                 {t.modal.desc}
-              </label>
+              </span>
               <SmartTextarea
                 id='description-input'
                 className='w-full flex-1 resize-none'
@@ -408,12 +408,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </h4>
               <div className={pricingGridClass}>
                 <div>
-                  <label
+                  <span
                     htmlFor='stock-input'
                     className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
                   >
                     {t.modal.stock}
-                  </label>
+                  </span>
                   <SmartInput
                     id='stock-input'
                     type='number'
@@ -426,27 +426,27 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label
+                  <span
                     htmlFor='units-pack'
                     className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
                   >
                     {t.modal.unitsPerPack}
-                  </label>
+                  </span>
                   <SmartInput
                     id='units-pack'
                     type='number'
                     min='1'
                     value={formData.unitsPerPack || 1}
                     onChange={(e) =>
-                      setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
+                      setFormData({ ...formData, unitsPerPack: parseInt(e.target.value, 10) || 1 })
                     }
                   />
                 </div>
               </div>
               <div>
-                <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <span className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                   {t.modal.expiry}
-                </label>
+                </span>
                 <SmartDateInput
                   required
                   className='w-full'
@@ -462,12 +462,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </h4>
               <div className='space-y-4'>
                 <div>
-                  <label
+                  <span
                     htmlFor='public-price'
                     className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
                   >
                     {t.modal.publicPrice}
-                  </label>
+                  </span>
                   <SmartInput
                     id='public-price'
                     type='number'
@@ -481,12 +481,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label
+                  <span
                     htmlFor='cost-price'
                     className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
                   >
                     {t.modal.cost}
-                  </label>
+                  </span>
                   <SmartInput
                     id='cost-price'
                     type='number'
@@ -501,12 +501,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
               <div className={pricingGridClass}>
                 <div>
-                  <label
+                  <span
                     htmlFor='unit-price'
                     className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
                   >
                     {currentLangCode === 'ar' ? 'سعر الشريط' : 'Unit Price'}
-                  </label>
+                  </span>
                   <SmartInput
                     id='unit-price'
                     type='number'
@@ -524,12 +524,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label
+                  <span
                     htmlFor='unit-cost'
                     className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
                   >
                     {currentLangCode === 'ar' ? 'تكلفة الشريط' : 'Unit Cost'}
-                  </label>
+                  </span>
                   <SmartInput
                     id='unit-cost'
                     type='number'
@@ -548,12 +548,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 </div>
               </div>
               <div>
-                <label
+                <span
                   htmlFor='max-discount'
                   className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
                 >
                   Max Discount (%)
-                </label>
+                </span>
                 <SmartInput
                   id='max-discount'
                   type='number'

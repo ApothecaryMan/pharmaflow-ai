@@ -1,8 +1,7 @@
-import React from 'react';
-
 export function ArcaneMagicRunes() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Arcane magic runes</title>
       <style>{`
         @keyframes amr-spin-cw { 100% { transform: rotate(360deg); } }
         @keyframes amr-spin-ccw { 100% { transform: rotate(-360deg); } }

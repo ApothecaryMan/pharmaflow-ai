@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 
 const filePath = '/home/x1carbon/Projects/HTML/pharmaflow-ai/UI_LOGIC_INVENTORY.md';
 const content = fs.readFileSync(filePath, 'utf8');

@@ -97,6 +97,7 @@ const PLANS: Plan[] = [
 
 const CheckIcon: React.FC<{ highlighted?: boolean }> = ({ highlighted }) => (
   <svg className='zn-check' viewBox='0 0 14 14' fill='none'>
+    <title>Check</title>
     <polyline
       points='2,7 5.5,10.5 12,3.5'
       stroke={highlighted ? '#444' : '#2a2a2a'}
@@ -301,7 +302,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
           <button
             onClick={() => onViewChange?.('org-management')}
             className='fixed top-10 left-10 z-50 flex items-center justify-center transition-opacity hover:opacity-60'
-          >
+           type="button">
             <span
               className='material-symbols-rounded text-[var(--zn-text)]'
               style={{ fontSize: '36px' }}
@@ -318,7 +319,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
           <h1 className='zn-title' style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}>
             Choose your compound
           </h1>
-          <p className='zn-subtitle'>// three tiers. one stack.</p>
+          <p className='zn-subtitle'>{'// three tiers. one stack.'}</p>
         </div>
 
         {/* Billing Toggle */}
@@ -357,13 +358,13 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
 
               {renderPriceBlock(plan)}
 
-              <button className={`zn-btn ${plan.ctaPrimary ? 'primary' : ''}`}>{plan.cta}</button>
+              <button className={`zn-btn ${plan.ctaPrimary ? 'primary' : ''}`} type="button">{plan.cta}</button>
 
               <hr className='zn-divider' />
 
               <p className='zn-features-label'>{plan.featuresLabel}</p>
               {plan.features.map((f, i) => (
-                <div className='zn-feature' key={i}>
+                <div className='zn-feature' key={`${f.text}-${i}`}>
                   <CheckIcon highlighted={f.highlighted} />
                   <span className='zn-feature-text'>{f.text}</span>
                 </div>

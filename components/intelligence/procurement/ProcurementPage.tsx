@@ -6,7 +6,6 @@ import type { ProcurementItem, ProcurementSummary } from '../../../types/intelli
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { TanStackTable } from '../../common/TanStackTable';
 import { ConfidenceIndicator } from '../common/ConfidenceIndicator';
-import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { StatusBadge } from '../common/StatusBadge';
 import { GeneratePOModal } from './GeneratePOModal';
 
@@ -20,8 +19,8 @@ interface ProcurementPageProps {
 
 export const ProcurementPage: React.FC<ProcurementPageProps> = ({
   t,
-  language = 'EN',
-  summary,
+  language: _language = 'EN',
+  summary: _summary,
   filteredItems,
   loading,
 }) => {
@@ -71,7 +70,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
       columnHelper.accessor('stock_status', {
         header: t?.intelligence?.procurement?.grid?.columns?.stockStatus || 'Status',
         meta: { align: 'center' },
-        cell: (info) => <StatusBadge status={info.getValue()} language={language} />,
+        cell: (info) => <StatusBadge status={info.getValue()} language={t} />,
       }),
       columnHelper.accessor('current_stock', {
         header: t?.intelligence?.procurement?.grid?.columns?.available || 'Available',
@@ -133,6 +132,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
               onClick={() => handleGeneratePO([info.row.original.product_id])}
               className='p-1.5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors'
               title={t?.intelligence?.procurement?.generatePO || 'Generate PO'}
+              type='button'
             >
               <span
                 className='material-symbols-rounded font-icon'

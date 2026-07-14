@@ -2,7 +2,7 @@ import type React from 'react';
 import type { ReactNode } from 'react';
 import type { BadgeStyle, Language, SwitchVariant, ThemeColor } from '../types';
 import { NotificationProvider, useNotification } from './NotificationContext';
-import { ThemeProvider, useTheme, type BackgroundPattern } from './ThemeContext';
+import { type BackgroundPattern, ThemeProvider, useTheme } from './ThemeContext';
 import { TypographyProvider, useTypography } from './TypographyContext';
 import { UIProvider, useUI } from './UIContext';
 

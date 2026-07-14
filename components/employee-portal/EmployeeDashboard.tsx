@@ -81,7 +81,7 @@ export function EmployeeDashboard({ view = 'profile', onViewChange, onLogout }: 
     [updateProfile, queryClient]
   );
 
-  const handleActionRequest = useCallback(
+  const _handleActionRequest = useCallback(
     async (id: string, action: 'accepted' | 'rejected') => {
       try {
         await actionRequest(id, action);

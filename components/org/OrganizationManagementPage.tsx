@@ -5,7 +5,6 @@ import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
 import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
 import { type OrgData, orgAggregationService } from '../../services/org/orgAggregationService';
 import { orgService } from '../../services/org/orgService';
@@ -34,7 +33,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   const { darkMode } = useSettings();
   const [data, setData] = useState<OrgData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const [activeMatrixTab, setActiveMatrixTab] = useState<'managers' | 'staff'>('managers');
 
@@ -64,7 +63,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
 
   useEffect(() => {
     fetchData();
-  }, [activeOrgId]);
+  }, [fetchData]);
 
   const handleUpdateEmployee = async (employeeId: string, updates: any) => {
     try {

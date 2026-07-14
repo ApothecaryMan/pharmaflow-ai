@@ -87,13 +87,13 @@ export const wrapPrintHTML = (options: PrintShellOptions): string => {
     fontFamily = "'Roboto', Arial, sans-serif",
   } = options;
 
-  const effectiveOrientation = deriveOrientation(width, height, orientation);
+  const _effectiveOrientation = deriveOrientation(width, height, orientation);
 
   // For landscape, the @page size string keeps W×H but the browser/printer
   // honors the orientation. We do NOT swap dimensions in CSS — that was the
   // old rotatePage hack that produced skewed output. The real orientation
   // fix lives in the QZ config (see qzPrinter.printLabelSilently).
-  const pageSize = `${width}mm ${height}mm`;
+  const _pageSize = `${width}mm ${height}mm`;
 
   // Shared font-ready + optional auto-print script. Replaces the duplicated
   // `document.fonts.ready` + setTimeout safety-delay logic.

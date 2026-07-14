@@ -7,7 +7,7 @@ interface AIAssistantProps {
   t: Translations;
 }
 
-export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
+export const AIAssistant: React.FC<AIAssistantProps> = ({ color: _color, t }) => {
   const [drugName, setDrugName] = useState('');
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
@@ -22,7 +22,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
     try {
       const result = await analyzeDrugInteraction(drugName, query || 'General safety information');
       setResponse(result);
-    } catch (err) {
+    } catch (_err) {
       setResponse(t.error);
     } finally {
       setLoading(false);
@@ -52,30 +52,46 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
 
         <form onSubmit={handleAnalyze} className='space-y-4 w-full'>
           <div>
-            <label className='block text-[10px] font-bold uppercase text-gray-400 mb-1 ms-4'>
+            <label
+              htmlFor='drug-name'
+              className='block text-[10px] font-bold uppercase text-gray-400 mb-1 ms-4'
+            >
               {t.drugLabel}
             </label>
             <input
+              id='drug-name'
               type='text'
               required
               value={drugName}
               onChange={(e) => setDrugName(e.target.value)}
               placeholder={t.placeholderDrug}
               className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-hidden focus:ring-2 transition-all'
-              style={{ '--tw-ring-color': `var(--primary-500)` } as any}
+              style={
+                { '--tw-ring-color': `var(--primary-500)` } as React.CSSProperties & {
+                  '--tw-ring-color': string;
+                }
+              }
             />
           </div>
           <div>
-            <label className='block text-[10px] font-bold uppercase text-gray-400 mb-1 ms-4'>
+            <label
+              htmlFor='query'
+              className='block text-[10px] font-bold uppercase text-gray-400 mb-1 ms-4'
+            >
               {t.questionLabel}
             </label>
             <input
+              id='query'
               type='text'
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t.placeholderQuestion}
               className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-hidden focus:ring-2 transition-all'
-              style={{ '--tw-ring-color': `var(--primary-500)` } as any}
+              style={
+                { '--tw-ring-color': `var(--primary-500)` } as React.CSSProperties & {
+                  '--tw-ring-color': string;
+                }
+              }
             />
           </div>
 

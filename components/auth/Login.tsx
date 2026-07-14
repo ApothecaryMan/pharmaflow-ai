@@ -215,6 +215,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                 strokeLinejoin='round'
                 className='shrink-0'
               >
+                <title>Error</title>
                 <circle cx='12' cy='12' r='10' />
                 <line x1='12' x2='12' y1='8' y2='12' />
                 <line x1='12' x2='12.01' y1='16' y2='16' />
@@ -344,6 +345,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                     strokeLinecap='round'
                     strokeLinejoin='round'
                   >
+                    <title>Check</title>
                     <polyline points='20 6 9 17 4 12' />
                   </svg>
                 )}
@@ -380,6 +382,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                   strokeLinejoin='round'
                   className='animate-spin'
                 >
+                  <title>Loading</title>
                   <path d='M21 12a9 9 0 1 1-6.219-8.56' />
                 </svg>
                 <span>{t.signingIn}</span>

@@ -7,7 +7,6 @@ import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { AuditTransaction } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
-import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { TransactionDetailModal } from './TransactionDetailModal';
 
 interface AuditPageProps {

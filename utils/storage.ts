@@ -233,7 +233,7 @@ export const storage = {
         return defaultValue;
       }
       return parsed as T;
-    } catch (error) {
+    } catch (_error) {
       if (
         typeof item === 'string' &&
         typeof defaultValue === 'string' &&

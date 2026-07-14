@@ -23,39 +23,36 @@ export const useUpdateCheck = () => {
   const lastCheckRef = useRef(0);
   const currentVersion = packageJson.version;
 
-  const checkForUpdates = useCallback(
-    async (force = false) => {
-      // Cooldown: skip if checked recently (unless forced)
-      const now = Date.now();
-      if (!force && now - lastCheckRef.current < CHECK_COOLDOWN_MS) return;
-      if (isCheckingRef.current) return;
+  const checkForUpdates = useCallback(async (force = false) => {
+    // Cooldown: skip if checked recently (unless forced)
+    const now = Date.now();
+    if (!force && now - lastCheckRef.current < CHECK_COOLDOWN_MS) return;
+    if (isCheckingRef.current) return;
 
-      isCheckingRef.current = true;
-      lastCheckRef.current = now;
-      setIsChecking(true);
-      try {
-        const response = await fetch('/version.json?t=' + now, {
-          cache: 'no-store',
-        });
-        if (!response.ok) throw new Error('Failed to fetch version info');
+    isCheckingRef.current = true;
+    lastCheckRef.current = now;
+    setIsChecking(true);
+    try {
+      const response = await fetch(`/version.json?t=${now}`, {
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('Failed to fetch version info');
 
-        const data: UpdateInfo = await response.json();
+      const data: UpdateInfo = await response.json();
 
-        if (data.version !== currentVersion) {
-          setUpdateInfo(data);
-          setHasUpdate(true);
-        } else {
-          setHasUpdate(false);
-        }
-      } catch (error) {
-        console.error('[UpdateCheck] Error checking for updates:', error);
-      } finally {
-        isCheckingRef.current = false;
-        setIsChecking(false);
+      if (data.version !== currentVersion) {
+        setUpdateInfo(data);
+        setHasUpdate(true);
+      } else {
+        setHasUpdate(false);
       }
-    },
-    [currentVersion]
-  );
+    } catch (error) {
+      console.error('[UpdateCheck] Error checking for updates:', error);
+    } finally {
+      isCheckingRef.current = false;
+      setIsChecking(false);
+    }
+  }, []);
 
   useEffect(() => {
     // 1. Check once on mount

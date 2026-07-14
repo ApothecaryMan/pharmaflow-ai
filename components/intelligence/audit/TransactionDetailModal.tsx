@@ -150,7 +150,11 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
         {/* Actions */}
         <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto'>
-          <button onClick={() => console.log('Print receipt')} className={MODAL_FOOTER_BTN_CANCEL}>
+          <button
+            onClick={() => console.log('Print receipt')}
+            className={MODAL_FOOTER_BTN_CANCEL}
+            type='button'
+          >
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
               print
             </span>

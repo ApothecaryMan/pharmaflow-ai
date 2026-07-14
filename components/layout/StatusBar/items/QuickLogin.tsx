@@ -33,6 +33,7 @@ const PasskeyButton: React.FC<{
     onClick={onClick}
     className='flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
     title={title}
+    type='button'
   >
     <span
       className='material-symbols-rounded text-primary-500 leading-none'
@@ -67,7 +68,7 @@ const LoginInputView: React.FC<{
   t,
 }) => {
   const isNewPass = step === 'new-password';
-  const isAR = language === 'AR';
+  const _isAR = language === 'AR';
 
   const placeholder = useMemo(() => {
     if (step === 'username') return t?.username || 'Username...';
@@ -154,22 +155,22 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   const tooltipText = useMemo(() => {
     if (!currentEmployeeId) return t?.login || 'Login';
     return (
-      <div className="flex items-center gap-3 py-0.5 pr-2 pl-0.5" dir={isAR ? 'rtl' : 'ltr'}>
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 dark:bg-black/10 flex-shrink-0 border-2 border-white/30 dark:border-black/10 flex items-center justify-center shadow-inner">
+      <div className='flex items-center gap-3 py-0.5 pr-2 pl-0.5' dir={isAR ? 'rtl' : 'ltr'}>
+        <div className='w-10 h-10 rounded-full overflow-hidden bg-white/20 dark:bg-black/10 flex-shrink-0 border-2 border-white/30 dark:border-black/10 flex items-center justify-center shadow-inner'>
           {avatarUrl ? (
-            <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt={userName} className='w-full h-full object-cover' />
           ) : (
-            <span className="material-symbols-rounded text-white dark:text-gray-700 text-2xl">
+            <span className='material-symbols-rounded text-white dark:text-gray-700 text-2xl'>
               person
             </span>
           )}
         </div>
-        <div className="flex flex-col gap-0.5 justify-center min-w-20">
-          <span className="text-[13px] font-bold text-white dark:text-gray-900 leading-none">
+        <div className='flex flex-col gap-0.5 justify-center min-w-20'>
+          <span className='text-[13px] font-bold text-white dark:text-gray-900 leading-none'>
             {userName}
           </span>
           {roleLabel && (
-            <span className="text-[10px] text-white/70 dark:text-gray-600 font-semibold tracking-wider uppercase">
+            <span className='text-[10px] text-white/70 dark:text-gray-600 font-semibold tracking-wider uppercase'>
               {roleLabel}
             </span>
           )}
@@ -249,7 +250,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         setHasRecovered(true);
         alert.success(t?.changeSuccess || 'Password updated successfully');
         setTimeout(() => {
-          window.location.replace(window.location.origin + '/#/');
+          window.location.replace(`${window.location.origin}/#/`);
         }, 1500);
       } else {
         setIsError(true);
@@ -276,7 +277,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
 
       // Smart optimization: If user already typed their username, target their specific passkey
       // to skip the browser selection list.
-      let allowCredentials;
+      let allowCredentials: any[];
       if (step === 'username' && inputVal.trim()) {
         const found = employees.find((emp) => emp.username === inputVal.trim());
         if (found?.biometricCredentialId) {
@@ -402,7 +403,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       dir={isAR ? 'rtl' : 'ltr'}
     >
       {step === 'idle' ? (
-        <div onContextMenu={handleContextMenu} className='h-full flex items-center'>
+        <div role="button" tabIndex={0} onContextMenu={handleContextMenu} className='h-full flex items-center'>
           <StatusBarItem
             icon='person'
             tooltip={tooltipText}
@@ -461,6 +462,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
               }}
               className='flex items-center justify-center h-full px-2 opacity-85 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer'
               title={t?.forgotPassword || 'Forgot Password?'}
+              type='button'
             >
               <span
                 className='material-symbols-rounded block leading-none'

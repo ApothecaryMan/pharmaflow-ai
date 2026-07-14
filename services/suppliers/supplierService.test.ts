@@ -86,6 +86,7 @@ describe('SupplierService', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       or: vi.fn().mockReturnThis(),
+      // biome-ignore lint/suspicious/noThenProperty: required for Promise-like mock
       then: vi
         .fn()
         .mockImplementation((onfulfilled) =>

@@ -1,5 +1,3 @@
-import { money } from './money';
-
 // Performance: Cache formatters to avoid costly re-allocation
 const formatterCache = new Map<string, Intl.NumberFormat>();
 
@@ -145,7 +143,7 @@ export const formatCompactCurrency = (
   const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
-  const formatter = getFormatter(
+  const _formatter = getFormatter(
     {
       notation: 'compact',
       minimumFractionDigits: decimals,
@@ -194,7 +192,7 @@ export const formatCompactCurrencyParts = (
   const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
-  const formatter = getFormatter(
+  const _formatter = getFormatter(
     {
       notation: 'compact',
       minimumFractionDigits: decimals,

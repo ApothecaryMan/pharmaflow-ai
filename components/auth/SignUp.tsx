@@ -12,10 +12,10 @@ interface SignUpProps {
 
 export const SignUp: React.FC<SignUpProps> = ({
   onViewChange,
-  onLoginSuccess,
+  onLoginSuccess: _onLoginSuccess,
   language = 'EN',
 }) => {
-  const t = TRANSLATIONS[language].login as any;
+  const t = TRANSLATIONS[language].login;
 
   const [registrationType, setRegistrationType] = useState<'org' | 'employee' | null>(null);
 
@@ -106,6 +106,7 @@ export const SignUp: React.FC<SignUpProps> = ({
             {language === 'AR' ? 'نوع الحساب' : 'Account Type'}
           </h3>
           <button
+            type='button'
             onClick={() => setRegistrationType('employee')}
             className='w-full p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800/80 hover:border-zinc-700 transition-all duration-300 group flex items-center gap-4 text-start cursor-pointer'
           >
@@ -114,6 +115,7 @@ export const SignUp: React.FC<SignUpProps> = ({
               fill='currentColor'
               viewBox='0 0 24 24'
             >
+              <title>Employee</title>
               <path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' />
             </svg>
             <div className='flex-1'>
@@ -128,6 +130,7 @@ export const SignUp: React.FC<SignUpProps> = ({
             </div>
           </button>
           <button
+            type='button'
             onClick={() => setRegistrationType('org')}
             className='w-full p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800/80 hover:border-zinc-700 transition-all duration-300 group flex items-center gap-4 text-start cursor-pointer'
           >
@@ -136,6 +139,7 @@ export const SignUp: React.FC<SignUpProps> = ({
               fill='currentColor'
               viewBox='0 0 24 24'
             >
+              <title>Organization</title>
               <path d='M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z' />
             </svg>
             <div className='flex-1'>
@@ -164,6 +168,7 @@ export const SignUp: React.FC<SignUpProps> = ({
       ) : registrationType === 'employee' ? (
         <div className='animate-in fade-in slide-in-from-bottom-4 duration-500'>
           <button
+            type='button'
             onClick={() => setRegistrationType(null)}
             className='mb-6 flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer'
           >
@@ -173,6 +178,7 @@ export const SignUp: React.FC<SignUpProps> = ({
               viewBox='0 0 24 24'
               stroke='currentColor'
             >
+              <title>Back</title>
               <path
                 strokeLinecap='round'
                 strokeLinejoin='round'
@@ -203,6 +209,7 @@ export const SignUp: React.FC<SignUpProps> = ({
             strokeLinejoin='round'
             className='text-white mb-6'
           >
+            <title>Success</title>
             <path d='M22 11.08V12a10 10 0 1 1-5.93-9.14'></path>
             <polyline points='22 4 12 14.01 9 11.01'></polyline>
           </svg>
@@ -221,6 +228,7 @@ export const SignUp: React.FC<SignUpProps> = ({
       ) : (
         <div className='animate-in fade-in slide-in-from-bottom-4 duration-500'>
           <button
+            type='button'
             onClick={() => setRegistrationType(null)}
             className='mb-6 flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer'
           >
@@ -230,6 +238,7 @@ export const SignUp: React.FC<SignUpProps> = ({
               viewBox='0 0 24 24'
               stroke='currentColor'
             >
+              <title>Back</title>
               <path
                 strokeLinecap='round'
                 strokeLinejoin='round'
@@ -347,6 +356,7 @@ export const SignUp: React.FC<SignUpProps> = ({
                     fill='none'
                     viewBox='0 0 24 24'
                   >
+                    <title>Loading</title>
                     <circle
                       className='opacity-25'
                       cx='12'

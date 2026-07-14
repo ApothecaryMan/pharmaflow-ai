@@ -1,11 +1,7 @@
 import type React from 'react';
 import { useMemo } from 'react';
 import { useSettings } from '../../context';
-import {
-  formatCompactCurrencyParts,
-  formatCurrencyParts,
-  getCurrencySymbol,
-} from '../../utils/currency';
+import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { AnimatedCounter } from './AnimatedCounter';
 import { Tooltip } from './Tooltip';
@@ -49,7 +45,7 @@ export const SmallCard = ({
   title,
   value,
   icon,
-  iconColor,
+  iconColor: _iconColor,
   trend,
   trendValue,
   trendLabel,
@@ -58,7 +54,7 @@ export const SmallCard = ({
   currencyLabel,
   fractionDigits,
   iconOverlay,
-  valueSuffix,
+  valueSuffix: _valueSuffix,
   iconTooltip,
   isLoading,
   className = '',

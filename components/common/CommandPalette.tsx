@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
 import { Command } from 'cmdk';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useKeyboardContext } from '@/hooks/keyboard';
+import { useCallback } from 'react';
 import { PAGE_REGISTRY } from '@/config/pageRegistry';
+import { useKeyboardContext } from '@/hooks/keyboard';
 
 interface CommandPaletteProps {
   language: 'AR' | 'EN';

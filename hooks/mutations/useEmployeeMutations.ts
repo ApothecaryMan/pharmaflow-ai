@@ -17,7 +17,7 @@ export function useAddEmployee() {
 
 export function useUpdateEmployee() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
+  const _branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
@@ -30,7 +30,7 @@ export function useUpdateEmployee() {
 
 export function useDeleteEmployee() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
+  const _branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: (id: string) => employeeService.delete(id),

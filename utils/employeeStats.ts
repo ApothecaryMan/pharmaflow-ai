@@ -1,4 +1,4 @@
-import { CartItem, type Sale } from '../types';
+import type { Sale } from '../types';
 import { money } from './money';
 
 /**

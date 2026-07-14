@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FC } from 'react';
+import { type FC, useEffect, useRef } from 'react';
 import { useUI } from '../../context/UIContext';
 
 const WS_URL = `ws://localhost:${import.meta.env.VITE_MCP_WS_PORT || '3456'}`;
@@ -62,7 +62,7 @@ export const DesignMcpBridge: FC = () => {
       clearTimeout(reconnectTimer.current);
       wsRef.current?.close();
     };
-  }, []);
+  }, [connect]);
 
   return null;
 };

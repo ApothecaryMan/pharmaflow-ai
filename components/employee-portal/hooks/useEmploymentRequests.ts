@@ -25,30 +25,22 @@ export const useEmploymentRequests = (userId: string | undefined) => {
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, employmentRequestRepository]);
 
   const acceptRequest = useCallback(
     async (id: string, updatedBy: string) => {
-      try {
-        await employmentRequestRepository.acceptRequest(id, updatedBy);
-        await fetchRequests();
-      } catch (err) {
-        throw err;
-      }
+      await employmentRequestRepository.acceptRequest(id, updatedBy);
+      await fetchRequests();
     },
-    [fetchRequests]
+    [fetchRequests, employmentRequestRepository]
   );
 
   const rejectRequest = useCallback(
     async (id: string, updatedBy: string) => {
-      try {
-        await employmentRequestRepository.rejectRequest(id, updatedBy);
-        await fetchRequests();
-      } catch (err) {
-        throw err;
-      }
+      await employmentRequestRepository.rejectRequest(id, updatedBy);
+      await fetchRequests();
     },
-    [fetchRequests]
+    [fetchRequests, employmentRequestRepository]
   );
 
   useEffect(() => {

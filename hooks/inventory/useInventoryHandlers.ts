@@ -136,7 +136,16 @@ export function useInventoryHandlers({
         error(`Failed to update product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, inventory, currentEmployeeId, employees, activeBranchId, error, success]
+    [
+      setInventory,
+      inventory,
+      currentEmployeeId,
+      employees,
+      activeBranchId,
+      error,
+      success,
+      setBatches,
+    ]
   );
 
   const handleDeleteDrug = useCallback(

@@ -1,6 +1,5 @@
 import { supabase } from '../../../lib/supabase';
 import type { EmploymentRequest } from '../../../types';
-import { employeeService } from '../employeeService';
 import { employeeProfileRepository } from './employeeProfileRepository';
 
 export const employmentRequestRepository = {
@@ -148,7 +147,7 @@ export const employmentRequestRepository = {
     username: string
   ): Promise<boolean> {
     try {
-      const { data, error } = await supabase.rpc('accept_employment_request', {
+      const { data: _data, error } = await supabase.rpc('accept_employment_request', {
         p_request_id: requestId,
         p_user_id: userId,
         p_username: username,

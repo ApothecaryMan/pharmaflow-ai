@@ -150,7 +150,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       totalItems,
       syncWithSource,
     }),
-    [engine, isLoading, lastSync, totalItems]
+    [engine, isLoading, lastSync, totalItems, syncWithSource]
   );
 
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;

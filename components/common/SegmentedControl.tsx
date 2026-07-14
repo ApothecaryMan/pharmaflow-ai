@@ -1,4 +1,3 @@
-import type React from 'react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type PermissionAction, permissionsService } from '../../services/auth/permissionsService';
 
@@ -94,6 +93,7 @@ export function SegmentedControl<T extends string | number | boolean>({
       el.style.setProperty('--it', `${t}px`);
       if (prevDir.current && prevDir.current !== s.direction) {
         el.dataset.dirChange = 'true';
+        // biome-ignore lint/suspicious/noAssignInExpressions: intentional short-circuit
         setTimeout(() => el && (el.dataset.dirChange = 'false'), 150);
       }
       prevDir.current = s.direction;
@@ -111,7 +111,7 @@ export function SegmentedControl<T extends string | number | boolean>({
     el.querySelectorAll('button').forEach((b) => obs.observe(b));
     upd();
     return () => obs.disconnect();
-  }, [value, filtered.length, isCompact]);
+  }, [isCompact]);
 
   const pill = shape === 'pill',
     sz = SIZES[size];

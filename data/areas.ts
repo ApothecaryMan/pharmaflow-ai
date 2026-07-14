@@ -497,10 +497,10 @@ export const AREAS: Area[] = [
 ];
 
 // Helper to generate generic areas for cities without specific data
-const generateGenericAreas = () => {
-  const genericAreas: Area[] = [];
+const _generateGenericAreas = () => {
+  const _genericAreas: Area[] = [];
   // Range of IDs to skip (already defined above)
-  const definedCityIds = [
+  const _definedCityIds = [
     '101',
     '102',
     '103',

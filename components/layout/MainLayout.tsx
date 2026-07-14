@@ -1,17 +1,17 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type React from 'react';
 import { useState } from 'react';
-import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
+import { getContentContainerClasses } from '../../config/layoutConfig';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
 import { useGlobalHelp } from '../../context/HelpContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useUI } from '../../context/UIContext';
-import type { ViewState } from '../../types';
-import { useAutoSystemBarColor } from '../../utils/systemBars';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useAuthStore } from '../../stores/authStore';
+import type { ViewState } from '../../types';
+import { useAutoSystemBarColor } from '../../utils/systemBars';
 import { CommandPalette } from '../common/CommandPalette';
 import { ContextMenuProvider, useContextMenu } from '../common/ContextMenu';
 import { HelpModal } from '../common/HelpModal';
@@ -61,6 +61,8 @@ const GlobalContextMenuWrapper: React.FC<{
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className='w-full h-full'
       onContextMenu={(e) => {
         if (e.defaultPrevented) return;
@@ -129,7 +131,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const {
     theme,
-    setTheme,
+    setTheme: _setTheme,
     darkMode,
     setDarkMode,
     backgroundPattern,

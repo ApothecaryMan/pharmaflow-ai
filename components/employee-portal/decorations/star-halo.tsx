@@ -1,6 +1,7 @@
 export function StarHalo() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Star halo</title>
       <g transform='translate(0, -8)'>
         <path
           d='M 14,42 Q 64,10 114,42'

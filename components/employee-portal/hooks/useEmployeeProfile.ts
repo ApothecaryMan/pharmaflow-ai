@@ -25,7 +25,7 @@ export const useEmployeeProfile = (userId: string | undefined) => {
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, employeeProfileRepository]);
 
   const updateProfile = useCallback(
     async (updates: Partial<UserProfile>) => {
@@ -40,7 +40,7 @@ export const useEmployeeProfile = (userId: string | undefined) => {
         throw err;
       }
     },
-    [userId]
+    [userId, employeeProfileRepository]
   );
 
   useEffect(() => {

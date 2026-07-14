@@ -9,24 +9,24 @@
 
 /* 1. Backdrop override rules */
 .modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.5) !important;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .sidebar-modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.15);
 }
 
 @media (min-width: 768px) {
   .sidebar-modal-backdrop {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    pointer-events: none !important;
-    background-color: transparent !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: none;
+    background-color: transparent;
   }
 
   /* Prevent page scroll-lock in sidebar mode on desktop */
   body.sidebar-modal-active:not(.modal-blur-active) {
-    overflow: auto !important;
+    overflow: auto;
   }
 }
 
@@ -34,51 +34,51 @@
 @media (min-width: 768px) {
   /* Main card layout transformation - physical right alignment for both LTR and RTL */
   .sidebar-modal-card {
-    position: absolute !important;
-    top: calc(var(--navbar-height) + var(--spacing-base)) !important;
-    right: var(--spacing-base) !important;
-    bottom: calc(var(--statusbar-height) + var(--spacing-base)) !important;
-    left: auto !important;
-    width: var(--sidebar-modal-width, 512px) !important;
+    position: absolute;
+    top: calc(var(--navbar-height) + var(--spacing-base));
+    right: var(--spacing-base);
+    bottom: calc(var(--statusbar-height) + var(--spacing-base));
+    left: auto;
+    width: var(--sidebar-modal-width, 512px);
     height: calc(
       100vh -
       var(--navbar-height) -
       var(--statusbar-height) -
       calc(var(--spacing-base) * 2)
-    ) !important;
+    );
     max-height: calc(
       100vh -
       var(--navbar-height) -
       var(--statusbar-height) -
       calc(var(--spacing-base) * 2)
-    ) !important;
-    border-radius: var(--radius-2xl, 16px) !important;
-    border: 1px solid var(--border-divider) !important;
+    );
+    border-radius: var(--radius-2xl, 16px);
+    border: 1px solid var(--border-divider);
   }
 
   /* Shifting transition on the main viewport layout */
   .main-layout-content {
-    transition: padding-right 300ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+    transition: padding-right 300ms cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   /* Shifting activation when sidebar modal is visible - physical right padding */
   .sidebar-modal-active .main-layout-content {
-    padding-right: calc(var(--sidebar-modal-width, 512px) + var(--spacing-base)) !important;
-    padding-left: 0 !important;
+    padding-right: calc(var(--sidebar-modal-width, 512px) + var(--spacing-base));
+    padding-left: 0;
   }
 
   /* Ensure single-child content areas expand to fill full height in sidebar mode */
   .sidebar-modal-card .content-shift-layer > div:only-child {
-    max-height: none !important;
-    height: 100% !important;
+    max-height: none;
+    height: 100%;
   }
 
   /* cardBorderLight overrides for sidebar modal card */
   .thin-border-mode .sidebar-modal-card {
-    border: 1px solid var(--border-secondary) !important;
+    border: 1px solid var(--border-secondary);
   }
 
   .none-border-mode .sidebar-modal-card {
-    border-color: transparent !important;
+    border-color: transparent;
   }
 }

@@ -12,26 +12,15 @@ import type {
   PurchaseReturn,
   Return,
   Sale,
-  StockMovement,
 } from '../../types';
-import { idGenerator } from '../../utils/idGenerator';
-import { money } from '../../utils/money';
-import { resolveUnits } from '../../utils/stockUtils';
 import { auditService } from '../audit/auditService';
 import { cashService } from '../cash/cashService';
-import { cashRepository } from '../cash/repositories/cashRepository';
 import { calculateSalePoints } from '../customers/loyaltyUtils';
-import { batchService } from '../inventory/batchService';
-import { inventoryService } from '../inventory/inventoryService';
 import { batchRepository } from '../inventory/repositories/batchRepository';
 import { stockMovementRepository } from '../inventory/repositories/stockMovementRepository';
-import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { purchaseService } from '../purchases/purchaseService';
-import { returnsRepository } from '../returns/repositories/returnsRepository';
 import { returnService } from '../returns/returnService';
 import { salesRepository } from '../sales/repositories/salesRepository';
-import { salesService } from '../sales/salesService';
-import { settingsService } from '../settings/settingsService';
 
 export interface TransactionResult<T = any> {
   success: boolean;

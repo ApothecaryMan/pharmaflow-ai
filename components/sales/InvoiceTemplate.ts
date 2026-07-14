@@ -115,7 +115,7 @@ export function generateLayout1HTML(
   _defaults?: any
 ): string {
   const lang = opts.language || 'EN';
-  const isRTL = lang === 'AR';
+  const _isRTL = lang === 'AR';
 
   // Default fallbacks if keys are missing but allow empty string if explicitly set?
   // We use || which means empty string falls back to default.
@@ -279,7 +279,7 @@ export function generateLayout1HTML(
                 item.isUnit && item.unitsPerPack
                   ? item.publicPrice / item.unitsPerPack
                   : item.publicPrice;
-              const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
+              const _lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
 
               return `
             <tr>

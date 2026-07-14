@@ -27,8 +27,7 @@ export function useDailyAchievements(
   const bid = branchId ?? '';
   return useQuery({
     queryKey: [...queryKeys.achievements.month(bid, year, month), language],
-    queryFn: () =>
-      achievementService.getMonthAchievements(bid, year, month, language),
+    queryFn: () => achievementService.getMonthAchievements(bid, year, month, language),
     enabled: enabled && !!bid && year > 0 && month >= 0 && month <= 11,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,

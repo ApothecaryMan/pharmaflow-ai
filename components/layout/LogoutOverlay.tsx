@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import type React from 'react';
 
 interface LogoutOverlayProps {
@@ -8,12 +7,13 @@ interface LogoutOverlayProps {
   terminatorName?: string | null;
 }
 
-const LogoAsterisk = ({ scale = 1.4 }: { scale?: number }) => (
+const _LogoAsterisk = ({ scale = 1.4 }: { scale?: number }) => (
   <svg
     viewBox='0 0 140 140'
     className='w-12 h-12 text-zinc-900 dark:text-white animate-spin'
     style={{ animationDuration: '2s' }}
   >
+    <title>Loading</title>
     <g transform={`translate(70 70) scale(${scale})`} fill='currentColor'>
       <rect x='-4' y='-35' width='8' height='70' rx='.5' transform='rotate(45)' />
       <rect x='-4' y='-35' width='8' height='20' rx='.5' />
@@ -28,11 +28,10 @@ const LogoAsterisk = ({ scale = 1.4 }: { scale?: number }) => (
 
 export const LogoutOverlay: React.FC<LogoutOverlayProps> = ({
   language,
-  darkMode,
+  darkMode: _darkMode,
   logoutReason = 'normal',
   terminatorName = null,
 }) => {
-
   return (
     <div className='h-dvh w-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-black relative overflow-hidden'>
       <div

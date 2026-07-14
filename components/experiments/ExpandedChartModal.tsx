@@ -391,7 +391,7 @@ StatsCard.displayName = 'StatsCard';
  *
  * @component
  */
-const CustomTooltipContent = memo(({ active, payload, label, color, unit }: any) => {
+const CustomTooltipContent = memo(({ active, payload, label, color, unit: _unit }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className='backdrop-blur-md bg-white/80 dark:bg-gray-900/80 saturate-150 p-2.5 px-3.5 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 flex flex-col gap-1'>
@@ -561,6 +561,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = memo(
       <button
         onClick={onExportCSV}
         className='flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition-colors'
+        type='button'
       >
         <span className='material-symbols-rounded text-base'>download</span>
         CSV
@@ -570,6 +571,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = memo(
       <button
         onClick={onExportPNG}
         className='flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition-colors'
+        type='button'
       >
         <span className='material-symbols-rounded text-base'>image</span>
         PNG
@@ -579,6 +581,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = memo(
       <button
         onClick={onPrint}
         className='flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition-colors'
+        type='button'
       >
         <span className='material-symbols-rounded text-base'>print</span>
         Print
@@ -805,7 +808,7 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
   // ═════════════════════════════════════════════════════════════════
 
   const { detailedData, filteredData, stats } = useChartData(data, period); // Data processing
-  const { brushRange, handleBrushChange, displayedRange } = useBrush(filteredData); // Brush control
+  const { brushRange: _brushRange, handleBrushChange, displayedRange } = useBrush(filteredData); // Brush control
   const {
     tableRef,
     handleTableScroll,

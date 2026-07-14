@@ -8,33 +8,33 @@
 
 /* --- Theme Utility Classes (from index.html) --- */
 .bg-theme-primary {
-  background-color: var(--color-primary) !important;
+  background-color: var(--color-primary);
 }
 .bg-theme-light {
-  background-color: var(--color-primary-light) !important;
+  background-color: var(--color-primary-light);
 }
 .bg-theme-hover:hover {
-  background-color: var(--color-primary-hover) !important;
+  background-color: var(--color-primary-hover);
 }
 
 .text-theme-primary {
-  color: var(--color-primary) !important;
+  color: var(--color-primary);
 }
 .text-theme-hover:hover {
-  color: var(--color-primary-hover) !important;
+  color: var(--color-primary-hover);
 }
 
 .border-theme-primary {
-  border-color: var(--color-primary) !important;
+  border-color: var(--color-primary);
 }
 .border-theme-accent {
-  border-color: var(--border-accent) !important;
+  border-color: var(--border-accent);
 }
 
 /* --- Input & Text Utilities (from index.html) --- */
 .uppercase-mode .drug-name,
 .uppercase-mode .item-name {
-  text-transform: uppercase !important;
+  text-transform: uppercase;
 }
 
 /* Hide Number Input Arrows */
@@ -69,8 +69,8 @@ html, body  { overscroll-behavior: none; -webkit-overflow-scrolling: touch; scro
 }
 
 /* Scroll Lock for Mobile Drawer/Modals */
-.drawer-open, .drawer-open html, .drawer-open body  { overflow: hidden !important; }
-.drawer-open .main-content-scroll  { overflow: hidden !important; touch-action: none !important; }
+.drawer-open, .drawer-open html, .drawer-open body  { overflow: hidden; }
+.drawer-open .main-content-scroll  { overflow: hidden; touch-action: none; }
 
 /* PWA Standalone Mode Detection */
 @media (display-mode: standalone)  {
@@ -85,7 +85,7 @@ body  {
 .no-select  { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
 /* Global Disabled Button Styling */
-button:disabled, .btn-disabled  { cursor: default !important; pointer-events: none !important; opacity: 0.5; }
+button:disabled, .btn-disabled  { cursor: default; pointer-events: none; opacity: 0.5; }
 
 /* Modal Body Disabled — dims all interactive children when modal is in processing state */
 [data-modal-body-disabled] button,
@@ -111,7 +111,7 @@ button:disabled, .btn-disabled  { cursor: default !important; pointer-events: no
 
 /* Custom Card Shadow (User Request 2025-12-09) */
 
-html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid var(--border-divider) !important; }
+html:not(.dark) .card-shadow  { box-shadow: none; border: 2px solid var(--border-divider); }
 
 /* --- Premium Reusable Badge Component Utilities --- */
 @utility badge-danger {
@@ -172,21 +172,21 @@ html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid v
 
 /* Custom Icon scaling inside premium badges */
 [class*="badge-"] .material-symbols-rounded {
-  font-size: 1.15em !important;
-  width: 1.15em !important;
-  height: 1.15em !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  line-height: 1 !important;
+  font-size: 1.15em;
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 /* Global Dynamic Badge Styling overrides controlled via Settings */
 [class*="badge-"] {
-  border-radius: var(--badge-radius, 0.5rem) !important;
-  border-width: var(--badge-border-width, 1px) !important;
-  padding: var(--badge-padding, 0.25rem 0.5rem) !important;
-  font-size: var(--badge-font-size, 0.75rem) !important;
-  text-transform: var(--badge-text-transform, none) !important;
-  letter-spacing: var(--badge-letter-spacing, normal) !important;
+  border-radius: var(--badge-radius, 0.5rem);
+  border-width: var(--badge-border-width, 1px);
+  padding: var(--badge-padding, 0.25rem 0.5rem);
+  font-size: var(--badge-font-size, 0.75rem);
+  text-transform: var(--badge-text-transform, none);
+  letter-spacing: var(--badge-letter-spacing, normal);
 }

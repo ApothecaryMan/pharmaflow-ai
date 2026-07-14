@@ -91,8 +91,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
 
     if (data?.invoice_id) {
       const parts = data.invoice_id.split('-');
-      if (parts.length === 2 && !Number.isNaN(Number.parseInt(parts[1]))) {
-        const nextNum = Number.parseInt(parts[1]) + 1;
+      if (parts.length === 2 && !Number.isNaN(Number.parseInt(parts[1], 10))) {
+        const nextNum = Number.parseInt(parts[1], 10) + 1;
         return `INV-${nextNum.toString().padStart(6, '0')}`;
       }
     }
@@ -120,7 +120,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     return purchaseRepository.update(id, updates);
   }
 
-  async approve(id: string, approverId: string, approverName: string): Promise<Purchase> {
+  async approve(id: string, _approverId: string, approverName: string): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
 

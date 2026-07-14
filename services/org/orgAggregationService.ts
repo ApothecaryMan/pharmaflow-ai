@@ -108,12 +108,14 @@ const computeMetrics = (
 
   for (const s of allSales) {
     if (s.branchId) {
+      // biome-ignore lint/suspicious/noAssignInExpressions: nullish coalescing assignment
       (salesByBranch[s.branchId] ??= []).push(s);
     }
   }
 
   for (const i of allInventory) {
     if (i.branchId) {
+      // biome-ignore lint/suspicious/noAssignInExpressions: nullish coalescing assignment
       (inventoryByBranch[i.branchId] ??= []).push(i);
     }
   }
@@ -125,7 +127,7 @@ const computeMetrics = (
     totalSales += branchSales.length;
     totalRevenue += branchSales.reduce((sum, sale) => sum + (sale.total || 0), 0);
 
-    const branchTodaySales = branchSales.filter((s) => s.date && s.date.startsWith(today));
+    const branchTodaySales = branchSales.filter((s) => s.date?.startsWith(today));
     todayRevenue += branchTodaySales.reduce((sum, sale) => sum + (sale.total || 0), 0);
 
     const branchInventory = inventoryByBranch[branch.id] || [];
@@ -162,7 +164,7 @@ export const aggregateOrgMetrics = async (
     const cached = await getCachedMetrics(orgId);
     if (cached) {
       const lastUpdate = new Date(cached.lastUpdated).getTime();
-      const now = new Date().getTime();
+      const now = Date.now();
       const fiveMinutes = 5 * 60 * 1000;
 
       if (now - lastUpdate < fiveMinutes) {

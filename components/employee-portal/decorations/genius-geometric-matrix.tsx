@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function GeniusGeometricMatrix() {
   // Generate coordinates for outer and inner nodes to form a geometric lattice
   // outside the avatar's face. Radius >= 52 ensures the face is not blocked.
@@ -21,6 +19,7 @@ export function GeniusGeometricMatrix() {
 
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Genius geometric matrix</title>
       <style>{`
         @keyframes ggm-spin-cw { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes ggm-spin-ccw { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
@@ -67,6 +66,7 @@ export function GeniusGeometricMatrix() {
             const skipOuter = outerNodes[(i + 2) % N]; // Advanced geometric skips
 
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: generated nodes have no stable id
               <g key={`web-${i}`}>
                 {/* Primary V-Shapes */}
                 <line
@@ -121,6 +121,7 @@ export function GeniusGeometricMatrix() {
         {/* Layer 2: Orbiting Tech Nodes & Prisms */}
         <g className='ggm-origin ggm-layer-2'>
           {outerNodes.map((node, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: generated nodes have no stable id
             <g key={`outer-node-${i}`}>
               {/* Outer Golden Prisms */}
               {i % 4 === 0 && (
@@ -156,6 +157,7 @@ export function GeniusGeometricMatrix() {
           ))}
 
           {innerNodes.map((node, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: generated nodes have no stable id
             <g key={`inner-node-${i}`}>
               {/* Inner Violet Nodes */}
               {i % 3 === 0 && (
@@ -175,6 +177,7 @@ export function GeniusGeometricMatrix() {
         {/* Layer 3: Faint Background Compass Data */}
         <g className='ggm-origin ggm-layer-3' opacity='0.6'>
           {Array.from({ length: 4 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: generated compass points have no stable id
             <g key={`compass-${i}`} transform={`rotate(${i * 90} 64 64)`}>
               {/* Cardinal Point Markers */}
               <line x1='64' y1='-2' x2='64' y2='6' stroke='#7dd3fc' strokeWidth='1.5' />

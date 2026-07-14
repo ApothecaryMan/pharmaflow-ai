@@ -1,6 +1,7 @@
 export function ToxicSymbiote() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Toxic symbiote</title>
       <g opacity='0.98'>
         <circle cx='64' cy='64' r='54' stroke='#1F2937' strokeWidth='4' />
         <circle

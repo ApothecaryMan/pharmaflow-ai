@@ -1,8 +1,8 @@
 import type React from 'react';
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Z_INDEX } from '../../src/styles/z-index';
 import { useTheme } from '../../context/ThemeContext';
+import { Z_INDEX } from '../../src/styles/z-index';
 
 const R = 10,
   AW = 14,
@@ -26,7 +26,7 @@ const genPath = (w: number, h: number, s: string, ax: number, ay: number) => {
   d += `L ${R},${isT ? h - AH : h} Q 0,${isT ? h - AH : h} 0,${isT ? h - AH - R : h - R} `;
   if (isR)
     d += `L 0,${ay + AW / 2} C 0,${ay + AW / 4} ${-AH},${ay + AW / 8} ${-AH},${ay} C ${-AH},${ay - AW / 8} 0,${ay - AW / 4} 0,${ay - AW / 2} `;
-  return d + `L 0,${isB ? AH + R : R} Q 0,${isB ? AH : 0} ${R},${isB ? AH : 0} Z`;
+  return `${d}L 0,${isB ? AH + R : R} Q 0,${isB ? AH : 0} ${R},${isB ? AH : 0} Z`;
 };
 
 export const Tooltip: React.FC<{
@@ -55,9 +55,10 @@ export const Tooltip: React.FC<{
   let tooltipStyle = 'default';
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
+    // biome-ignore lint/correctness/useHookAtTopLevel: intentional fallback pattern
     const themeContext = useTheme();
     tooltipStyle = themeContext.tooltipStyle;
-  } catch (e) {
+  } catch (_e) {
     // Fallback if rendered outside ThemeProvider
   }
   const [show, setShow] = useState(false),
@@ -71,14 +72,14 @@ export const Tooltip: React.FC<{
   useLayoutEffect(() => {
     if (!show || !trigRef.current || !toolRef.current || !contentRef.current) return;
     const upd = () => {
-      const tr = trigRef.current!.getBoundingClientRect(),
-        cw = contentRef.current!.offsetWidth,
-        ch = contentRef.current!.offsetHeight,
+      const tr = trigRef.current?.getBoundingClientRect(),
+        cw = contentRef.current?.offsetWidth,
+        ch = contentRef.current?.offsetHeight,
         vw = window.innerWidth,
         vh = window.innerHeight,
         gap = 4;
       let s = position;
-      
+
       // Box style defaults to side placement instead of top
       if (tooltipStyle === 'box' && position === 'top') {
         s = 'right';
@@ -129,7 +130,7 @@ export const Tooltip: React.FC<{
       window.removeEventListener('scroll', handleScroll, true);
       if (frameId !== null) cancelAnimationFrame(frameId);
     };
-  }, [show, content, position]);
+  }, [show, position, tooltipStyle]);
 
   const hE = () => {
     if (disabled) return;
@@ -142,7 +143,7 @@ export const Tooltip: React.FC<{
   };
 
   return (
-    <div className={`relative w-fit ${className}`} onMouseEnter={hE} onMouseLeave={hL}>
+    <div role="button" tabIndex={0} className={`relative w-fit ${className}`} onMouseEnter={hE} onMouseLeave={hL}>
       <div ref={trigRef} className={`flex items-center min-w-0 max-w-full ${triggerClassName}`}>
         {children}
       </div>
@@ -150,40 +151,53 @@ export const Tooltip: React.FC<{
         createPortal(
           <div
             ref={toolRef}
+            role="button"
+            tabIndex={0}
             data-settled='false'
             onMouseEnter={hE}
             onMouseLeave={hL}
             className={`fixed pointer-events-auto z-[${Z_INDEX.TOOLTIP}] ${tooltipClassName}`}
             style={{ top: 'var(--ty)', left: 'var(--tx)', zIndex: Z_INDEX.TOOLTIP }}
           >
-            <div className={`relative group ${tooltipStyle === 'box' ? (fillColor ? '' : 'bg-black/90 dark:bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xl') : ''}`} style={{ borderRadius: tooltipStyle === 'box' ? 10 : R, filter: tooltipStyle === 'box' ? 'none' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))', ...(tooltipStyle === 'box' && fillColor ? { backgroundColor: fillColor } : {}) }}>
+            <div
+              className={`relative group ${tooltipStyle === 'box' ? (fillColor ? '' : 'bg-black/90 dark:bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xl') : ''}`}
+              style={{
+                borderRadius: tooltipStyle === 'box' ? 10 : R,
+                filter:
+                  tooltipStyle === 'box' ? 'none' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
+                ...(tooltipStyle === 'box' && fillColor ? { backgroundColor: fillColor } : {}),
+              }}
+            >
               {tooltipStyle !== 'box' && (
                 <svg
                   className='absolute inset-0 w-full h-full pointer-events-none overflow-visible'
                   style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
                 >
-                  <path 
-                    d={path || ''} 
-                    className={fillColor ? '' : 'fill-gray-800 dark:fill-stone-50'} 
-                    style={fillColor ? { fill: fillColor } : undefined} 
+                  <title>Tooltip background</title>
+                  <path
+                    d={path || ''}
+                    className={fillColor ? '' : 'fill-gray-800 dark:fill-stone-50'}
+                    style={fillColor ? { fill: fillColor } : undefined}
                   />
                 </svg>
               )}
               <div
                 ref={contentRef}
                 className={`relative z-10 font-medium tracking-tight whitespace-nowrap w-max ${
-                  tooltipStyle === 'box' 
-                    ? 'text-[12px] px-3 py-1.5' 
+                  tooltipStyle === 'box'
+                    ? 'text-[12px] px-3 py-1.5'
                     : `text-[11px] font-semibold ${textColor ? '' : 'text-stone-50 dark:text-gray-800'}`
                 }`}
                 style={{
                   ...(textColor ? { color: textColor } : {}),
-                  ...(tooltipStyle !== 'box' ? {
-                    paddingTop: side === 'bottom' ? AH + 8 : 8,
-                    paddingBottom: side === 'top' ? AH + 8 : 8,
-                    paddingLeft: side === 'right' ? AH + 12 : 12,
-                    paddingRight: side === 'left' ? AH + 12 : 12,
-                  } : {})
+                  ...(tooltipStyle !== 'box'
+                    ? {
+                        paddingTop: side === 'bottom' ? AH + 8 : 8,
+                        paddingBottom: side === 'top' ? AH + 8 : 8,
+                        paddingLeft: side === 'right' ? AH + 12 : 12,
+                        paddingRight: side === 'left' ? AH + 12 : 12,
+                      }
+                    : {}),
                 }}
               >
                 {content}

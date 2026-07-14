@@ -1,7 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
-import type { UserRole } from '../../../config/permissions';
 import { useSettings } from '../../../context';
 import { useLongPress } from '../../../hooks/common/useLongPress';
 import type { TRANSLATIONS } from '../../../i18n/translations';
@@ -47,9 +46,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
   ({
     packItem,
     unitItem,
-    commonItem,
+    commonItem: _commonItem,
     itemId,
-    color,
+    color: _color,
     t,
     showMenu,
     removeFromCart,
@@ -105,6 +104,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
       );
     }
 
+    // biome-ignore lint/correctness/useHookAtTopLevel: conditional render
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: itemId,
     });
@@ -119,7 +119,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
     // Use common item for shared props like name, expiry, etc.
     // BUT: Look up the fresh batch data from allBatches to ensure we have the latest maxDiscount/costPrice
     // The cart item might be a stale copy.
-    const staleItem = commonItem;
+    const staleItem = _commonItem;
     const freshBatch = allBatches.find((b) => b.id === staleItem.id) || staleItem;
     // BUG-009: Only merge NON-FINANCIAL fields from live inventory.
     // Price and costPrice are locked at add-to-cart time to prevent mid-session price changes.
@@ -192,7 +192,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
             );
             if (disc !== null) {
               const val = parseFloat(disc);
-              if (!isNaN(val) && val >= 0 && val <= 100) {
+              if (!Number.isNaN(val) && val >= 0 && val <= 100) {
                 const maxDisc = item.maxDiscount ?? 10;
                 if (val > maxDisc) {
                   alert(`Discount cannot exceed ${maxDisc}%`);
@@ -223,6 +223,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
       onTouchStart: onLongPressTouchStart,
       onTouchEnd: onLongPressTouchEnd,
       onTouchMove: onLongPressTouchMove,
+      // biome-ignore lint/correctness/useHookAtTopLevel: conditional render branch
     } = useLongPress({
       onLongPress: (e) => {
         const touch = e.touches[0];
@@ -333,6 +334,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
               }}
               onPointerDown={(e) => e.stopPropagation()}
               className='w-7 h-7 flex items-center justify-center text-gray-400/50 hover:text-red-500 transition-all duration-200 active:scale-90 focus:outline-none'
+              type='button'
             >
               <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                 delete

@@ -91,7 +91,7 @@
         window.addEventListener("load", () => {
           navigator.serviceWorker
             .register("/sw.js")
-            .then((registration) => {
+            .then((_registration) => {
               // console.log("✅ Service Worker registered:", registration.scope);
             })
             .catch((error) => {

@@ -24,7 +24,7 @@ async function testFDA() {
       } else {
         console.log(`| ${name} | ❌ | - |`);
       }
-    } catch (error) {
+    } catch (_error) {
       console.log(`| ${name} | ⚠️ Error | - |`);
     }
   }

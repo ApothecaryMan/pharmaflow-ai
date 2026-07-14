@@ -1,7 +1,6 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { BANNER_STYLES, renderBanner } from '../../utils/banners';
-import { PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
 import { BUTTON_CLOSE_BASE, Modal } from '../common/Modal';
 import { LOCAL_TRANSLATIONS, type ProfileData } from './ModalTests';
 
@@ -191,7 +190,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       try {
         const eyeDropper = new (window as any).EyeDropper();
         const result = await eyeDropper.open();
-        if (result && result.sRGBHex) {
+        if (result?.sRGBHex) {
           setEditCustomAccentColor(result.sRGBHex);
         }
       } catch (e) {
@@ -285,9 +284,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
               {/* Banner Position Adjustment Preview / Editor */}
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].bannerPreview}
-                  </label>
+                  </span>
                   <div className='flex items-center gap-1.5'>
                     <input
                       ref={colorInputRef}
@@ -408,9 +407,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
               {/* Graphics Banner Selector */}
               <div className='space-y-2'>
-                <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                   {LOCAL_TRANSLATIONS[language].graphicsBanner}
-                </label>
+                </span>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
                   {BANNER_STYLES.map((ban) => (
                     <button
@@ -439,9 +438,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
               {/* Status Selector */}
               <div className='space-y-2'>
-                <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                   {LOCAL_TRANSLATIONS[language].onlineStatus}
-                </label>
+                </span>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
                   {[
                     {
@@ -484,9 +483,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
               {/* Custom Status/Bio Input */}
               <div className='space-y-2'>
-                <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                   {LOCAL_TRANSLATIONS[language].editStatusBio}
-                </label>
+                </span>
                 <div className='relative flex items-center'>
                   <span className='material-symbols-rounded text-(--text-tertiary) absolute start-3 text-[18px]'>
                     info
@@ -509,9 +508,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {/* Name English */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].nameEnglish}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.nameEN}
@@ -522,9 +521,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Name Arabic */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].nameArabic}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.nameAR}
@@ -535,9 +534,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Role English */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].roleEnglish}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.roleEN}
@@ -548,9 +547,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Role Arabic */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].roleArabic}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.roleAR}
@@ -568,9 +567,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {/* Email */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].email}
-                  </label>
+                  </span>
                   <input
                     type='email'
                     value={editForm.email}
@@ -581,9 +580,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Phone */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].phone}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.phone}
@@ -594,9 +593,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Address English */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].addressEnglish}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.addressEN}
@@ -607,9 +606,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Address Arabic */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].addressArabic}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.addressAR}
@@ -620,9 +619,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Shift English */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].shiftEnglish}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.shiftEN}
@@ -633,9 +632,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Shift Arabic */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].shiftArabic}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.shiftAR}
@@ -646,9 +645,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Employee ID */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].employeeId}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.employeeId}
@@ -659,9 +658,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* License Code */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].license}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.license}
@@ -672,9 +671,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
                 {/* Joined Date */}
                 <div className='space-y-2'>
-                  <label className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                  <span className='text-xs font-bold uppercase tracking-wider text-(--text-tertiary)'>
                     {LOCAL_TRANSLATIONS[language].joined}
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.joined}
@@ -691,12 +690,12 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             <div className='space-y-5 px-6 pb-6 '>
               {/* National ID Upload Section */}
               <div className='space-y-1'>
-                <label className='text-xs font-semibold text-(--text-tertiary) uppercase px-1 flex items-center gap-2'>
+                <span className='text-xs font-semibold text-(--text-tertiary) uppercase px-1 flex items-center gap-2'>
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                     badge
                   </span>
                   {LOCAL_TRANSLATIONS[language].nationalIdCard}
-                </label>
+                </span>
                 <div className='bg-(--bg-secondary)/10 pt-2.5 pb-4 px-4 rounded-xl border border-(--border-divider) grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   {/* Front Face */}
                   <div className='space-y-1.5'>
@@ -729,7 +728,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                         </button>
                       </div>
                     ) : (
-                      <label className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
+                      <label
+                        htmlFor='field-730'
+                        className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'
+                      >
                         <span
                           className='material-symbols-rounded text-gray-400'
                           style={{ fontSize: 'var(--icon-lg)' }}
@@ -798,7 +800,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                         </button>
                       </div>
                     ) : (
-                      <label className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
+                      <label
+                        htmlFor='field-799'
+                        className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'
+                      >
                         <span
                           className='material-symbols-rounded text-gray-400'
                           style={{ fontSize: 'var(--icon-lg)' }}
@@ -838,12 +843,12 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
               {/* Syndicate Card Upload Section */}
               <div className='space-y-1'>
-                <label className='text-xs font-semibold text-(--text-tertiary) uppercase px-1 flex items-center gap-2'>
+                <span className='text-xs font-semibold text-(--text-tertiary) uppercase px-1 flex items-center gap-2'>
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                     card_membership
                   </span>
                   {LOCAL_TRANSLATIONS[language].syndicateCards}
-                </label>
+                </span>
                 <div className='bg-(--bg-secondary)/10 pt-2.5 pb-4 px-4 rounded-xl border border-(--border-divider) grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   {/* Main Syndicate Card */}
                   <div className='space-y-1.5'>
@@ -876,7 +881,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                         </button>
                       </div>
                     ) : (
-                      <label className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
+                      <label
+                        htmlFor='field-877'
+                        className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'
+                      >
                         <span
                           className='material-symbols-rounded text-gray-400'
                           style={{ fontSize: 'var(--icon-lg)' }}
@@ -943,7 +951,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                         </button>
                       </div>
                     ) : (
-                      <label className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
+                      <label
+                        htmlFor='field-944'
+                        className='flex flex-col items-center justify-center gap-2 p-4 w-full aspect-[8/5] border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'
+                      >
                         <span
                           className='material-symbols-rounded text-gray-400'
                           style={{ fontSize: 'var(--icon-lg)' }}

@@ -1,20 +1,17 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StorageKeys } from '../../config/storageKeys';
 import { useAlert } from '../../context';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import { useAuthStore } from '../../stores/authStore';
 import type { ViewState } from '../../types';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import type { ProcurementItem } from '../../types/intelligence';
 import type { Drug } from '../../types/inventory';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { money } from '../../utils/money';
-import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { SearchEngineInput } from '../common/SearchEngineInput';
-import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { TanStackTable } from '../common/TanStackTable';
 import { useInventoryHeader } from './InventoryHeaderContext';
@@ -45,7 +42,7 @@ interface EnrichedShortageItem {
   abcClass: 'A' | 'B' | 'C';
 }
 
-type FilterAlertType =
+type _FilterAlertType =
   | 'ALL'
   | 'OUT_OF_STOCK_SOLD'
   | 'MANUAL_MINIMUM_REACHED'
@@ -55,7 +52,7 @@ type FilterAlertType =
 export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   t,
   language = 'AR',
-  onViewChange,
+  onViewChange: _onViewChange,
   navigationParams: _navigationParams,
 }) => {
   const isAR = language === 'AR';
@@ -330,7 +327,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   }, []);
 
   // Select all filtered items across all pages
-  const handleSelectAllFiltered = useCallback(() => {
+  const _handleSelectAllFiltered = useCallback(() => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       filteredData.forEach((row) => {
@@ -874,6 +871,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
               onClick={handleClearSelection}
               className='text-zinc-400 hover:text-white transition-colors p-1 hover:bg-zinc-800/60 rounded-lg cursor-pointer flex items-center justify-center'
               title={t.clearSelection}
+              type='button'
             >
               <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                 close

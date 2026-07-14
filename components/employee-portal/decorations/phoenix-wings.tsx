@@ -1,6 +1,7 @@
 export function PhoenixWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Phoenix wings</title>
       <g opacity='0.95'>
         <path
           d='M12,75 C2,50 -23,35 -19,12 C-9,18 5,45 12,75 Z'

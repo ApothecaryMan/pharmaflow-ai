@@ -1,6 +1,7 @@
 export function TwinButterflies() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Twin butterflies</title>
       <g transform='translate(96, 24) rotate(-15)'>
         <path
           d='M-1,-14 C-4,-22 -10,-24 -14,-22'

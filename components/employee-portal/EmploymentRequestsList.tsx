@@ -128,9 +128,10 @@ export function EmploymentRequestsList({
   if (isLoading) {
     return (
       <div className='grid gap-4 animate-pulse'>
-        {[...Array(2)].map((_, i) => (
+        {// biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
+        [...Array(2)].map((_, i) => (
           <div
-            key={i}
+            key={`skeleton-${i}`}
             className='bg-(--bg-card) border border-(--border-color) rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-[104px] sm:h-[88px]'
           >
             <div className='flex items-start gap-4 w-full'>
@@ -302,6 +303,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base transition-colors disabled:opacity-50 ${className}`}
+      type='button'
     >
       {isProcessing ? (
         <span

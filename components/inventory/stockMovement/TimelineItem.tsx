@@ -45,8 +45,8 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   previousStock,
   newStock,
   performedBy,
-  isRTL,
-  status,
+  isRTL: _isRTL,
+  status: _status,
   reason,
   batchId,
   expiryDate,
@@ -57,17 +57,17 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   const config = typeConfig[type] || typeConfig.adjustment;
   const dateObj = new Date(date);
 
-  const dateStr = dateObj.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
+  const dateStr = dateObj.toLocaleDateString(_isRTL ? 'ar-EG' : 'en-US', {
     month: 'short',
     day: 'numeric',
   });
 
-  const timeStr = dateObj.toLocaleTimeString(isRTL ? 'ar-EG-u-nu-latn' : 'en-US', {
+  const timeStr = dateObj.toLocaleTimeString(_isRTL ? 'ar-EG-u-nu-latn' : 'en-US', {
     hour: '2-digit',
     minute: '2-digit',
   });
 
-  const packLabel = isRTL ? 'علبة' : 'PACKS';
+  const packLabel = _isRTL ? 'علبة' : 'PACKS';
   const qtyFormatted = formatStockAmount(Math.abs(quantity), unitsPerPack, packLabel);
   const [qtyValue, qtyLabel] = qtyFormatted.split(' ');
 
@@ -133,7 +133,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               </>
             )}
             <span className={`font-bold text-sm tracking-tight ${colorClass.split(' ')[1]}`}>
-              {isRTL ? config.arLabel : config.label}
+              {_isRTL ? config.arLabel : config.label}
             </span>
             <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
             <span className='text-[11px] text-(--text-secondary) font-bold flex items-center gap-1 uppercase tracking-wider max-w-[150px]'>
@@ -169,7 +169,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             {value && value !== 0 && (
               <div className='flex flex-col gap-1'>
                 <span className='text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none'>
-                  {isRTL ? 'القيمة' : 'VALUE'}
+                  {_isRTL ? 'القيمة' : 'VALUE'}
                 </span>
                 <span
                   className={`text-base font-bold tabular-nums leading-none tracking-tight ${value > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
@@ -182,7 +182,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             {/* Change Context */}
             <div className='flex flex-col gap-1'>
               <span className='text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none'>
-                {isRTL ? 'الرصيد' : 'BALANCE'}
+                {_isRTL ? 'الرصيد' : 'BALANCE'}
               </span>
               <div className='flex items-center gap-2 text-xs font-bold text-(--text-secondary) leading-none'>
                 <span className='tabular-nums opacity-60'>{prevFormatted.trim()}</span>
@@ -190,7 +190,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                   className='material-symbols-rounded text-(--text-tertiary)'
                   style={{ fontSize: 'var(--icon-sm)' }}
                 >
-                  {isRTL ? 'arrow_back' : 'arrow_forward'}
+                  {_isRTL ? 'arrow_back' : 'arrow_forward'}
                 </span>
                 <span className='text-(--text-primary) font-black tabular-nums'>
                   {newFormatted.trim()}

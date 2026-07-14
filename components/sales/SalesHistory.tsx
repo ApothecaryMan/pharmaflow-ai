@@ -2,27 +2,25 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useSalesHandlers } from '../../hooks/sales/useSalesHandlers';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { salesService } from '../../services/sales';
-import type { Customer, Employee, Return, Sale, Shift } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import type { Customer, Return, Sale } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { money } from '../../utils/money';
-import { CARD_BASE } from '../../utils/themeStyles';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
-import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
-import { useCustomers } from '../../hooks/queries/useCustomersQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useAuthStore } from '../../stores/authStore';
 import { DateRangePicker } from '../common/DatePicker';
-import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
 import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { SaleDetailModal } from './SaleDetailModal';
-import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
-import { useSalesHandlers } from '../../hooks/sales/useSalesHandlers';
 
 interface SalesHistoryProps {
   color: string;
@@ -88,7 +86,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [page, setPage] = useState(1);
   const [pagedSales, setPagedSales] = useState<Sale[]>(sales || []);
-  const [totalSales, setTotalSales] = useState(sales?.length || 0);
+  const [_totalSales, setTotalSales] = useState(sales?.length || 0);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const { textTransform } = useSettings();
   const pageSize = 50;
@@ -246,19 +244,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             itemsText,
             '-------------------',
             sale.subtotal &&
-            `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
+              `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
             sale.globalDiscount &&
-            `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
+              `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
             sale.tax && `${isAr ? 'الضريبة' : 'Tax'}: ${formatCurrency(sale.tax)}`,
             sale.deliveryFee &&
-            `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
+              `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
             isReturned
               ? `${isAr ? 'المرتجع' : 'Returned'}: -${formatCurrency(returnedAmount)}\n${isAr ? 'صافي الإجمالي' : 'Net Total'}: ${formatCurrency(sale.netTotal || 0)}`
               : `${t.headers.total || (isAr ? 'الإجمالي' : 'Total')}: ${formatCurrency(sale.total)}`,
             '-------------------',
             `${isAr ? 'طريقة الدفع' : 'Payment Method'}: ${sale.paymentMethod === 'visa' ? t.visa : t.cash}`,
             sale.saleType &&
-            `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : isAr ? 'شراء مباشر' : 'Walk-in'}`,
+              `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : isAr ? 'شراء مباشر' : 'Walk-in'}`,
             sale.notes?.trim() && `${isAr ? 'ملاحظات' : 'Notes'}: ${sale.notes}`,
           ]
             .filter(Boolean)
@@ -521,7 +519,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [activeBranchId, activeOrgId, page, serverFilters, sales]);
+  }, [activeBranchId, activeOrgId, page, serverFilters]);
 
   const handleSearchChange = React.useCallback((value: string) => {
     setSearchTerm(value);
@@ -543,7 +541,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     setPage(1);
   }, []);
 
-  const handlePaginationChange = useCallback((p: { pageIndex: number }) => {
+  const _handlePaginationChange = useCallback((p: { pageIndex: number }) => {
     setPage(p.pageIndex + 1);
   }, []);
 
@@ -652,45 +650,61 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
   const showLoading = isLoading || isPageLoading || isDetailLoading;
 
-  const rightControls = useMemo(() => (
-    <div className='flex justify-center sm:justify-end w-full gap-1'>
-      <SearchInput
-        compact
-        expandable
-        value={searchTerm}
-        onSearchChange={handleSearchChange}
-        placeholder={t.searchPlaceholder || 'Search sales…'}
-        wrapperClassName='w-full sm:w-[250px] lg:w-[350px]'
-      />
-      <DateRangePicker
-        startDate={startDate}
-        endDate={endDate}
-        onStartDateChange={handleStartDateChange}
-        onEndDateChange={handleEndDateChange}
-        color={color}
-        locale={locale}
-        rounded='lg'
-        className='h-8'
-      />
+  const rightControls = useMemo(
+    () => (
+      <div className='flex justify-center sm:justify-end w-full gap-1'>
+        <SearchInput
+          compact
+          expandable
+          value={searchTerm}
+          onSearchChange={handleSearchChange}
+          placeholder={t.searchPlaceholder || 'Search sales…'}
+          wrapperClassName='w-full sm:w-[250px] lg:w-[350px]'
+        />
+        <DateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={handleStartDateChange}
+          onEndDateChange={handleEndDateChange}
+          color={color}
+          locale={locale}
+          rounded='lg'
+          className='h-8'
+        />
 
-      <button
-        type='button'
-        onClick={exportToCSV}
-        disabled={pagedSales.length === 0}
-        className='inline-flex items-center gap-2 px-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0 text-gray-700 dark:text-gray-200 h-8'
-      >
-        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-          />
-        </svg>
-        <span className='hidden lg:inline'>{t.exportCSV}</span>
-      </button>
-    </div>
-  ), [searchTerm, handleSearchChange, startDate, endDate, handleStartDateChange, handleEndDateChange, color, locale, exportToCSV, pagedSales.length, t]);
+        <button
+          type='button'
+          onClick={exportToCSV}
+          disabled={pagedSales.length === 0}
+          className='inline-flex items-center gap-2 px-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0 text-gray-700 dark:text-gray-200 h-8'
+        >
+          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <title>Export</title>
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+            />
+          </svg>
+          <span className='hidden lg:inline'>{t.exportCSV}</span>
+        </button>
+      </div>
+    ),
+    [
+      searchTerm,
+      handleSearchChange,
+      startDate,
+      endDate,
+      handleStartDateChange,
+      handleEndDateChange,
+      color,
+      locale,
+      exportToCSV,
+      pagedSales.length,
+      t,
+    ]
+  );
 
   return (
     <div className='flex flex-col h-full bg-(--bg-page-surface)'>
@@ -700,17 +714,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       >
         <TanStackTable
           leftCustomControls={
-            <>
-              <h1
-                className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-gray-900 dark:text-white page-title me-2 sm:me-4 shrink-0'
-                style={{
-                  fontFeatureSettings:
-                    '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
-                }}
-              >
-                {t.title}
-              </h1>
-            </>
+            <h1
+              className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-gray-900 dark:text-white page-title me-2 sm:me-4 shrink-0'
+              style={{
+                fontFeatureSettings:
+                  '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+              }}
+            >
+              {t.title}
+            </h1>
           }
           data={pagedSales}
           columns={tableColumns}

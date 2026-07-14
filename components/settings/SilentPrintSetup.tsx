@@ -8,7 +8,7 @@ interface SilentPrintSetupProps {
 }
 
 export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
-  color = 'emerald',
+  color: _color = 'emerald',
   language = 'AR',
   onTestPrint,
 }) => {
@@ -94,6 +94,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         className='w-full flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-start'
         dir={language === 'AR' ? 'rtl' : 'ltr'}
+        type='button'
       >
         <div className='flex items-center gap-3'>
           <div className='p-1.5 rounded-md bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300'>
@@ -133,6 +134,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
                 <button
                   onClick={handleDownload}
                   className='mt-2 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100 text-xs font-bold rounded-sm transition-colors flex items-center gap-2'
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[16px]'>file_download</span>
                   {t.downloadBtn}
@@ -178,6 +180,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
                   <button
                     onClick={handleTest}
                     className='px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100 text-xs font-bold rounded-sm transition-colors flex items-center gap-2'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-[16px]'>print</span>
                     {t.testBtn}

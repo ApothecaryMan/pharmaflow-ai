@@ -139,7 +139,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
       supabase.removeChannel(dbChannel);
       clearInterval(tickInterval);
     };
-  }, [profile?.id, workspaceIdsString, isRTL]);
+  }, [profile?.id, workspaceIdsString, reloadSessions]);
 
   // Refresh sessions when the sessions tab is opened
   useEffect(() => {
@@ -199,6 +199,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                 fontFeatureSettings:
                   '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
               }}
+              type='button'
             >
               <div className='flex items-center gap-0.5'>
                 <div className='relative flex items-center justify-center'>

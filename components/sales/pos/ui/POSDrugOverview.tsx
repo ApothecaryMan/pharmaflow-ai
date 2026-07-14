@@ -8,8 +8,6 @@ import {
   getExpiryColorClass,
   parseExpiryEndOfMonth,
 } from '../../../../utils/expiryUtils';
-import { formatStockAmount } from '../../../../utils/inventory';
-import { resolveUnits } from '../../../../utils/stockUtils';
 import { PriceDisplay } from '../../../common/TanStackTable';
 
 const formatDrugQty = (units: number, unitsPerPack: number, lang: string) => {
@@ -234,11 +232,11 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
                   ([dateA], [dateB]) =>
                     parseExpiryEndOfMonth(dateA).getTime() - parseExpiryEndOfMonth(dateB).getTime()
                 )
-                .map(([expiryDate, rawStock], idx) => {
+                .map(([expiryDate, rawStock]) => {
                   const totalStock = rawStock as number;
                   return (
                     <tr
-                      key={idx}
+                      key={expiryDate}
                       className='hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors'
                     >
                       <td className='px-4 py-2'>
@@ -294,9 +292,9 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
 
       {/* Description Footer */}
       <div className='p-4 rounded-2xl bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700'>
-        <label className='text-[10px] font-black text-gray-400 uppercase mb-2 block tracking-widest'>
+        <span className='text-[10px] font-black text-gray-400 uppercase mb-2 block tracking-widest'>
           {t?.modal?.description || 'Description'}
-        </label>
+        </span>
         <p className='text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium'>
           {viewingDrug.description ||
             t?.modal?.noDescription ||

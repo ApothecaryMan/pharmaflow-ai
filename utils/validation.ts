@@ -1,5 +1,4 @@
-import { batchService } from '../services/inventory/batchService';
-import { type CartItem, type Drug, Sale } from '../types';
+import type { CartItem, Drug } from '../types';
 import { resolveUnits } from './stockUtils';
 
 export interface ValidationResult {

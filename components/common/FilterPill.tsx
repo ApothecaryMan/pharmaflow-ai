@@ -8,7 +8,6 @@ import {
   ContextMenuSeparator,
   useContextMenu,
 } from './ContextMenu';
-import { Tooltip } from './Tooltip';
 
 export interface FilterOption {
   value: any;
@@ -39,7 +38,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
   onUpdate,
   onRemove,
   collapsed = false,
-  rounded = 'full',
+  rounded: _rounded = 'full',
 }) => {
   const { language } = useTypography();
   const t = TRANSLATIONS[language];
@@ -65,6 +64,8 @@ export const FilterPill: React.FC<FilterPillProps> = ({
 
     const menuContent = (
       <div
+        role="button"
+        tabIndex={0}
         className='font-sans'
         onMouseEnter={() => {
           if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
@@ -158,7 +159,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
   };
 
   // Content for Tooltip (Full Details) - Keeping for potential reuse, but it's not in the render now
-  const tooltipContent = (
+  const _tooltipContent = (
     <div className='flex flex-col gap-0.5'>
       <span className='font-bold text-gray-300'>{config.label}</span>
       <span className='opacity-90'>{getSelectedLabels() || 'None'}</span>
@@ -169,9 +170,12 @@ export const FilterPill: React.FC<FilterPillProps> = ({
   return (
     <div
       ref={pillRef}
+      role="button"
+      tabIndex={0}
       onMouseEnter={handleOpenMenu}
       onMouseLeave={handleMouseLeave}
       onClick={handleOpenMenu}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenMenu(e); } }}
       className={`
         flex items-center gap-1.5 
         leading-none select-none cursor-pointer
@@ -204,8 +208,9 @@ export const FilterPill: React.FC<FilterPillProps> = ({
         </span>
       )}
 
-      <div
-        role='button'
+      <button
+        type='button'
+        tabIndex={0}
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
@@ -219,7 +224,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
         <span className='material-symbols-rounded font-bold' style={{ fontSize: 'var(--icon-sm)' }}>
           close
         </span>
-      </div>
+      </button>
     </div>
   );
 };

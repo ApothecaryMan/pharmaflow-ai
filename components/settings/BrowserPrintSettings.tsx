@@ -161,6 +161,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                       onClick={connect}
                       disabled={isConnecting}
                       className='px-3 py-1.5 text-xs font-bold rounded-sm transition-colors bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
+                      type='button'
                     >
                       {pt.reconnect || (language === 'AR' ? 'إعادة الاتصال' : 'Reconnect')}
                     </button>
@@ -183,9 +184,9 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
               {settings.enabled && (
                 <div className='space-y-3 pt-4 border-t border-(--border-divider)'>
                   <div className='flex items-center justify-between gap-4'>
-                    <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider block whitespace-nowrap'>
+                    <span className='text-[11px] font-bold text-gray-400 uppercase tracking-wider block whitespace-nowrap'>
                       {pt.silentMode || (language === 'AR' ? 'الطباعة الصامتة' : 'Silent Mode')}
-                    </label>
+                    </span>
                     <p className='text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed text-right'>
                       {settings.silentMode === 'on' &&
                         (pt.silentHints?.on ||
@@ -253,6 +254,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                 onClick={refreshPrinters}
                 disabled={isLoadingPrinters}
                 className='p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-gray-400'
+                type='button'
               >
                 <span
                   className={`material-symbols-rounded text-[18px] ${isLoadingPrinters ? 'animate-spin' : ''}`}
@@ -265,9 +267,9 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
             <div className='space-y-6'>
               {/* Receipt Printer */}
               <div className='flex flex-col gap-2'>
-                <label className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
+                <span className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
                   {pt.receiptPrinter || (language === 'AR' ? 'طابعة الفواتير' : 'Receipt Printer')}
-                </label>
+                </span>
 
                 <div className='flex items-center gap-2'>
                   <div className='flex-1 relative z-50'>
@@ -304,6 +306,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                         ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
                         : 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
                     }`}
+                    type='button'
                   >
                     {testingReceipt
                       ? language === 'AR'
@@ -316,9 +319,9 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
 
               {/* Label Printer */}
               <div className='flex flex-col gap-2 pt-4 border-t border-(--border-divider)'>
-                <label className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
+                <span className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
                   {pt.labelPrinter || (language === 'AR' ? 'طابعة الملصقات' : 'Label Printer')}
-                </label>
+                </span>
 
                 <div className='flex items-center gap-2'>
                   <div className='flex-1 relative z-40'>
@@ -355,6 +358,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                         ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
                         : 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
                     }`}
+                    type='button'
                   >
                     {testingLabel
                       ? language === 'AR'
@@ -409,6 +413,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                 <button
                   onClick={() => onViewChange?.('desktop-settings')}
                   className='w-full md:w-auto px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100 rounded-sm text-sm font-bold transition-colors shadow-sm'
+                  type='button'
                 >
                   {language === 'AR' ? 'الانتقال لإعدادات سطح المكتب' : 'Go to Desktop Settings'}
                 </button>

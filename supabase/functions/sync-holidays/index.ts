@@ -173,7 +173,7 @@ Deno.serve(async (req: Request) => {
       if (error) {
         // Fallback: try standard insert if table doesn't have unique constraint
         console.warn(`[Sync] Upsert failed for ${nameEN}, trying insert: ${error.message}`);
-        const { data: insData, error: insError } = await supabase
+        const { data: insData, error: _insError } = await supabase
           .from('holidays')
           .insert(holidayRow)
           .select('*')
@@ -196,7 +196,7 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Sync] Unexpected error:', error.message);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,

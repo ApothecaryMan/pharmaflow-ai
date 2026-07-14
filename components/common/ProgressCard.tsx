@@ -35,7 +35,10 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
 
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={`p-5 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 flex flex-col justify-center ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
     >
       <div className='flex items-center justify-between mb-2'>
@@ -135,7 +138,10 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({
 }) => {
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} flex items-center justify-between gap-4 ${onClick ? 'cursor-pointer' : 'cursor-default'} ${className} ${isLoading ? 'animate-pulse' : ''}`}
     >
       {/* Category Label Section */}
@@ -152,7 +158,10 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({
       {/* Data Items Section */}
       <div className='flex-1 flex gap-6'>
         {(isLoading ? (Array.from({ length: 2 }) as any[]) : items).map((item, index) => (
-          <div key={index} className='flex-1 flex flex-col justify-center'>
+          <div
+            key={item?.label || `skeleton-${index}`}
+            className='flex-1 flex flex-col justify-center'
+          >
             {/* Header: Value & Label */}
             <div className='flex justify-between items-end mb-2'>
               {isLoading ? (
@@ -231,12 +240,15 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
             {isLoading ? (
               <div className='flex gap-2'>
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className='h-3 w-8 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                  <div
+                    key={`legend-sk-${i}`}
+                    className='h-3 w-8 bg-zinc-100 dark:bg-zinc-800 rounded'
+                  />
                 ))}
               </div>
             ) : (
               segments.map((segment, index) => (
-                <span key={index} className='flex items-center gap-1.5'>
+                <span key={`${segment.label}-${index}`} className='flex items-center gap-1.5'>
                   <span
                     className={`${compact ? 'text-sm font-bold text-gray-700 dark:text-gray-300' : 'font-bold opacity-70'}`}
                   >
@@ -271,7 +283,7 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
           ) : (
             segments.map((segment, index) => (
               <div
-                key={index}
+                key={`${segment.label}-${index}`}
                 style={{ flex: segment.value }}
                 className={`${segment.color} h-full transition-all duration-500`}
                 title={segment.tooltip || `${segment.label}: ${segment.value}`}

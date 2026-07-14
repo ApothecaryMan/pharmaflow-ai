@@ -145,7 +145,7 @@ export const getLabelElementContent = (
  * @returns Object with storeName and hotline
  */
 export const getReceiptSettings = (
-  activeBranchId?: string,
+  _activeBranchId?: string,
   activeBranchName?: string,
   activeBranchPhone?: string,
   printSettings?: Record<string, any>
@@ -231,7 +231,7 @@ const getPrintOffsets = (printSettings?: Record<string, any>): { x: number; y: n
         y: savedDesign.printOffsetY || 0,
       };
     }
-  } catch (e) {}
+  } catch (_e) {}
   return { x: 0, y: 0 };
 };
 
@@ -332,7 +332,7 @@ export const generateLabelHTML = (
     let styleAttr = '';
     let classAttr = '';
 
-    if (classNameMap && classNameMap[el.id]) {
+    if (classNameMap?.[el.id]) {
       classAttr = `class="${classNameMap[el.id]}"`;
     } else {
       const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
@@ -675,8 +675,8 @@ export const printLabels = async (
     // Apply dynamic visibility overrides
     if (options.elementVisibility) {
       design.elements.forEach((el: LabelElement) => {
-        if (options.elementVisibility![el.id] !== undefined) {
-          el.isVisible = options.elementVisibility![el.id];
+        if (options.elementVisibility?.[el.id] !== undefined) {
+          el.isVisible = options.elementVisibility?.[el.id];
         }
       });
     }
@@ -705,7 +705,7 @@ export const printLabels = async (
     const innerGap = isDouble ? 1 : 0; // Add 1mm gap to push the 2nd label down from the split
     const outerGap = isDouble ? 2 : design.labelGap || 0; // According to diagram: 2mm
 
-    const pageHeight = isDouble ? labelHeight * 2 + innerGap + outerGap : labelHeight + outerGap;
+    const _pageHeight = isDouble ? labelHeight * 2 + innerGap + outerGap : labelHeight + outerGap;
 
     const printablePageHeight = isDouble ? labelHeight * 2 + innerGap : labelHeight;
 

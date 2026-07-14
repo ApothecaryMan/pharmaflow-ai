@@ -67,7 +67,7 @@ describe('CustomerService', () => {
 
   it('should add loyalty points', async () => {
     vi.mocked(customerRepository.getById).mockResolvedValue(mockCustomer);
-    vi.mocked(customerRepository.update).mockImplementation(async (id, updates) => {
+    vi.mocked(customerRepository.update).mockImplementation(async (_id, updates) => {
       return { ...mockCustomer, ...updates } as Customer;
     });
 
@@ -78,7 +78,7 @@ describe('CustomerService', () => {
 
   it('should redeem loyalty points if sufficient', async () => {
     vi.mocked(customerRepository.getById).mockResolvedValue(mockCustomer);
-    vi.mocked(customerRepository.update).mockImplementation(async (id, updates) => {
+    vi.mocked(customerRepository.update).mockImplementation(async (_id, updates) => {
       return { ...mockCustomer, ...updates } as Customer;
     });
 

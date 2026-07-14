@@ -63,7 +63,7 @@ async function testEdgeCases() {
       if (warnLen > 0) hasWarnings++;
 
       console.log(
-        `✅ ${tc.name.padEnd(40)} | interactions: ${interLen > 0 ? interLen + ' chars' : 'NONE'} | warnings: ${warnLen > 0 ? warnLen + ' chars' : 'NONE'} | contraindications: ${contraLen > 0 ? contraLen + ' chars' : 'NONE'}`
+        `✅ ${tc.name.padEnd(40)} | interactions: ${interLen > 0 ? `${interLen} chars` : 'NONE'} | warnings: ${warnLen > 0 ? `${warnLen} chars` : 'NONE'} | contraindications: ${contraLen > 0 ? `${contraLen} chars` : 'NONE'}`
       );
     } catch (error) {
       console.log(`⚠️  ${tc.name.padEnd(40)} | ERROR: ${error.message}`);

@@ -8,7 +8,7 @@ import { useShift } from '../../hooks/sales/useShift';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { expenseService } from '../../services/financials/expenseService';
 import { useAuthStore } from '../../stores/authStore';
-import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
+import type { CashTransaction, Employee, Language, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { printDocument } from '../../utils/printing';
 import { storage } from '../../utils/storage';
@@ -120,7 +120,7 @@ export const useCashRegister = ({
   const handleOpenShift = useCallback(() => {
     const amount = parseFloat(amountInput);
 
-    if (amountInput === '' || isNaN(amount)) {
+    if (amountInput === '' || Number.isNaN(amount)) {
       setValidationError(t.cashRegister.validation.amountRequired);
       return;
     }
@@ -139,10 +139,10 @@ export const useCashRegister = ({
     }
 
     const startUser = employees?.find((e) => e.id === currentEmployeeId);
-    const userName = startUser ? startUser.name : 'Pharmacist';
+    const _userName = startUser ? startUser.name : 'Pharmacist';
     const newShiftId = idGenerator.uuid();
     const activeBranch = branches.find((b) => b.id === activeBranchId);
-    const branchCode = activeBranch?.code || 'PF';
+    const _branchCode = activeBranch?.code || 'PF';
 
     const newShift: Shift = {
       id: newShiftId,
@@ -190,13 +190,14 @@ export const useCashRegister = ({
     reasonInput,
     startShift,
     closeModal,
+    employees,
   ]);
 
   const handleCloseShift = useCallback(() => {
     if (!currentShift) return;
     const amount = parseFloat(amountInput);
 
-    if (amountInput === '' || isNaN(amount)) {
+    if (amountInput === '' || Number.isNaN(amount)) {
       setValidationError(t.cashRegister.validation.amountRequired);
       return;
     }
@@ -215,7 +216,7 @@ export const useCashRegister = ({
     }
 
     const startUser = employees?.find((e) => e.id === currentEmployeeId);
-    const userName = startUser ? startUser.name : 'Pharmacist';
+    const _userName = startUser ? startUser.name : 'Pharmacist';
 
     const closeTs = getVerifiedDate();
     const shiftStart = new Date(currentShift.openTime).getTime();
@@ -273,7 +274,7 @@ export const useCashRegister = ({
       transactions: [
         ...currentShift.transactions,
         {
-          id: getVerifiedDate().getTime().toString() + '-close',
+          id: `${getVerifiedDate().getTime().toString()}-close`,
           branchId: activeBranchId,
           shiftId: currentShift.id,
           time: getVerifiedDate().toISOString(),
@@ -332,7 +333,7 @@ export const useCashRegister = ({
     if (!currentShift || !modalMode) return;
     const amount = parseFloat(amountInput);
 
-    if (amountInput === '' || isNaN(amount)) {
+    if (amountInput === '' || Number.isNaN(amount)) {
       setValidationError(t.cashRegister.validation.amountRequired);
       return;
     }

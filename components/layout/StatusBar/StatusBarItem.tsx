@@ -90,6 +90,7 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
       onClick={onClick}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
     >
       {renderContent()}
     </div>
@@ -100,7 +101,9 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
       content={tooltip}
       className='h-full'
       triggerClassName='h-full'
-      tooltipClassName={typeof tooltip === 'string' ? 'font-bold uppercase tracking-wider z-60' : 'z-60'}
+      tooltipClassName={
+        typeof tooltip === 'string' ? 'font-bold uppercase tracking-wider z-60' : 'z-60'
+      }
     >
       {Item}
     </Tooltip>

@@ -26,7 +26,7 @@ export const formatExpiryDate = (expiryDate: any): string => {
 
   // Fallback for Date objects or ISO strings
   const dateObj = new Date(expiryDate);
-  if (!isNaN(dateObj.getTime())) {
+  if (!Number.isNaN(dateObj.getTime())) {
     return dateObj.toLocaleDateString('en-US', {
       month: '2-digit',
       year: '2-digit',
@@ -54,7 +54,7 @@ export type ExpiryStatus = 'valid' | 'invalid' | 'near-expiry' | 'incomplete';
  * @param previousValue - Previous value (for comparison)
  * @returns Sanitized value or null if invalid
  */
-export const sanitizeExpiryInput = (input: string, previousValue: string = ''): string | null => {
+export const sanitizeExpiryInput = (input: string, _previousValue: string = ''): string | null => {
   // Allow empty
   if (!input) return '';
 
@@ -66,16 +66,16 @@ export const sanitizeExpiryInput = (input: string, previousValue: string = ''): 
 
   // Validate month (first 2 digits)
   if (input.length >= 1) {
-    const firstDigit = parseInt(input[0]);
+    const firstDigit = parseInt(input[0], 10);
     // First digit can only be 0 or 1
     if (firstDigit > 1 && input.length === 1) {
       // Auto-prepend 0 for months 2-9
-      return '0' + input[0];
+      return `0${input[0]}`;
     }
   }
 
   if (input.length >= 2) {
-    const month = parseInt(input.slice(0, 2));
+    const month = parseInt(input.slice(0, 2), 10);
     // Month must be 01-12
     if (month === 0 || month > 12) return null;
   }
@@ -142,22 +142,22 @@ export const checkExpiryStatus = (
 
   if (date.length === 4 && !date.includes('/')) {
     // MMYY format (exactly 4 digits)
-    month = parseInt(date.slice(0, 2));
-    year = parseInt(date.slice(2));
+    month = parseInt(date.slice(0, 2), 10);
+    year = parseInt(date.slice(2), 10);
   } else if (date.length === 7 && date.includes('/')) {
     // MM/YYYY format
-    month = parseInt(date.split('/')[0]);
-    year = parseInt(date.split('/')[1]) % 100;
+    month = parseInt(date.split('/')[0], 10);
+    year = parseInt(date.split('/')[1], 10) % 100;
   } else if (/^\d{4}-\d{2}$/.test(date)) {
     // YYYY-MM format
     const parts = date.split('-');
-    year = parseInt(parts[0].slice(-2));
-    month = parseInt(parts[1]);
+    year = parseInt(parts[0].slice(-2), 10);
+    month = parseInt(parts[1], 10);
   } else if (/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(date)) {
     // YYYY-MM-DD or full ISO string
     const parts = date.split('T')[0].split('-');
-    year = parseInt(parts[0].slice(-2));
-    month = parseInt(parts[1]);
+    year = parseInt(parts[0].slice(-2), 10);
+    month = parseInt(parts[1], 10);
   } else if (date.length > 4 && !date.includes('/')) {
     return 'invalid';
   } else {
@@ -165,7 +165,7 @@ export const checkExpiryStatus = (
   }
 
   // Invalid month
-  if (isNaN(month) || isNaN(year) || month < 1 || month > 12) return 'invalid';
+  if (Number.isNaN(month) || Number.isNaN(year) || month < 1 || month > 12) return 'invalid';
 
   const now = new Date();
   const currentYear = now.getFullYear() % 100;
@@ -233,7 +233,7 @@ export const normalizeExpiryToISO = (dateStr: string | null | undefined): string
   if (/^\d{3,4}$/.test(trimmed)) {
     const padded = trimmed.padStart(4, '0');
     const month = padded.slice(0, 2);
-    const year = '20' + padded.slice(2);
+    const year = `20${padded.slice(2)}`;
     return `${year}-${month}-01`;
   }
 
@@ -252,7 +252,7 @@ export const normalizeExpiryToISO = (dateStr: string | null | undefined): string
     if (parts.length === 2) {
       const month = parts[0].padStart(2, '0');
       let year = parts[1];
-      if (year.length === 2) year = '20' + year;
+      if (year.length === 2) year = `20${year}`;
       return `${year}-${month}-01`;
     }
   }
@@ -278,8 +278,8 @@ export const parseExpiryEndOfMonth = (dateStr: string): Date => {
   if (!dateStr) return new Date(0);
 
   const parts = dateStr.split('-');
-  const year = parseInt(parts[0]);
-  const month = parseInt(parts[1]);
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
 
   // Create date for the first day of the NEXT month, then subtract 1 millisecond
   // months in JS Date are 0-indexed (0=Jan, 11=Dec)
@@ -303,7 +303,6 @@ export const getExpiryStatusConfig = (status: ExpiryStatus): { color: string; ic
       return { color: 'amber', icon: 'schedule' };
     case 'incomplete':
       return { color: 'orange', icon: 'pending' };
-    case 'invalid':
     default:
       return { color: 'red', icon: 'error' };
   }

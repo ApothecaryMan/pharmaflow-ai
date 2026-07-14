@@ -119,7 +119,7 @@ export function DataPortButton<T extends Record<string, any>>({
     try {
       exportToCSV(data, columns, filename);
       setFeedback({ type: 'success', msg: `${filename}.csv ✓` });
-    } catch (err) {
+    } catch (_err) {
       setFeedback({ type: 'error', msg: 'CSV export failed' });
     }
     setIsExporting(null);
@@ -131,7 +131,7 @@ export function DataPortButton<T extends Record<string, any>>({
     try {
       await exportToExcel(data, columns, filename);
       setFeedback({ type: 'success', msg: `${filename}.xlsx ✓` });
-    } catch (err) {
+    } catch (_err) {
       setFeedback({ type: 'error', msg: 'Excel export failed' });
     }
     setIsExporting(null);
@@ -146,7 +146,7 @@ export function DataPortButton<T extends Record<string, any>>({
         ...pdfOptions,
       });
       setFeedback({ type: 'success', msg: `PDF ✓` });
-    } catch (err) {
+    } catch (_err) {
       setFeedback({ type: 'error', msg: 'PDF export failed' });
     }
     setIsExporting(null);
@@ -166,7 +166,7 @@ export function DataPortButton<T extends Record<string, any>>({
           type: 'success',
           msg: `${result.rowCount} ${t.global.actions.rowsImported} ✓`,
         });
-      } catch (err: any) {
+      } catch (_err: any) {
         setFeedback({ type: 'error', msg: t.global.actions.importError });
       }
 
@@ -198,6 +198,7 @@ export function DataPortButton<T extends Record<string, any>>({
         className={`inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-40 ${
           iconOnly ? 'p-2.5' : isSm ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'
         }`}
+        type='button'
       >
         <span className={`material-symbols-rounded ${isSm ? 'text-sm' : 'text-base'}`}>
           {isExporting ? 'progress_activity' : 'swap_vert'}
@@ -237,6 +238,7 @@ export function DataPortButton<T extends Record<string, any>>({
               onClick={handleCSV}
               disabled={data.length === 0}
               className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group'
+              type='button'
             >
               <span className='material-symbols-rounded text-base text-emerald-500'>csv</span>
               <span>{t.global.actions.exportCSV}</span>
@@ -251,6 +253,7 @@ export function DataPortButton<T extends Record<string, any>>({
               onClick={handleExcel}
               disabled={data.length === 0}
               className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group'
+              type='button'
             >
               <span className='material-symbols-rounded text-base text-green-600'>table_chart</span>
               <span>{t.global.actions.exportExcel}</span>
@@ -265,6 +268,7 @@ export function DataPortButton<T extends Record<string, any>>({
               onClick={handlePDF}
               disabled={data.length === 0}
               className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group'
+              type='button'
             >
               <span className='material-symbols-rounded text-base text-rose-500'>
                 picture_as_pdf
@@ -285,6 +289,7 @@ export function DataPortButton<T extends Record<string, any>>({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all group'
+                type='button'
               >
                 <span className='material-symbols-rounded text-base text-blue-500'>
                   upload_file

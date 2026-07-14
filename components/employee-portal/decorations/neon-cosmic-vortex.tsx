@@ -1,6 +1,7 @@
 export function NeonCosmicVortex() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Neon cosmic vortex</title>
       <style>{`
         @keyframes vortex-spin-cw { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes vortex-spin-ccw { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }

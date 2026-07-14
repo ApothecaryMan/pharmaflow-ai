@@ -7,14 +7,16 @@ import { stockMovementService } from '../../services/inventory/stockMovement/sto
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, StockMovement, StockMovementFilters, StockMovementSummary } from '../../types';
-import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
+import { getFullDisplayName } from '../../utils/drugDisplayName';
 import { useSearchKeyboardNavigation } from '../common/SearchDropdown';
 
 interface UseStockMovementReportProps {
   onViewChange: (view: string, params?: any) => void;
 }
 
-export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportProps) => {
+export const useStockMovementReport = ({
+  onViewChange: _onViewChange,
+}: UseStockMovementReportProps) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const isDataLoading = useAuthStore((s) => s.isLoading);
   const { data: inventory = [] } = useInventory(activeBranchId);
@@ -45,7 +47,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
 
   // Track last loaded branch to prevent redundant refreshes
-  const lastLoadedBranchId = useRef<string>('');
+  const _lastLoadedBranchId = useRef<string>('');
 
   // --- Column Configuration ---
   const columns = useMemo(() => {
@@ -75,7 +77,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     return history.filter((m) => {
       if (!m.timestamp || typeof m.timestamp !== 'string' || m.timestamp === 'DATE') return false;
       const date = new Date(m.timestamp);
-      return !isNaN(date.getTime()) && (m.type as string) !== 'TYPE';
+      return !Number.isNaN(date.getTime()) && (m.type as string) !== 'TYPE';
     });
   }, [history]);
 

@@ -169,7 +169,7 @@ export const employeeRepository = {
     return data ? this.mapFromDb(data) : null;
   },
 
-  async getAllByAuthUserId(userId: string): Promise<Employee[]> {
+  async getAllByAuthUserId(_userId: string): Promise<Employee[]> {
     // Use RPC to bypass RLS circular dependency on organizations/branches
     const { data, error } = await supabase.rpc('get_my_workspaces');
     if (error) throw error;

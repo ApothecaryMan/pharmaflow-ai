@@ -21,7 +21,6 @@ import {
   TEST_EMAIL,
   TEST_PASSWORD,
 } from '../config.js';
-import { loginAndGetToken, verifySession } from '../helpers/auth.js';
 
 // --- Custom Metrics ---
 const loginDuration = new Trend('auth_login_duration', true);

@@ -1,6 +1,7 @@
 export function DragonWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Dragon wings</title>
       <style>{`
         @keyframes dragon-flap-left { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.72) rotate(6deg); } }
         @keyframes dragon-flap-right { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.72) rotate(-6deg); } }

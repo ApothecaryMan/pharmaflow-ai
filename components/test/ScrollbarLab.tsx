@@ -256,9 +256,7 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       dir={language === 'AR' ? 'rtl' : 'ltr'}
     >
       {/* Scope CSS Styles Injection */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
  /* Overriding Webkit disabling standard property */
  .scrollbar-sandbox .scrollbar-ghost, 
  .scrollbar-sandbox .scrollbar-neon, 
@@ -406,10 +404,8 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
  }
  .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-thumb:hover {
  background: rgba(16, 185, 129, 0.7) !important;
- }
- `,
-        }}
-      />
+          }
+        `}</style>
 
       {/* Dynamic Unified PageHeader */}
       <PageHeader
@@ -462,7 +458,8 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
                 <div className='space-y-3.5'>
                   {dummyParagraphs.map((para, idx) => (
                     <p
-                      key={idx}
+                      // biome-ignore lint/suspicious/noArrayIndexKey: dummy paragraphs have no stable id
+                      key={`para-${idx}`}
                       className='text-[11px] leading-relaxed text-zinc-650 dark:text-zinc-400 font-medium'
                     >
                       {para}
@@ -484,6 +481,7 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                 }`}
+                type='button'
               >
                 <span className='material-symbols-rounded text-[18px]'>
                   {copiedId === design.id ? 'check' : 'content_copy'}

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { MENU_TRANSLATIONS } from '../i18n/menuTranslations.ts';
 import { TRANSLATIONS } from '../i18n/translations.ts';
 
@@ -45,7 +45,7 @@ const colors = {
 };
 
 // أنماط للبحث عن نصوص بدون ترجمة
-const HARDCODE_PATTERNS = [
+const _HARDCODE_PATTERNS = [
   // جميع النصوص بين علامات الاقتباس
   /"([^"]{3,})"(?![\s]*:)/g, // "text"
   /'([^']{3,})'(?![\s]*:)/g, // 'text'
@@ -263,7 +263,7 @@ class TranslationValidator {
             }
           });
         });
-      } catch (error) {
+      } catch (_error) {
         // تخطي الملفات التي لا يمكن قراءتها
       }
     }
@@ -288,7 +288,7 @@ class TranslationValidator {
             files.push(fullPath);
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // تخطي المجلدات التي لا يمكن قراءتها
       }
     };
@@ -319,7 +319,8 @@ class TranslationValidator {
     ];
 
     for (const pattern of patterns) {
-      let match;
+      let match: RegExpExecArray | null;
+      // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
       while ((match = pattern.exec(line)) !== null) {
         const text = (match[1] || match[0]).trim();
 

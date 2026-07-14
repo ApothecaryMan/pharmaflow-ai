@@ -29,7 +29,7 @@ export const Switch: React.FC<SwitchProps> = ({
   theme = 'primary',
   disabled = false,
   activeColor,
-  animate = true,
+  animate: _animate = true,
 }) => {
   const { switchVariant: globalVariant } = useUI();
   const { theme: currentTheme } = useTheme();

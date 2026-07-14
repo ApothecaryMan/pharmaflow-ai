@@ -1,7 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import type { ExpiryRiskItem, RiskSummary } from '../../../types/intelligence';
-import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { CreateDiscountModal } from './CreateDiscountModal';
 import { ExpiryRiskGrid } from './ExpiryRiskGrid';
 
@@ -13,7 +12,7 @@ interface RiskPageProps {
   loading: boolean;
 }
 
-export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }) => {
+export const RiskPage: React.FC<RiskPageProps> = ({ t, summary: _summary, items, loading }) => {
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
 

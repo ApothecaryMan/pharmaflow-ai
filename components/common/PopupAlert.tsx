@@ -117,6 +117,7 @@ export const PopupAlert: React.FC<PopupAlertProps> = ({
               <button
                 onClick={onCancel}
                 className='px-3 py-1 rounded-[4px] text-[10px] font-bold text-zinc-600 dark:text-zinc-400 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors'
+                type='button'
               >
                 {cancelText || 'إلغاء'}
               </button>
@@ -129,6 +130,7 @@ export const PopupAlert: React.FC<PopupAlertProps> = ({
                     ? 'bg-red-600 hover:bg-red-700 text-white border-red-700/50 dark:border-red-500/50'
                     : 'bg-zinc-900 hover:bg-black text-white border-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white dark:border-white/10'
                 }`}
+                type='button'
               >
                 {confirmText || 'موافق'}
               </button>

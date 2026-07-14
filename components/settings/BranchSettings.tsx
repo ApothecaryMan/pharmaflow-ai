@@ -13,7 +13,6 @@ import { useAuthStore } from '../../stores/authStore';
 import type { Branch, Employee } from '../../types';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
-import { LocationSelector } from '../common/LocationSelector';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
@@ -39,12 +38,12 @@ interface FormFieldProps {
 
 const FormField: React.FC<FormFieldProps> = ({ label, children, className = '', id }) => (
   <div className={className}>
-    <label
+    <span
       htmlFor={id}
       className='block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5'
     >
       {label}
-    </label>
+    </span>
     {children}
   </div>
 );
@@ -127,7 +126,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
           {isLoading ? (
             [1, 2, 3].map((i) => (
               <div
-                key={i}
+                key={`avatar-sk-${i}`}
                 className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 border-2 border-white dark:border-zinc-900'
               />
             ))
@@ -241,6 +240,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
             <button
               onClick={() => onEdit(branch!)}
               className='flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition-none'
+              type='button'
             >
               <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                 edit
@@ -249,9 +249,10 @@ const BranchCard: React.FC<BranchCardProps> = ({
             </button>
             <button
               disabled={isSubmitting}
-              onClick={() => onDelete(branch!.id, branch!.name)}
+              onClick={() => onDelete(branch?.id, branch?.name)}
               className='p-1.5 text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 cursor-pointer flex items-center justify-center transition-none'
               aria-label='Delete branch'
+              type='button'
             >
               <span className='material-symbols-rounded' style={{ fontSize: '22px' }}>
                 delete
@@ -491,16 +492,16 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         return (
           emp.name.toLowerCase().includes(search) ||
           emp.employeeCode.toLowerCase().includes(search) ||
-          (emp.nameArabic && emp.nameArabic.includes(search))
+          emp.nameArabic?.includes(search)
         );
       });
 
     return (
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
-          <label className='text-xs font-semibold text-zinc-500 uppercase tracking-wider'>
+          <span className='text-xs font-semibold text-zinc-500 uppercase tracking-wider'>
             {t.settings.assignEmployees}
-          </label>
+          </span>
           <SegmentedControl
             size='xs'
             value={employeeView}
@@ -696,6 +697,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               <button
                 onClick={handleSave}
                 className='px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold rounded-lg uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all'
+                type='button'
               >
                 {isSubmitting ? '...' : t.attendance.saveTime}
               </button>
@@ -741,6 +743,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                 onClick={() => setIsTokenRevealed(!isTokenRevealed)}
                 className='absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer'
                 title={isTokenRevealed ? 'Hide' : 'Reveal'}
+                type='button'
               >
                 <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                   {isTokenRevealed ? 'visibility_off' : 'visibility'}
@@ -753,6 +756,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               <button
                 onClick={handleCopy}
                 className='flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold uppercase tracking-wider hover:opacity-90 cursor-pointer transition-none'
+                type='button'
               >
                 <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                   content_copy
@@ -763,6 +767,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                 onClick={handleGenerate}
                 disabled={isGeneratingToken}
                 className='flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-50 transition-none'
+                type='button'
               >
                 <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                   refresh
@@ -786,6 +791,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               onClick={handleGenerate}
               disabled={isGeneratingToken}
               className='flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold cursor-pointer disabled:opacity-50 transition-none shadow-sm'
+              type='button'
             >
               {isGeneratingToken ? (
                 <span
@@ -855,6 +861,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             <button
               onClick={() => handleOpenModal()}
               className='flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-none bg-zinc-900 text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 cursor-pointer shadow-sm'
+              type='button'
             >
               <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                 add
@@ -869,19 +876,17 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         <div className='flex-1 overflow-y-auto p-6 custom-scrollbar'>
           <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'>
             {isLoading ? (
-              <>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <BranchCard
-                    key={i}
-                    employees={[]}
-                    language={language}
-                    onEdit={() => {}}
-                    onDelete={() => {}}
-                    isSubmitting={false}
-                    isLoading={true}
-                  />
-                ))}
-              </>
+              [1, 2, 3, 4, 5].map((i) => (
+                <BranchCard
+                  key={`branch-card-sk-${i}`}
+                  employees={[]}
+                  language={language}
+                  onEdit={() => {}}
+                  onDelete={() => {}}
+                  isSubmitting={false}
+                  isLoading={true}
+                />
+              ))
             ) : branches.length === 0 ? (
               <div className='col-span-full py-20 flex flex-col items-center justify-center text-center opacity-40'>
                 <span
@@ -938,13 +943,18 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
             {modalView !== 'attendance' && (
               <div className='flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6'>
-                <button onClick={() => setIsModalOpen(false)} className={MODAL_FOOTER_BTN_CANCEL}>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className={MODAL_FOOTER_BTN_CANCEL}
+                  type='button'
+                >
                   {language === 'AR' ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   onClick={handleSave}
                   className={MODAL_FOOTER_BTN_PRIMARY}
                   style={{ backgroundColor: color }}
+                  type='button'
                 >
                   {isSubmitting ? (
                     <span className='text-[10px] font-bold'>

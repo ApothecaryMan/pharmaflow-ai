@@ -1,6 +1,7 @@
 export function AngelWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Angel wings</title>
       <style>{`
         @keyframes angel-flap-left { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.88) rotate(3deg); } }
         @keyframes angel-flap-right { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.88) rotate(-3deg); } }

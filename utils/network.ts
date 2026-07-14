@@ -19,7 +19,7 @@ export const checkRealConnectivity = async (): Promise<NetworkResult> => {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const _timeoutId = setTimeout(() => controller.abort(), 5000);
 
     const startTime = performance.now();
     const { error } = await supabase
@@ -39,7 +39,7 @@ export const checkRealConnectivity = async (): Promise<NetworkResult> => {
     }
 
     return { status: 'online', latency };
-  } catch (error) {
+  } catch (_error) {
     return { status: 'offline-no-internet' };
   }
 };

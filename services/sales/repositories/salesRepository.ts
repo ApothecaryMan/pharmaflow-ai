@@ -167,12 +167,20 @@ export const salesRepository = {
     };
 
     allSumQuery = applyFilter(allSumQuery);
-    todaySumQuery = applyFilter(todaySumQuery).gte('date', `${today}T00:00:00`).lte('date', `${today}T23:59:59`);
+    todaySumQuery = applyFilter(todaySumQuery)
+      .gte('date', `${today}T00:00:00`)
+      .lte('date', `${today}T23:59:59`);
     allCountQuery = applyFilter(allCountQuery);
-    todayCountQuery = applyFilter(todayCountQuery).gte('date', `${today}T00:00:00`).lte('date', `${today}T23:59:59`);
+    todayCountQuery = applyFilter(todayCountQuery)
+      .gte('date', `${today}T00:00:00`)
+      .lte('date', `${today}T23:59:59`);
 
-    const [allSumResult, todaySumResult, allCountResult, todayCountResult] =
-      await Promise.all([allSumQuery, todaySumQuery, allCountQuery, todayCountQuery]);
+    const [allSumResult, todaySumResult, allCountResult, todayCountResult] = await Promise.all([
+      allSumQuery,
+      todaySumQuery,
+      allCountQuery,
+      todayCountQuery,
+    ]);
 
     if (allSumResult.error) throw allSumResult.error;
     if (todaySumResult.error) throw todaySumResult.error;
@@ -185,9 +193,10 @@ export const salesRepository = {
     return {
       totalSales: allCountResult.count || 0,
       totalRevenue: money.fromSmallestUnit(money.toSmallestUnit(totalRevenue)),
-      averageTransaction: allCountResult.count && allCountResult.count > 0
-        ? money.divide(totalRevenue, allCountResult.count)
-        : 0,
+      averageTransaction:
+        allCountResult.count && allCountResult.count > 0
+          ? money.divide(totalRevenue, allCountResult.count)
+          : 0,
       todaySales: todayCountResult.count || 0,
       todayRevenue: money.fromSmallestUnit(money.toSmallestUnit(todayRevenue)),
     };

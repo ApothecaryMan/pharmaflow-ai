@@ -5,8 +5,6 @@
 
 import { supabase } from '../../lib/supabase';
 import type { CashTransaction, Shift } from '../../types';
-import { idGenerator } from '../../utils/idGenerator';
-import { money } from '../../utils/money';
 import { settingsService } from '../settings/settingsService';
 import { cashRepository } from './repositories/cashRepository';
 

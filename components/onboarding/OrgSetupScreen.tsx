@@ -92,9 +92,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
       className={`min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4 pb-20 ${isRTL ? 'font-arabic' : ''}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
         @keyframes subtle-float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-8px) rotate(1deg); }
@@ -111,9 +109,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
           transform: translateY(-2px);
           box-shadow: 0 10px 20px -10px var(--theme-color-glow);
         }
-      `,
-        }}
-      />
+      `}</style>
 
       <div className='max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800'>
         <div
@@ -148,10 +144,10 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
 
         <form onSubmit={handleSubmit} className='p-8 space-y-6'>
           <div>
-            <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
+            <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2'>
               {isRTL ? 'اسم المنظمة' : 'Organization Name'}
               <span className='text-red-500 ml-1'>*</span>
-            </label>
+            </span>
             <SmartInput
               required
               value={orgName}
@@ -162,9 +158,9 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3'>
+            <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3'>
               {isRTL ? 'اختر خطة الاشتراك' : 'Choose Subscription Plan'}
-            </label>
+            </span>
             <div className='space-y-2.5'>
               {plans.map((plan) => (
                 <button
@@ -225,9 +221,9 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3'>
+            <span className='block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3'>
               {isRTL ? 'لون الهوية' : 'Brand Identity Color'}
-            </label>
+            </span>
             <div className='flex items-center justify-between gap-3 bg-zinc-50/50 dark:bg-zinc-800/40 p-3.5 rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-xl shadow-sm'>
               <div className='flex flex-wrap gap-2.5'>
                 {availableThemes.map((t) => (
@@ -279,6 +275,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
                 fill='none'
                 viewBox='0 0 24 24'
               >
+                <title>Loading</title>
                 <circle
                   className='opacity-25'
                   cx='12'

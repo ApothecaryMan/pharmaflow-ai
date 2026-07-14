@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function UltraRainbowAura() {
   const particles = [];
   const N = 24; // 24 floating rainbow particles
@@ -30,6 +28,7 @@ export function UltraRainbowAura() {
 
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Ultra rainbow aura</title>
       <defs>
         {/* Magical glow filter */}
         <filter id='urv-glow'>
@@ -189,6 +188,7 @@ export function UltraRainbowAura() {
             const duration = p.type === 0 ? '4s' : p.type === 1 ? '2.5s' : '5s';
 
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: particles have no stable id
               <g key={`particle-wrapper-${i}`} transform={`translate(64, 64) rotate(${p.angle})`}>
                 <g
                   style={{

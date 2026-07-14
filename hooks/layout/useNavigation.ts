@@ -2,7 +2,6 @@ import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { type MenuItem, MODULE_VIEW_MAPPING, PHARMACY_MENU } from '../../config/menuData';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import type { UserRole } from '../../config/permissions';
 import { useAlert } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { ViewState } from '../../types';
@@ -100,11 +99,11 @@ interface UseNavigationParams {
  * Provides handlers for view changes, module changes, and filtered menu items.
  */
 export function useNavigation({
-  view,
+  view: _view,
   setView,
   activeModule,
   setActiveModule,
-  dashboardSubView,
+  dashboardSubView: _dashboardSubView,
   setDashboardSubView,
   resolveView,
   setMobileMenuOpen,
@@ -114,7 +113,7 @@ export function useNavigation({
   onProtectedNavigation,
   currentEmployeeId,
   activeBranchId,
-  activeOrgId,
+  activeOrgId: _activeOrgId,
 }: UseNavigationParams): NavigationHandlers {
   const { error } = useAlert();
 

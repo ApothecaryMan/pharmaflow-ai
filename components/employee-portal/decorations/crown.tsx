@@ -1,6 +1,7 @@
 export function Crown() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Crown</title>
       <style>{`
         @keyframes crown-float { 0%, 100% { transform: translateY(-25px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(0.5deg); } }
         @keyframes gem-shimmer { 0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); } 50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,255,255,0.9)); } }

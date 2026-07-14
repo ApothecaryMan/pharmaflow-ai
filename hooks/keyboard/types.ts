@@ -1,4 +1,18 @@
-export type ShortcutScope = 'global' | 'pos' | 'inventory' | 'purchases' | 'barcode-studio' | 'barcode-printer' | 'add-product' | 'stock-adjustment' | 'calculator' | 'sales-history' | 'customers' | 'reports' | 'settings' | 'dashboard';
+export type ShortcutScope =
+  | 'global'
+  | 'pos'
+  | 'inventory'
+  | 'purchases'
+  | 'barcode-studio'
+  | 'barcode-printer'
+  | 'add-product'
+  | 'stock-adjustment'
+  | 'calculator'
+  | 'sales-history'
+  | 'customers'
+  | 'reports'
+  | 'settings'
+  | 'dashboard';
 
 export interface ShortcutDef {
   id: string;

@@ -106,7 +106,7 @@ export function getHeaders(accessToken) {
     Prefer: 'return=representation',
   };
   if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
+    headers.Authorization = `Bearer ${accessToken}`;
   }
   return headers;
 }

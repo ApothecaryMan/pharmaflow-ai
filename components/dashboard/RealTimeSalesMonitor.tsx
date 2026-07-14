@@ -16,13 +16,13 @@ import {
 } from 'recharts';
 import { useAlert, useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useShift } from '../../hooks/sales/useShift';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
 import { useAuthStore } from '../../stores/authStore';
-import type { Customer, Drug, Sale, ThemeColor } from '../../types';
+import type { Sale, ThemeColor } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { money } from '../../utils/money';
@@ -58,7 +58,10 @@ const StatCard = ({
   type,
 }: any) => (
   <div
+    role="button"
+    tabIndex={0}
     onClick={onClick}
+    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(e); } }}
     className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
   >
     <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
@@ -121,6 +124,7 @@ const GenericListItem = ({
         <button
           onClick={onClick}
           className='p-2 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors'
+          type='button'
         >
           <span className='material-symbols-rounded text-lg'>{actionLabel || 'arrow_forward'}</span>
         </button>
@@ -143,7 +147,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   onViewChange,
 }) => {
   const isRTL = language === 'AR';
-  const { textTransform, darkMode } = useSettings();
+  const { textTransform, darkMode: _darkMode } = useSettings();
   const { playHighValue } = usePosSounds();
   const [expandedView, setExpandedView] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'VIP' | 'HIGH_VALUE'>('ALL');
@@ -165,7 +169,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     if (activeBranchId && branchFilter === 'all') {
       setBranchFilter(activeBranchId);
     }
-  }, [activeBranchId]);
+  }, [activeBranchId, branchFilter]);
 
   const processedSalesRef = useRef<Set<string>>(new Set());
   const isFirstRun = useRef(true);
@@ -277,7 +281,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     } catch (e: any) {
       alert.error(e.message || String(e), 'Window Creation Error');
     }
-  }, [revenue, transactions, language, alert]);
+  }, [revenue, transactions, language, alert, dailyTarget]);
   // --- Logic Helpers ---
   const isVIP = useCallback(
     (sale: Sale) => {
@@ -297,7 +301,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     processedSalesRef.current = new Set();
     isFirstRun.current = true;
     setDisplayedSales([]);
-  }, [branchFilter, activeFilter]);
+  }, []);
 
   const getPaymentLabel = useCallback(
     (method?: string) => {
@@ -450,7 +454,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           <div className='grid gap-3'>
             {topProducts.map((p, idx) => (
               <GenericListItem
-                key={idx}
+                key={`${p.id || p.name || idx}`}
                 rank={idx + 1}
                 title={getDisplayName(p, textTransform)}
                 subtitle={`${p.qty} units sold`}
@@ -513,9 +517,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     t,
     textTransform,
     getPaymentLabel,
-    paymentAnalysis,
-    itemsSold,
-    products,
   ]);
 
   // --- Chart Data Mapping ---
@@ -535,7 +536,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     const lastReturn = salesWithReturns[0] ? new Date(salesWithReturns[0].date) : null;
     let lastReturnText = '-';
     if (lastReturn) {
-      const diff = Math.floor((new Date().getTime() - lastReturn.getTime()) / 60000);
+      const diff = Math.floor((Date.now() - lastReturn.getTime()) / 60000);
       if (diff < 60) lastReturnText = language === 'AR' ? `منذ ${diff} دقيقة` : `${diff}m ago`;
       else
         lastReturnText =
@@ -607,7 +608,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         leftContent={
           <div className='flex items-center gap-3'>
             <div
+              role="button"
+              tabIndex={0}
               onClick={openLiveWidget}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLiveWidget(); } }}
               title={language === 'AR' ? 'تثبيت كـ نافذة عائمة' : 'Pin as floating widget'}
               className='hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700 shadow-sm backdrop-blur-sm hover:shadow-md cursor-pointer active:scale-95 transition-all'
             >
@@ -745,9 +749,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 </thead>
                 <tbody>
                   {isLoading
-                    ? Array.from({ length: 8 }).map((_, i) => (
+                    ? // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
+                      Array.from({ length: 8 }).map((_, i) => (
                         <tr
-                          key={i}
+                          key={`row-sk-${i}`}
                           className='border-b border-[var(--border-divider)] animate-pulse'
                         >
                           <td className='py-4 px-2'>
@@ -975,8 +980,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             </div>
             <div className='space-y-3' dir='ltr'>
               {isLoading
-                ? Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className='flex items-center justify-between p-2 animate-pulse'>
+                ? // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                      key={`seller-sk-${i}`}
+                      className='flex items-center justify-between p-2 animate-pulse'
+                    >
                       <div className='flex items-center gap-4'>
                         <div className='h-6 w-4 bg-gray-100 dark:bg-gray-800 rounded' />
                         <div className='h-4 w-32 bg-gray-100 dark:bg-gray-800 rounded' />
@@ -986,7 +995,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   ))
                 : topProducts.map((p, idx) => (
                     <div
-                      key={idx}
+                      key={`${p.id || p.name || idx}`}
                       className='flex items-center justify-between p-2 group hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors'
                     >
                       <div className='flex items-center gap-4 overflow-hidden'>
@@ -1035,7 +1044,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     dataKey='value'
                   >
                     {paymentPieData.map((e, i) => (
-                      <Cell key={i} fill={e.color} />
+                      <Cell key={`${e.name}-${i}`} fill={e.color} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(val: number) => formatCurrency(val)} />
@@ -1087,7 +1096,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     dataKey='value'
                   >
                     {categoryPieData.map((e, i) => (
-                      <Cell key={i} fill={e.color} />
+                      <Cell key={`${e.name}-${i}`} fill={e.color} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(val: number) => formatCurrency(val)} />

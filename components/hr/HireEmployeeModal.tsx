@@ -61,7 +61,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
     setError(null);
 
     try {
-      let profile;
+      let profile: Awaited<ReturnType<typeof employeeProfileRepository.getById>>;
 
       // 1. Validate if user exists
       if (isUUID) {
@@ -186,7 +186,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
 
             <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
               <div className='flex flex-col gap-1'>
-                <label className='text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors'>
+                <span className='text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors'>
                   <span
                     className={
                       inputType === 'username'
@@ -206,7 +206,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
                   >
                     {language === 'AR' ? 'المعرف (ID)' : 'ID'}
                   </span>
-                </label>
+                </span>
                 <SmartInput
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
@@ -221,9 +221,9 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
             <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50 flex flex-col gap-3'>
               <div className='grid grid-cols-2 gap-2'>
                 <div className='flex flex-col gap-1'>
-                  <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                  <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
                     {t.department}
-                  </label>
+                  </span>
                   <FilterDropdown
                     className='w-full z-30'
                     minHeight={34}
@@ -249,9 +249,9 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
                 </div>
 
                 <div className='flex flex-col gap-1'>
-                  <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                  <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
                     {t.role}
-                  </label>
+                  </span>
                   <FilterDropdown
                     className='w-full z-20'
                     minHeight={34}
@@ -280,9 +280,9 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
               <div className='w-full h-px bg-zinc-200 dark:bg-zinc-800/50' />
 
               <div className='flex flex-col gap-1'>
-                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
                   {t.branch}
-                </label>
+                </span>
                 <FilterDropdown
                   className='w-full z-10'
                   minHeight={34}

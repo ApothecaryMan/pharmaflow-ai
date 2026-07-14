@@ -151,7 +151,7 @@ export const Modal: React.FC<ModalProps> = ({
   closeOnBackdropClick = true,
   zIndex,
   title,
-  subtitle,
+  subtitle: _subtitle,
   icon,
   headerActions,
   tabs,
@@ -173,13 +173,13 @@ export const Modal: React.FC<ModalProps> = ({
   const settings = useSettings();
   const {
     modalPresentationMode,
-    setModalPresentationMode,
-    sidebarModalWidth,
-    setSidebarModalWidth,
+    setModalPresentationMode: _setModalPresentationMode,
+    sidebarModalWidth: _sidebarModalWidth,
+    setSidebarModalWidth: _setSidebarModalWidth,
     language,
   } = settings;
   const { showMenu } = useContextMenu();
-  const t = TRANSLATIONS[language].settings;
+  const _t = TRANSLATIONS[language].settings;
 
   const isSidebar = modalPresentationMode === 'sidebar' && !preventSidebar;
 
@@ -333,10 +333,12 @@ export const Modal: React.FC<ModalProps> = ({
             key={item.key}
             onClick={() => setSidebarModalWidth?.(item.key)}
             disabled={!isSidebar}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${!isSidebar
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+              !isSidebar
                 ? 'opacity-30 cursor-not-allowed'
                 : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-              }`}
+            }`}
+            type='button'
           >
             <span className='material-symbols-rounded text-lg'>
               {sidebarModalWidth === item.key ? 'check_circle' : 'circle'}
@@ -433,6 +435,8 @@ export const Modal: React.FC<ModalProps> = ({
                 <div className='h-full flex flex-col overflow-hidden'>
                   {/* Header - Windows 10 Style (Compact & Functional) */}
                   <div
+                    role="button"
+                    tabIndex={0}
                     className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative select-none custom-card-css-target no-padding'
                     onContextMenu={handleHeaderContextMenu}
                   >
@@ -493,6 +497,7 @@ export const Modal: React.FC<ModalProps> = ({
                           disabled={disabled}
                           className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent custom-card-css-target no-padding'
                           aria-label='Close modal'
+                          type='button'
                         >
                           <span
                             className='material-symbols-rounded leading-none'

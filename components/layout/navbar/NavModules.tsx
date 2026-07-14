@@ -2,14 +2,13 @@ import { motion } from 'framer-motion';
 import React from 'react';
 import type { MenuItem } from '../../../config/menuData';
 import { useSettings } from '../../../context';
+import { preloadPages } from '../../../hooks/layout/usePreloadPage';
 import { getMenuTranslation } from '../../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import type { ViewState } from '../../../types';
 import { EventManager } from '../../../utils/events/eventManager';
-import { getIconByName, Icons } from '../../common/Icons';
-import { Tooltip } from '../../common/Tooltip';
+import { getIconByName } from '../../common/Icons';
 import { SidebarDropdown } from '../SidebarDropdown';
-import { preloadPages } from '../../../hooks/layout/usePreloadPage';
 
 interface NavModulesProps {
   menuItems: MenuItem[];
@@ -125,6 +124,8 @@ export const NavModules: React.FC<NavModulesProps> = ({
             <div
               key={module.id}
               id={`navbar-tab-${module.id}`}
+              role="button"
+              tabIndex={0}
               className='relative group/item'
               onMouseLeave={handleMouseLeave}
             >
@@ -159,6 +160,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
                       ? t.settings.comingSoon
                       : ''
                 }
+                type='button'
               >
                 <span className={`flex items-center justify-center`}>
                   {(() => {

@@ -1,6 +1,7 @@
 export function IceQueen() {
   return (
     <svg viewBox='0 16 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Ice queen crown</title>
       <style>{`
         @keyframes ice-float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-3.5px) rotate(0.8deg); } }
         @keyframes frost-shimmer { 0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px #60A5FA); } 50% { opacity: 1; filter: drop-shadow(0 0 8px #FFFFFF); } }

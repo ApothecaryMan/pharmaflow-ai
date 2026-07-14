@@ -2,9 +2,7 @@ import {
   closestCenter,
   DndContext,
   type DragEndEvent,
-  KeyboardSensor,
   MouseSensor,
-  PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -18,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSettings } from '../../context';
 import { useLongPress } from '../../hooks/common/useLongPress';
@@ -68,8 +66,7 @@ interface SortableTabProps {
 const SortableTab = ({
   tab,
   isActive,
-  color,
-  tabsCount,
+  color: _color,  tabsCount,
   onTabClick,
   onTabClose,
   onTogglePin,
@@ -100,7 +97,7 @@ const SortableTab = ({
 
   const hasItems = tab.cart.length > 0;
   const isPinned = tab.isPinned || false;
-  const currentTouchTab = useRef<string | null>(null);
+  const _currentTouchTab = useRef<string | null>(null);
   const tabRef = useRef<HTMLDivElement | null>(null);
 
   const [showTooltip, setShowTooltip] = useState(false);
@@ -157,6 +154,8 @@ const SortableTab = ({
         setNodeRef(node);
         tabRef.current = node;
       }}
+      role="button"
+      tabIndex={0}
       style={style}
       {...attributes}
       {...listeners}
@@ -187,13 +186,14 @@ const SortableTab = ({
         // listeners?.onTouchMove?.(e);
         onTabTouchMove(e);
       }}
-      onClick={(e) => {
+      onClick={(_e) => {
         if (isTabLongPress.current) {
           isTabLongPress.current = false;
           return;
         }
         onTabClick(tab.id);
       }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTabClick(tab.id); } }}
     >
       {/* Pin or Loading Indicator */}
       {isActive && isLoading ? (
@@ -220,12 +220,13 @@ const SortableTab = ({
           }}
           className='flex-1 w-full bg-white/60 dark:bg-(--bg-surface-neutral) border-none rounded px-1.5 py-0 m-0 h-5 text-sm font-bold text-primary-900 dark:text-primary-100 focus:outline-none focus:ring-1 focus:ring-primary-500/40 shadow-inner'
           dir='auto'
-          autoFocus
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start on input interaction
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
         <div
+          role="button"
+          tabIndex={0}
           className='flex-1 flex items-center gap-2 overflow-hidden'
           onDoubleClick={() => onRenameStart(tab)}
         >
@@ -237,18 +238,20 @@ const SortableTab = ({
 
           {/* Cart Badge */}
           {hasItems && (
-            <span
-              ref={badgeRef}
-              onMouseEnter={handleBadgeMouseEnter}
-              onMouseLeave={handleBadgeMouseLeave}
-              className={`
-                    flex items-center justify-center h-4.5 min-w-[18px] px-1.5 rounded-full text-[9px] font-black
-                    transition-all duration-300 animate-scale-in
-                    ${
-                      isActive
-                        ? `bg-primary-500 dark:bg-primary-400 text-gray-50 dark:text-(--bg-surface-neutral) shadow-none`
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 opacity-60'
-                    }
+          <span
+            ref={badgeRef}
+            role="button"
+            tabIndex={0}
+            onMouseEnter={handleBadgeMouseEnter}
+            onMouseLeave={handleBadgeMouseLeave}
+            className={`
+                  flex items-center justify-center h-4.5 min-w-[18px] px-1.5 rounded-full text-[9px] font-black
+                  transition-all duration-300 animate-scale-in
+                  ${
+                    isActive
+                      ? `bg-primary-500 dark:bg-primary-400 text-gray-50 dark:text-(--bg-surface-neutral) shadow-none`
+                      : `bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 opacity-60`
+                  }
                 `}
             >
               {tab.cart.length}
@@ -271,6 +274,7 @@ const SortableTab = ({
             ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
             text-gray-400 hover:text-gray-700 dark:hover:text-gray-200
           `}
+          type='button'
         >
           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
             close
@@ -404,7 +408,10 @@ export const TabBar: React.FC<TabBarProps> = ({
       <div className='flex items-center gap-2 px-3 pb-2 pt-1 overflow-x-auto no-scrollbar select-none touch-pan-x'>
         {/* Tabs Container */}
         <div className='flex items-center gap-2 flex-1'>
-          <SortableContext items={tabs.map((t) => t.id)} strategy={horizontalListSortingStrategy}>
+          <SortableContext
+            items={useMemo(() => tabs.map((t) => t.id), [tabs])}
+            strategy={horizontalListSortingStrategy}
+          >
             {tabs.map((tab) => (
               <SortableTab
                 key={tab.id}
@@ -452,6 +459,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               shrink-0
             `}
             title={t.tabs?.newTab || 'New Tab'}
+            type='button'
           >
             <span
               className='material-symbols-rounded'

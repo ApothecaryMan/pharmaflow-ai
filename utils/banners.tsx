@@ -34,6 +34,7 @@ export const BANNER_STYLES: BannerStyle[] = [
           viewBox='0 0 100 100'
           fill='currentColor'
         >
+          <title>Molecular network pattern</title>
           <circle cx='20' cy='30' r='4' />
           <circle cx='50' cy='20' r='5' />
           <circle cx='80' cy='40' r='4' />
@@ -115,6 +116,7 @@ export const BANNER_STYLES: BannerStyle[] = [
           fill='none'
           preserveAspectRatio='none'
         >
+          <title>Synthwave grid pattern</title>
           <path
             d='M 150 0 L 130 50 L 170 45 L 140 100 L 190 90 L 160 144'
             stroke='currentColor'
@@ -154,6 +156,7 @@ export const BANNER_STYLES: BannerStyle[] = [
           fill='currentColor'
           preserveAspectRatio='none'
         >
+          <title>Wave divider pattern</title>
           <path d='M-20 50 C 40 20, 80 20, 120 50 C 160 30, 200 30, 240 50 C 280 25, 320 25, 360 50 C 400 35, 420 35, 440 50 Z' />
         </svg>
         <div className='absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent' />
@@ -176,6 +179,7 @@ export const BANNER_STYLES: BannerStyle[] = [
           fill='currentColor'
           preserveAspectRatio='none'
         >
+          <title>Floral petal pattern</title>
           <path d='M 50 40 C 45 30, 35 30, 40 40 C 30 35, 30 45, 40 50 C 35 60, 45 60, 50 50 C 55 60, 65 60, 60 50 C 70 45, 70 35, 60 40 C 65 30, 55 30, 50 40 Z' />
           <circle cx='50' cy='45' r='3' fill='#fbbf24' />
           <path d='M 320 70 C 315 60, 305 60, 310 70 C 300 65, 300 75, 310 80 C 305 90, 315 90, 320 80 C 325 90, 335 90, 330 80 C 340 75, 340 65, 330 70 C 335 60, 325 60, 320 70 Z' />
@@ -225,6 +229,7 @@ export const BANNER_STYLES: BannerStyle[] = [
           viewBox='0 0 800 800'
           preserveAspectRatio='xMidYMid slice'
         >
+          <title>Cyber hexagonal grid pattern</title>
           <g fill='none' strokeWidth='3' stroke='hsl(335, 77%, 50%)' strokeLinecap='round'>
             <line
               x1='380.5'
@@ -951,6 +956,7 @@ export const BANNER_STYLES: BannerStyle[] = [
           viewBox='0 0 800 800'
           preserveAspectRatio='xMidYMid slice'
         >
+          <title>Chaos abstract pattern</title>
           <defs>
             <linearGradient x1='50%' y1='0%' x2='50%' y2='100%' id='ccchaos-grad'>
               <stop stopColor='hsl(334, 75%, 49%)' stopOpacity='1' offset='0%' />

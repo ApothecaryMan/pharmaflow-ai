@@ -28,7 +28,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if current user is Super Admin to show the toggle
-  const currentUser = authService.getCurrentUserSync();
+  const _currentUser = authService.getCurrentUserSync();
 
   React.useEffect(() => {
     const fetchHistory = async () => {
@@ -44,7 +44,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       }
     };
     fetchHistory();
-  }, [activeBranchId, showAllBranches]);
+  }, [activeBranchId, showAllBranches, branches]);
 
   const getActionInfo = (action: string) => {
     switch (action) {
@@ -129,7 +129,8 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             if (part === '{{from}}') {
               return (
                 <span
-                  key={i}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: template parts have no stable id
+                  key={`branch-from-${i}`}
                   className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
                 >
                   {branchSwitchMatch[1]}
@@ -139,14 +140,16 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             if (part === '{{to}}') {
               return (
                 <span
-                  key={i}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: template parts have no stable id
+                  key={`branch-to-${i}`}
                   className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
                 >
                   {branchSwitchMatch[2]}
                 </span>
               );
             }
-            return <React.Fragment key={i}>{part}</React.Fragment>;
+            // biome-ignore lint/suspicious/noArrayIndexKey: template parts have no stable id
+            return <React.Fragment key={`branch-text-${i}`}>{part}</React.Fragment>;
           })}
         </span>
       );
@@ -266,7 +269,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
     // Pattern 8: Employee {name} logged out by {admin}
     const employeeLoggedOutMatch = details.match(/^Employee (.*) logged out by (.*)$/);
     if (employeeLoggedOutMatch) {
-      const translated = t.loginAudit.detailPatterns.employeeLoggedOutBy
+      const _translated = t.loginAudit.detailPatterns.employeeLoggedOutBy
         .split('{{name}}')
         .join('{{temp}}')
         .split('{{admin}}')
@@ -282,7 +285,8 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             if (part === '{{name}}') {
               return (
                 <span
-                  key={i}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: template parts have no stable id
+                  key={`emp-name-${i}`}
                   className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
                 >
                   {employeeLoggedOutMatch[1]}
@@ -292,14 +296,16 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             if (part === '{{admin}}') {
               return (
                 <span
-                  key={i}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: template parts have no stable id
+                  key={`emp-admin-${i}`}
                   className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'
                 >
                   {employeeLoggedOutMatch[2]}
                 </span>
               );
             }
-            return <React.Fragment key={i}>{part}</React.Fragment>;
+            // biome-ignore lint/suspicious/noArrayIndexKey: template parts have no stable id
+            return <React.Fragment key={`emp-text-${i}`}>{part}</React.Fragment>;
           })}
         </span>
       );
@@ -467,7 +473,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
         meta: { width: 400, align: 'start', flex: true },
       },
     ],
-    [t, language]
+    [t, branches, employees, getActionInfo, translateDetails]
   );
 
   return (
@@ -493,7 +499,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             wrapperClassName='w-full sm:w-64'
           />
 
-          <label className='flex items-center gap-3 h-[34px] px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer flex-shrink-0'>
+          <span className='flex items-center gap-3 h-[34px] px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer flex-shrink-0'>
             <span className='text-sm font-medium text-gray-700 dark:text-gray-300 select-none whitespace-nowrap'>
               {t.loginAudit.showAllBranches}
             </span>
@@ -503,7 +509,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
               theme={currentTheme.name.toLowerCase()}
               activeColor={currentTheme.hex}
             />
-          </label>
+          </span>
         </div>
       </div>
       {/* Table Area */}

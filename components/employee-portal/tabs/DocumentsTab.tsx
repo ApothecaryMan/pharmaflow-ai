@@ -6,10 +6,9 @@ import { employeeProfileRepository } from '../../../services/hr/repositories/emp
 import type { UserProfile } from '../../../types';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 
-const PROFILE_GLASS_CARD_NO_BORDER =
-  PROFILE_GLASS_CARD_BASE.split(' ')
-    .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
-    .join(' ') + ' border border-transparent';
+const PROFILE_GLASS_CARD_NO_BORDER = `${PROFILE_GLASS_CARD_BASE.split(' ')
+  .filter((c) => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+  .join(' ')} border border-transparent`;
 
 const readFileAsBase64 = (file: File, t: Translations): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -222,7 +221,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         setUploadingDoc(null);
       }
     },
-    [onUpdateProfile, t]
+    [onUpdateProfile, t, setCachedDocs]
   );
 
   const handleDocRemove = useCallback(
@@ -237,7 +236,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         setDeletingDoc(null);
       }
     },
-    [onUpdateProfile]
+    [onUpdateProfile, setCachedDocs]
   );
 
   return (

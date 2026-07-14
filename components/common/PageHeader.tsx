@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
 import type { ReactNode } from 'react';
-import { Tooltip } from './Tooltip';
 import { preloadPage } from '../../hooks/layout/usePreloadPage';
+import { Tooltip } from './Tooltip';
 
 /**
  * PageHeader Component
@@ -126,6 +126,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 }}
                 className='flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer'
                 aria-label={showBottom ? 'Hide Summary' : 'Show Summary'}
+                type='button'
               >
                 <span className={`material-symbols-rounded ${showBottom ? 'rotate-180' : ''}`}>
                   expand_more

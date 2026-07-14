@@ -5,18 +5,17 @@ import { useStatusBar } from '../../components/layout/StatusBar';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
 import { COUNTRY_CODES } from '../../data/countryCodes';
-import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
-import { authService } from '../../services/auth/authService';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { branchService } from '../../services/org/branchService';
-import { useAuthStore } from '../../stores/authStore';
-import type { Customer } from '../../types';
-import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { getLocationName } from '../../data/locations';
 import {
   useAddCustomer,
-  useUpdateCustomer,
   useDeleteCustomer,
+  useUpdateCustomer,
 } from '../../hooks/mutations/useCustomerMutations';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { authService } from '../../services/auth/authService';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
+import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
@@ -38,7 +37,6 @@ import {
 } from '../common/SmartInputs';
 import { Switch } from '../common/Switch';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
-import { Tooltip } from '../common/Tooltip';
 
 interface CustomerManagementProps {
   color: string;
@@ -78,12 +76,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     } else {
       setMode('list');
     }
-  }, [navigationParams]);
+  }, [navigationParams, getVerifiedDate]);
 
   const branches = useAuthStore((s) => s.branches);
-  const { theme: currentTheme } = useSettings();
+  const { theme: _currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
-  const currentUser = authService.getCurrentUserSync();
+  const _currentUser = authService.getCurrentUserSync();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
@@ -93,7 +91,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const { showMenu } = useContextMenu();
   const [showSuccess, setShowSuccess] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
-  const [copyFeedback, setCopyFeedback] = useState(false);
+  const [copyFeedback, _setCopyFeedback] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'additional'>('basic');
   const [showStats, setShowStats] = useState(() =>
     storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, false)
@@ -115,18 +113,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [isContactOpen, setIsContactOpen] = useState(false);
 
   // Smart Direction
-  const nameDir = useSmartDirection(formData.name, t.modal.placeholders.johnDoe);
-  const notesDir = useSmartDirection(formData.notes, t.modal.notes);
-  const streetDir = useSmartDirection(formData.streetAddress, t.modal.placeholders.streetAddress);
-  const locationDir = useSmartDirection(
+  const _nameDir = useSmartDirection(formData.name, t.modal.placeholders.johnDoe);
+  const _notesDir = useSmartDirection(formData.notes, t.modal.notes);
+  const _streetDir = useSmartDirection(formData.streetAddress, t.modal.placeholders.streetAddress);
+  const _locationDir = useSmartDirection(
     formData.preferredLocation,
     t.modal.placeholders.downtownBranch
   );
-  const insuranceDir = useSmartDirection(formData.insuranceProvider);
-  const policyDir = useSmartDirection(formData.policyNumber);
+  const _insuranceDir = useSmartDirection(formData.insuranceProvider);
+  const _policyDir = useSmartDirection(formData.policyNumber);
 
   // Preferred Contact Dropdown States
-  const [isModalContactOpen, setIsModalContactOpen] = useState(false);
+  const [_isModalContactOpen, _setIsModalContactOpen] = useState(false);
 
   // Contact Options
   const CONTACT_OPTIONS = [
@@ -163,7 +161,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
    * getNextSerialId - Finds the highest existing serialId
    * and returns the next value in the sequence.
    */
-  const getNextSerialId = () => {
+  const _getNextSerialId = () => {
     return idGenerator.generate('customers-serial', activeBranchId);
   };
 
@@ -173,7 +171,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
    * - Serial ID: Max existing serial + 1
    * Delegated to: useEntityActions.handleAddCustomer for final verification
    */
-  const handleOpenAdd = () => {
+  const _handleOpenAdd = () => {
     setMode('add');
     setEditingCustomer(null);
     setFormData({
@@ -268,7 +266,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     {
       label: t.contextMenu.viewHistory,
       icon: 'manage_search',
-      action: () => onViewChange && onViewChange('customer-history', { customerId: customer.id }),
+      action: () => onViewChange?.('customer-history', { customerId: customer.id }),
     },
     { separator: true },
     {
@@ -494,6 +492,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     handleOpenEdit(c);
                   }}
                   className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-primary-500 transition-colors'
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[20px]'>edit</span>
                 </button>
@@ -505,6 +504,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     deleteCustomer.mutateAsync(c.id);
                   }}
                   className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors'
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[20px]'>delete</span>
                 </button>
@@ -514,7 +514,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         },
       },
     ],
-    [language, t, color, deleteCustomer, handleOpenEdit, branches]
+    [language, t, deleteCustomer, handleOpenEdit, branches]
   );
 
   const tableColumns = useMemo(() => {
@@ -545,16 +545,17 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
         {/* Street Address */}
         <div>
-          <label className='block text-xs font-medium text-gray-500 mb-1'>
+          <label htmlFor='field-547' className='block text-xs font-medium text-gray-500 mb-1'>
             {t.modal.streetAddress}
+            <SmartTextarea
+              id='field-547'
+              value={formData.streetAddress || ''}
+              onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
+              rows={2}
+              className='resize-none mt-1'
+              placeholder={t.modal.placeholders.streetAddress}
+            />
           </label>
-          <SmartTextarea
-            value={formData.streetAddress || ''}
-            onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
-            rows={2}
-            className='resize-none'
-            placeholder={t.modal.placeholders.streetAddress}
-          />
         </div>
       </div>
     </div>
@@ -573,7 +574,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         disabled={isLoading}
         footer={
           <div className='flex gap-3'>
-            <button onClick={handleCloseProfile} className={MODAL_FOOTER_BTN_CANCEL}>
+            <button onClick={handleCloseProfile} className={MODAL_FOOTER_BTN_CANCEL} type='button'>
               {t.modal.close}
             </button>
             <button
@@ -582,6 +583,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 handleOpenEdit(c);
               }}
               className={MODAL_FOOTER_BTN_PRIMARY}
+              type='button'
             >
               <span className='material-symbols-rounded text-[18px]'>edit</span>
               {t.modal.editProfile}
@@ -589,7 +591,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           </div>
         }
       >
-        <div className='w-full' onClick={(e) => e.stopPropagation()}>
+        <div className='w-full' role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
           {/* Header */}
           <div
             className={`p-6 bg-linear-to-br from-primary-500 to-primary-600 text-white relative overflow-hidden`}
@@ -801,17 +803,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   onClick={handleOpenKiosk}
                   className='flex items-center gap-2 px-4 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-700 dark:text-zinc-300 transition-all rounded-full text-xs font-bold'
                   title='Open Patient Self-Entry Mode'
+                  type='button'
                 >
                   <span className='material-symbols-rounded text-[18px]'>monitor_heart</span>
                   <span className='hidden md:inline'>{t.modal.kioskMode}</span>
                 </button>
               )}
-              <label className='flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
+              <div className='flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
                 <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
                   {t.globalView}
                 </span>
                 <Switch checked={showAllBranches} onChange={setShowAllBranches} />
-              </label>
+              </div>
             </div>
           ) : null
         }
@@ -1029,72 +1032,90 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
                   <div className='grid grid-cols-3 gap-4'>
                     <div className='col-span-1'>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label
+                        htmlFor='field-1033'
+                        className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
                         {t.modal.code} *
+                        <div className='relative mt-1'>
+                          <SmartInput
+                            id='field-1033'
+                            type='text'
+                            required
+                            value={formData.code || ''}
+                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                            placeholder={t.modal.placeholders.code}
+                          />
+                          <button
+                            type='button'
+                            onClick={() => setFormData({ ...formData, code: generateUniqueCode() })}
+                            className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-500 transition-colors'
+                            title={t.modal.generateCode}
+                          >
+                            <span className='material-symbols-rounded text-[18px]'>autorenew</span>
+                          </button>
+                        </div>
                       </label>
-                      <div className='relative'>
-                        <SmartInput
-                          type='text'
-                          required
-                          value={formData.code || ''}
-                          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                          placeholder={t.modal.placeholders.code}
-                        />
-                        <button
-                          type='button'
-                          onClick={() => setFormData({ ...formData, code: generateUniqueCode() })}
-                          className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-500 transition-colors'
-                          title={t.modal.generateCode}
-                        >
-                          <span className='material-symbols-rounded text-[18px]'>autorenew</span>
-                        </button>
-                      </div>
                     </div>
                     <div className='col-span-2'>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label
+                        htmlFor='field-1055'
+                        className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
                         {t.modal.name} *
+                        <SmartInput
+                          id='field-1055'
+                          type='text'
+                          required
+                          value={formData.name || ''}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder={t.modal.placeholders.johnDoe}
+                          className='mt-1'
+                        />
                       </label>
-                      <SmartInput
-                        type='text'
-                        required
-                        value={formData.name || ''}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder={t.modal.placeholders.johnDoe}
-                      />
                     </div>
                   </div>
 
                   <div className='grid grid-cols-2 gap-4 mt-4'>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label
+                        htmlFor='field-1071'
+                        className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
                         {t.modal.phone} *
+                        <div className='relative mt-1'>
+                          <SmartPhoneInput
+                            id='field-1071'
+                            required
+                            value={formData.phone || ''}
+                            onChange={(val) => setFormData({ ...formData, phone: val })}
+                            placeholder={t.modal.placeholders.phone}
+                            className='w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
+                          />
+                          {getDetectedCountry(formData.phone) && (
+                            <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
+                              {language === 'AR'
+                                ? getDetectedCountry(formData.phone)?.country_ar
+                                : getDetectedCountry(formData.phone)?.country_en}
+                            </div>
+                          )}
+                        </div>
                       </label>
-                      <div className='relative'>
-                        <SmartPhoneInput
-                          required
-                          value={formData.phone || ''}
-                          onChange={(val) => setFormData({ ...formData, phone: val })}
-                          placeholder={t.modal.placeholders.phone}
-                          className='w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        />
-                        {getDetectedCountry(formData.phone) && (
-                          <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
-                            {language === 'AR'
-                              ? getDetectedCountry(formData.phone)?.country_ar
-                              : getDetectedCountry(formData.phone)?.country_en}
-                          </div>
-                        )}
-                      </div>
                     </div>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label
+                        htmlFor='field-1092'
+                        className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
                         {t.modal.email}
+                        <SmartEmailInput
+                          id='field-1092'
+                          value={formData.email || ''}
+                          onChange={(val) => setFormData({ ...formData, email: val })}
+                          placeholder={t.modal.placeholders.email}
+                          className='mt-1'
+                        />
                       </label>
-                      <SmartEmailInput
-                        value={formData.email || ''}
-                        onChange={(val) => setFormData({ ...formData, email: val })}
-                        placeholder={t.modal.placeholders.email}
-                      />
                     </div>
                   </div>
 
@@ -1138,16 +1159,20 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   </div>
 
                   <div className='mt-4'>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label
+                      htmlFor='field-1144'
+                      className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
                       {t.modal.notes}
+                      <SmartTextarea
+                        id='field-1144'
+                        value={formData.notes || ''}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        rows={2}
+                        className='resize-none mt-1'
+                        placeholder={t.modal.placeholders.notes}
+                      />
                     </label>
-                    <SmartTextarea
-                      value={formData.notes || ''}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={2}
-                      className='resize-none'
-                      placeholder={t.modal.placeholders.notes}
-                    />
                   </div>
                 </div>
               </div>
@@ -1162,9 +1187,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
                   <div className='space-y-4'>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <span className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {t.modal.contact}
-                      </label>
+                      </span>
                       <FilterDropdown
                         variant='input'
                         items={CONTACT_OPTIONS}
@@ -1201,17 +1226,22 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       />
                     </div>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label
+                        htmlFor='field-1207'
+                        className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
                         {t.modal.location}
+                        <SmartInput
+                          id='field-1207'
+                          type='text'
+                          value={formData.preferredLocation || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, preferredLocation: e.target.value })
+                          }
+                          placeholder={t.modal.placeholders.downtownBranch}
+                          className='mt-1'
+                        />
                       </label>
-                      <SmartInput
-                        type='text'
-                        value={formData.preferredLocation || ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, preferredLocation: e.target.value })
-                        }
-                        placeholder={t.modal.placeholders.downtownBranch}
-                      />
                     </div>
 
                     <div className='border-t border-gray-100 dark:border-gray-800 my-4'></div>
@@ -1220,28 +1250,40 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       {t.modal.insurance}
                     </h4>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label
+                        htmlFor='field-1227'
+                        className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
                         {t.modal.insurance}
+                        <SmartInput
+                          id='field-1227'
+                          type='text'
+                          value={formData.insuranceProvider || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, insuranceProvider: e.target.value })
+                          }
+                          placeholder={t.modal.placeholders.insurance}
+                          className='mt-1'
+                        />
                       </label>
-                      <SmartInput
-                        type='text'
-                        value={formData.insuranceProvider || ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, insuranceProvider: e.target.value })
-                        }
-                        placeholder={t.modal.placeholders.insurance}
-                      />
                     </div>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label
+                        htmlFor='field-1241'
+                        className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
                         {t.modal.policy}
+                        <SmartInput
+                          id='field-1241'
+                          type='text'
+                          value={formData.policyNumber || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, policyNumber: e.target.value })
+                          }
+                          placeholder={t.modal.placeholders.policy}
+                          className='mt-1'
+                        />
                       </label>
-                      <SmartInput
-                        type='text'
-                        value={formData.policyNumber || ''}
-                        onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
-                        placeholder={t.modal.placeholders.policy}
-                      />
                     </div>
                   </div>
 
@@ -1297,63 +1339,81 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 {/* Code & Basic Info */}
                 <div className='grid grid-cols-3 gap-4'>
                   <div className='col-span-1'>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label
+                      htmlFor='field-1308'
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
                       {t.modal.code} *
+                      <div className='flex gap-2 mt-1'>
+                        <SmartInput
+                          id='field-1308'
+                          type='text'
+                          required
+                          value={formData.code || ''}
+                          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                          placeholder={t.modal.placeholders.code}
+                        />
+                      </div>
                     </label>
-                    <div className='flex gap-2'>
-                      <SmartInput
-                        type='text'
-                        required
-                        value={formData.code || ''}
-                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        placeholder={t.modal.placeholders.code}
-                      />
-                    </div>
                   </div>
                   <div className='col-span-2'>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label
+                      htmlFor='field-1322'
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
                       {t.modal.name} *
+                      <SmartInput
+                        id='field-1322'
+                        type='text'
+                        required
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder={t.modal.placeholders.johnDoe}
+                        className='mt-1'
+                      />
                     </label>
-                    <SmartInput
-                      type='text'
-                      required
-                      value={formData.name || ''}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder={t.modal.placeholders.johnDoe}
-                    />
                   </div>
                 </div>
 
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label
+                      htmlFor='field-1338'
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
                       {t.modal.phone} *
+                      <div className='relative mt-1'>
+                        <SmartPhoneInput
+                          id='field-1338'
+                          required
+                          value={formData.phone || ''}
+                          onChange={(val) => setFormData({ ...formData, phone: val })}
+                          placeholder={t.modal.placeholders.phone}
+                        />
+                        {getDetectedCountry(formData.phone) && (
+                          <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
+                            {language === 'AR'
+                              ? getDetectedCountry(formData.phone)?.country_ar
+                              : getDetectedCountry(formData.phone)?.country_en}
+                          </div>
+                        )}
+                      </div>
                     </label>
-                    <div className='relative'>
-                      <SmartPhoneInput
-                        required
-                        value={formData.phone || ''}
-                        onChange={(val) => setFormData({ ...formData, phone: val })}
-                        placeholder={t.modal.placeholders.phone}
-                      />
-                      {getDetectedCountry(formData.phone) && (
-                        <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
-                          {language === 'AR'
-                            ? getDetectedCountry(formData.phone)?.country_ar
-                            : getDetectedCountry(formData.phone)?.country_en}
-                        </div>
-                      )}
-                    </div>
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label
+                      htmlFor='field-1358'
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
                       {t.modal.email}
+                      <SmartEmailInput
+                        id='field-1358'
+                        value={formData.email || ''}
+                        onChange={(val) => setFormData({ ...formData, email: val })}
+                        placeholder={t.modal.placeholders.email}
+                        className='mt-1'
+                      />
                     </label>
-                    <SmartEmailInput
-                      value={formData.email || ''}
-                      onChange={(val) => setFormData({ ...formData, email: val })}
-                      placeholder={t.modal.placeholders.email}
-                    />
                   </div>
                 </div>
 
@@ -1365,23 +1425,23 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 {/* Preferences */}
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.contact}
-                    </label>
+                    </span>
                     <FilterDropdown
                       variant='input'
                       items={CONTACT_OPTIONS}
                       selectedItem={CONTACT_OPTIONS.find(
                         (o) => o.id === (formData.preferredContact || 'phone')
                       )}
-                      isOpen={isModalContactOpen}
-                      onToggle={() => setIsModalContactOpen(!isModalContactOpen)}
+                      isOpen={isContactOpen}
+                      onToggle={() => setIsContactOpen(!isContactOpen)}
                       onSelect={(option) => {
                         setFormData({
                           ...formData,
                           preferredContact: option.id as Customer['preferredContact'],
                         });
-                        setIsModalContactOpen(false);
+                        setIsContactOpen(false);
                       }}
                       keyExtractor={(item) => item.id}
                       renderSelected={(item) => (
@@ -1404,17 +1464,22 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     />
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label
+                      htmlFor='field-1417'
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
                       {t.modal.location}
+                      <SmartInput
+                        id='field-1417'
+                        type='text'
+                        value={formData.preferredLocation || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, preferredLocation: e.target.value })
+                        }
+                        placeholder={t.modal.placeholders.downtownBranch}
+                        className='mt-1'
+                      />
                     </label>
-                    <SmartInput
-                      type='text'
-                      value={formData.preferredLocation || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, preferredLocation: e.target.value })
-                      }
-                      placeholder={t.modal.placeholders.downtownBranch}
-                    />
                   </div>
                 </div>
 
@@ -1428,35 +1493,43 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   </h4>
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
-                      <label className='block text-xs text-gray-500 mb-1'>
+                      <label htmlFor='field-1442' className='block text-xs text-gray-500 mb-1'>
                         {t.modal.insurance}
+                        <SmartInput
+                          id='field-1442'
+                          type='text'
+                          value={formData.insuranceProvider || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, insuranceProvider: e.target.value })
+                          }
+                          placeholder={t.modal.placeholders.insurance}
+                          className='mt-1'
+                        />
                       </label>
-                      <SmartInput
-                        type='text'
-                        value={formData.insuranceProvider || ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, insuranceProvider: e.target.value })
-                        }
-                        placeholder={t.modal.placeholders.insurance}
-                      />
                     </div>
                     <div>
-                      <label className='block text-xs text-gray-500 mb-1'>{t.modal.policy}</label>
-                      <SmartInput
-                        type='text'
-                        value={formData.policyNumber || ''}
-                        onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
-                        placeholder={t.modal.placeholders.policy}
-                      />
+                      <label htmlFor='field-1456' className='block text-xs text-gray-500 mb-1'>
+                        {t.modal.policy}
+                        <SmartInput
+                          id='field-1456'
+                          type='text'
+                          value={formData.policyNumber || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, policyNumber: e.target.value })
+                          }
+                          placeholder={t.modal.placeholders.policy}
+                          className='mt-1'
+                        />
+                      </label>
                     </div>
                   </div>
                 </div>
 
                 {/* Chronic Conditions */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.modal.conditions}
-                  </label>
+                  </span>
                   <div className='flex flex-wrap gap-2'>
                     {[
                       'diabetes',
@@ -1486,16 +1559,20 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='field-1506'
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t.modal.notes}
+                    <SmartTextarea
+                      id='field-1506'
+                      value={formData.notes || ''}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      rows={2}
+                      className='resize-none mt-1'
+                      placeholder={t.modal.placeholders.notes}
+                    />
                   </label>
-                  <SmartTextarea
-                    value={formData.notes || ''}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={2}
-                    className='resize-none'
-                    placeholder={t.modal.placeholders.notes}
-                  />
                 </div>
               </div>
             )}
@@ -1541,48 +1618,62 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           <form id='kiosk-form' onSubmit={handleSubmit} className='space-y-6'>
             <div className='space-y-4'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label
+                  htmlFor='field-1561'
+                  className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                >
                   {t.modal.name} *
+                  <SmartInput
+                    id='field-1561'
+                    type='text'
+                    required
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder={t.modal.placeholders.johnDoe}
+                    className='mt-1'
+                  />
                 </label>
-                <SmartInput
-                  type='text'
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t.modal.placeholders.johnDoe}
-                />
               </div>
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='field-1576'
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t.modal.phone} *
+                    <div className='relative mt-1'>
+                      <SmartPhoneInput
+                        id='field-1576'
+                        required
+                        value={formData.phone || ''}
+                        onChange={(val) => setFormData({ ...formData, phone: val })}
+                        placeholder={t.modal.placeholders.phone}
+                      />
+                      {getDetectedCountry(formData.phone) && (
+                        <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
+                          {language === 'AR'
+                            ? getDetectedCountry(formData.phone)?.country_ar
+                            : getDetectedCountry(formData.phone)?.country_en}
+                        </div>
+                      )}
+                    </div>
                   </label>
-                  <div className='relative'>
-                    <SmartPhoneInput
-                      required
-                      value={formData.phone || ''}
-                      onChange={(val) => setFormData({ ...formData, phone: val })}
-                      placeholder={t.modal.placeholders.phone}
-                    />
-                    {getDetectedCountry(formData.phone) && (
-                      <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
-                        {language === 'AR'
-                          ? getDetectedCountry(formData.phone)?.country_ar
-                          : getDetectedCountry(formData.phone)?.country_en}
-                      </div>
-                    )}
-                  </div>
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='field-1596'
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t.modal.email}
+                    <SmartEmailInput
+                      id='field-1596'
+                      value={formData.email || ''}
+                      onChange={(val) => setFormData({ ...formData, email: val })}
+                      placeholder={t.modal.placeholders.email}
+                      className='mt-1'
+                    />
                   </label>
-                  <SmartEmailInput
-                    value={formData.email || ''}
-                    onChange={(val) => setFormData({ ...formData, email: val })}
-                    placeholder={t.modal.placeholders.email}
-                  />
                 </div>
               </div>
 
@@ -1597,9 +1688,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </h3>
                 <div className='space-y-3'>
                   <div>
-                    <label className='block text-xs font-bold text-gray-500 uppercase mb-2'>
+                    <span className='block text-xs font-bold text-gray-500 uppercase mb-2'>
                       {t.modal.conditions}
-                    </label>
+                    </span>
                     <div className='flex flex-wrap gap-2'>
                       {[
                         'diabetes',

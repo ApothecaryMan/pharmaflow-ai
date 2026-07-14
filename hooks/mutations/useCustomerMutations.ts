@@ -17,7 +17,7 @@ export function useAddCustomer() {
 
 export function useUpdateCustomer() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
+  const _branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
@@ -30,7 +30,7 @@ export function useUpdateCustomer() {
 
 export function useDeleteCustomer() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
+  const _branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: (id: string) => customerService.delete(id),

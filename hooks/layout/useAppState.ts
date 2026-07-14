@@ -4,8 +4,8 @@ import { ROUTES } from '../../config/routes';
 import { StorageKeys } from '../../config/storageKeys';
 import { authService } from '../../services/auth/authService';
 import type { ViewState } from '../../types';
-import { usePersistedState } from '../common/usePersistedState';
 import { storage } from '../../utils/storage';
+import { usePersistedState } from '../common/usePersistedState';
 
 export interface ToastState {
   message: string;
@@ -77,7 +77,7 @@ export function useAppState(): AppState {
         storage.remove(StorageKeys.CURRENT_EMPLOYEE_ID);
       }
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentEmployeeId, setCurrentEmployeeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     // View state

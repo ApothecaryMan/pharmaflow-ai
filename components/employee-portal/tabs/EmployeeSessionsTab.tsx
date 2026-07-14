@@ -3,7 +3,6 @@ import {
   getSessionStatus,
   isSessionOnline,
 } from '../../../hooks/infrastructure/useSessionHeartbeat';
-import { supabase } from '../../../lib/supabase';
 import { authService } from '../../../services/auth/authService';
 import {
   sessionRepository,
@@ -139,7 +138,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
     });
 
   const onlineCount = mySessions.filter((session) => isSessionOnline(session.last_seen_at)).length;
-  const offlineCount = mySessions.length - onlineCount;
+  const _offlineCount = mySessions.length - onlineCount;
 
   return (
     <div className=' space-y-6'>
@@ -163,6 +162,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
           onClick={onReloadSessions}
           disabled={loading}
           className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-transparent disabled:opacity-50 cursor-pointer transition-colors text-(--text-secondary)'
+          type='button'
         >
           <svg
             className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
@@ -171,6 +171,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
             strokeWidth='2'
             viewBox='0 0 24 24'
           >
+            <title>Refresh</title>
             <polyline points='23 4 23 10 17 10' />
             <polyline points='1 20 1 14 7 14' />
             <path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15' />
@@ -329,6 +330,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
                     onClick={() => handleLogout(session)}
                     className='inline-flex shrink-0 items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
                     title={isRTL ? 'إنهاء الجلسة' : 'Terminate'}
+                    type='button'
                   >
                     <Icons.Logout size={14} />
                     <span className='text-xs font-medium'>{isRTL ? 'إنهاء' : 'End'}</span>

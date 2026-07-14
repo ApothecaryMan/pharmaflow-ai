@@ -89,7 +89,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       setActiveStep(0);
       setError(null);
     }
-  }, [isAuthenticated, error, hasChecked]);
+  }, [isAuthenticated, error, hasChecked, checkStatus]);
 
   return {
     activeStep,

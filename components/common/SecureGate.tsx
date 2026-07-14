@@ -61,7 +61,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
     setUsernameInput(currentEmployee?.username || '');
     setPasswordInput('');
     setErrorMessage('');
-  }, [storageKey, currentEmployee]);
+  }, [currentEmployee]);
 
   const handlePasswordUnlock = async (e: React.FormEvent) => {
     e.preventDefault();

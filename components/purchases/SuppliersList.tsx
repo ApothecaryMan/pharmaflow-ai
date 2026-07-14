@@ -2,16 +2,15 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
+import {
+  useAddSupplier,
+  useDeleteSupplier,
+  useUpdateSupplier,
+} from '../../hooks/mutations/useSupplierMutations';
+import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Supplier } from '../../types';
-import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
-import {
-  useAddSupplier,
-  useUpdateSupplier,
-  useDeleteSupplier,
-} from '../../hooks/mutations/useSupplierMutations';
-import { idGenerator } from '../../utils/idGenerator';
 import {
   CARD_BASE,
   MODAL_FOOTER_BTN_CANCEL,
@@ -25,13 +24,7 @@ import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
-import {
-  isValidEmail,
-  isValidPhone,
-  SmartEmailInput,
-  SmartPhoneInput,
-  useSmartDirection,
-} from '../common/SmartInputs';
+import { SmartEmailInput, SmartPhoneInput, useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 
 interface SuppliersListProps {
@@ -128,7 +121,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
   // Copy helper
   const copyToClipboard = async (text: string) => {
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
       } else {
         const textArea = document.createElement('textarea');
@@ -358,7 +351,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
         },
       },
     ],
-    [t, getRowActions]
+    [t, language]
   ); // getRowActions is stable component reference but we just in case include it
 
   return (
@@ -410,32 +403,30 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
       />
 
       {mode === 'list' ? (
-        <>
-          <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
-            <TanStackTable
-              data={suppliers}
-              columns={columns}
-              tableId='suppliers_list'
-              globalFilter={search}
-              onSearchChange={setSearch}
-              enableTopToolbar={false}
-              searchPlaceholder={t.searchPlaceholder || 'Search supplier name, contact...'}
-              onRowClick={(row) => handleViewDetails(row as Supplier)}
-              onRowContextMenu={(e, row) =>
-                showMenu(e.clientX, e.clientY, getRowActions(row as Supplier))
-              }
-              color={color}
-              enablePagination={true}
-              enableVirtualization={false}
-              pageSize='auto'
-              enableShowAll={true}
-              filterableColumns={[governorateFilterConfig]}
-              initialFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              dense={true}
-            />
-          </div>
-        </>
+        <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
+          <TanStackTable
+            data={suppliers}
+            columns={columns}
+            tableId='suppliers_list'
+            globalFilter={search}
+            onSearchChange={setSearch}
+            enableTopToolbar={false}
+            searchPlaceholder={t.searchPlaceholder || 'Search supplier name, contact...'}
+            onRowClick={(row) => handleViewDetails(row as Supplier)}
+            onRowContextMenu={(e, row) =>
+              showMenu(e.clientX, e.clientY, getRowActions(row as Supplier))
+            }
+            color={color}
+            enablePagination={true}
+            enableVirtualization={false}
+            pageSize='auto'
+            enableShowAll={true}
+            filterableColumns={[governorateFilterConfig]}
+            initialFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            dense={true}
+          />
+        </div>
       ) : (
         /* ADD SUPPLIER FORM VIEW - INLINE */
         <div className='flex-1 overflow-y-auto'>
@@ -449,19 +440,19 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                 </h3>
                 <div className='space-y-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.id || 'ID'}
-                    </label>
+                    </span>
                     <div className='w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
                       {editForm.supplierCode ||
                         (language === 'AR' ? 'توليد تلقائي...' : 'Auto-generated...')}
                     </div>
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.companyName || 'Company Name'}{' '}
                       <span className='text-red-500'>*</span>
-                    </label>
+                    </span>
                     <input
                       type='text'
                       required
@@ -474,9 +465,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                     />
                   </div>
                   <div className='col-span-2'>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.location || 'Location'}
-                    </label>
+                    </span>
                     <LocationSelector
                       language={language}
                       selectedGovernorate={editForm.governorate}
@@ -493,9 +484,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                     />
                   </div>
                   <div className='col-span-2'>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.address || 'Street Address'}
-                    </label>
+                    </span>
                     <textarea
                       value={editForm.address}
                       onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
@@ -517,10 +508,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                 </h3>
                 <div className='space-y-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.contactPerson || 'Contact Person'}{' '}
                       <span className='text-red-500'>*</span>
-                    </label>
+                    </span>
                     <input
                       type='text'
                       required
@@ -533,9 +524,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                     />
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.phone || 'Phone'} <span className='text-red-500'>*</span>
-                    </label>
+                    </span>
                     <SmartPhoneInput
                       required
                       value={editForm.phone}
@@ -546,9 +537,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                     />
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.email || 'Email'} <span className='text-red-500'>*</span>
-                    </label>
+                    </span>
                     <SmartEmailInput
                       required
                       value={editForm.email}
@@ -575,6 +566,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                 onClick={handleSaveNew}
                 disabled={isSaving}
                 className='py-3 px-6 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-primary-600/20 flex items-center justify-center space-x-2 rtl:space-x-reverse'
+                type='button'
               >
                 {isSaving ? (
                   <>
@@ -603,10 +595,14 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
           disabled={isSaving}
           footer={
             <div className='flex gap-3'>
-              <button onClick={() => setEditingSupplier(null)} className={MODAL_FOOTER_BTN_CANCEL}>
+              <button
+                onClick={() => setEditingSupplier(null)}
+                className={MODAL_FOOTER_BTN_CANCEL}
+                type='button'
+              >
                 {t.modal?.cancel || 'Cancel'}
               </button>
-              <button onClick={handleSaveEdit} className={MODAL_FOOTER_BTN_PRIMARY}>
+              <button onClick={handleSaveEdit} className={MODAL_FOOTER_BTN_PRIMARY} type='button'>
                 {isSaving ? (
                   <>
                     <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
@@ -623,9 +619,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
           <div className='space-y-6'>
             {/* ID Field */}
             <div className='mb-4'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 {t.form?.id || 'ID'}
-              </label>
+              </span>
               <div className='w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
                 {editForm.supplierCode || editForm.id}
               </div>
@@ -639,9 +635,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
               </h4>
               <div className='space-y-4'>
                 <div className='col-span-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.form?.location || 'Location'}
-                  </label>
+                  </span>
                   <LocationSelector
                     language={language}
                     selectedGovernorate={editForm?.governorate}
@@ -662,9 +658,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.form?.companyName || 'Company Name'} <span className='text-red-500'>*</span>
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.name}
@@ -676,9 +672,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.form?.address || 'Street Address'}
-                  </label>
+                  </span>
                   <textarea
                     value={editForm.address}
                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
@@ -700,10 +696,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
               </h4>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.form?.contactPerson || 'Contact Person'}{' '}
                     <span className='text-red-500'>*</span>
-                  </label>
+                  </span>
                   <input
                     type='text'
                     value={editForm.contactPerson}
@@ -715,9 +711,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.form?.phone || 'Phone'} <span className='text-red-500'>*</span>
-                  </label>
+                  </span>
                   <SmartPhoneInput
                     value={editForm.phone}
                     onChange={(val) => setEditForm({ ...editForm, phone: val })}
@@ -727,9 +723,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                   />
                 </div>
                 <div className='md:col-span-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.form?.email || 'Email'} <span className='text-red-500'>*</span>
-                  </label>
+                  </span>
                   <SmartEmailInput
                     value={editForm.email}
                     onChange={(val) => setEditForm({ ...editForm, email: val })}
@@ -756,10 +752,14 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
           subtitle={t.modal?.deleteSubtitle || 'This action cannot be undone'}
           footer={
             <div className='flex gap-3'>
-              <button onClick={() => setDeleteConfirm(null)} className={MODAL_FOOTER_BTN_CANCEL}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className={MODAL_FOOTER_BTN_CANCEL}
+                type='button'
+              >
                 {t.modal?.cancel || 'Cancel'}
               </button>
-              <button onClick={confirmDelete} className={MODAL_FOOTER_BTN_DANGER}>
+              <button onClick={confirmDelete} className={MODAL_FOOTER_BTN_DANGER} type='button'>
                 {t.modal?.deleteBtn || 'Delete'}
               </button>
             </div>
@@ -869,6 +869,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                 <button
                   onClick={() => setViewingSupplier(null)}
                   className={MODAL_FOOTER_BTN_CANCEL}
+                  type='button'
                 >
                   <span
                     className='material-symbols-rounded'
@@ -887,6 +888,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                     handleEdit(s);
                   }}
                   className={MODAL_FOOTER_BTN_PRIMARY}
+                  type='button'
                 >
                   <span
                     className='material-symbols-rounded'
@@ -910,7 +912,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                 </p>
                 <ListWrapper>
                   {activeItems.map((item, i, arr) => (
-                    <ListItem key={i} index={i} total={arr.length}>
+                    <ListItem key={`${item.label}-${i}`} index={i} total={arr.length}>
                       <div className='flex items-center gap-2 shrink-0'>
                         {/* Rule 9: Precise Icon Styling */}
                         <span

@@ -443,6 +443,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
             className='w-16 h-16 text-primary-500 animate-spin'
             style={{ animationDuration: '2s' }}
           >
+            <title>Smooth Asterisk</title>
             <LogoAsterisk />
           </svg>
           <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
@@ -457,6 +458,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
             className='w-16 h-16 text-primary-500 animate-spin'
             style={{ animationDuration: '1.5s', animationTimingFunction: 'steps(8)' }}
           >
+            <title>Stepped Asterisk</title>
             <LogoAsterisk />
           </svg>
           <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
@@ -467,6 +469,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
         {/* V3a: Orbiting Dots */}
         <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
           <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <title>Orbiting Dots</title>
             <g
               className='animate-spin'
               style={{ transformOrigin: '70px 70px', animationDuration: '3s' }}
@@ -486,6 +489,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
         {/* V3b: Pulse Ring */}
         <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
           <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <title>Pulse Ring</title>
             <motion.circle
               cx='70'
               cy='70'
@@ -526,6 +530,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
         {/* V3c: Radar Sweep */}
         <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
           <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <title>Radar Sweep</title>
             <circle
               cx='70'
               cy='70'
@@ -561,6 +566,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
             transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
             style={{ transformOrigin: 'center' }}
           >
+            <title>Morph Scale</title>
             <LogoAsterisk />
           </motion.svg>
           <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
@@ -576,6 +582,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
             animate={{ y: [0, -12, 0] }}
             transition={{ repeat: Infinity, duration: 0.7, ease: 'easeInOut' }}
           >
+            <title>Bounce</title>
             <LogoAsterisk />
           </motion.svg>
           <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>Bounce</span>
@@ -584,6 +591,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
         {/* V3f: Spinning Ring */}
         <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
           <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <title>Spinning ring animation</title>
             <circle
               cx='70'
               cy='70'
@@ -606,6 +614,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
         {/* V3g: Advanced Multi-Ring Pro */}
         <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
           <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <title>Multi-Ring Pro</title>
             <defs>
               <linearGradient id='ringGrad' x1='0%' y1='0%' x2='100%' y2='100%'>
                 <stop offset='0%' stopColor='var(--color-primary-400, #60a5fa)' />
@@ -681,6 +690,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
             animate={{ rotate: [0, 180, 360] }}
             transition={{ repeat: Infinity, ease: 'easeInOut', duration: 1.5 }}
           >
+            <title>Elastic Asterisk</title>
             <LogoAsterisk />
           </motion.svg>
           <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
@@ -692,7 +702,7 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
   );
 };
 
-export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) => {
+export const ModalTests: React.FC<ModalTestsProps> = ({ color: _color, t: _t, language }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<ModalConfig>({});
   const [activePage, setActivePage] = useState('page1');
@@ -759,6 +769,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
  }
  `}
       style={variant === 'primary' ? { backgroundColor: 'var(--color-primary-500, #3b82f6)' } : {}}
+      type='button'
     >
       <span className='material-symbols-rounded text-[20px]'>{icon}</span>
       {label}
@@ -786,7 +797,10 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
 
   // Sample header action for testing
   const sampleHeaderAction = (
-    <button className='px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'>
+    <button
+      className='px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+      type='button'
+    >
       Action
     </button>
   );
@@ -1047,6 +1061,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
                 onClick={() => setIsOpen(false)}
                 className='flex-1 px-4 py-2.5 rounded-xl font-medium text-white transition-colors'
                 style={{ backgroundColor: 'var(--color-primary-500, #3b82f6)' }}
+                type='button'
               >
                 {language === 'AR' ? 'إغلاق' : 'Close Modal'}
               </button>

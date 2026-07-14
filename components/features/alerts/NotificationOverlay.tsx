@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useSettings } from '../../../context';
 import { type AlertData, useAlert } from './AlertContext';
 
@@ -12,7 +12,7 @@ import { type AlertData, useAlert } from './AlertContext';
 export const NotificationOverlay: React.FC = () => {
   const { alerts, removeAlert } = useAlert();
   const { language } = useSettings();
-  const isRTL = language === 'AR';
+  const _isRTL = language === 'AR';
 
   const [isHovered, setIsHovered] = useState(false);
 
@@ -24,6 +24,8 @@ export const NotificationOverlay: React.FC = () => {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={`fixed top-13 right-5 z-[10000] pointer-events-auto flex flex-col items-end w-full max-w-[420px] px-4 select-none`}
@@ -124,6 +126,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
       <button
         onClick={onClose}
         className={`absolute top-3 right-2 transition-all z-10 cursor-pointer ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
+        type='button'
       >
         <span
           className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'

@@ -110,7 +110,7 @@ export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({
   className = '',
   children,
 }) => {
-  const { isGlass } = useContextMenu();
+  const { isGlass: _isGlass } = useContextMenu();
 
   return (
     <button
@@ -130,6 +130,7 @@ export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 ${className}
             `}
+      type='button'
     >
       {children ? (
         children
@@ -158,7 +159,7 @@ export const ContextMenuCheckboxItem: React.FC<{
   disabled?: boolean;
   className?: string; // Restore className support
 }> = ({ label, checked, onCheckedChange, disabled, className = '' }) => {
-  const { isGlass } = useContextMenu();
+  const { isGlass: _isGlass } = useContextMenu();
 
   return (
     <button
@@ -177,6 +178,7 @@ export const ContextMenuCheckboxItem: React.FC<{
                 }
                 ${className}
             `}
+      type='button'
     >
       <span
         className={`text-sm font-medium transition-colors ${!checked ? 'text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'}`}
@@ -334,6 +336,8 @@ export const ContextMenuProvider: React.FC<{
         ? ReactDOM.createPortal(
             <div
               ref={menuRef}
+              role="button"
+              tabIndex={0}
               onMouseEnter={() => setIsMouseOverMenu(true)}
               onMouseLeave={() => setIsMouseOverMenu(false)}
               className={`fixed z-[999999] min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 origin-top-left overflow-hidden custom-card-css-target no-padding
@@ -351,10 +355,10 @@ export const ContextMenuProvider: React.FC<{
               ) : menu.actions.length > 0 ? (
                 menu.actions.map((action, index) =>
                   action.separator ? (
-                    <ContextMenuSeparator key={index} />
+                    <ContextMenuSeparator key={`${action.label}-${index}`} />
                   ) : (
                     <ContextMenuItem
-                      key={index}
+                      key={`${action.label}-${index}`}
                       label={action.label}
                       icon={action.icon}
                       danger={action.danger}

@@ -5,10 +5,8 @@ import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
 import { orgService } from '../../services/org/orgService';
 import { useAuthStore } from '../../stores/authStore';
-import type { Organization } from '../../types';
-import { Language, ThemeColor, type ViewState } from '../../types';
+import type { Organization, ViewState } from '../../types';
 import { EventManager } from '../../utils/events/eventManager';
-import { getIconByName, Icons } from '../common/Icons';
 import { Tooltip } from '../common/Tooltip';
 import { NavModules } from './navbar/NavModules';
 import { NavUserActions } from './navbar/NavUserActions';
@@ -55,16 +53,16 @@ interface NavbarProps {
 const NavbarComponent: React.FC<NavbarProps> = ({
   menuItems,
   activeModule,
-  onModuleChange,
+  onModuleChange: _onModuleChange,
   appTitle,
-  onMobileMenuToggle,
-  isMobile = false,
+  onMobileMenuToggle: _onMobileMenuToggle,
+  isMobile: _isMobile = false,
   onLogoClick,
   currentView,
   onNavigate,
   employees = [],
-  currentEmployeeId,
-  setCurrentEmployeeId,
+  currentEmployeeId: _currentEmployeeId,
+  setCurrentEmployeeId: _setCurrentEmployeeId,
   onLogout,
   onOpenInWindow,
 }) => {
@@ -73,8 +71,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     theme: currentTheme,
     darkMode,
     navStyle = 1,
-    hideInactiveModules,
-    developerMode,
+    hideInactiveModules: _hideInactiveModules,
+    developerMode: _developerMode,
   } = useSettings();
 
   // Resolve active dynamic events to see if there is a custom logo or navbar icon set
@@ -89,12 +87,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const navbarIconsEvent = activeEvents.find((e) => e.type === 'NAVBAR_ICONS');
   const customLogo = (navbarIconsEvent?.payload as any)?.logo;
 
-  const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
+  const currentEmployee = employees.find((e) => e.id === _currentEmployeeId);
 
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const switchBranch = useAuthStore((s) => s.switchBranch);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
-  const switchOrg = useAuthStore((s) => s.switchOrg);
+  const _switchOrg = useAuthStore((s) => s.switchOrg);
   const branches = useAuthStore((s) => s.branches);
   const isDataLoading = useAuthStore((s) => s.isLoading);
 
@@ -104,7 +102,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isSwitchingOrg, setIsSwitchingOrg] = useState(false);
+  const [_isSwitchingOrg, _setIsSwitchingOrg] = useState(false);
 
   const [isMobileView, setIsMobileView] = useState(false);
 
@@ -115,7 +113,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  const theme = currentTheme.primary;
+  const _theme = currentTheme.primary;
 
   // Load organizations on mount and when user session changes
   useEffect(() => {
@@ -129,7 +127,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       }
     };
     loadOrgContext();
-  }, [activeOrgId]); // Re-run if org changes or session might have changed
+  }, []); // Re-run if org changes or session might have changed
 
   // Update activeOrg when userOrgs or activeOrgId changes
   useEffect(() => {
@@ -141,7 +139,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   const activeBranch = branches.find((b) => b.id === activeBranchId);
   const profileRef = useRef<HTMLDivElement>(null);
-  const importRef = useRef<HTMLInputElement>(null);
+  const _importRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];
 
   useEffect(() => {
@@ -188,7 +186,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     };
   }, []);
 
-  const handleModuleClick = (moduleId: string, event: React.MouseEvent<HTMLButtonElement>) => {
+  const _handleModuleClick = (moduleId: string, event: React.MouseEvent<HTMLButtonElement>) => {
     if (navStyle === 2) {
       // Toggle dropdown
       if (activeDropdown === moduleId) {
@@ -199,7 +197,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         setActiveAnchor(event.currentTarget);
       }
     } else {
-      onModuleChange(moduleId);
+      _onModuleChange(moduleId);
 
       // Auto-navigate to first implemented sub-page if available
       if (onNavigate) {
@@ -246,7 +244,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     }
   };
 
-  const getInitials = (name: string) => {
+  const _getInitials = (name: string) => {
     if (!name) return '';
     // Remove titles like Dr, Dr., Doctor, Phd, match Arabic titles too
     const cleaned = name.replace(/\b(Dr|Dr\.|Doctor|دكتور|د\.?)\b/gi, '').trim();
@@ -284,11 +282,14 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     >
       {/* Logo & Title */}
       <div
+        role="button"
+        tabIndex={0}
         className='flex items-center gap-2 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80'
-        onClick={(e) => {
+        onClick={(_e) => {
           onLogoClick?.();
           if (isMobileView) setShowMobileSettings(true);
         }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onLogoClick?.(); if (isMobileView) setShowMobileSettings(true); } }}
       >
         {/* Dynamic Logo based on darkMode prop */}
         <img
@@ -354,7 +355,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
             return (
               <Tooltip
-                key={index}
+                key={item.char}
                 position='bottom'
                 content={
                   acronym ? (
@@ -378,6 +379,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   className='text-gray-900 dark:text-white transition-transform hover:scale-125 hover:text-primary-500 cursor-default flex items-center justify-center'
                 >
                   <svg viewBox={item.viewBox} className='h-[15px] w-auto'>
+                    <title>Brand icon</title>
                     {item.svgElement}
                   </svg>
                 </div>
@@ -390,7 +392,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       <NavModules
         menuItems={menuItems}
         activeModule={activeModule}
-        onModuleChange={onModuleChange}
+        onModuleChange={_onModuleChange}
         currentView={currentView}
         onNavigate={onNavigate}
         onOpenInWindow={onOpenInWindow}
@@ -426,7 +428,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           showProfileMenu={showProfileMenu}
           setShowProfileMenu={setShowProfileMenu}
           profileRef={profileRef}
-          currentEmployeeId={currentEmployeeId}
+          currentEmployeeId={_currentEmployeeId}
           currentEmployee={currentEmployee}
           activeOrg={activeOrg}
           activeBranch={activeBranch}

@@ -1,6 +1,7 @@
 export function CyberOrbitalShroud() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Cyber orbital shroud</title>
       <circle
         cx='64'
         cy='64'

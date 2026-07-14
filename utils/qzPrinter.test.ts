@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { connect, disconnect, getPrinters, getStatus, isConnected, printHTML } from './qzPrinter';
+import { connect, getStatus, isConnected } from './qzPrinter';
 
 // Define the shape of our QZ mock
 const mockQz = {

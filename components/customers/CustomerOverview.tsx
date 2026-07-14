@@ -1,22 +1,10 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { getLocationName } from '../../data/locations';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useAuthStore } from '../../stores/authStore';
-import type { Customer, Sale } from '../../types';
 import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ExpandedModal } from '../common/ExpandedModal';
@@ -104,7 +92,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
   const locationDistribution = useMemo(() => {
     const distribution: Record<string, number> = {};
     customers.forEach((c) => {
-      const location = c.governorate || 'Unknown';
+      const _location = c.governorate || 'Unknown';
       const locationName = c.governorate
         ? getLocationName(c.governorate, 'gov', language)
         : language === 'AR'
@@ -271,6 +259,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       onClick={onClick}
       className='opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800'
       title={title || t?.expand || 'Expand'}
+      type='button'
     >
       <span className='material-symbols-rounded text-[18px]'>open_in_full</span>
     </button>
@@ -315,7 +304,10 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
           {/* Total Customers */}
           <div
+            role="button"
+            tabIndex={0}
             onClick={() => setExpandedView('total')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('total'); } }}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
           >
             <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
@@ -332,7 +324,10 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 
           {/* Customer Lifetime Value */}
           <div
+            role="button"
+            tabIndex={0}
             onClick={() => setExpandedView('lifetimeValue')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('lifetimeValue'); } }}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
           >
             <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
@@ -351,7 +346,10 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 
           {/* New Customers */}
           <div
+            role="button"
+            tabIndex={0}
             onClick={() => setExpandedView('newCustomers')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('newCustomers'); } }}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
           >
             <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
@@ -370,7 +368,10 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 
           {/* Loyalty Points */}
           <div
+            role="button"
+            tabIndex={0}
             onClick={() => setExpandedView('loyaltyPoints')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('loyaltyPoints'); } }}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
           >
             <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
@@ -417,8 +418,8 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     labelLine={false}
                   >
-                    {locationDistribution.slice(0, 6).map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    {locationDistribution.slice(0, 6).map((item, index) => (
+                      <Cell key={item.name} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -856,6 +857,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               )
             }
             className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
+            type='button'
           >
             <span className='material-symbols-rounded text-[18px]'>download</span>
             {t?.exportCSV || 'Export'}
@@ -952,6 +954,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               )
             }
             className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
+            type='button'
           >
             <span className='material-symbols-rounded text-[18px]'>download</span>
             {t?.exportCSV || 'Export'}

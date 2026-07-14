@@ -21,8 +21,6 @@
  */
 
 import {
-  type ColumnDef,
-  type FilterFn,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -41,8 +39,7 @@ import { useLongPress } from '../../hooks/common/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { ContextMenuItem, ContextMenuTrigger, useContextMenu } from './ContextMenu';
-import type { FilterConfig } from './FilterPill';
+import { ContextMenuTrigger, useContextMenu } from './ContextMenu';
 import { SearchInput } from './SearchInput';
 import { getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
 import {
@@ -55,7 +52,6 @@ import {
   globalFilterFnStable,
   unifiedFilterFn,
 } from './table/helpers';
-import { MemoizedCell } from './table/MemoizedCell';
 import { MemoizedRow } from './table/MemoizedRow';
 import { PageButton } from './table/PageButton';
 import { PriceDisplay } from './table/PriceDisplay';
@@ -220,12 +216,15 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
             />
 
             <div
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 if (!isJumping) {
                   setIsJumping(true);
                   setJumpValue((table.getState().pagination.pageIndex + 1).toString());
                 }
               }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!isJumping) { setIsJumping(true); setJumpValue((table.getState().pagination.pageIndex + 1).toString()); } } }}
               className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${
                 !isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
               }`}
@@ -233,7 +232,6 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
               {isJumping ? (
                 <div className='flex items-center gap-1'>
                   <input
-                    autoFocus
                     type='text'
                     value={jumpValue}
                     onChange={(e) => {
@@ -242,14 +240,14 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
                         setJumpValue('');
                         return;
                       }
-                      const num = parseInt(val);
+                      const num = parseInt(val, 10);
                       if (num >= 1 && num <= table.getPageCount()) {
                         setJumpValue(val);
                       }
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && jumpValue) {
-                        table.setPageIndex(parseInt(jumpValue) - 1);
+                        table.setPageIndex(parseInt(jumpValue, 10) - 1);
                         setIsJumping(false);
                       } else if (e.key === 'Escape') {
                         setIsJumping(false);
@@ -312,6 +310,7 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
                 : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
             }`}
             title={isShowAll ? 'Paginated View' : t.showAll || 'Show All'}
+            type='button'
           >
             <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
               {isShowAll ? 'splitscreen' : 'view_day'}
@@ -335,7 +334,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   emptyMessage = '',
   color = 'primary',
   defaultHiddenColumns = [],
-  activeIndex,
+  activeIndex: _activeIndex,
   lite = false,
   dense = false,
   enableTopToolbar = !lite,
@@ -361,11 +360,11 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   enableNewRowAnimation = true,
   onVisibleRowsChange,
 }: TanStackTableProps<TData, TValue>) {
-  const { language, numeralLocale, textLocale } = useTypography();
+  const { language, numeralLocale: _numeralLocale, textLocale } = useTypography();
   const { developerMode } = useUI();
   const isAR = language === 'AR';
   const isRtl = isAR; // Source of truth from state, not DOM, to prevent sync lag
-  const languageLocale = textLocale;
+  const _languageLocale = textLocale;
   const t = TRANSLATIONS[language];
 
   // Long-press support for rows
@@ -398,6 +397,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // Build default visibility from defaultHiddenColumns
   const defaultVisibility = React.useMemo(() => {
     const visibility: VisibilityState = {};
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional default visibility build
     defaultHiddenColumns.forEach((id) => (visibility[id] = false));
     columns.forEach((col) => {
       const id = (col as any).id || (col as any).accessorKey;
@@ -418,13 +418,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   });
 
   // ─── Optimization: stringify once per effect for stable comparison ───
-  const initialFiltersJson = JSON.stringify(initialFilters);
+  const _initialFiltersJson = JSON.stringify(initialFilters);
   React.useEffect(() => {
     const propFilters = Object.entries(initialFilters).map(([id, value]) => ({ id, value }));
     setColumnFilters((prev) =>
       JSON.stringify(prev) === JSON.stringify(propFilters) ? prev : propFilters
     );
-  }, [initialFiltersJson]);
+  }, [initialFilters]);
 
   const [isShowAll, setIsShowAll] = useState(false);
 
@@ -748,7 +748,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     return () => observer.disconnect();
   }, [pageSize, dense, isShowAll, table]);
 
-  const handleColumnContextMenu = React.useCallback(
+  const _handleColumnContextMenu = React.useCallback(
     (e: React.MouseEvent, columnId?: string) => {
       e.preventDefault();
       e.stopPropagation();
@@ -778,7 +778,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const { visibleColumns, visibleColumnsCount } = React.useMemo(() => {
     const cols = table.getVisibleLeafColumns();
     return { visibleColumns: cols, visibleColumnsCount: cols.length };
-  }, [columns, columnVisibility]);
+  }, [table]);
 
   // --- Unified Column Metadata ---
   const columnMetaMap = React.useMemo(
@@ -788,7 +788,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
           .getAllLeafColumns()
           .map((column) => [column.id, computeColumnMeta(column, columnAlignment)])
       ),
-    [columns, columnAlignment]
+    [columnAlignment, table]
   );
 
   // Virtualizer Setup
@@ -894,7 +894,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             </ContextMenuTrigger>
           ) : (
             <table className='w-full text-start border-separate border-spacing-0 table-fixed'>
-              <thead ref={headerRef} className='sticky top-0 z-10 bg-(--bg-card) custom-card-css-target no-padding'>
+              <thead
+                ref={headerRef}
+                className='sticky top-0 z-10 bg-(--bg-card) custom-card-css-target no-padding'
+              >
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
@@ -981,31 +984,31 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
               <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
                 {(isLoading || localLoading) && rows.length === 0 ? (
-                  <>
-                    {[...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map(
-                      (_, i) => (
-                        <tr
-                          key={`skeleton-row-${i}`}
-                          className='animate-pulse border-b border-(--border-divider)'
-                        >
-                          {visibleColumns.map((col) => (
-                            <td
-                              key={`skeleton-cell-${col.id}-${i}`}
-                              className={`${dense ? 'py-2' : 'py-4'} px-4`}
-                            >
-                              <div className='flex flex-col gap-2 [direction:ltr] items-start'>
-                                <div className='h-3 bg-zinc-200/60 dark:bg-zinc-800/40 rounded-md w-24' />
-                                {/* Sub-line for some columns to look more natural */}
-                                {col.id.toLowerCase().includes('name') && (
-                                  <div className='h-2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded-md w-16' />
-                                )}
-                              </div>
-                            </td>
-                          ))}
-                        </tr>
-                      )
-                    )}
-                  </>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
+                  [...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map(
+                    (_, i) => (
+                      <tr
+                        key={`skeleton-row-${i}`}
+                        className='animate-pulse border-b border-(--border-divider)'
+                      >
+                        {// biome-ignore lint/suspicious/noArrayIndexKey: col.id gives uniqueness per row
+                        visibleColumns.map((col) => (
+                          <td
+                            key={`skeleton-cell-${col.id}-${i}`}
+                            className={`${dense ? 'py-2' : 'py-4'} px-4`}
+                          >
+                            <div className='flex flex-col gap-2 [direction:ltr] items-start'>
+                              <div className='h-3 bg-zinc-200/60 dark:bg-zinc-800/40 rounded-md w-24' />
+                              {/* Sub-line for some columns to look more natural */}
+                              {col.id.toLowerCase().includes('name') && (
+                                <div className='h-2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded-md w-16' />
+                              )}
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    )
+                  )
                 ) : rows.length > 0 ? (
                   <>
                     {enableVirtualization && paddingTop > 0 && (
@@ -1107,6 +1110,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             enablePagination && (table.getPageCount() > 1 || isShowAll) ? 'bottom-16' : 'bottom-4'
           }`}
           title='Copy Column Layout & Alignment — Requires Developer Mode'
+          type='button'
         >
           <span className='material-symbols-rounded block text-lg transition-transform duration-300 group-hover/dev-btn:rotate-6'>
             {copied ? 'check' : 'grid_view'}

@@ -31,7 +31,7 @@ interface UseAuthParams {
  */
 export function useAuth({ view, setView }: UseAuthParams): AuthState {
   // Use Alert Hook
-  const { error } = useAlert();
+  const { error: _error } = useAlert();
 
   // Optimistic Init: Check session synchronously to prevent "flash of loading"
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.hasSession());
@@ -68,7 +68,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         setIsAuthenticated(false);
         // Set view directly to skip route guard checks for this specific action
         setView(ROUTES.LOGIN);
-      } catch (e) {
+      } catch (_e) {
         // Even if API fails, client should logout
         setIsAuthenticated(false);
         setView(ROUTES.LOGIN);
@@ -250,7 +250,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
       if (authListener) authListener.unsubscribe();
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [setView]); // Removed 'view' to prevent re-running on every navigation
+  }, [setView, handleLogout]); // Removed 'view' to prevent re-running on every navigation
 
   // Watch for view changes and redirect if needed
   useEffect(() => {
@@ -266,7 +266,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
 
       setView(correctView);
     }
-  }, [view, isAuthChecking, resolveView, setView, error, isAuthenticated]);
+  }, [view, isAuthChecking, resolveView, setView]);
 
   return {
     isAuthenticated,

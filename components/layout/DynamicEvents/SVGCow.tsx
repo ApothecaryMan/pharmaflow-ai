@@ -3,6 +3,7 @@ import type React from 'react';
 export const SVGCow: React.FC = () => {
   return (
     <svg viewBox='0 0 100 60' width='48' height='28' style={{ overflow: 'visible' }}>
+      <title>Cow</title>
       <style>{`
         @keyframes walk-left-legs {
           0%, 100% { transform: rotate(-18deg); }

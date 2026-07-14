@@ -1,27 +1,25 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
 import {
   getCategories,
   getLocalizedCategory,
   getLocalizedProductType,
-  getProductTypes,
-  isMedicineCategory,
 } from '../../data/productCategories';
+import { usePageShortcuts } from '../../hooks/keyboard';
+import {
+  useAddProduct,
+  useDeleteProduct,
+  useUpdateProduct,
+} from '../../hooks/mutations/useInventoryMutations';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
-import type { Drug, GroupedDrug, GroupingKey } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
-import {
-  useAddProduct,
-  useUpdateProduct,
-  useDeleteProduct,
-} from '../../hooks/mutations/useInventoryMutations';
-import { formatCompactCurrency, formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import type { Drug, GroupedDrug } from '../../types';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   formatExpiryDate,
@@ -31,25 +29,18 @@ import {
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { money } from '../../utils/money';
 import { convertToPacks, resolveDisplayStock, resolveUnits } from '../../utils/stockUtils';
-import {
-  CARD_BASE,
-  MODAL_FOOTER_BTN_CANCEL,
-  MODAL_FOOTER_BTN_PRIMARY,
-} from '../../utils/themeStyles';
-import { HoverDropdown, SegmentedControl } from '../common';
-import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
+import { HoverDropdown } from '../common';
+import { useContextMenu } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
 import { InteractiveCard } from '../common/InteractiveCard';
 import { Modal } from '../common/Modal';
-import { PageHeader } from '../common/PageHeader';
 import { SearchEngineInput } from '../common/SearchEngineInput';
-import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
 import { AddProduct } from './AddProduct';
 import { EditProductModal } from './EditProductModal';
 import { useInventoryHeader } from './InventoryHeaderContext';
-import { usePageShortcuts } from '../../hooks/keyboard';
 
 /**
  * Maps a product category to a premium static status badge style,
@@ -97,7 +88,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
   const [editingDrug, setEditingDrug] = useState<Drug | null>(null);
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [activeDetailsTab, setActiveDetailsTab] = useState<'general' | 'pharmacy'>('general');
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [_activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const viewingDrugBatches = useMemo(() => {
     if (!viewingDrug) return [];
@@ -127,11 +118,11 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
 
   const {
     setLeftContent,
-    setRightContent,
+    setRightContent: _setRightContent,
     setBottomContent,
     setShowStatsToggle,
-    setShowStats,
-    showStats,
+    setShowStats: _setShowStats,
+    showStats: _showStats,
   } = useInventoryHeader();
 
   // Synchronization Buffer: Ensures skeleton stays until data is actually available
@@ -253,7 +244,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
     const newStock = prompt(`Adjust stock for ${drug.name} (in Packs):`, currentPacks.toString());
     if (newStock !== null) {
       const val = parseFloat(newStock);
-      if (!isNaN(val)) {
+      if (!Number.isNaN(val)) {
         updateProduct.mutateAsync({
           id: drug.id,
           updates: { stock: validateStock(resolveUnits(val, false, drug.unitsPerPack)) },
@@ -269,7 +260,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
   };
 
   // Categories are now determined dynamically using helper
-  const allCategories = getCategories(currentLang);
+  const _allCategories = getCategories(currentLang);
 
   // 1. Base filtering (Pills/Status only - No Search)
   const baseFilteredInventory = useMemo(() => {
@@ -277,8 +268,8 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
 
     // Apply Stock Status Filter
     const stockVals =
-      activeFilters['stock_status'] && activeFilters['stock_status'].length > 0
-        ? activeFilters['stock_status']
+      activeFilters.stock_status && activeFilters.stock_status.length > 0
+        ? activeFilters.stock_status
         : ['in_stock'];
 
     if (!stockVals.includes('all')) {
@@ -579,10 +570,13 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
                   return (
                     <div
                       key={opt}
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedUnits((prev) => ({ ...prev, [drug.id]: opt }));
                       }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setSelectedUnits((prev) => ({ ...prev, [drug.id]: opt })); } }}
                       className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center ${
                         isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
@@ -702,10 +696,13 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
                   return (
                     <div
                       key={batch.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: batch.id }));
                       }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: batch.id })); } }}
                       className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
                         isSelected
                           ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
@@ -735,7 +732,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
     });
 
     return cols;
-  }, [color, currentLang, t, textTransform, canViewFinancials]);
+  }, [currentLang, t, textTransform, canViewFinancials, isRTL, selectedBatches, selectedUnits]);
 
   // Define Filter Config
   const filterConfigs = useMemo<FilterConfig[]>(
@@ -1040,6 +1037,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
               <button
                 onClick={() => handlePrintBarcode(viewingDrug)}
                 className={MODAL_FOOTER_BTN_CANCEL}
+                type='button'
               >
                 <span className='material-symbols-rounded'>qr_code_2</span>
                 {t.actionsMenu.printBarcode}
@@ -1051,12 +1049,17 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
                     handleOpenEdit(viewingDrug);
                   }}
                   className={MODAL_FOOTER_BTN_PRIMARY}
+                  type='button'
                 >
                   <span className='material-symbols-rounded'>edit</span>
                   {t.actionsMenu.edit}
                 </button>
               )}
-              <button onClick={() => setViewingDrug(null)} className={MODAL_FOOTER_BTN_CANCEL}>
+              <button
+                onClick={() => setViewingDrug(null)}
+                className={MODAL_FOOTER_BTN_CANCEL}
+                type='button'
+              >
                 <span className='material-symbols-rounded'>close</span>
               </button>
             </div>
@@ -1122,10 +1125,10 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
                 </div>
 
                 <div>
-                  <label className='text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1'>
+                  <span className='text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1'>
                     <span className='material-symbols-rounded text-[14px]'>description</span>
                     {t.details?.description || 'Description'}
-                  </label>
+                  </span>
                   <p className='text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700'>
                     {viewingDrug.description ||
                       t.details?.noDescription ||
@@ -1174,7 +1177,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
 
                           return (
                             <tr
-                              key={idx}
+                              key={expiryDate}
                               className='hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors'
                             >
                               <td className='px-4 py-3'>
@@ -1306,7 +1309,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
                 max='100'
                 value={printQuantity}
                 onChange={(e) =>
-                  setPrintQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))
+                  setPrintQuantity(Math.max(1, Math.min(100, parseInt(e.target.value, 10) || 1)))
                 }
                 className='w-20 h-12 text-center text-2xl font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden'
               />

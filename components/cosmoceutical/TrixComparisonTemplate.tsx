@@ -290,6 +290,7 @@ const DARK: ColorPalette = {
 
 const TickIcon: React.FC<{ stamp: string }> = ({ stamp }) => (
   <svg viewBox='0 0 20 20' className='inline-block align-middle' style={{ width: 18, height: 18 }}>
+    <title>Tick</title>
     <path
       d='M3 10.3 C5 12.3 7 14.3 8.4 15.4 C11.4 11 14.5 6.4 17 3.4'
       stroke={stamp}
@@ -347,7 +348,7 @@ const DirBlock: React.FC<{ text: string; className?: string; style?: React.CSSPr
 
 export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
   language = 'EN',
-  color = '#6366f1',
+  color: _color = '#6366f1',
 }) => {
   const isAr = language === 'AR';
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -540,6 +541,7 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                       marginBottom: 8,
                     }}
                   >
+                    <title>Product icon</title>
                     <path d={p.iconSvg} />
                   </svg>
                   <div
@@ -661,7 +663,7 @@ export const TrixComparisonTemplate: React.FC<TrixComparisonTemplateProps> = ({
                       </th>
                       {row.present.map((has, ci) => (
                         <td
-                          key={ci}
+                          key={`${row.name}-${ci}`}
                           style={{
                             padding: '9px 10px',
                             border: `1px solid ${C.rule}`,

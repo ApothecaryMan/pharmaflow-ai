@@ -1,15 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import { useShift } from '../../hooks/sales/useShift';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useAuthStore } from '../../stores/authStore';
+import { useShift } from '../../hooks/sales/useShift';
 import { auditService } from '../../services/audit/auditService';
-import type { Employee, Shift } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import type { Shift } from '../../types';
 import { printDocument } from '../../utils/printing';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { DatePicker, DateRangePicker } from '../common/DatePicker';
+import { DateRangePicker } from '../common/DatePicker';
 import { InteractiveCard } from '../common/InteractiveCard';
 import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
@@ -58,7 +58,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   color,
   t,
   language,
-  datePickerTranslations,
+  datePickerTranslations: _datePickerTranslations,
   onViewChange,
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
@@ -72,7 +72,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const [showSummary, setShowSummary] = useState(false);
 
   // Load shifts from useShift hook (sharded storage)
-  const { shifts: allShiftsFromHook, isLoading, endShift } = useShift();
+  const { shifts: allShiftsFromHook, isLoading, endShift: _endShift } = useShift();
 
   const handleReprintShift = async (shift: Shift) => {
     // 1. Increment print count locally
@@ -116,7 +116,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     return allShiftsFromHook;
   }, [allShiftsFromHook]);
 
-  const formatRelativeDate = (date: Date) => {
+  const _formatRelativeDate = (date: Date) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
@@ -360,7 +360,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         meta: { align: 'start' },
       },
     ],
-    [t, language, employees]
+    [t, employees, formatDuration]
   );
 
   const filteredShifts = useMemo(() => {
@@ -380,7 +380,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
 
       return true;
     });
-  }, [shifts, searchTerm, startDate, endDate]);
+  }, [shifts, searchTerm, startDate, endDate, employees]);
 
   // Calculate summary stats
   const totalRevenue = filteredShifts.reduce(
@@ -406,7 +406,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       'Cash Out',
       'Variance',
     ];
-    const escape = (str: string | number | undefined) =>
+    const escapeCsv = (str: string | number | undefined) =>
       `"${String(str || '').replace(/"/g, '""')}"`;
 
     const rows = filteredShifts.map((shift) => {
@@ -509,6 +509,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
               onClick={exportToCSV}
               disabled={filteredShifts.length === 0}
               className={`px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200`}
+              type='button'
             >
               <span className='material-symbols-rounded text-lg'>download</span>
               <span className='hidden md:inline'>{t.shiftHistory?.exportCSV || 'Export CSV'}</span>
@@ -613,6 +614,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
               onClick={() => handleReprintShift(selectedShift)}
               className='w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all flex items-center justify-center border border-(--border-divider)'
               title={language === 'AR' ? 'إعادة طباعة' : 'Reprint'}
+              type='button'
             >
               <span className='material-symbols-rounded text-[22px]'>print</span>
             </button>
@@ -655,7 +657,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                     value: selectedShift.transactions.length,
                     color: '',
                   },
-                ].map((item, i, arr) => {
+                ]// biome-ignore lint/suspicious/noArrayIndexKey: inline config objects have no id
+                .map((item, i, arr) => {
                   const isFirst = i === 0;
                   const isLast = i === arr.length - 1;
                   const rounding =
@@ -668,7 +671,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                           : 'rounded-md';
                   return (
                     <div
-                      key={i}
+                      key={`shift-info-${i}`}
                       className={`flex items-center justify-between py-3 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding}`}
                     >
                       <div className='flex items-center gap-2 shrink-0'>

@@ -9,7 +9,7 @@ export function generateLayout2HTML(
   _defaults?: any
 ): string {
   const lang = opts.language || 'EN';
-  const isRTL = lang === 'AR';
+  const _isRTL = lang === 'AR';
   const currentDefaults = INVOICE_DEFAULTS[lang];
 
   return `
@@ -112,7 +112,7 @@ export function generateLayout2HTML(
       
       <div class="section-box">
         <div class="info-row">
-          <span>${sale.customerName ? (sale.customerCode ? sale.customerCode + ' ' : '') + sale.customerName : 'GUEST'}</span>
+          <span>${sale.customerName ? (sale.customerCode ? `${sale.customerCode} ` : '') + sale.customerName : 'GUEST'}</span>
           <span>#${sale.dailyOrderNumber || 1}</span>
         </div>
         <div class="info-row" style="font-size: 10px; font-weight: normal;">

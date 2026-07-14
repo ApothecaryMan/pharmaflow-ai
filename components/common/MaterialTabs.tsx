@@ -46,7 +46,10 @@ export const MaterialTabs: React.FC<MaterialTabsProps> = ({
 
   return (
     <div
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
       onClick={interactive ? onClick : undefined}
+      onKeyDown={interactive ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } } : undefined}
       {...rest}
       className={`group relative ${heightClass} px-4 flex items-center transition-all overflow-hidden outline-hidden focus:outline-hidden ring-0 focus:ring-0 ${roundedClass} ${interactiveClasses} ${className}`}
     >

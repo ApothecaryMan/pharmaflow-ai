@@ -1,20 +1,20 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
+import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { permissionsService } from '../../services/auth/permissionsService';
-import type { Employee, Purchase, Shift } from '../../types';
+import { useAuthStore } from '../../stores/authStore';
+import type { Purchase } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
-import { money, pricing, tax } from '../../utils/money';
+import { money } from '../../utils/money';
 import { Modal, PageHeader, SearchInput, SegmentedControl, useSmartDirection } from '../common';
-import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useAuthStore } from '../../stores/authStore';
-import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
-import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 
 // --- Sub-components (SalesHistory Style) ---
 
@@ -113,7 +113,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
     return (
       p.supplierName.toLowerCase().includes(searchLower) ||
       p.invoiceId.toLowerCase().includes(searchLower) ||
-      (p.externalInvoiceId && p.externalInvoiceId.toLowerCase().includes(searchLower))
+      p.externalInvoiceId?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -213,7 +213,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
-                key={i}
+                key={`card-sk-${i}`}
                 className='bg-white dark:bg-(--bg-card) rounded-3xl border border-gray-100 dark:border-(--border-divider) p-5 space-y-4 animate-pulse'
               >
                 <div className='flex justify-between items-start'>
@@ -225,7 +225,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 </div>
                 <div className='space-y-3 pt-2'>
                   {[1, 2, 3].map((j) => (
-                    <div key={j} className='flex justify-between'>
+                    <div key={`detail-sk-${j}`} className='flex justify-between'>
                       <div className='h-3 w-20 bg-gray-100 dark:bg-neutral-800 rounded' />
                       <div className='h-3 w-12 bg-gray-100 dark:bg-neutral-800 rounded' />
                     </div>
@@ -265,10 +265,13 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {filteredPendingPurchases.map((purchase) => (
               <div
                 key={purchase.id}
+                role="button"
+                tabIndex={0}
                 className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${
                   isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
                 }`}
                 onClick={() => setSelectedPurchase(purchase)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPurchase(purchase); } }}
               >
                 {/* Header */}
                 <div className='flex justify-between items-start mb-5'>
@@ -340,13 +343,17 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
                 {/* Actions */}
                 <div
+                  role="button"
+                  tabIndex={0}
                   className='mt-auto pt-3 border-t border-gray-100 dark:border-(--border-divider) grid grid-cols-2 gap-3'
                   onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                 >
                   {permissionsService.can('purchase.approve') && (
                     <button
                       onClick={(e) => handleOpenApprove(purchase.id, e)}
                       className='py-2 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[18px]'>check_circle</span>
                       {t.approve || 'Approve'}
@@ -364,6 +371,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <button
                       onClick={(e) => handleOpenReject(purchase.id, e)}
                       className='py-2 rounded-xl bg-gray-50 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 border border-transparent hover:border-red-100 dark:hover:border-red-900/50'
+                      type='button'
                     >
                       <span className='material-symbols-rounded text-[18px]'>cancel</span>
                       {t.reject || 'Reject'}
@@ -427,7 +435,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   .filter(Boolean)
                   .map((item: any, i) => (
                     <div
-                      key={i}
+                      key={`${item.label}-${i}`}
                       className={`flex items-center justify-between py-2 px-4 bg-transparent transition-all border-b sm:border-b last:border-b-0 border-gray-100 dark:border-white/10`}
                     >
                       <div className='flex items-center gap-2 shrink-0'>
@@ -478,7 +486,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <tbody className='text-[13px]'>
                       {selectedPurchase.items.map((item, idx) => (
                         <tr
-                          key={idx}
+                          key={`${item.id || idx}`}
                           className='border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'
                         >
                           <td className='p-2'>
@@ -560,11 +568,12 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   <button
                     onClick={() => {
                       if (purchaseToApprove || selectedPurchase) {
-                        handleApprovePurchase(selectedPurchase!.id);
+                        handleApprovePurchase(selectedPurchase?.id);
                         setSelectedPurchase(null);
                       }
                     }}
                     className='flex-1 py-3.5 rounded-2xl font-bold text-white bg-green-600 hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-lg'>check_circle</span>
                     {t.approve || 'Approve'}
@@ -576,6 +585,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                       setRejectReason('');
                     }}
                     className='flex-1 py-3.5 rounded-2xl font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm border border-gray-200 dark:border-gray-700'
+                    type='button'
                   >
                     <span className='material-symbols-rounded text-lg'>cancel</span>
                     {t.reject || 'Reject'}
@@ -608,9 +618,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           </p>
 
           <div className='text-left mb-6'>
-            <label className='text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1 block'>
+            <span className='text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1 block'>
               {t.approvedBy || 'Approved By'}
-            </label>
+            </span>
             <div className='flex items-center gap-2 justify-center py-2.5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5'>
               <span className='material-symbols-rounded text-gray-400 text-base'>
                 account_circle
@@ -625,12 +635,14 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             <button
               onClick={() => setIsApproveModalOpen(false)}
               className='flex-1 py-3 rounded-2xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 text-sm'
+              type='button'
             >
               {t.cancel || 'Cancel'}
             </button>
             <button
               onClick={confirmApprove}
               className='flex-1 py-3 rounded-2xl font-bold text-sm bg-green-600 text-white hover:bg-green-700'
+              type='button'
             >
               {t.confirm || 'Confirm'}
             </button>
@@ -673,12 +685,14 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             <button
               onClick={() => setIsRejectModalOpen(false)}
               className='flex-1 py-3 rounded-2xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 text-sm'
+              type='button'
             >
               {t.cancel || 'Cancel'}
             </button>
             <button
               onClick={confirmReject}
               className='flex-1 py-3 rounded-2xl font-bold bg-red-600 text-white hover:bg-red-700 text-sm'
+              type='button'
             >
               {t.reject || 'Reject'}
             </button>

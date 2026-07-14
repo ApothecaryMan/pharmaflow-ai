@@ -1,6 +1,7 @@
 export function ChronoMatrixInfinity() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Chrono matrix infinity</title>
       <g opacity='0.98'>
         <circle cx='64' cy='64' r='54' stroke='#4C1D95' strokeWidth='1.5' opacity='0.4' />
         <circle

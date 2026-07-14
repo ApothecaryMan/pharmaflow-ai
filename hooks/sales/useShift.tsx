@@ -225,7 +225,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   );
 
   const addTransaction = useCallback(
-    async (shiftId: string, transaction: CashTransaction, updates: Partial<Shift> = {}) => {
+    async (shiftId: string, transaction: CashTransaction, _updates: Partial<Shift> = {}) => {
       try {
         await cashService.addTransaction(shiftId, {
           branchId: activeBranchId,

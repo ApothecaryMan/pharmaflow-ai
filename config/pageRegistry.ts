@@ -264,13 +264,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'dashboard',
     category: 'main-dashboard',
 
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'onViewChange',
-    ],
-    permission: PERMISSIONS_MAPPING['dashboard'],
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
+    permission: PERMISSIONS_MAPPING.dashboard,
     layout: 'dashboard',
   },
   inventory: {
@@ -281,13 +276,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'inventory_2',
     category: 'inventory',
 
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'onViewChange',
-    ],
-    permission: PERMISSIONS_MAPPING['inventory'],
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
+    permission: PERMISSIONS_MAPPING.inventory,
   },
   'stock-movement': {
     id: 'stock-movement',
@@ -328,13 +318,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'point_of_sale',
     category: 'sales',
 
-    requiredProps: [
-      'color',
-      't',
-      'language',
-    ],
+    requiredProps: ['color', 't', 'language'],
 
-    permission: PERMISSIONS_MAPPING['pos'],
+    permission: PERMISSIONS_MAPPING.pos,
     layout: 'full-bleed',
   },
   'sales-history': {
@@ -344,12 +330,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل المبيعات',
     icon: 'receipt_long',
     category: 'sales',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'navigationParams',
-    ],
+    requiredProps: ['color', 't', 'language', 'navigationParams'],
     permission: PERMISSIONS_MAPPING['sales-history'],
   },
   'return-history': {
@@ -369,12 +350,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'قائمة الموردين',
     icon: 'local_shipping',
     category: 'purchase',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-    ],
-    permission: PERMISSIONS_MAPPING['suppliers'],
+    requiredProps: ['color', 't', 'language'],
+    permission: PERMISSIONS_MAPPING.suppliers,
   },
   purchases: {
     id: 'purchases',
@@ -383,14 +360,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'المشتريات',
     icon: 'shopping_cart',
     category: 'purchase',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'navigationParams',
-      'onViewChange',
-    ],
-    permission: PERMISSIONS_MAPPING['purchases'],
+    requiredProps: ['color', 't', 'language', 'navigationParams', 'onViewChange'],
+    permission: PERMISSIONS_MAPPING.purchases,
   },
   'pending-approval': {
     id: 'pending-approval',
@@ -399,12 +370,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'بانتظار الموافقة',
     icon: 'pending_actions',
     category: 'purchase',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'onViewChange',
-    ],
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['pending-approval'],
   },
   'drug-approval-queue': {
@@ -424,13 +390,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل المشتريات',
     icon: 'history',
     category: 'purchase',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'navigationParams',
-      'onViewChange',
-    ],
+    requiredProps: ['color', 't', 'language', 'navigationParams', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['purchase-history'],
   },
   'purchase-returns': {
@@ -440,11 +400,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'مرتجعات المشتريات',
     icon: 'assignment_return',
     category: 'purchase',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-    ],
+    requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['purchase-returns'],
   },
   'barcode-printer': {
@@ -474,14 +430,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'جميع العملاء',
     icon: 'group',
     category: 'customers',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'onViewChange',
-      'navigationParams',
-    ],
-    permission: PERMISSIONS_MAPPING['customers'],
+    requiredProps: ['color', 't', 'language', 'onViewChange', 'navigationParams'],
+    permission: PERMISSIONS_MAPPING.customers,
   },
   'customer-overview': {
     id: 'customer-overview',
@@ -501,14 +451,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل العملاء',
     icon: 'manage_search',
     category: 'customers',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'navigationParams',
-      'isLoading',
-      'onViewChange',
-    ],
+    requiredProps: ['color', 't', 'language', 'navigationParams', 'isLoading', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['customer-history'],
   },
   'loyalty-overview': {
@@ -571,7 +514,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'cosmoceutical',
     requiredProps: ['color', 't', 'language', 'onViewChange'],
-    permission: PERMISSIONS_MAPPING['inventory'],
+    permission: PERMISSIONS_MAPPING.inventory,
     layout: 'full-screen',
   },
   expenses: {
@@ -582,7 +525,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'receipt_long',
     category: 'finance',
     requiredProps: ['t', 'language', 'currentEmployeeId', 'onViewChange'],
-    permission: PERMISSIONS_MAPPING['expenses'],
+    permission: PERMISSIONS_MAPPING.expenses,
     layout: 'standard',
   },
   'shift-history': {
@@ -706,12 +649,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'قائمة الموظفين',
     icon: 'badge',
     category: 'hr',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'onViewChange',
-    ],
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['employee-list'],
   },
   'employee-profile': {
@@ -786,13 +724,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نظرة عامة على الموظفين',
     icon: 'supervisor_account',
     category: 'hr-dashboard',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'isLoading',
-      'onViewChange',
-    ],
+    requiredProps: ['color', 't', 'language', 'isLoading', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['staff-overview'],
     layout: 'dashboard',
   },
@@ -837,14 +769,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'إدارة المنظمة',
     icon: 'corporate_fare',
     category: 'settings',
-    requiredProps: [
-      'color',
-      't',
-      'language',
-      'currentEmployeeId',
-      'activeOrgId',
-      'onViewChange',
-    ],
+    requiredProps: ['color', 't', 'language', 'currentEmployeeId', 'activeOrgId', 'onViewChange'],
     permission: 'settings.view',
     layout: 'standard',
   },
@@ -940,7 +865,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'warning',
     category: 'inventory',
     requiredProps: ['t', 'language', 'onViewChange', 'navigationParams'],
-    permission: PERMISSIONS_MAPPING['inventory'],
+    permission: PERMISSIONS_MAPPING.inventory,
     layout: 'standard',
   },
 };

@@ -1,7 +1,6 @@
 import type maplibregl from 'maplibre-gl';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Icons from '@/components/common/Icons';
-import { Map, MapClusterLayer, MapControls, type MapViewport, useMap } from '@/components/ui/map';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Map as MapComponent, MapClusterLayer, MapControls, type MapViewport } from '@/components/ui/map';
 import { useSettings } from '../../context';
 import { useAuthStore } from '../../stores/authStore';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -190,7 +189,7 @@ export default function CustomerDensityMap({ language = 'ar' }: { language?: any
 
   return (
     <div className='relative w-full h-full overflow-hidden bg-[#09090b]'>
-      <Map
+      <MapComponent
         ref={mapRef}
         theme={darkMode ? 'dark' : 'light'}
         language={language}
@@ -226,7 +225,7 @@ export default function CustomerDensityMap({ language = 'ar' }: { language?: any
           showFullscreen
           className='opacity-80 hover:opacity-100 transition-opacity'
         />
-      </Map>
+      </MapComponent>
 
       {/* View Switcher Overlay */}
       <div className='absolute top-6 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-sm'>

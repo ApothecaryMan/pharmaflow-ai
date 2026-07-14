@@ -16,7 +16,7 @@ function sha256_fallback(ascii: string): string {
   const mathPow = Math.pow;
   const maxWord = mathPow(2, 32);
   const lengthProperty = 'length';
-  let i, j;
+  let i: number, j: number;
   let result = '';
 
   const words: number[] = [];
@@ -52,7 +52,8 @@ function sha256_fallback(ascii: string): string {
   words[words[lengthProperty]] = asciiBitLength;
 
   for (j = 0; j < words[lengthProperty]; ) {
-    const w = words.slice(j, (j += 16)); // The message is expanded into 64 words
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional side-effect in SHA-256
+    const w = words.slice(j, (j += 16));
     const oldHash = hash;
     // This is now the "working hash", often labelled as variables a...h
     // (we just copy the array)

@@ -18,7 +18,7 @@
 
   /* Global Icon Loading State - Prevents ligature text from showing before font loads */
   html:not(.fonts-loaded) .material-symbols-rounded {
-    color: transparent !important;
+    color: transparent;
     position: relative;
     overflow: hidden;
     background: var(--border-divider);
@@ -27,7 +27,7 @@
     min-height: 1em;
     max-width: 1em;
     max-height: 1em;
-    display: inline-flex !important;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     animation: icon-shimmer 1.5s infinite ease-in-out;

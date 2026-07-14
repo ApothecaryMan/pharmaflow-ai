@@ -4,13 +4,11 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
-import type { UserRole } from '../../config/permissions';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
 import type { CartItem, Drug, Employee, ViewState } from '../../types';
-import { formatCurrencyParts } from '../../utils/currency';
 import { resolvePrice } from '../../utils/stockUtils';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -197,8 +195,8 @@ const DockButton = React.memo<DockButtonProps>(
     view,
     currentView,
     icon,
-    label,
-    theme,
+    label: _label,
+    theme: _theme,
     onClick,
     isDynamic = false,
     'aria-label': ariaLabel,
@@ -217,7 +215,7 @@ const DockButton = React.memo<DockButtonProps>(
  }
  ${isDynamic ? 'animate-scale-in' : ''}
  `}
-        aria-label={ariaLabel || label}
+        aria-label={ariaLabel || _label}
         aria-current={isActive ? 'page' : undefined}
         type='button'
       >
@@ -241,7 +239,7 @@ const DockButton = React.memo<DockButtonProps>(
         <span
           className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}
         >
-          {label}
+          {_label}
         </span>
       </button>
     );
@@ -522,7 +520,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   theme,
   t,
   language,
-  hideInactiveModules,
+  hideInactiveModules: _hideInactiveModules,
   isStandalone,
   currentEmployeeId,
   onSelectEmployee,
@@ -675,7 +673,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     inventory.forEach((drug) => {
       const key = `${drug.name}|${drug.dosageForm}`;
       if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(drug);
+      map.get(key)?.push(drug);
     });
     return map;
   }, [inventory]);

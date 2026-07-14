@@ -63,13 +63,52 @@ export const ACHIEVEMENT_COLORS = COLOR_MAP;
 // ─── Month name helpers ───────────────────────────────────────────────────
 
 const MONTH_NAMES: Record<string, string[]> = {
-  EN: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-  AR: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+  EN: [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ],
+  AR: [
+    'يناير',
+    'فبراير',
+    'مارس',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'أغسطس',
+    'سبتمبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ],
 };
 
 const MONTH_SHORT: Record<string, string[]> = {
   EN: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-  AR: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+  AR: [
+    'يناير',
+    'فبراير',
+    'مارس',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'أغسطس',
+    'سبتمبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ],
 };
 
 export function getMonthName(month: number, language: string, short = false): string {
@@ -99,10 +138,7 @@ interface CacheEntry<T> {
  * Executes an async function with exponential backoff on failure.
  * Only retries on transient/network errors — throws immediately on auth/validation errors.
  */
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  retries = MAX_RETRIES
-): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       return await fn();
@@ -113,12 +149,12 @@ async function withRetry<T>(
       const code = (err as { code?: string })?.code;
       const isNonTransient =
         code === 'PGRST116' || // Not found (single row expected)
-        code === '42501' ||    // Insufficient privilege
-        code === '42P01';      // Undefined table
+        code === '42501' || // Insufficient privilege
+        code === '42P01'; // Undefined table
       if (isNonTransient || isLastAttempt) throw err;
 
       // Exponential backoff: 300ms, 600ms, 1200ms...
-      const delay = BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
+      const delay = BASE_RETRY_DELAY_MS * 2 ** attempt;
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -189,11 +225,7 @@ class AchievementService {
           .gte('date', `${monthStr}-01`)
           .lte('date', `${monthStr}-${String(daysInMonth).padStart(2, '0')}`)
           .order('date', { ascending: true }),
-        supabase
-          .from('branches')
-          .select('monthly_sales_target')
-          .eq('id', branchId)
-          .single(),
+        supabase.from('branches').select('monthly_sales_target').eq('id', branchId).single(),
       ])
     );
 
@@ -240,8 +272,7 @@ class AchievementService {
 
     // ── STEP 4: Compute monthly totals ─────────────────────────────────
     const monthlyTarget = Number(branchResult.data?.monthly_sales_target ?? 0);
-    const overallPct =
-      monthlyTarget > 0 ? Math.round((monthlyRevenue / monthlyTarget) * 100) : 0;
+    const overallPct = monthlyTarget > 0 ? Math.round((monthlyRevenue / monthlyTarget) * 100) : 0;
 
     const result: MonthAchievements = {
       year,

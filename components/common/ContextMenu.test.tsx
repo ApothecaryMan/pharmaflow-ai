@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React, { useRef } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ContextMenuProvider, ContextMenuTrigger, useContextMenu } from './ContextMenu';
 
 // Helper component to test hook
@@ -8,6 +7,8 @@ const TestComponent = () => {
   const { showMenu } = useContextMenu();
   return (
     <div
+      role="button"
+      tabIndex={0}
       data-testid='trigger-area'
       onContextMenu={(e) => {
         e.preventDefault();

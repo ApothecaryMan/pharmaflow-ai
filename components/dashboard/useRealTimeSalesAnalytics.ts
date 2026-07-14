@@ -26,7 +26,7 @@ interface RealTimeSalesAnalyticsProps {
 export const useRealTimeSalesAnalytics = ({
   sales,
   customers,
-  products,
+  products: _products,
   shifts,
   language,
 }: RealTimeSalesAnalyticsProps) => {
@@ -116,7 +116,7 @@ export const useRealTimeSalesAnalytics = ({
         const period = i >= 12 ? (language === 'AR' ? 'م' : 'ص') : language === 'AR' ? 'ص' : 'AM';
         const hour12 = i % 12 || 12;
         return {
-          hour: i.toString().padStart(2, '0') + ':00',
+          hour: `${i.toString().padStart(2, '0')}:00`,
           date: `${hour12} ${period}`,
           revenue: dynamics.hourly.revenueMap[i] || 0,
           sales: dynamics.hourly.transactionsMap[i] || 0,
@@ -163,7 +163,7 @@ export const useRealTimeSalesAnalytics = ({
   }, [todaysSales, averages.avgOrderValue]);
 
   const itemsAnalysis = useMemo(() => {
-    const itemsPerTransaction =
+    const _itemsPerTransaction =
       coreMetrics.transactions > 0 ? coreMetrics.itemsSold / coreMetrics.transactions : 0;
     const categoryCounts: Record<string, number> = {};
 
@@ -420,7 +420,7 @@ export const useRealTimeSalesAnalytics = ({
         },
       ],
     };
-  }, [coreMetrics, language]);
+  }, [coreMetrics, language, activeCountersStats]);
 
   return useMemo(
     () => ({

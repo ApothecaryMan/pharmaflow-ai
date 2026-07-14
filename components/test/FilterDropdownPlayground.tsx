@@ -47,12 +47,12 @@ export function FilterDropdownPlayground<T>({
   keyExtractor,
   onEnter,
   className = '',
-  color = 'primary',
+  color: _color = 'primary',
   variant = 'minimal',
   minHeight,
   style,
   disabled = false,
-  centered = false,
+  centered: _centered = false,
   rounded = 'xl',
   hideArrow = false,
   autoHideArrow = false,
@@ -84,7 +84,7 @@ export function FilterDropdownPlayground<T>({
     }
   }, [effectiveIsOpen]);
 
-  const handleFocus = (e: React.FocusEvent) => {
+  const handleFocus = (_e: React.FocusEvent) => {
     if (!isClickingRef.current && !effectiveIsOpen && !disabled) {
       handleToggle();
     }

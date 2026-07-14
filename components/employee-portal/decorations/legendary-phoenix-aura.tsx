@@ -1,6 +1,7 @@
 export function LegendaryPhoenixAura() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Legendary phoenix aura</title>
       <g opacity='0.98'>
         <circle
           cx='64'

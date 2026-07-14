@@ -1,7 +1,6 @@
 import type React from 'react';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import { authService } from '../../../services/auth/authService';
-import { permissionsService } from '../../../services/auth/permissionsService';
 import type { Language, Organization, ViewState } from '../../../types';
 import { isTauri } from '../../../utils/platform';
 import { EmployeeAvatar } from '../../common/EmployeeAvatar';
@@ -65,6 +64,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
         <button
           onClick={() => setShowProfileMenu(!showProfileMenu)}
           className={`flex items-center gap-2 py-0.5 px-1 ${!isCompact ? 'ltr:pr-3 rtl:pl-3' : ''} rounded-full border border-transparent hover:border-(--border-divider) hover:bg-(--bg-navbar-hover) ${showProfileMenu ? 'border-(--border-divider) bg-(--bg-navbar-hover)' : ''}`}
+          type='button'
         >
           <EmployeeAvatar
             image={currentEmployee?.image}
@@ -182,6 +182,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     }}
                     disabled={isLoggingOut}
                     className='md:hidden flex items-center justify-center w-9 h-9 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors'
+                    type='button'
                   >
                     {isLoggingOut ? <Icons.Loading className='animate-spin' /> : <Icons.Logout />}
                   </button>
@@ -203,8 +204,8 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                   </div>
                   <div className='space-y-1 max-h-[150px] overflow-y-auto scrollbar-hide'>
                     {authService
-                      .getCurrentUserSync()!
-                      .availableWorkspaces!.map((workspace: any) => {
+                      .getCurrentUserSync()
+                      ?.availableWorkspaces?.map((workspace: any) => {
                         const isActive =
                           authService.getCurrentUserSync()?.employeeId === workspace.id;
                         return (
@@ -218,6 +219,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
      : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
  }
  `}
+                            type='button'
                           >
                             <div className='flex flex-col items-start'>
                               <span>{workspace.orgName || 'Pharmacy'}</span>
@@ -261,6 +263,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
      : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
  }
  `}
+                        type='button'
                       >
                         <div className='flex items-center gap-2'>
                           {activeBranchId === branch.id ? (
@@ -290,6 +293,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     setShowProfileMenu(false);
                   }}
                   className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center gap-2'
+                  type='button'
                 >
                   <Icons.Desktop size='var(--icon-md)' />
                   {language === 'AR' ? 'إعدادات سطح المكتب' : 'Desktop Settings'}
@@ -315,6 +319,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                 }}
                 disabled={isLoggingOut}
                 className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-lg flex items-center justify-center gap-2'
+                type='button'
               >
                 {isLoggingOut ? <Icons.Loading className='animate-spin' /> : <Icons.Logout />}
                 {t.profile.signOut}

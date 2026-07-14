@@ -1,14 +1,27 @@
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '../lib/queryKeys';
-import type { ActionContext, Customer, Drug, Purchase, PurchaseReturn, Return, Sale, StockBatch } from '../types';
-import type { SaleData } from './sales/useSalesHandlers';
-import { useAuthStore } from '../stores/authStore';
-import { useCompleteSale } from './mutations/useSalesMutations';
-import { useAddPurchase, useApprovePurchase, useMarkPurchaseReceived } from './mutations/usePurchaseMutations';
-import { useProcessSalesReturn, useCreatePurchaseReturn } from './mutations/useReturnsMutations';
-import { useShift } from './sales/useShift';
+import { useCallback } from 'react';
 import { useStatusBar } from '../components/layout/StatusBar';
+import { queryKeys } from '../lib/queryKeys';
+import { useAuthStore } from '../stores/authStore';
+import type {
+  ActionContext,
+  Customer,
+  Drug,
+  Purchase,
+  PurchaseReturn,
+  Return,
+  Sale,
+  StockBatch,
+} from '../types';
+import {
+  useAddPurchase,
+  useApprovePurchase,
+  useMarkPurchaseReceived,
+} from './mutations/usePurchaseMutations';
+import { useCreatePurchaseReturn, useProcessSalesReturn } from './mutations/useReturnsMutations';
+import { useCompleteSale } from './mutations/useSalesMutations';
+import type { SaleData } from './sales/useSalesHandlers';
+import { useShift } from './sales/useShift';
 
 export function useHandlerInfrastructure() {
   const queryClient = useQueryClient();

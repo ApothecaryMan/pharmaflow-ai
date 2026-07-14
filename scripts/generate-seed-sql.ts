@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // --- Configuration ---
 const BRANCH_ID = '20864e85-6a6e-4b4b-a44c-b87fe50ecb7b';
@@ -26,7 +26,7 @@ const jsonStr = jsonMatch[1]
 
 const inventory = JSON.parse(jsonStr);
 
-function escape(str: any) {
+function escapeValue(str: any) {
   if (str === null || str === undefined) return 'NULL';
   if (typeof str === 'string') return `'${str.replace(/'/g, "''")}'`;
   return str;

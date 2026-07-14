@@ -68,7 +68,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     },
     ref
   ) => {
-    const { language, textTransform } = useTypography();
+    const { language, textTransform: _textTransform } = useTypography();
     const t = TRANSLATIONS[language];
     const dir = useSmartDirection(value, placeholder);
     const showClear = value && onClear;
@@ -131,7 +131,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     };
 
     const handleClearAllFilters = () => {
-      activeGroups.forEach((gid) => onUpdateFilter && onUpdateFilter(gid, []));
+      activeGroups.forEach((gid) => onUpdateFilter?.(gid, []));
       hideMenu();
     };
 
@@ -142,18 +142,20 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
 
       const menuContent = (
-        <div
-          className='font-sans'
-          onMouseEnter={() => {
-            if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
-          }}
-          onMouseLeave={() => {
-            filterLeaveTimeoutRef.current = setTimeout(() => {
-              hideMenu();
-            }, 150);
-          }}
-        >
-          <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
+      <div
+        role="button"
+        tabIndex={0}
+        className='font-sans'
+        onMouseEnter={() => {
+          if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
+        }}
+        onMouseLeave={() => {
+          filterLeaveTimeoutRef.current = setTimeout(() => {
+            hideMenu();
+          }, 150);
+        }}
+      >
+        <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
             {t.global.table.filters}
           </div>
           {filterConfigs.map((config) => {
@@ -241,7 +243,6 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         value={value}
                         onChange={(e) => onSearchChange(e.target.value)}
                         placeholder={placeholder}
-                        autoFocus
                         onKeyDown={(e) => {
                           if (e.key === 'Escape') setExpanded(false);
                           props.onKeyDown?.(e);
@@ -269,6 +270,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   className='flex items-center gap-2 px-3 h-8 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
                 >
                   <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <title>Search</title>
                     <path
                       strokeLinecap='round'
                       strokeLinejoin='round'
@@ -365,6 +367,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
     return (
       <div
+        role="button"
+        tabIndex={0}
         className={`
             relative flex items-center flex-wrap gap-2
             bg-(--bg-input)
@@ -382,6 +386,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             ref.current?.focus();
           }
         }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (ref && typeof ref !== 'function' && 'current' in ref) ref.current?.focus(); } }}
       >
         <div
           className={`
@@ -421,7 +426,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             onChange={(e) => onSearchChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onKeyUp={(e) => setIsCapsLock(e.getModifierState('CapsLock'))}
-            placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
+            placeholder={hasActiveFilters ? `${placeholder?.split(',')[0]}...` : placeholder}
             spellCheck='false'
             autoComplete='off'
             autoCorrect='off'
@@ -463,8 +468,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   config={config}
                   selectedValues={values}
                   collapsed={shouldCollapse}
-                  onUpdate={(newVals) => onUpdateFilter && onUpdateFilter(groupId, newVals)}
-                  onRemove={() => onUpdateFilter && onUpdateFilter(groupId, [])}
+                  onUpdate={(newVals) => onUpdateFilter?.(groupId, newVals)}
+                  onRemove={() => onUpdateFilter?.(groupId, [])}
                   rounded={rounded}
                 />
               );
@@ -550,6 +555,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               }}
               className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 outline-hidden p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 ms-1'
               style={{ fontSize: '20px' }}
+              type='button'
             >
               close
             </button>

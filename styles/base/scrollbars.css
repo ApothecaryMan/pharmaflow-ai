@@ -47,13 +47,13 @@
   @supports not selector(::-webkit-scrollbar) {
     @media (hover: hover) {
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
-        scrollbar-width: thin !important;
-        scrollbar-color: transparent transparent !important;
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
         transition: scrollbar-color 0.1s ease;
       }
 
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
-        scrollbar-color: rgba(156, 163, 175, 0.3) transparent !important;
+        scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
       }
     }
   }
@@ -61,54 +61,54 @@
   /* Chrome / Safari / Edge / Webkit global overrides */
   @media (hover: hover) {
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
-      --global-scrollbar-color: rgba(156, 163, 175, 0) !important;
+      --global-scrollbar-color: rgba(156, 163, 175, 0);
       transition: --global-scrollbar-color 0.1s ease-in-out;
     }
 
     /* Transition to visible state when container is hovered */
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
-      --global-scrollbar-color: rgba(156, 163, 175, 0.3) !important;
+      --global-scrollbar-color: rgba(156, 163, 175, 0.3);
     }
 
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar {
-      width: 3px !important;
-      height: 3px !important;
+      width: 3px;
+      height: 3px;
     }
 
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-track {
-      background: transparent !important;
-      border: none !important;
+      background: transparent;
+      border: none;
     }
 
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-thumb {
-      background: var(--global-scrollbar-color) !important;
-      border-radius: 0px !important;
-      border: none !important;
-      background-clip: border-box !important;
+      background: var(--global-scrollbar-color);
+      border-radius: 0px;
+      border: none;
+      background-clip: border-box;
     }
 
     /* Direct hover state on the scrollbar thumb itself - snaps to slightly darker */
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.sandbox-scroll)::-webkit-scrollbar-thumb:hover {
-      background: rgba(156, 163, 175, 0.6) !important;
+      background: rgba(156, 163, 175, 0.6);
     }
   }
 }
 
 /* Scrollbar Utility Classes */
 @utility scrollbar-hide {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
-    display: none !important;
+    display: none;
   }
 }
 
 .no-scrollbar {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .no-scrollbar::-webkit-scrollbar {
-  display: none !important;
+  display: none;
 }

@@ -66,7 +66,7 @@ class UniversalPrinterService {
   /**
    * Universal print receipt function
    */
-  public async printReceipt(html: string, rawData?: string): Promise<boolean> {
+  public async printReceipt(html: string, _rawData?: string): Promise<boolean> {
     const settings = this.loadSettings();
     const { preferredInterface, tauriPrinter, enabled, silentMode } = settings;
 
@@ -140,7 +140,7 @@ class UniversalPrinterService {
       if (printerName) {
         try {
           const { invoke } = await import('@tauri-apps/api/core');
-          const payload = commands.join('\n') + '\n';
+          const payload = `${commands.join('\n')}\n`;
           await invoke('print_raw_data', { printerName, data: payload });
           return true;
         } catch (e) {

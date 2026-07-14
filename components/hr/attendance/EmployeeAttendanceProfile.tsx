@@ -37,6 +37,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
           <button
             onClick={() => onViewChange?.('attendance-reports')}
             className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+            type='button'
           >
             <span className='material-symbols-rounded text-lg'>
               {isRTL ? 'arrow_forward' : 'arrow_back'}

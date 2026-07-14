@@ -1,6 +1,7 @@
 export function Heart() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <title>Heart</title>
       <g opacity='0.95'>
         <path
           d='M 14,50 Q 64,8 114,50'

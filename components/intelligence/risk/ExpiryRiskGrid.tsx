@@ -26,7 +26,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({
   isLoading = false,
 }) => {
   // Infer language from T object or default (hacky but works if T structure is consistent)
-  const language = t?.metadata?.language || 'EN'; // Placeholder if needed, or just pass 'EN' if not critical.
+  const _language = t?.metadata?.language || 'EN'; // Placeholder if needed, or just pass 'EN' if not critical.
   // Actually usually T comes from useTranslation which doesn't expose language directly often?
   // Let's assume EN for now unless passed. But wait, `t` here is prop.
   // We can pass language prop if available.
@@ -93,7 +93,10 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({
           const action = info.row.original.recommended_action;
           return (
             <div className='flex justify-end'>
-              <button className='px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 rounded-sm text-xs font-medium transition-colors'>
+              <button
+                className='px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 rounded-sm text-xs font-medium transition-colors'
+                type='button'
+              >
                 {action === 'DISCOUNT_AGGRESSIVE'
                   ? t?.intelligence?.risk?.grid?.actions?.discount50 || '50% Off'
                   : action === 'DISCOUNT_MODERATE'
