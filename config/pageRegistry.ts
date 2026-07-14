@@ -1,5 +1,4 @@
-import React, { type ComponentType } from 'react';
-
+import type { ComponentType } from 'react';
 import type {
   Customer,
   Drug,
@@ -13,172 +12,199 @@ import type {
   Supplier,
   ViewState,
 } from '../types';
+import { createLazyPage } from '../utils/createLazyPage';
 import type { PermissionAction } from './permissions';
 import { PERMISSIONS_MAPPING } from './permissionsMapping';
 
-const Login = React.lazy(() =>
+const Login = createLazyPage(() =>
   import('../components/auth/Login').then((m) => ({ default: m.Login }))
 );
-const CustomerHistory = React.lazy(() =>
+const CustomerHistory = createLazyPage(() =>
   import('../components/customers/CustomerHistory').then((m) => ({ default: m.CustomerHistory }))
 );
-const CustomerLoyaltyLookup = React.lazy(() =>
+const CustomerLoyaltyLookup = createLazyPage(() =>
   import('../components/customers/CustomerLoyaltyLookup').then((m) => ({
     default: m.CustomerLoyaltyLookup,
   }))
 );
-const CustomerLoyaltyOverview = React.lazy(() =>
+const CustomerLoyaltyOverview = createLazyPage(() =>
   import('../components/customers/CustomerLoyaltyOverview').then((m) => ({
     default: m.CustomerLoyaltyOverview,
   }))
 );
-const CustomerManagement = React.lazy(() =>
+const CustomerManagement = createLazyPage(() =>
   import('../components/customers/CustomerManagement').then((m) => ({
     default: m.CustomerManagement,
   }))
 );
-const CustomerOverview = React.lazy(() =>
+const CustomerOverview = createLazyPage(() =>
   import('../components/customers/CustomerOverview').then((m) => ({ default: m.CustomerOverview }))
 );
-const Dashboard = React.lazy(() =>
+const Dashboard = createLazyPage(() =>
   import('../components/dashboard/Dashboard').then((m) => ({ default: m.Dashboard }))
 );
-const RealTimeSalesMonitor = React.lazy(() =>
+const RealTimeSalesMonitor = createLazyPage(() =>
   import('../components/dashboard/RealTimeSalesMonitor').then((m) => ({
     default: m.RealTimeSalesMonitor,
   }))
 );
-const AdvancedSmCard = React.lazy(() =>
+const AdvancedSmCard = createLazyPage(() =>
   import('../components/experiments/AdvancedSmCard').then((m) => ({ default: m.AdvancedSmCard }))
 );
-const DashboardExperiments = React.lazy(() =>
+const DashboardExperiments = createLazyPage(() =>
   import('../components/experiments/DashboardExperiments').then((m) => ({
     default: m.DashboardExperiments,
   }))
 );
-const ExpenseTracker = React.lazy(() =>
+const ExpenseTracker = createLazyPage(() =>
   import('../components/finance/ExpenseTracker').then((m) => ({ default: m.ExpenseTracker }))
 );
-const EmployeeList = React.lazy(() =>
+const EmployeeList = createLazyPage(() =>
   import('../components/hr/EmployeeList').then((m) => ({ default: m.EmployeeList }))
 );
-const EmployeeProfile = React.lazy(() =>
+const EmployeeProfile = createLazyPage(() =>
   import('../components/hr/EmployeeProfile').then((m) => ({ default: m.EmployeeProfile }))
 );
-const StaffOverview = React.lazy(() =>
+const StaffOverview = createLazyPage(() =>
   import('../components/hr/StaffOverview').then((m) => ({ default: m.StaffOverview }))
 );
-const DrugApprovalQueue = React.lazy(() =>
+const DrugApprovalQueue = createLazyPage(() =>
   import('../components/inventory').then((m) => ({ default: m.DrugApprovalQueue }))
 );
-const ExpiryManagement = React.lazy(() =>
+const ExpiryManagement = createLazyPage(() =>
   import('../components/inventory').then((m) => ({ default: m.ExpiryManagement }))
 );
-const StockMovementReport = React.lazy(() =>
+const StockMovementReport = createLazyPage(() =>
   import('../components/inventory').then((m) => ({ default: m.StockMovementReport }))
 );
-const AddProduct = React.lazy(() =>
+const AddProduct = createLazyPage(() =>
   import('../components/inventory/AddProduct').then((m) => ({ default: m.AddProduct }))
 );
-const BarcodePrinter = React.lazy(() =>
+const BarcodePrinter = createLazyPage(() =>
   import('../components/inventory/BarcodePrinter').then((m) => ({ default: m.BarcodePrinter }))
 );
-const BarcodeStudio = React.lazy(() =>
+const BarcodeStudio = createLazyPage(() =>
   import('../components/inventory/BarcodeStudio').then((m) => ({ default: m.BarcodeStudio }))
 );
-const Inventory = React.lazy(() =>
+const Inventory = createLazyPage(() =>
   import('../components/inventory/Inventory').then((m) => ({ default: m.Inventory }))
 );
-const InventoryManagement = React.lazy(() =>
+const InventoryManagement = createLazyPage(() =>
   import('../components/inventory/InventoryManagement').then((m) => ({
     default: m.InventoryManagement,
   }))
 );
-const StockAdjustment = React.lazy(() =>
+const StockAdjustment = createLazyPage(() =>
   import('../components/inventory/StockAdjustment').then((m) => ({ default: m.StockAdjustment }))
 );
-const LandingPage = React.lazy(() =>
+const LandingPage = createLazyPage(() =>
   import('../components/layout/LandingPage').then((m) => ({ default: m.LandingPage }))
 );
-const PendingApproval = React.lazy(() =>
+const PendingApproval = createLazyPage(() =>
   import('../components/purchases/PendingApproval').then((m) => ({ default: m.PendingApproval }))
 );
-const PurchaseHistory = React.lazy(() =>
+const PurchaseHistory = createLazyPage(() =>
   import('../components/purchases/PurchaseHistory').then((m) => ({ default: m.PurchaseHistory }))
 );
-const PurchaseReturns = React.lazy(() =>
+const PurchaseReturns = createLazyPage(() =>
   import('../components/purchases/PurchaseReturns').then((m) => ({ default: m.PurchaseReturns }))
 );
-const Purchases = React.lazy(() =>
+const Purchases = createLazyPage(() =>
   import('../components/purchases/Purchases').then((m) => ({ default: m.Purchases }))
 );
-const SuppliersList = React.lazy(() =>
+const SuppliersList = createLazyPage(() =>
   import('../components/purchases/SuppliersList').then((m) => ({ default: m.SuppliersList }))
 );
-const LoginAuditList = React.lazy(() =>
+const LoginAuditList = createLazyPage(() =>
   import('../components/reports/LoginAuditList').then((m) => ({ default: m.LoginAuditList }))
 );
-const ProfitLossPage = React.lazy(() =>
+const ProfitLossPage = createLazyPage(() =>
   import('../components/reports/ProfitLossPage').then((m) => ({ default: m.ProfitLossPage }))
 );
-const CashRegister = React.lazy(() =>
+const CashRegister = createLazyPage(() =>
   import('../components/sales/CashRegister').then((m) => ({ default: m.CashRegister }))
 );
-const POS = React.lazy(() =>
+const POS = createLazyPage(() =>
   import('../components/sales/pos/POS').then((m) => ({ default: m.POS }))
 );
-const ReceiptDesigner = React.lazy(() =>
+const ReceiptDesigner = createLazyPage(() =>
   import('../components/sales/ReceiptDesigner').then((m) => ({ default: m.ReceiptDesigner }))
 );
-const ReturnHistory = React.lazy(() =>
+const ReturnHistory = createLazyPage(() =>
   import('../components/sales/ReturnHistory').then((m) => ({ default: m.ReturnHistory }))
 );
-const SalesHistory = React.lazy(() =>
+const SalesHistory = createLazyPage(() =>
   import('../components/sales/SalesHistory').then((m) => ({ default: m.SalesHistory }))
 );
-const ShiftHistory = React.lazy(() =>
+const ShiftHistory = createLazyPage(() =>
   import('../components/sales/ShiftHistory').then((m) => ({ default: m.ShiftHistory }))
 );
-const BranchSettings = React.lazy(() =>
+const BranchSettings = createLazyPage(() =>
   import('../components/settings/BranchSettings').then((m) => ({ default: m.BranchSettings }))
 );
-const BrowserPrintSettings = React.lazy(() =>
+const BrowserPrintSettings = createLazyPage(() =>
   import('../components/settings/BrowserPrintSettings').then((m) => ({
     default: m.BrowserPrintSettings,
   }))
 );
-const DesktopSettings = React.lazy(() =>
+const DesktopSettings = createLazyPage(() =>
   import('../components/settings/DesktopSettings').then((m) => ({ default: m.DesktopSettings }))
 );
-const PricingPage = React.lazy(() =>
+const PricingPage = createLazyPage(() =>
   import('../components/settings/PricingPage').then((m) => ({ default: m.PricingPage }))
 );
-const ThemeStudioPage = React.lazy(() =>
+const ThemeStudioPage = createLazyPage(() =>
   import('../components/settings/ThemeStudio').then((m) => ({ default: m.ThemeStudio }))
 );
-const A5InvoiceDesigner = React.lazy(() =>
+const A5InvoiceDesigner = createLazyPage(() =>
   import('../components/test/A5InvoiceDesigner').then((m) => ({ default: m.A5InvoiceDesigner }))
 );
-const AnimatedCounterLab = React.lazy(() =>
+const AnimatedCounterLab = createLazyPage(() =>
   import('../components/test/AnimatedCounterLab').then((m) => ({ default: m.AnimatedCounterLab }))
 );
-const FilterDropdownTest = React.lazy(() =>
+const FilterDropdownTest = createLazyPage(() =>
   import('../components/test/FilterDropdownTest').then((m) => ({ default: m.FilterDropdownTest }))
 );
-const ModalTests = React.lazy(() =>
+const ModalTests = createLazyPage(() =>
   import('../components/test/ModalTests').then((m) => ({ default: m.ModalTests }))
 );
-const ScrollbarLab = React.lazy(() =>
+const ScrollbarLab = createLazyPage(() =>
   import('../components/test/ScrollbarLab').then((m) => ({ default: m.ScrollbarLab }))
 );
-const CosmoceuticalPage = React.lazy(() =>
+const CosmoceuticalPage = createLazyPage(() =>
   import('../components/cosmoceutical/CosmoceuticalPage').then((m) => ({
     default: m.CosmoceuticalPage,
   }))
 );
-const IntelligenceDashboard = React.lazy(() =>
+const IntelligenceDashboard = createLazyPage(() =>
   import('../pages/IntelligenceDashboard').then((m) => ({ default: m.IntelligenceDashboard }))
 );
+const ActiveSessionsPage = createLazyPage(() =>
+  import('../components/settings/ActiveSessionsPage').then((m) => ({
+    default: m.ActiveSessionsPage,
+  }))
+);
+const CustomerDensityMap = createLazyPage(
+  () => import('../components/customers/CustomerDensityMap')
+);
+const OrganizationManagementPage = createLazyPage(() =>
+  import('../components/org/OrganizationManagementPage').then((m) => ({
+    default: m.OrganizationManagementPage,
+  }))
+);
+const AttendanceTerminal = createLazyPage(
+  () => import('../components/hr/attendance/AttendanceTerminal')
+);
+const AttendanceReports = createLazyPage(
+  () => import('../components/hr/attendance/AttendanceReports')
+);
+const EmployeeAttendanceProfile = createLazyPage(
+  () => import('../components/hr/attendance/EmployeeAttendanceProfile')
+);
+const DrugInteractionsPage = createLazyPage(
+  () => import('../components/prescriptions/DrugInteractionsPage')
+);
+const ShortagesPage = createLazyPage(() => import('../components/inventory/ShortagesPage'));
 
 export interface InjectedPageProps {
   color?: string;
@@ -242,6 +268,7 @@ export interface InjectedPageProps {
 export interface PageConfig {
   id: string;
   component: ComponentType<InjectedPageProps>;
+  preload?: () => Promise<{ default: ComponentType<InjectedPageProps> }>;
   menuLabel: string;
   menuLabelAr: string;
   requiredProps?: string[]; // Props that need to be passed to the component
@@ -258,7 +285,8 @@ export interface PageConfig {
 export const PAGE_REGISTRY: Record<string, PageConfig> = {
   dashboard: {
     id: 'dashboard',
-    component: Dashboard,
+    component: Dashboard.component,
+    preload: Dashboard.preload,
     menuLabel: 'Dashboard Overview',
     menuLabelAr: 'نظرة عامة على لوحة التحكم',
     icon: 'dashboard',
@@ -270,7 +298,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   inventory: {
     id: 'inventory',
-    component: Inventory,
+    component: Inventory.component,
+    preload: Inventory.preload,
     menuLabel: 'Inventory',
     menuLabelAr: 'المخزون',
     icon: 'inventory_2',
@@ -281,7 +310,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'stock-movement': {
     id: 'stock-movement',
-    component: StockMovementReport,
+    component: StockMovementReport.component,
+    preload: StockMovementReport.preload,
     menuLabel: 'Stock Movement Report',
     menuLabelAr: 'تقرير حركة المخزون',
     icon: 'timeline',
@@ -291,7 +321,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'expiry-calendar': {
     id: 'expiry-calendar',
-    component: ExpiryManagement,
+    component: ExpiryManagement.component,
+    preload: ExpiryManagement.preload,
     menuLabel: 'Expiry Calendar',
     menuLabelAr: 'تقويم الانتهاء',
     icon: 'calendar_today',
@@ -301,7 +332,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'inventory-beta': {
     id: 'inventory-beta',
-    component: InventoryManagement,
+    component: InventoryManagement.component,
+    preload: InventoryManagement.preload,
     menuLabel: 'Inventory (Beta)',
     menuLabelAr: 'المخزون (تجريبي)',
     icon: 'table_view',
@@ -312,7 +344,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   pos: {
     id: 'pos',
-    component: POS,
+    component: POS.component,
+    preload: POS.preload,
     menuLabel: 'Point of Sale',
     menuLabelAr: 'نقطة البيع',
     icon: 'point_of_sale',
@@ -325,7 +358,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'sales-history': {
     id: 'sales-history',
-    component: SalesHistory,
+    component: SalesHistory.component,
+    preload: SalesHistory.preload,
     menuLabel: 'Sales History',
     menuLabelAr: 'سجل المبيعات',
     icon: 'receipt_long',
@@ -335,7 +369,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'return-history': {
     id: 'return-history',
-    component: ReturnHistory,
+    component: ReturnHistory.component,
+    preload: ReturnHistory.preload,
     menuLabel: 'Return History',
     menuLabelAr: 'سجل الإرجاعات',
     icon: 'assignment_return',
@@ -345,7 +380,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   suppliers: {
     id: 'suppliers',
-    component: SuppliersList,
+    component: SuppliersList.component,
+    preload: SuppliersList.preload,
     menuLabel: 'Supplier List',
     menuLabelAr: 'قائمة الموردين',
     icon: 'local_shipping',
@@ -355,7 +391,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   purchases: {
     id: 'purchases',
-    component: Purchases,
+    component: Purchases.component,
+    preload: Purchases.preload,
     menuLabel: 'Purchases',
     menuLabelAr: 'المشتريات',
     icon: 'shopping_cart',
@@ -365,7 +402,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'pending-approval': {
     id: 'pending-approval',
-    component: PendingApproval,
+    component: PendingApproval.component,
+    preload: PendingApproval.preload,
     menuLabel: 'Pending Approval',
     menuLabelAr: 'بانتظار الموافقة',
     icon: 'pending_actions',
@@ -375,7 +413,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'drug-approval-queue': {
     id: 'drug-approval-queue',
-    component: DrugApprovalQueue,
+    component: DrugApprovalQueue.component,
+    preload: DrugApprovalQueue.preload,
     menuLabel: 'Drug Approval Queue',
     menuLabelAr: 'موافقات الأدوية الجديدة',
     icon: 'assignment_turned_in',
@@ -385,7 +424,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'purchase-history': {
     id: 'purchase-history',
-    component: PurchaseHistory,
+    component: PurchaseHistory.component,
+    preload: PurchaseHistory.preload,
     menuLabel: 'Purchase History',
     menuLabelAr: 'سجل المشتريات',
     icon: 'history',
@@ -395,7 +435,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'purchase-returns': {
     id: 'purchase-returns',
-    component: PurchaseReturns,
+    component: PurchaseReturns.component,
+    preload: PurchaseReturns.preload,
     menuLabel: 'Purchase Returns',
     menuLabelAr: 'مرتجعات المشتريات',
     icon: 'assignment_return',
@@ -405,7 +446,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'barcode-printer': {
     id: 'barcode-printer',
-    component: BarcodePrinter,
+    component: BarcodePrinter.component,
+    preload: BarcodePrinter.preload,
     menuLabel: 'Barcode Printer',
     menuLabelAr: 'طباعة الباركود',
     icon: 'print',
@@ -415,7 +457,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'barcode-studio': {
     id: 'barcode-studio',
-    component: BarcodeStudio,
+    component: BarcodeStudio.component,
+    preload: BarcodeStudio.preload,
     menuLabel: 'Barcode Studio',
     menuLabelAr: 'استوديو الباركود',
     icon: 'qr_code_2',
@@ -425,7 +468,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   customers: {
     id: 'customers',
-    component: CustomerManagement,
+    component: CustomerManagement.component,
+    preload: CustomerManagement.preload,
     menuLabel: 'All Customers',
     menuLabelAr: 'جميع العملاء',
     icon: 'group',
@@ -435,7 +479,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'customer-overview': {
     id: 'customer-overview',
-    component: CustomerOverview,
+    component: CustomerOverview.component,
+    preload: CustomerOverview.preload,
     menuLabel: 'Customer Overview',
     menuLabelAr: 'نظرة عامة على العملاء',
     icon: 'analytics',
@@ -446,7 +491,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'customer-history': {
     id: 'customer-history',
-    component: CustomerHistory,
+    component: CustomerHistory.component,
+    preload: CustomerHistory.preload,
     menuLabel: 'Customer History',
     menuLabelAr: 'سجل العملاء',
     icon: 'manage_search',
@@ -456,7 +502,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'loyalty-overview': {
     id: 'loyalty-overview',
-    component: CustomerLoyaltyOverview,
+    component: CustomerLoyaltyOverview.component,
+    preload: CustomerLoyaltyOverview.preload,
     menuLabel: 'Loyalty Overview',
     menuLabelAr: 'نظرة عامة على الولاء',
     icon: 'stars',
@@ -467,7 +514,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'loyalty-lookup': {
     id: 'loyalty-lookup',
-    component: CustomerLoyaltyLookup,
+    component: CustomerLoyaltyLookup.component,
+    preload: CustomerLoyaltyLookup.preload,
     menuLabel: 'Customer Loyalty Lookup',
     menuLabelAr: 'بحث ولاء العملاء',
     icon: 'person_search',
@@ -477,7 +525,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'real-time-sales': {
     id: 'real-time-sales',
-    component: RealTimeSalesMonitor,
+    component: RealTimeSalesMonitor.component,
+    preload: RealTimeSalesMonitor.preload,
     menuLabel: 'Real-time Sales Monitor',
     menuLabelAr: 'مراقبة المبيعات الفورية',
     icon: 'monitoring',
@@ -488,7 +537,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'add-product': {
     id: 'add-product',
-    component: AddProduct,
+    component: AddProduct.component,
+    preload: AddProduct.preload,
     menuLabel: 'Add New Product',
     menuLabelAr: 'إضافة منتج جديد',
     icon: 'add_box',
@@ -498,7 +548,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'cash-register': {
     id: 'cash-register',
-    component: CashRegister,
+    component: CashRegister.component,
+    preload: CashRegister.preload,
     menuLabel: 'Cash Register',
     menuLabelAr: 'سجل النقدية',
     icon: 'point_of_sale',
@@ -508,7 +559,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   cosmoceutical: {
     id: 'cosmoceutical',
-    component: CosmoceuticalPage,
+    component: CosmoceuticalPage.component,
+    preload: CosmoceuticalPage.preload,
     menuLabel: 'Cosmoceutical',
     menuLabelAr: 'المستحضرات التجميلية الطبية',
     icon: 'science',
@@ -519,7 +571,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   expenses: {
     id: 'expenses',
-    component: ExpenseTracker,
+    component: ExpenseTracker.component,
+    preload: ExpenseTracker.preload,
     menuLabel: 'Expense Tracker',
     menuLabelAr: 'متتبع المصروفات',
     icon: 'receipt_long',
@@ -530,7 +583,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'shift-history': {
     id: 'shift-history',
-    component: ShiftHistory,
+    component: ShiftHistory.component,
+    preload: ShiftHistory.preload,
     menuLabel: 'Shift History',
     menuLabelAr: 'سجل الورديات',
     icon: 'history',
@@ -540,7 +594,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'stock-adjustment': {
     id: 'stock-adjustment',
-    component: StockAdjustment,
+    component: StockAdjustment.component,
+    preload: StockAdjustment.preload,
     menuLabel: 'Stock Adjustment',
     menuLabelAr: 'جرد المخزون',
     icon: 'inventory',
@@ -550,7 +605,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'receipt-designer': {
     id: 'receipt-designer',
-    component: ReceiptDesigner,
+    component: ReceiptDesigner.component,
+    preload: ReceiptDesigner.preload,
     menuLabel: 'Receipt Design',
     menuLabelAr: 'تصميم الفاتورة',
     icon: 'brush',
@@ -560,7 +616,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'dashboard-experiments': {
     id: 'dashboard-experiments',
-    component: DashboardExperiments,
+    component: DashboardExperiments.component,
+    preload: DashboardExperiments.preload,
     menuLabel: 'Dashboard Experiments',
     menuLabelAr: 'تجارب لوحة التحكم',
     icon: 'science',
@@ -570,7 +627,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'advanced-sm-card': {
     id: 'advanced-sm-card',
-    component: AdvancedSmCard,
+    component: AdvancedSmCard.component,
+    preload: AdvancedSmCard.preload,
     menuLabel: 'Advanced Sm Card',
     menuLabelAr: 'بطاقات صغيرة متطورة',
     icon: 'dashboard_customize',
@@ -580,7 +638,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'modal-tests': {
     id: 'modal-tests',
-    component: ModalTests,
+    component: ModalTests.component,
+    preload: ModalTests.preload,
     menuLabel: 'Modal Tests',
     menuLabelAr: 'اختبار النوافذ',
     icon: 'dialogs',
@@ -590,7 +649,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'animated-counter-lab': {
     id: 'animated-counter-lab',
-    component: AnimatedCounterLab,
+    component: AnimatedCounterLab.component,
+    preload: AnimatedCounterLab.preload,
     menuLabel: 'Animated Counter Lab',
     menuLabelAr: 'مختبر الأرقام المتحركة',
     icon: 'text_format',
@@ -600,7 +660,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'scrollbar-lab': {
     id: 'scrollbar-lab',
-    component: ScrollbarLab,
+    component: ScrollbarLab.component,
+    preload: ScrollbarLab.preload,
     menuLabel: 'Scrollbar Lab',
     menuLabelAr: 'مختبر شريط التمرير',
     icon: 'science',
@@ -611,7 +672,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'theme-studio': {
     id: 'theme-studio',
-    component: ThemeStudioPage,
+    component: ThemeStudioPage.component,
+    preload: ThemeStudioPage.preload,
     menuLabel: 'Theme Studio',
     menuLabelAr: 'استوديو المظهر',
     icon: 'palette',
@@ -622,7 +684,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'a5-invoice-designer': {
     id: 'a5-invoice-designer',
-    component: A5InvoiceDesigner,
+    component: A5InvoiceDesigner.component,
+    preload: A5InvoiceDesigner.preload,
     menuLabel: 'A5 Invoice Designer',
     menuLabelAr: 'مصمم فواتير A5',
     icon: 'print',
@@ -633,7 +696,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'filter-dropdown-test': {
     id: 'filter-dropdown-test',
-    component: FilterDropdownTest,
+    component: FilterDropdownTest.component,
+    preload: FilterDropdownTest.preload,
     menuLabel: 'Filter Dropdown Test',
     menuLabelAr: 'اختبار القائمة المنسدلة',
     icon: 'filter_alt',
@@ -644,7 +708,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'employee-list': {
     id: 'employee-list',
-    component: EmployeeList,
+    component: EmployeeList.component,
+    preload: EmployeeList.preload,
     menuLabel: 'Employee List',
     menuLabelAr: 'قائمة الموظفين',
     icon: 'badge',
@@ -654,7 +719,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'employee-profile': {
     id: 'employee-profile',
-    component: EmployeeProfile,
+    component: EmployeeProfile.component,
+    preload: EmployeeProfile.preload,
     menuLabel: 'Employee Profile',
     menuLabelAr: 'ملف الموظف',
     icon: 'id_card',
@@ -664,11 +730,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'active-sessions': {
     id: 'active-sessions',
-    component: React.lazy(() =>
-      import('../components/settings/ActiveSessionsPage').then((m) => ({
-        default: m.ActiveSessionsPage,
-      }))
-    ),
+    component: ActiveSessionsPage.component,
+    preload: ActiveSessionsPage.preload,
     menuLabel: 'Active Sessions',
     menuLabelAr: 'الأجهزة المتصلة',
     icon: 'devices',
@@ -678,7 +741,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   login: {
     id: 'login',
-    component: Login,
+    component: Login.component,
+    preload: Login.preload,
     menuLabel: 'Login',
     menuLabelAr: 'تسجيل الدخول',
     icon: 'lock',
@@ -688,7 +752,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   intelligence: {
     id: 'intelligence',
-    component: IntelligenceDashboard,
+    component: IntelligenceDashboard.component,
+    preload: IntelligenceDashboard.preload,
     menuLabel: 'Business Intelligence',
     menuLabelAr: 'ذكاء الأعمال',
     icon: 'auto_graph',
@@ -699,7 +764,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'login-audit': {
     id: 'login-audit',
-    component: LoginAuditList,
+    component: LoginAuditList.component,
+    preload: LoginAuditList.preload,
     menuLabel: 'Login Audit',
     menuLabelAr: 'سجل عمليات الدخول',
     icon: 'history',
@@ -709,7 +775,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   landing: {
     id: 'landing',
-    component: LandingPage,
+    component: LandingPage.component,
+    preload: LandingPage.preload,
     menuLabel: 'Welcome',
     menuLabelAr: 'ترحيب',
     icon: 'home',
@@ -719,7 +786,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'staff-overview': {
     id: 'staff-overview',
-    component: StaffOverview,
+    component: StaffOverview.component,
+    preload: StaffOverview.preload,
     menuLabel: 'Staff Overview',
     menuLabelAr: 'نظرة عامة على الموظفين',
     icon: 'supervisor_account',
@@ -730,7 +798,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'branch-management': {
     id: 'branch-management',
-    component: BranchSettings,
+    component: BranchSettings.component,
+    preload: BranchSettings.preload,
     menuLabel: 'Branch Management',
     menuLabelAr: 'إدارة الفروع',
     icon: 'domain',
@@ -749,7 +818,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'customer-density-map': {
     id: 'customer-density-map',
-    component: React.lazy(() => import('../components/customers/CustomerDensityMap')),
+    component: CustomerDensityMap.component,
+    preload: CustomerDensityMap.preload,
     menuLabel: 'Customer Density Map',
     menuLabelAr: 'خريطة كثافة العملاء',
     icon: 'map',
@@ -760,11 +830,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'org-management': {
     id: 'org-management',
-    component: React.lazy(() =>
-      import('../components/org/OrganizationManagementPage').then((m) => ({
-        default: m.OrganizationManagementPage,
-      }))
-    ),
+    component: OrganizationManagementPage.component,
+    preload: OrganizationManagementPage.preload,
     menuLabel: 'Org Management',
     menuLabelAr: 'إدارة المنظمة',
     icon: 'corporate_fare',
@@ -775,7 +842,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   services: {
     id: 'services',
-    component: PricingPage,
+    component: PricingPage.component,
+    preload: PricingPage.preload,
     menuLabel: 'Services & Pricing',
     menuLabelAr: 'الخدمات والأسعار',
     icon: 'sell',
@@ -785,7 +853,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'attendance-terminal': {
     id: 'attendance-terminal',
-    component: React.lazy(() => import('../components/hr/attendance/AttendanceTerminal')),
+    component: AttendanceTerminal.component,
+    preload: AttendanceTerminal.preload,
     menuLabel: 'Mark Attendance',
     menuLabelAr: 'تسجيل الحضور',
     icon: 'touch_app',
@@ -795,7 +864,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'attendance-reports': {
     id: 'attendance-reports',
-    component: React.lazy(() => import('../components/hr/attendance/AttendanceReports')),
+    component: AttendanceReports.component,
+    preload: AttendanceReports.preload,
     menuLabel: 'Attendance Reports',
     menuLabelAr: 'تقارير الحضور',
     icon: 'assessment',
@@ -805,7 +875,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'employee-attendance-profile': {
     id: 'employee-attendance-profile',
-    component: React.lazy(() => import('../components/hr/attendance/EmployeeAttendanceProfile')),
+    component: EmployeeAttendanceProfile.component,
+    preload: EmployeeAttendanceProfile.preload,
     menuLabel: 'Employee Attendance',
     menuLabelAr: 'حضور الموظف',
     icon: 'person_check',
@@ -815,7 +886,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'desktop-settings': {
     id: 'desktop-settings',
-    component: DesktopSettings,
+    component: DesktopSettings.component,
+    preload: DesktopSettings.preload,
     menuLabel: 'Desktop Settings',
     menuLabelAr: 'إعدادات سطح المكتب',
     icon: 'desktop_windows',
@@ -826,7 +898,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'browser-settings': {
     id: 'browser-settings',
-    component: BrowserPrintSettings,
+    component: BrowserPrintSettings.component,
+    preload: BrowserPrintSettings.preload,
     menuLabel: 'Print Settings',
     menuLabelAr: 'إعدادات الطباعة',
     icon: 'print',
@@ -837,7 +910,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'profit-loss': {
     id: 'profit-loss',
-    component: ProfitLossPage,
+    component: ProfitLossPage.component,
+    preload: ProfitLossPage.preload,
     menuLabel: 'Profit & Loss',
     menuLabelAr: 'الأرباح والخسائر',
     icon: 'analytics',
@@ -848,7 +922,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'drug-interactions': {
     id: 'drug-interactions',
-    component: React.lazy(() => import('../components/prescriptions/DrugInteractionsPage')),
+    component: DrugInteractionsPage.component,
+    preload: DrugInteractionsPage.preload,
     menuLabel: 'Drug Interactions',
     menuLabelAr: 'تفاعلات الأدوية',
     icon: 'medication',
@@ -859,7 +934,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   shortages: {
     id: 'shortages',
-    component: React.lazy(() => import('../components/inventory/ShortagesPage')),
+    component: ShortagesPage.component,
+    preload: ShortagesPage.preload,
     menuLabel: 'Shortages & Predictive Alerts',
     menuLabelAr: 'النواقص والإنذارات التنبؤية',
     icon: 'warning',
