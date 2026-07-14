@@ -4,6 +4,7 @@ import { useDynamicTickerData } from '../../../hooks/layout/useDynamicTickerData
 import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
 import { useShift } from '../../../hooks/sales/useShift';
 import packageJson from '../../../package.json';
+import { authService } from '../../../services/auth/authService';
 import { useAuthStore } from '../../../stores/authStore';
 import { AlertsAndAds } from '../../features/alerts/AlertsAndAds';
 import { ConnectionStatus } from './items/ConnectionStatus';
@@ -138,7 +139,13 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
       showTickerTopSeller,
     } = useSettings();
 
-    const tickerData = useDynamicTickerData();
+    const tickerData = useDynamicTickerData({
+      enabled: showTicker,
+      showCustomers: showTickerCustomers,
+      showSales: showTickerSales,
+      showInventory: showTickerInventory,
+      showTopSeller: showTickerTopSeller,
+    });
     const activeBranchId = useAuthStore((s) => s.activeBranchId);
     const activeOrgId = useAuthStore((s) => s.activeOrgId);
     const isLoading = useAuthStore((s) => s.isLoading);
@@ -154,10 +161,25 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     }, [employees, activeOrgId]);
 
     // 2. Smart Memoization: Prepare data outside JSX
-    const currentEmployee = useMemo(
-      () => orgEmployees.find((e) => e.id === currentEmployeeId),
-      [orgEmployees, currentEmployeeId]
-    );
+    const currentEmployee = useMemo(() => {
+      const found = orgEmployees.find((e) => e.id === currentEmployeeId);
+      if (found) return found;
+
+      // Fallback to synchronous session data while employees are fetching
+      if (currentEmployeeId) {
+        const session = authService.getCurrentUserSync();
+        if (session && session.employeeId === currentEmployeeId) {
+          return {
+            id: session.employeeId,
+            name: session.employeeName || session.username,
+            role: session.role,
+            orgId: session.orgId,
+            branchId: session.branchId,
+          } as any; // Cast as any because we don't have the full Employee object, just enough for UI
+        }
+      }
+      return undefined;
+    }, [orgEmployees, currentEmployeeId]);
 
     const shiftTooltip = useMemo(() => {
       if (isShiftLoading) return isAR ? 'جاري التحميل...' : 'Loading shift...';

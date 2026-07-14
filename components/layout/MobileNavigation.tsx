@@ -558,12 +558,15 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     if (dynamicTab) handleViewChange(dynamicTab.id);
   }, [dynamicTab, handleViewChange]);
 
-  const activeBranchId = useAuthStore((s) => s.activeBranchId);
-  const { data: inventory = [] } = useInventory(activeBranchId);
-  const { playSuccess } = usePosSounds();
-  const { showMenu } = useContextMenu();
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = React.useState(false);
+  
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const isSearchActive = view === 'medicine-search' || isCartOpen;
+  const branchKey = isSearchActive ? activeBranchId : '';
+  const { data: inventory = [] } = useInventory(branchKey);
+  const { playSuccess } = usePosSounds();
+  const { showMenu } = useContextMenu();
 
   // --- CART LOGIC ---
   const addToCart = React.useCallback(

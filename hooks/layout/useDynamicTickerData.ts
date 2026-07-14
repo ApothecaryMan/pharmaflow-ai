@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useLowStock } from '../../hooks/queries/useInventoryQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
@@ -21,12 +21,22 @@ export interface TickerData {
   } | null;
 }
 
-export const useDynamicTickerData = (): TickerData => {
+export interface DynamicTickerOptions {
+  enabled: boolean;
+  showCustomers?: boolean;
+  showSales?: boolean;
+  showInventory?: boolean;
+  showTopSeller?: boolean;
+}
+
+export const useDynamicTickerData = (options: DynamicTickerOptions): TickerData => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
-  const { data: inventory = [] } = useInventory(activeBranchId);
-  const { data: customers = [] } = useCustomers(activeBranchId);
-  const { data: employees = [] } = useEmployees(activeBranchId);
+  const branchKey = options.enabled ? activeBranchId : '';
+
+  const { data: sales = [] } = useRecentSales(options.showSales || options.showTopSeller ? branchKey : '');
+  const { data: lowStockItems = [] } = useLowStock(options.showInventory ? branchKey : '', 10);
+  const { data: customers = [] } = useCustomers(options.showCustomers ? branchKey : '');
+  const { data: employees = [] } = useEmployees(options.showTopSeller ? branchKey : '');
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -45,13 +55,11 @@ export const useDynamicTickerData = (): TickerData => {
       (s) => s.status === 'pending' || s.status === 'with_delivery' || s.status === 'on_way'
     ).length;
 
-    // 2. Inventory Metrics
     let lowStockCount = 0;
     let shortagesCount = 0;
 
-    inventory.forEach((item) => {
-      // Logic: Shortage if 0, Low if <= 10 (or item specific threshold if we had one)
-      // Assuming 10 as generic low stock threshold for now
+    lowStockItems.forEach((item) => {
+      // Logic: Shortage if 0, Low if <= 10
       if (item.stock <= 0) {
         shortagesCount++;
       } else if (item.stock <= 10) {
@@ -109,7 +117,7 @@ export const useDynamicTickerData = (): TickerData => {
       newCustomersToday,
       topSeller: canViewFinancials ? topSellerStats : null,
     };
-  }, [sales, inventory, customers, employees]);
+  }, [sales, lowStockItems, customers, employees]);
 
   return metrics;
 };

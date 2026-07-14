@@ -180,10 +180,9 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   }, [currentEmployeeId, userName, roleLabel, avatarUrl, t, isAR]);
 
   const loginLabel = useMemo(() => {
-    if (isLoading && currentEmployeeId) return undefined;
-    if (currentEmployeeId) return userName;
-    return t?.login || 'Login';
-  }, [isLoading, currentEmployeeId, userName, t]);
+    if (!currentEmployeeId) return t?.login || 'Login';
+    return userName;
+  }, [currentEmployeeId, userName, t]);
 
   // --- Logic Handlers ---
   const resetState = useCallback(() => {

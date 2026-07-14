@@ -30,13 +30,20 @@ async function getDB(): Promise<IDBPDatabase<PersistDB>> {
   return dbInstance;
 }
 
+let persistQueue: Promise<void> = Promise.resolve();
+
 export const queryPersister = {
   async persistClient(client: PersistedClient) {
-    const db = await getDB();
-    const tx = db.transaction('cache', 'readwrite');
-    const store = tx.objectStore('cache');
-    await store.put({ key: 'react-query-cache', client });
-    await tx.done;
+    const prev = persistQueue;
+    persistQueue = (async () => {
+      await prev.catch(() => {});
+      const db = await getDB();
+      const tx = db.transaction('cache', 'readwrite');
+      const store = tx.objectStore('cache');
+      await store.put({ key: 'react-query-cache', client });
+      await tx.done;
+    })();
+    return persistQueue;
   },
 
   async restoreClient(): Promise<PersistedClient | undefined> {

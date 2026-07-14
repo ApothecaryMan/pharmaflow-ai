@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useCallback, useEffect } from 'react';
+import { StorageKeys } from './config/storageKeys';
 import { storage } from './utils/storage';
 
 // EmployeeDashboard loaded lazily (only for employee portal users)
@@ -16,6 +17,13 @@ const AuthPage = lazy(() =>
 import { AppLoadingScreen } from './components/common/AppLoadingScreen';
 import { AuthenticatedContent } from './components/layout/AuthenticatedContent';
 import { preloadPage } from './hooks/layout/usePreloadPage';
+
+// Preload the first page chunk synchronously at module init
+// to overlap chunk fetch with React's initial render.
+const hasSession = authService.hasSession();
+const persistedView = storage.get<string>(StorageKeys.VIEW, '');
+const initialView = persistedView || (hasSession ? 'landing' : '');
+if (initialView) preloadPage(initialView);
 
 const OrgSetupScreen = lazy(() =>
   import('./components/onboarding/OrgSetupScreen').then((m) => ({

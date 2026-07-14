@@ -55,10 +55,24 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+          const inventoryKey = queryKeys.inventory.all(activeBranchId);
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            queryClient.setQueryData(inventoryKey, (old: any[] | undefined) => {
+              if (!old) return old;
+              const idx = old.findIndex((d) => d.id === payload.new.id);
+              if (idx > -1) {
+                const copy = [...old];
+                copy[idx] = { ...copy[idx], ...payload.new };
+                return copy;
+              }
+              return [...old, payload.new];
+            });
             inventorySearchEngine.queueUpdate(payload.new as any);
           } else if (payload.eventType === 'DELETE') {
+            queryClient.setQueryData(inventoryKey, (old: any[] | undefined) => {
+              if (!old) return old;
+              return old.filter((d) => d.id !== payload.old.id);
+            });
             inventorySearchEngine.removeItem(payload.old.id);
           }
         }
@@ -75,9 +89,26 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
           table: 'stock_batches',
           filter: `branch_id=eq.${activeBranchId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
-          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+        (payload: any) => {
+          const batchesKey = queryKeys.batches.all(activeBranchId);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            queryClient.setQueryData(batchesKey, (old: any[] | undefined) => {
+              if (!old) return old;
+              const idx = old.findIndex((b) => b.id === payload.new.id);
+              if (idx > -1) {
+                const copy = [...old];
+                copy[idx] = { ...copy[idx], ...payload.new };
+                return copy;
+              }
+              return [...old, payload.new];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            queryClient.setQueryData(batchesKey, (old: any[] | undefined) => {
+              if (!old) return old;
+              return old.filter((b) => b.id !== payload.old.id);
+            });
+          }
+          // Note: computed inventory will automatically update since batches query data changed
         }
       )
       .subscribe();
