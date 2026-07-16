@@ -8,7 +8,7 @@ import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useAuthStore } from '../../../../stores/authStore';
-import { PillSlider } from '../../../common/PillSlider';
+import { FeralSlider } from '../../../common/FeralSlider';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { Tooltip } from '../../../common/Tooltip';
@@ -434,10 +434,13 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     size='xs'
                     fullWidth
                     shape='pill'
+                    valueChangeEffect
                     options={availableThemes.map((th) => ({
                       label: '',
                       value: th.name,
                       dotColor: th.hex,
+                      pulseDot: true,
+
                     }))}
                   />
                 </div>
@@ -448,6 +451,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     size='xs'
                     shape='pill'
                     iconSize='--icon-settings'
+                    valueChangeEffect
                     options={[
                       { label: '', value: false, icon: 'light_mode' },
                       { label: '', value: true, icon: 'dark_mode' },
@@ -460,6 +464,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     onChange={(v) => setBadgeStyle?.(v as any)}
                     size='xs'
                     shape='pill'
+                    valueChangeEffect
                     options={[
                       { label: t.badgeStyleDefault, value: 'default' },
                       { label: t.badgeStylePill, value: 'pill' },
@@ -491,6 +496,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         onChange={(v) => setBorderRadius?.(v as any)}
                         size='xs'
                         shape='pill'
+                        valueChangeEffect
                         options={[
                           { label: t.radiusSharp, value: 'sharp' },
                           { label: t.radiusFull, value: 'full' },
@@ -513,6 +519,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           size='xs'
                           shape='pill'
                           iconSize='--icon-settings'
+                          valueChangeEffect
                           options={[
                             { label: '', value: 'default', icon: 'done' },
                             { label: '', value: 'ios', icon: 'toggle_on' },
@@ -705,70 +712,39 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           {language === 'AR' ? 'إعدادات النقش' : 'Pattern Settings'}
                         </span>
                       </div>
+                      <button
+                        onClick={() => {
+                          setBackgroundPatternOpacity(30);
+                          setBackgroundPatternScale(0);
+                          setBackgroundPatternBlur(0);
+                        }}
+                        className='text-[10px] font-bold text-(--text-tertiary) hover:text-(--text-primary) transition-colors flex items-center gap-1'
+                        type='button'
+                      >
+                        <span className='material-symbols-rounded text-[14px]'>refresh</span>
+                        {language === 'AR' ? 'إعادة' : 'Reset'}
+                      </button>
                     </div>
                     <div className='bg-(--bg-menu-hover) border border-(--border-divider) p-2 rounded-2xl flex flex-col gap-3 relative'>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-[10px] font-medium text-(--text-secondary) flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>opacity</span>
-                          {t.patternOpacity}
-                        </span>
-                        <PillSlider
-                          min={5}
-                          max={backgroundPatternBlur > 0 ? 100 : 70}
-                          step={5}
-                          value={backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity}
-                          onChange={setBackgroundPatternOpacity}
-                          disabled={backgroundPatternBlur > 0}
-                          backgroundStyle={{
-                            background: `linear-gradient(to right, var(--primary-500) ${(((backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity) - 5) / (backgroundPatternBlur > 0 ? 95 : 65)) * 100}%, transparent ${(((backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity) - 5) / (backgroundPatternBlur > 0 ? 95 : 65)) * 100}%)`,
-                          }}
-                        />
-                      </div>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-[10px] font-medium text-(--text-secondary) flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>zoom_out_map</span>
-                          {language === 'AR' ? 'الحجم' : 'Scale'}
-                        </span>
-                        <PillSlider
-                          min={-100}
-                          max={100}
-                          step={5}
-                          value={backgroundPatternScale}
-                          onChange={setBackgroundPatternScale}
-                          thumbClass={
-                            backgroundPatternScale < 0
-                              ? '[&::-webkit-slider-thumb]:bg-(--color-error)'
-                              : '[&::-webkit-slider-thumb]:bg-(--color-success)'
-                          }
-                          formatValue={Math.abs}
-                          backgroundStyle={{
-                            background: `linear-gradient(to right, transparent ${Math.min(
-                              50,
-                              50 + backgroundPatternScale / 2
-                            )}%, ${backgroundPatternScale < 0 ? 'var(--color-error)' : 'var(--color-success)'} ${Math.min(50, 50 + backgroundPatternScale / 2)}%, ${backgroundPatternScale < 0 ? 'var(--color-error)' : 'var(--color-success)'} ${Math.max(50, 50 + backgroundPatternScale / 2)}%, transparent ${Math.max(
-                              50,
-                              50 + backgroundPatternScale / 2
-                            )}%)`,
-                            backgroundColor: 'var(--border-divider)',
-                          }}
-                        />
-                      </div>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-[10px] font-medium text-(--text-secondary) flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>blur_on</span>
-                          {language === 'AR' ? 'التمويه' : 'Blur'}
-                        </span>
-                        <PillSlider
-                          min={0}
-                          max={5}
-                          step={1}
-                          value={backgroundPatternBlur}
-                          onChange={setBackgroundPatternBlur}
-                          backgroundStyle={{
-                            background: `linear-gradient(to right, var(--primary-500) ${(backgroundPatternBlur / 5) * 100}%, transparent ${(backgroundPatternBlur / 5) * 100}%)`,
-                          }}
-                        />
-                      </div>
+                      <FeralSlider
+                        label={t.patternOpacity}
+                        value={backgroundPatternBlur > 0 ? 100 : backgroundPatternOpacity}
+                        onChange={setBackgroundPatternOpacity}
+                        labelPosition='inside'
+                        unit='%'
+                      />
+                      <FeralSlider
+                        label={language === 'AR' ? 'الحجم' : 'Scale'}
+                        value={(backgroundPatternScale + 100) / 2}
+                        onChange={(val) => setBackgroundPatternScale(val * 2 - 100)}
+                        labelPosition='inside'
+                      />
+                      <FeralSlider
+                        label={language === 'AR' ? 'التمويه' : 'Blur'}
+                        value={backgroundPatternBlur * 20}
+                        onChange={(val) => setBackgroundPatternBlur(val / 20)}
+                        labelPosition='inside'
+                      />
                     </div>
                   </div>
                 )}
@@ -780,6 +756,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       size='xs'
                       shape='pill'
                       iconSize='--icon-settings'
+                      valueChangeEffect
                       options={[
                         { label: '', value: 'muted', icon: 'blur_off' },
                         { label: '', value: 'subtle', icon: 'blur_on' },
@@ -798,6 +775,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     size='xs'
                     shape='pill'
                     iconSize='--icon-settings'
+                    valueChangeEffect
                     options={[
                       { label: '', value: 'default', icon: 'play_arrow' },
                       { label: '', value: 'box', icon: 'crop_square' },
@@ -826,6 +804,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     size='xs'
                     shape='pill'
                     iconSize='--icon-settings'
+                    valueChangeEffect
                     options={[
                       { label: '', value: 1, icon: 'view_sidebar' },
                       { label: '', value: 2, icon: 'web_asset' },
@@ -840,6 +819,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       size='xs'
                       shape='pill'
                       iconSize='--icon-settings'
+                      valueChangeEffect
                       options={[
                         { label: '', value: 1, icon: 'view_sidebar' },
                         { label: '', value: 2, icon: 'dock_to_left' },
@@ -856,6 +836,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       size='xs'
                       shape='pill'
                       iconSize='--icon-settings'
+                      valueChangeEffect
                       options={[
                         { label: '', value: 'single', icon: 'view_list' },
                         { label: '', value: 'multi', icon: 'grid_view' },
@@ -878,6 +859,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   onChange={(v) => setLanguage(v as any)}
                   size='xs'
                   shape='pill'
+                  valueChangeEffect
                   options={[
                     { label: 'EN', value: 'EN' },
                     { label: 'AR', value: 'AR' },
@@ -900,6 +882,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     onChange={(v) => setModalPresentationMode?.(v as any)}
                     size='xs'
                     shape='pill'
+                    valueChangeEffect
                     options={[
                       { label: t.modalPresentationModeModal, value: 'modal' },
                       { label: t.modalPresentationModeSidebar, value: 'sidebar' },
@@ -913,6 +896,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       onChange={(v) => setSidebarModalWidth?.(v as any)}
                       size='xs'
                       shape='pill'
+                      valueChangeEffect
                       options={[
                         { label: t.sidebarModalWidthNarrow, value: 'sm' },
                         { label: t.sidebarModalWidthStandard, value: 'md' },
@@ -995,6 +979,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       onChange={(v) => setNumeralSystem(v as any)}
                       size='xs'
                       shape='pill'
+                      valueChangeEffect
                       options={[
                         { label: t.numeralArabic, value: 'AR' },
                         { label: t.numeralLatin, value: 'EN' },
@@ -1017,6 +1002,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       size='xs'
                       fullWidth
                       shape='pill'
+                      valueChangeEffect
                       options={[
                         { label: 'إيقاف', value: 'off' },
                         { label: 'جرافيكي', value: 'serif', fontFamily: '"HeadingFont"' },
@@ -1071,12 +1057,18 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                   ? 'نسخ تخطيط الأعمدة في الجداول'
                                   : 'Copy column layout in tables'}
                               </li>
+                              <li>
+                                {isAR
+                                  ? 'تفصيل استهلاك الباقة في أيقونة الواي فاي'
+                                  : 'Network usage details in Wi-Fi icon tooltip'}
+                              </li>
                             </ul>
                           </div>
                         }
                         position='top'
+                        triggerClassName='shrink-0'
                       >
-                        <span className='material-symbols-rounded text-[16px] text-gray-400 dark:text-gray-500 hover:text-primary-500 mr-2 rtl:ml-2 rtl:mr-0'>
+                        <span className='material-symbols-rounded text-[16px] opacity-60 hover:opacity-100 mr-2 rtl:ml-2 rtl:mr-0'>
                           info
                         </span>
                       </Tooltip>
