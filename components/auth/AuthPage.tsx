@@ -2,6 +2,7 @@ import type React from 'react';
 import { useCallback, useState } from 'react';
 import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
+import { useClockSkew } from '../../hooks/common/useClockSkew';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
 import type { Language } from '../../types';
@@ -29,6 +30,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
     return 'login';
   });
   useAutoSystemBarColor(`${currentView}:${language}`, '--bg-page-surface');
+
+  const { hasClockSkew } = useClockSkew();
+  const t = TRANSLATIONS[language || 'EN'];
 
   const handleViewChange = useCallback((view: AuthView) => {
     setCurrentView(view);
@@ -145,7 +149,38 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
             </nav>
 
             <div className='flex-1 flex flex-col justify-center items-center'>
-              <div className='w-full max-w-[360px] space-y-8 mt-12 lg:mt-0'>{renderContent()}</div>
+              {hasClockSkew && (
+                <div className='w-full max-w-[360px] mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-400 text-sm'>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    width='20'
+                    height='20'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    className='shrink-0 mt-0.5'
+                  >
+                    <title>Clock</title>
+                    <circle cx='12' cy='12' r='10' />
+                    <polyline points='12 6 12 12 16 14' />
+                  </svg>
+                  <div>
+                    <p className='font-medium mb-0.5'>{t.login.clockSkewTitle}</p>
+                    <p className='text-amber-400/80'>{t.login.clockSkewMessage}</p>
+                  </div>
+                </div>
+              )}
+              <div
+                className={
+                  'w-full max-w-[360px] space-y-8 mt-12 lg:mt-0' +
+                  (hasClockSkew ? ' pointer-events-none opacity-40' : '')
+                }
+              >
+                {renderContent()}
+              </div>
             </div>
           </div>
 

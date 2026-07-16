@@ -412,6 +412,9 @@ export const TRANSLATIONS = {
       confirmReject: 'Are you sure you want to reject this employment request?',
       errorRejectingRequest: 'Failed to reject request',
       errorAcceptingRequest: 'Failed to accept request',
+      clockSkewTitle: 'System clock out of sync',
+      clockSkewMessage:
+        'Your device time is incorrect, which prevents secure connection to our servers. Please update your system date, time, and timezone, then refresh the page.',
     },
     statusBar: {
       ready: 'Ready',
@@ -3985,6 +3988,9 @@ export const TRANSLATIONS = {
       confirmReject: 'هل أنت متأكد من رفض طلب التوظيف هذا؟',
       errorRejectingRequest: 'فشل في رفض الطلب',
       errorAcceptingRequest: 'فشل في قبول الطلب',
+      clockSkewTitle: 'ساعة الجهاز غير متزامنة',
+      clockSkewMessage:
+        'وقت جهازك غير صحيح، مما يمنع الاتصال الآمن بخوادمنا. يرجى تحديث التاريخ والوقت والمنطقة الزمنية لجهازك، ثم تحديث الصفحة.',
     },
     statusBar: {
       ready: 'جاهز',
