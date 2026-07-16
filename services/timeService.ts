@@ -83,14 +83,7 @@ class TimeService {
 
         console.log(`Time synced via Supabase RPC. Offset: ${this.offset}ms`);
         this.isSyncing = false;
-
-        // Notify app if local clock is wrong by more than 5 minutes
-        if (Math.abs(this.offset) > 5 * 60 * 1000) {
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('pharma_clock_skew', { detail: this.offset }));
-          }
-        }
-
+        this.dispatchSyncEvent();
         return true;
       }
     } catch (err) {
@@ -156,14 +149,7 @@ class TimeService {
 
         console.log(`Time synced via ${provider}. Offset: ${this.offset}ms`);
         this.isSyncing = false;
-
-        // Notify app if local clock is wrong by more than 5 minutes
-        if (Math.abs(this.offset) > 5 * 60 * 1000) {
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('pharma_clock_skew', { detail: this.offset }));
-          }
-        }
-
+        this.dispatchSyncEvent();
         return true;
       } catch (error) {
         console.warn(`Time sync failed for ${provider}:`, error);
@@ -183,6 +169,7 @@ class TimeService {
     storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
 
     this.isSyncing = false;
+    this.dispatchSyncEvent();
     // Return false to signal that sync was NOT successful (using fallback)
     return false;
   }
@@ -221,21 +208,24 @@ class TimeService {
   getLastSyncTime(): Date | null {
     return this.lastSyncTime > 0 ? new Date(this.lastSyncTime) : null;
   }
+
+  private dispatchSyncEvent(): void {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('pharma_clock_sync', { detail: this.offset }));
+      if (Math.abs(this.offset) > 5 * 60 * 1000) {
+        window.dispatchEvent(new CustomEvent('pharma_clock_skew', { detail: this.offset }));
+      }
+    }
+  }
 }
 
 // Singleton instance
 export const timeService = new TimeService();
 
+const SYNC_INTERVAL = 5 * 60 * 1000;
+
 // Auto-sync on initialization (with retry)
 const attemptSync = async (retries = 3) => {
-  // Skip if already synced (e.g., from localStorage cache)
-  if (timeService.isSynced()) {
-    if (import.meta.env.DEV) {
-      console.log('[TimeService] Already synced from cache, skipping network sync.');
-    }
-    return;
-  }
-
   for (let i = 0; i < retries; i++) {
     const success = await timeService.syncTime();
     if (success) {
@@ -246,9 +236,24 @@ const attemptSync = async (retries = 3) => {
   }
 };
 
+const startPeriodicSync = () => {
+  setInterval(() => {
+    timeService.syncTime();
+  }, SYNC_INTERVAL);
+};
+
+// Re-sync when tab becomes visible — catches manual clock fixes immediately
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    timeService.syncTime();
+  }
+};
+
 // Start sync attempt (skip in test to prevent race conditions)
 if (process.env.NODE_ENV !== 'test') {
   attemptSync();
+  startPeriodicSync();
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 }
 
 export default timeService;

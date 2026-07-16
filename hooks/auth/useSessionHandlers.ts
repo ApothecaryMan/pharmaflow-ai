@@ -83,6 +83,8 @@ export const useSessionHandlers = ({
             storage.set(StorageKeys.SESSION, storedSession);
           }
 
+          useAuthStore.getState().setCurrentEmployee(null);
+
           const activeSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
           if (activeSessionId) {
             sessionRepository.updateSessionEmployee(activeSessionId, null).catch(console.error);
@@ -90,6 +92,7 @@ export const useSessionHandlers = ({
         } else {
           const selectedEmployee = employees.find((e) => e.id === id);
           if (selectedEmployee) {
+            useAuthStore.getState().setCurrentEmployee(selectedEmployee);
             // --- Sync employee role to session for permissionsService ---
             const storedSession = storage.get<ExtendedSession>(StorageKeys.SESSION, null);
             if (storedSession) {

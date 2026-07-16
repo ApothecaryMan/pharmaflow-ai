@@ -47,6 +47,7 @@ import { ROUTES } from './config/routes';
 import { CatalogProvider, useAlert, useSettings } from './context';
 import { useAuth } from './hooks/auth/useAuth';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
+import { useClockSkew } from './hooks/common/useClockSkew';
 import { usePreventZoom } from './hooks/infrastructure/usePreventZoom';
 import { useSessionHeartbeat } from './hooks/infrastructure/useSessionHeartbeat';
 // App State Hooks
@@ -231,7 +232,10 @@ const App: React.FC = () => {
     authState.isAuthenticated ? '--bg-navbar' : '--bg-page-surface'
   );
 
-  // 5.1 Global Session Heartbeat — pings last_seen_at every 2 minutes for online detection
+  // 5.1 Clock skew detection
+  const { hasClockSkew } = useClockSkew();
+
+  // 5.2 Global Session Heartbeat — pings last_seen_at every 2 minutes for online detection
   useSessionHeartbeat(authState.isAuthenticated);
 
   // 6. Stable Login Callbacks
@@ -340,6 +344,8 @@ const App: React.FC = () => {
     }
   }
 
+  const showClockSkewOverlay = hasClockSkew && authState.isAuthenticated && !authState.isLoggingOut;
+
   return (
     <div className='h-dvh flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
       <div className='flex-1 overflow-hidden relative'>
@@ -350,6 +356,40 @@ const App: React.FC = () => {
           finalContent
         )}
       </div>
+
+      {showClockSkewOverlay && (
+        <div className='fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm'>
+          <div
+            className='flex flex-col items-center text-center max-w-md px-6'
+            dir={language === 'AR' ? 'rtl' : 'ltr'}
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='48'
+              height='48'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='1.5'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              className='text-amber-400 mb-6'
+            >
+              <title>Clock</title>
+              <circle cx='12' cy='12' r='10' />
+              <polyline points='12 6 12 12 16 14' />
+            </svg>
+            <h2 className='text-xl font-bold text-white mb-3 tracking-wide'>
+              {language === 'AR' ? 'ساعة الجهاز غير متزامنة' : 'System clock out of sync'}
+            </h2>
+            <p className='text-zinc-400 text-sm leading-relaxed'>
+              {language === 'AR'
+                ? 'وقت جهازك غير صحيح. يرجى تحديث التاريخ والوقت والمنطقة الزمنية لجهازك. سيستأنف التطبيق تلقائياً بمجرد تصحيح الساعة.'
+                : 'Your device time is incorrect. Please update your system date, time, and timezone. The app will automatically continue once your clock is correct.'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

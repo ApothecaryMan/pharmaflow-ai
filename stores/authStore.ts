@@ -175,6 +175,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
 
+      if (session?.employeeId && finalBranchId) {
+        try {
+          const { employeeRepository } = await import(
+            '../services/hr/repositories/employeeRepository'
+          );
+          const emp = await employeeRepository.getById(session.employeeId);
+          if (emp) set({ currentEmployee: emp });
+        } catch {
+          // Employee fetch is best-effort during init
+        }
+      }
+
       set({
         branches: allBranches,
         activeBranchId: finalBranchId,

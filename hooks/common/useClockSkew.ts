@@ -16,20 +16,37 @@ export function useClockSkew() {
 
   const [offset, setOffset] = useState<number>(0);
 
-  const handleClockSkew = useCallback((e: Event) => {
-    const detail = (e as CustomEvent).detail;
-    setHasClockSkew(true);
-    setOffset(typeof detail === 'number' ? detail : 0);
+  const updateFromOffset = useCallback((value: number) => {
+    setOffset(value);
+    setHasClockSkew(Math.abs(value) > CLOCK_SKEW_THRESHOLD);
   }, []);
+
+  const handleClockSkew = useCallback(
+    (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      updateFromOffset(typeof detail === 'number' ? detail : 0);
+    },
+    [updateFromOffset]
+  );
+
+  const handleClockSync = useCallback(
+    (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (typeof detail === 'number') {
+        updateFromOffset(detail);
+      }
+    },
+    [updateFromOffset]
+  );
 
   useEffect(() => {
     window.addEventListener('pharma_clock_skew', handleClockSkew);
-    return () => window.removeEventListener('pharma_clock_skew', handleClockSkew);
-  }, [handleClockSkew]);
+    window.addEventListener('pharma_clock_sync', handleClockSync);
+    return () => {
+      window.removeEventListener('pharma_clock_skew', handleClockSkew);
+      window.removeEventListener('pharma_clock_sync', handleClockSync);
+    };
+  }, [handleClockSkew, handleClockSync]);
 
-  const dismiss = useCallback(() => {
-    setHasClockSkew(false);
-  }, []);
-
-  return { hasClockSkew, offset, dismiss };
+  return { hasClockSkew, offset };
 }
