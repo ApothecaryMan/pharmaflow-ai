@@ -77,6 +77,10 @@ export const FilterDropdownTest: React.FC = () => {
   const [dual3A, setDual3A] = useState(20);
   const [dual3B, setDual3B] = useState(60);
 
+  // Feral UI States
+  const [feralSoften, setFeralSoften] = useState(0);
+  const [feralNoise, setFeralNoise] = useState(30);
+
   return (
     <div className='p-6 max-w-[1800px] w-full mx-auto h-screen overflow-hidden flex flex-col'>
       {/* Header */}
@@ -891,6 +895,107 @@ export const FilterDropdownTest: React.FC = () => {
                   <span className='text-orange-400'>TOP: {dual3A}</span>
                   <span className='text-pink-400'>BTM: {dual3B}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CONTAINER 8: Feral UI Replica */}
+          <div className={`p-6 rounded-3xl ${CARD_BASE} border border-divider flex flex-col gap-6`}>
+            <div className='flex items-center gap-3 border-b border-divider pb-4'>
+              <div className='p-2 bg-[#483734]/10 rounded-lg text-[#96827d]'>
+                <Sparkles size={24} />
+              </div>
+              <h2 className='text-xl font-bold text-gray-800 dark:text-gray-100'>
+                Slider UI: Feral Replica (تصميم مشابه)
+              </h2>
+            </div>
+            
+            <div className='py-4'>
+              {/* The Feral Box */}
+              <div className='bg-[#483734] rounded-2xl p-6 flex flex-col gap-5 font-sans w-full max-w-sm shadow-xl'>
+                
+                {/* FINISH header */}
+                <div className='text-[#bcaea9] text-xs font-bold tracking-wider mb-1'>
+                  FINISH
+                </div>
+
+                {/* SOFTEN Row */}
+                <div className='flex items-center justify-between gap-4'>
+                  <div className='text-[#bcaea9] text-xs font-bold tracking-wider w-20 shrink-0'>
+                    SOFTEN
+                  </div>
+                  <div className='relative flex-1 h-8 bg-[#574441] rounded-xl flex items-center overflow-hidden shadow-inner group'>
+                    {/* Tick marks */}
+                    <div className='absolute inset-0 flex justify-evenly items-center pointer-events-none z-10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                    </div>
+                    
+                    <div 
+                      className='absolute left-0 top-0 h-full bg-[#96827d] transition-all duration-150'
+                      style={{ width: `${feralSoften}%` }}
+                    />
+                    {feralSoften > 0 && (
+                      <div 
+                        className='absolute top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#faeed3] rounded-full shadow-[0_0_3px_rgba(0,0,0,0.5)] pointer-events-none transition-all duration-150 z-10'
+                        style={{ left: `calc(${feralSoften}% - 1.5px)` }}
+                      />
+                    )}
+                    <span className='absolute right-4 text-[#fdfcf9] text-sm font-semibold pointer-events-none z-10'>
+                      {feralSoften}px
+                    </span>
+                    <input
+                      type='range'
+                      min='0'
+                      max='100'
+                      value={feralSoften}
+                      onChange={(e) => setFeralSoften(Number(e.target.value))}
+                      className='absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20'
+                    />
+                  </div>
+                </div>
+
+                {/* NOISE Row */}
+                <div className='flex items-center w-full'>
+                  <div className='relative flex-1 h-8 bg-[#574441] rounded-xl flex items-center overflow-hidden shadow-inner group'>
+                    {/* Inner Label */}
+                    <span className='absolute left-4 text-[#eaddd7] text-xs font-bold tracking-widest pointer-events-none z-20 mix-blend-overlay'>
+                      NOISE
+                    </span>
+                    {/* Tick marks */}
+                    <div className='absolute inset-0 flex justify-evenly items-center pointer-events-none z-10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                      <div className='w-[1px] h-2.5 bg-white opacity-40' />
+                    </div>
+                    
+                    <div 
+                      className='absolute left-0 top-0 h-full bg-[#96827d] transition-all duration-150'
+                      style={{ width: `${feralNoise}%` }}
+                    />
+                    <div 
+                      className='absolute top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#faeed3] rounded-full shadow-[0_0_3px_rgba(0,0,0,0.5)] pointer-events-none transition-all duration-150 z-20'
+                      style={{ left: `calc(${feralNoise}% - 1.5px)` }}
+                    />
+                    <span className='absolute right-4 text-[#fdfcf9] text-sm font-semibold pointer-events-none z-20'>
+                      {feralNoise}%
+                    </span>
+                    <input
+                      type='range'
+                      min='0'
+                      max='100'
+                      value={feralNoise}
+                      onChange={(e) => setFeralNoise(Number(e.target.value))}
+                      className='absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30'
+                    />
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
