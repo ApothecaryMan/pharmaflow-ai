@@ -205,6 +205,11 @@ const DrugInteractionsPage = createLazyPage(
   () => import('../components/prescriptions/DrugInteractionsPage')
 );
 const ShortagesPage = createLazyPage(() => import('../components/inventory/ShortagesPage'));
+const PerformanceMetrics = createLazyPage(() =>
+  import('../components/performance/PerformanceMetrics').then((m) => ({
+    default: m.PerformanceMetrics,
+  }))
+);
 
 export interface InjectedPageProps {
   color?: string;
@@ -942,6 +947,18 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'inventory',
     requiredProps: ['t', 'language', 'onViewChange', 'navigationParams'],
     permission: PERMISSIONS_MAPPING.inventory,
+    layout: 'standard',
+  },
+  'performance-metrics': {
+    id: 'performance-metrics',
+    component: PerformanceMetrics.component,
+    preload: PerformanceMetrics.preload,
+    menuLabel: 'Performance Metrics',
+    menuLabelAr: 'مقاييس الأداء',
+    icon: 'speed',
+    category: 'test',
+    requiredProps: [],
+    permission: 'system.debug',
     layout: 'standard',
   },
 };

@@ -79,7 +79,8 @@ export type ViewState =
   | 'filter-dropdown-test'
   | 'expenses'
   | 'cosmoceutical'
-  | 'theme-studio';
+  | 'theme-studio'
+  | 'performance-metrics';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

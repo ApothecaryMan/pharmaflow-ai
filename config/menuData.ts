@@ -255,6 +255,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'performance-metrics',
         label: 'Performance Metrics',
         items: [
+          { label: 'Network Monitor', view: 'performance-metrics', icon: 'network_check' },
           { label: 'KPI Dashboard', icon: 'speed' },
           { label: 'Business Metrics', icon: 'analytics' },
           { label: 'Operational Efficiency', icon: 'settings_suggest' },
