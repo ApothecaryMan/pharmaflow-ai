@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
@@ -46,7 +46,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
 
   usePageHelp(ORG_MANAGEMENT_HELP[language] || ORG_MANAGEMENT_HELP.EN);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!activeOrgId) return;
     setIsLoading(true);
     setError(null);
@@ -59,7 +59,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeOrgId, t.fetchError]);
 
   useEffect(() => {
     fetchData();
