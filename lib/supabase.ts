@@ -1,4 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { trackedFetch, initWebSocketTracker } from '@/utils/networkTracker';
+
+// Initialize WebSocket tracking for Supabase Realtime usage estimation
+if (typeof window !== 'undefined') {
+  initWebSocketTracker();
+}
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -182,6 +188,9 @@ export const supabase = createGuardedClient(
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+      },
+      global: {
+        fetch: trackedFetch,
       },
     }
   )

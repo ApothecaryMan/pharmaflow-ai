@@ -59,15 +59,15 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const [endingSessions, setEndingSessions] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
 
+  // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
+  const [, setTick] = useState(0);
+
   const currentUser = authService.getCurrentUserSync();
 
   const currentUserAgent =
     typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
 
-  // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
-  const [, setTick] = useState(0);
-
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     try {
       setLoading(true);
       // Scope to current user for faster indexed query
@@ -79,7 +79,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser?.userId, t.activeSessions.errorLoading]);
 
   const refreshSessions = useCallback(async () => {
     setRefreshing(true);
