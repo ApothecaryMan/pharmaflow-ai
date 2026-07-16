@@ -1,8 +1,14 @@
-import { AnimatePresence, motion } from 'framer-motion';
+
 import type React from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { preloadPage } from '../../hooks/layout/usePreloadPage';
 import { Tooltip } from './Tooltip';
+
+interface PageHeaderCtx {
+  disableAnimation: boolean;
+}
+const PageHeaderContext = createContext<PageHeaderCtx>({ disableAnimation: false });
+export const usePageHeader = () => useContext(PageHeaderContext);
 
 /**
  * PageHeader Component
@@ -59,6 +65,8 @@ interface PageHeaderProps {
   onToggleBottom?: () => void;
   /** Tooltip text for the toggle button */
   toggleTooltip?: string;
+  /** Allow SegmentedControl animation inside this PageHeader (default false) */
+  animatedCenter?: boolean;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -77,6 +85,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   showStatsToggle = false,
   onToggleBottom,
   toggleTooltip,
+  animatedCenter = false,
 }) => {
   const baseClasses = `flex flex-col shrink-0 relative ${mb}`;
   const stickyClasses = sticky ? 'sticky top-0 z-40' : '';
@@ -111,7 +120,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             if (btn?.dataset.value) preloadPage(btn.dataset.value);
           }}
         >
-          {centerContent}
+          <PageHeaderContext.Provider value={{ disableAnimation: !animatedCenter }}>
+            {centerContent}
+          </PageHeaderContext.Provider>
         </div>
 
         {/* Right Section: Filters / Search / Actions */}
@@ -138,20 +149,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       </div>
 
       {/* Expandable Bottom Section */}
-      {bottomContent && (
-        <AnimatePresence initial={false}>
-          {showBottom && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className='overflow-hidden'
-            >
-              <div className='px-page pb-4 pt-2'>{bottomContent}</div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {bottomContent && showBottom && (
+        <div className='px-page pb-4 pt-2'>{bottomContent}</div>
       )}
     </header>
   );
