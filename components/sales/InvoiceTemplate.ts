@@ -9,6 +9,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { printDocument } from '../../utils/printing';
+import { getReceiptFontsCSS } from '../../utils/printing';
 import { generateLayout2HTML } from './InvoiceLayout2';
 import { generateLayout3HTML } from './InvoiceLayout3';
 import { generateLayout4HTML } from './InvoiceLayout4';
@@ -130,29 +131,8 @@ export function generateLayout1HTML(
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <style>
-        /* Local Font Declarations */
-        @font-face {
-          font-family: 'Fake Receipt';
-          src: url('/fonts/fake-receipt.woff') format('woff');
-          font-weight: normal;
-          font-style: normal;
-          font-display: swap;
-        }
-        @font-face {
-          font-family: 'Receiptional Receipt';
-          src: url('/fonts/receiptional-receipt.ttf') format('truetype');
-          font-weight: normal;
-          font-style: normal;
-          font-display: swap;
-        }
-        @font-face {
-          font-family: 'Raqami';
-          src: url('/fonts/Raqami.ttf') format('truetype');
-          font-weight: 700;
-          font-style: normal;
-          word-spacing: -2px;
-          font-display: swap;
-        }
+        /* Embedded Font Declarations */
+        ${getReceiptFontsCSS()}
         
         /* 80mm Thermal Receipt - ~300px at 72dpi */
         @page { 

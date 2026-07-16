@@ -12,3 +12,4 @@ export type { PrintOrientation, PrintShellOptions } from './printShell';
 export { deriveOrientation, escapeHtml, wrapPrintHTML } from './printShell';
 export type { OpenPrintWindowOptions } from './printWindow';
 export { mmToPopupSize, openPrintWindow, printViaIframe } from './printWindow';
+export { getReceiptFontsCSS } from './receiptFonts';

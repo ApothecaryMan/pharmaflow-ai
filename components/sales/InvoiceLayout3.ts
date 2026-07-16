@@ -1,6 +1,7 @@
 import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
+import { getReceiptFontsCSS } from '../../utils/printing';
 
 export function generateLayout3HTML(
   sale: Sale,
@@ -18,29 +19,8 @@ export function generateLayout3HTML(
     <head>
       <title>Receipt #${sale.id}</title>
       <style>
-        /* Local Font Declarations */
-        @font-face {
-          font-family: 'Fake Receipt';
-          src: url('/fonts/fake-receipt.woff') format('woff');
-          font-weight: normal;
-          font-style: normal;
-          font-display: swap;
-        }
-        @font-face {
-          font-family: 'Receiptional Receipt';
-          src: url('/fonts/receiptional-receipt.ttf') format('truetype');
-          font-weight: normal;
-          font-style: normal;
-          font-display: swap;
-        }
-        @font-face {
-          font-family: 'Raqami';
-          src: url('/fonts/Raqami.ttf') format('truetype');
-          font-weight: 700;
-          font-style: normal;
-          word-spacing: -2px;
-          font-display: swap;
-        }
+        /* Embedded Font Declarations */
+        ${getReceiptFontsCSS()}
         
         @page { margin: 0; size: 80mm auto; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
