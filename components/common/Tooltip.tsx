@@ -132,14 +132,17 @@ export const Tooltip: React.FC<{
     };
   }, [show, position, tooltipStyle]);
 
+  const appearDelay = tooltipStyle === 'box' ? 0 : delay;
+  const exitDelay = tooltipStyle === 'box' ? 0 : 150;
+
   const hE = () => {
     if (disabled) return;
     if (timeout.current) clearTimeout(timeout.current);
-    timeout.current = setTimeout(() => setShow(true), delay);
+    timeout.current = setTimeout(() => setShow(true), appearDelay);
   };
   const hL = () => {
     if (timeout.current) clearTimeout(timeout.current);
-    timeout.current = setTimeout(() => setShow(false), 150);
+    timeout.current = setTimeout(() => setShow(false), exitDelay);
   };
 
   return (
