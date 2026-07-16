@@ -3,9 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useUI } from '../../context/UIContext';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { CustomCssEditor } from '../common/CustomCssEditor';
-import { PillSlider } from '../common/PillSlider';
-import { SearchInput } from '../common/SearchInput';
-import { SegmentedControl } from '../common/SegmentedControl';
+import { FeralSlider } from '../common/FeralSlider';
 import { SmallCard } from '../common/SmallCard';
 import { Switch } from '../common/Switch';
 import { DesignMcpBridge } from './DesignMcpBridge';
@@ -13,9 +11,6 @@ import { BlendModePicker, FilterBuilder, ShadowBuilder } from './EffectsControls
 import { PresetSelector } from './PresetSelector';
 
 type CssPropMap = Record<string, string>;
-
-const gradientPct = (val: number, min: number, max: number) =>
-  ((val - min) / (max - min || 1)) * 100;
 
 const cssToProps = (css: string): CssPropMap => {
   const props: CssPropMap = {};
@@ -537,9 +532,9 @@ const getPropValue = (props: CssPropMap, key: string): string => {
 export const ThemeStudio: React.FC = () => {
   const { customCardCss, setCustomCardCss, enableCustomCardCss, setEnableCustomCardCss } = useUI();
   const [openCategories, setOpenCategories] = useState<Set<string>>(
-    new Set([CSS_CATEGORIES[0].id])
+    () => new Set([CSS_CATEGORIES[0].id])
   );
-  const [inactiveCategories, setInactiveCategories] = useState<Set<string>>(new Set());
+  const [inactiveCategories, setInactiveCategories] = useState<Set<string>>(() => new Set());
   const lastKnownProps = useRef<CssPropMap>({});
 
   const currentProps = useMemo(() => cssToProps(customCardCss || ''), [customCardCss]);
@@ -602,6 +597,28 @@ export const ThemeStudio: React.FC = () => {
     },
     [currentProps, setCustomCardCss]
   );
+
+  const updatePropRef = useRef(updateProp);
+  updatePropRef.current = updateProp;
+  const propHandlers = useRef<Record<string, (v: string) => void>>({});
+  const sliderHandlers = useRef<Record<string, (v: number) => void>>({});
+  const handlersReady = useRef(false);
+
+  if (!handlersReady.current) {
+    CSS_CATEGORIES.forEach((cat) => {
+      cat.properties.forEach((prop) => {
+        propHandlers.current[prop.key] = (v: string) =>
+          updatePropRef.current(prop.key, v);
+        sliderHandlers.current[prop.key] = (val: number) => {
+          const min = prop.min || 0;
+          const max = prop.max || 100;
+          const actualVal = (val / 100) * (max - min) + min;
+          updatePropRef.current(prop.key, `${actualVal}${prop.unit || ''}`);
+        };
+      });
+    });
+    handlersReady.current = true;
+  }
 
   const toggleCategory = useCallback((id: string) => {
     setOpenCategories((prev) => {
@@ -710,7 +727,7 @@ export const ThemeStudio: React.FC = () => {
                               </span>
                               <ShadowBuilder
                                 value={val}
-                                onChange={(v) => updateProp(prop.key, v)}
+                                onChange={propHandlers.current[prop.key]}
                               />
                             </div>
                           );
@@ -723,7 +740,7 @@ export const ThemeStudio: React.FC = () => {
                               </span>
                               <FilterBuilder
                                 value={val}
-                                onChange={(v) => updateProp(prop.key, v)}
+                                onChange={propHandlers.current[prop.key]}
                                 backdrop={prop.type === 'backdrop-filter'}
                               />
                             </div>
@@ -737,47 +754,40 @@ export const ThemeStudio: React.FC = () => {
                               </span>
                               <BlendModePicker
                                 value={val}
-                                onChange={(v) => updateProp(prop.key, v)}
+                                onChange={propHandlers.current[prop.key]}
                               />
                             </div>
                           );
                         }
 
-                        if (prop.type === 'slider') {
+                          if (prop.type === 'slider') {
                           const rawNum = val ? stripUnit(val) : prop.min || 0;
                           const sliderMin = prop.min || 0;
                           const sliderMax = prop.max || 100;
+                          const mappedValue = Math.round(((rawNum - sliderMin) / (sliderMax - sliderMin || 1)) * 100);
+                          const handleChange = sliderHandlers.current[prop.key];
+                          const handleReset = () => propHandlers.current[prop.key]('');
                           return (
-                            <div key={prop.key} className='flex items-center justify-between gap-2'>
-                              <span className='text-[10px] font-medium text-(--text-secondary) capitalize shrink-0'>
-                                {prop.label}
-                              </span>
-                              <div className='flex items-center gap-1'>
-                                <PillSlider
-                                  min={sliderMin}
-                                  max={sliderMax}
-                                  step={prop.step || 1}
-                                  value={rawNum}
-                                  onChange={(v) => updateProp(prop.key, `${v}${prop.unit || ''}`)}
-                                  className='w-24 md:w-32'
-                                  formatValue={(v) => `${v}${prop.unit || ''}`}
-                                  backgroundStyle={{
-                                    background: `linear-gradient(to right, var(--primary-500) ${gradientPct(rawNum, sliderMin, sliderMax)}%, transparent ${gradientPct(rawNum, sliderMin, sliderMax)}%)`,
-                                  }}
-                                />
-                                {val && (
-                                  <button
-                                    onClick={() => updateProp(prop.key, '')}
-                                    className='w-4 h-4 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0 ml-1'
-                                    title='Reset'
-                                    type='button'
-                                  >
-                                    <span className='material-symbols-rounded text-[12px]'>
-                                      close
-                                    </span>
-                                  </button>
-                                )}
-                              </div>
+                            <div key={prop.key} className='relative'>
+                              <FeralSlider
+                                label={prop.label}
+                                value={mappedValue}
+                                onChange={handleChange}
+                                labelPosition='inside'
+                                unit={prop.unit || ''}
+                              />
+                              {val && (
+                                <button
+                                  onClick={handleReset}
+                                  className='absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 rounded hover:bg-red-500/10 text-red-500 flex items-center justify-center z-40'
+                                  title='Reset'
+                                  type='button'
+                                >
+                                  <span className='material-symbols-rounded text-[12px]'>
+                                    close
+                                  </span>
+                                </button>
+                              )}
                             </div>
                           );
                         }
@@ -884,23 +894,18 @@ export const ThemeStudio: React.FC = () => {
           <div className='lg:col-span-6 xl:col-span-7 flex flex-col overflow-y-auto pr-1 pb-10 scrollbar-none'>
             <div className='min-h-full flex flex-wrap gap-3 items-start content-start'>
               <div className='w-full flex flex-wrap xl:flex-nowrap gap-3'>
-                <SearchInput
-                  value=''
-                  onSearchChange={() => {}}
-                  placeholder='Search...'
-                  wrapperClassName='flex-1 min-w-[150px]'
-                />
+                <div className='flex-1 min-w-[150px] bg-(--bg-input) border border-(--border-divider) rounded-lg px-3 py-2 flex items-center gap-2 text-xs text-(--text-tertiary)'>
+                  <span className='material-symbols-rounded text-[16px]'>search</span>
+                  Search...
+                </div>
 
-                <SegmentedControl
-                  options={[
-                    { value: '1', label: 'Day' },
-                    { value: '2', label: 'Week' },
-                    { value: '3', label: 'Month' },
-                  ]}
-                  value='1'
-                  onChange={() => {}}
-                  className='flex-1 min-w-[180px]'
-                />
+                <div className='flex-1 min-w-[180px] flex bg-(--bg-input) border border-(--border-divider) rounded-lg overflow-hidden text-xs font-medium'>
+                  {['Day', 'Week', 'Month'].map((l) => (
+                    <div key={l} className='flex-1 py-2 text-center text-(--text-tertiary) bg-(--bg-card)/50'>
+                      {l}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <SmallCard

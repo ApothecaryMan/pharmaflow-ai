@@ -1,5 +1,4 @@
-import type React from 'react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, type FC } from 'react';
 import { PillSlider } from '../common/PillSlider';
 import { Switch } from '../common/Switch';
 
@@ -138,7 +137,7 @@ function formatShadowLayer(l: ShadowLayer): string {
   return `${l.inset ? 'inset ' : ''}${l.x}px ${l.y}px ${l.blur}px ${l.spread}px ${l.color}`;
 }
 
-export const ShadowBuilder: React.FC<{ value: string; onChange: (v: string) => void }> = ({
+export const ShadowBuilder: FC<{ value: string; onChange: (v: string) => void }> = React.memo(({
   value,
   onChange,
 }) => {
@@ -257,7 +256,7 @@ export const ShadowBuilder: React.FC<{ value: string; onChange: (v: string) => v
       </button>
     </div>
   );
-};
+});
 
 interface FilterFnDef {
   key: string;
@@ -297,11 +296,11 @@ function formatFilterString(map: Record<string, number>): string {
     .join(' ');
 }
 
-export const FilterBuilder: React.FC<{
+export const FilterBuilder: FC<{
   value: string;
   onChange: (v: string) => void;
   backdrop?: boolean;
-}> = ({ value, onChange, backdrop = false }) => {
+}> = React.memo(({ value, onChange, backdrop = false }) => {
   const active = useMemo(() => parseFilterString(value), [value]);
 
   const toggle = (fn: FilterFnDef, on: boolean) => {
@@ -366,7 +365,7 @@ export const FilterBuilder: React.FC<{
       </div>
     </div>
   );
-};
+});
 
 const BLEND_MODES = [
   '',
@@ -386,7 +385,7 @@ const BLEND_MODES = [
   'luminosity',
 ];
 
-export const BlendModePicker: React.FC<{ value: string; onChange: (v: string) => void }> = ({
+export const BlendModePicker: FC<{ value: string; onChange: (v: string) => void }> = React.memo(({
   value,
   onChange,
 }) => (
@@ -416,4 +415,4 @@ export const BlendModePicker: React.FC<{ value: string; onChange: (v: string) =>
       );
     })}
   </div>
-);
+));

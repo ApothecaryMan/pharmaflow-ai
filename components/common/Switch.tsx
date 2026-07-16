@@ -57,7 +57,7 @@ export const Switch: React.FC<SwitchProps> = ({
       }, 50);
       isFirst.current = false;
     }
-  });
+  }, []);
 
   const handleClick = () => {
     if (!disabled) onChange(!checked);

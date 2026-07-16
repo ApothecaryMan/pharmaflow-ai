@@ -1,4 +1,4 @@
-import { type FC, useEffect, useRef } from 'react';
+import { type FC, useCallback, useEffect, useRef } from 'react';
 import { useUI } from '../../context/UIContext';
 
 const WS_URL = `ws://localhost:${import.meta.env.VITE_MCP_WS_PORT || '3456'}`;
@@ -23,8 +23,10 @@ export const DesignMcpBridge: FC = () => {
   const { setCustomCardCss, setEnableCustomCardCss } = useUI();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const settersRef = useRef({ setCustomCardCss, setEnableCustomCardCss });
+  settersRef.current = { setCustomCardCss, setEnableCustomCardCss };
 
-  const connect = () => {
+  const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
@@ -36,8 +38,8 @@ export const DesignMcpBridge: FC = () => {
           const msg: ThemeUpdateMessage = JSON.parse(event.data);
           if (msg.type === 'theme_update') {
             const css = propsToCss(msg.state.properties);
-            setCustomCardCss(css);
-            setEnableCustomCardCss(msg.state.enabled);
+            settersRef.current.setCustomCardCss(css);
+            settersRef.current.setEnableCustomCardCss(msg.state.enabled);
           }
         } catch {
           /* ignore malformed messages */
@@ -54,7 +56,7 @@ export const DesignMcpBridge: FC = () => {
     } catch {
       reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY);
     }
-  };
+  }, []);
 
   useEffect(() => {
     connect();

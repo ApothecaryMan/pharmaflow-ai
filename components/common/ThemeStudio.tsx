@@ -1,9 +1,11 @@
 import type React from 'react';
 import { useEffect } from 'react';
 import { useUI } from '../../context/UIContext';
+import { useDebounce } from '../../hooks/common/useDebounce';
 
 export const ThemeStudio: React.FC = () => {
   const { customCardCss, enableCustomCardCss } = useUI();
+  const debouncedCss = useDebounce(customCardCss, 60);
 
   useEffect(() => {
     let styleEl = document.getElementById('pharma-custom-card-css') as HTMLStyleElement | null;
@@ -13,8 +15,8 @@ export const ThemeStudio: React.FC = () => {
       document.head.appendChild(styleEl);
     }
 
-    if (customCardCss && enableCustomCardCss) {
-      const processedCss = customCardCss
+    if (debouncedCss && enableCustomCardCss) {
+      const processedCss = debouncedCss
         .split(';')
         .map((part) => {
           const trimmed = part.trim();
@@ -24,7 +26,7 @@ export const ThemeStudio: React.FC = () => {
         })
         .join('; ');
 
-      const cssWithoutPadding = customCardCss
+      const cssWithoutPadding = debouncedCss
         .split(';')
         .filter(
           (part) =>
@@ -67,7 +69,7 @@ export const ThemeStudio: React.FC = () => {
     return () => {
       document.getElementById('pharma-custom-card-css')?.remove();
     };
-  }, [customCardCss, enableCustomCardCss]);
+  }, [debouncedCss, enableCustomCardCss]);
 
   return null;
 };

@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import React, { type FC } from 'react';
 import { useUI } from '../../context/UIContext';
 
 interface PresetStyle {
@@ -104,7 +104,7 @@ const presetToCss = (style: PresetStyle): string => {
     .join(';\n');
 };
 
-export const PresetSelector: FC = () => {
+export const PresetSelector: FC = React.memo(() => {
   const { setCustomCardCss } = useUI();
 
   return (
@@ -137,4 +137,4 @@ export const PresetSelector: FC = () => {
       ))}
     </div>
   );
-};
+});
