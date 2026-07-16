@@ -38,6 +38,9 @@ export const queryKeys = {
   },
   org: {
     detail: (orgId: string) => ['org', orgId] as const,
+    members: (orgId: string) => ['org', 'members', orgId] as const,
+    subscription: (orgId: string) => ['org', 'subscription', orgId] as const,
+    logs: (orgId: string, limit: number) => ['org', 'logs', orgId, limit] as const,
   },
   branches: {
     all: (orgId: string) => ['branches', orgId] as const,

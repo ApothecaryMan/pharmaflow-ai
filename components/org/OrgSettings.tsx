@@ -1,13 +1,18 @@
+import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useBranches } from '../../hooks/queries/useBranchesQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import {
+  useActiveOrg,
+  useOrgLogs,
+  useOrgMembers,
+  useOrgSubscription,
+} from '../../hooks/queries/useOrgQuery';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { type AuditEntry, auditService } from '../../services/audit/auditService';
+import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { employeeService } from '../../services/hr/employeeService';
-import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
-import { useAuthStore } from '../../stores/authStore';
-import type { Branch, Employee, Organization, OrgMember, Subscription } from '../../types';
 import { SmartInput } from '../common/SmartInputs';
 import { InviteModal } from './InviteModal';
 
@@ -18,61 +23,42 @@ interface OrgSettingsProps {
 
 export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color: _color }) => {
   const _t = TRANSLATIONS[language];
-  const refreshAll = useAuthStore((s) => s.refreshAll);
+  const queryClient = useQueryClient();
 
-  const [org, setOrg] = useState<Organization | null>(null);
-  const [members, setMembers] = useState<OrgMember[]>([]);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [logs, setLogs] = useState<AuditEntry[]>([]);
+  const [activeOrgId] = useState(() => orgService.getActiveOrgId() || '');
+
+  const { data: org, isLoading: isOrgLoading } = useActiveOrg(activeOrgId);
+  const { data: members = [], isLoading: isMembersLoading } = useOrgMembers(activeOrgId);
+  const { data: subscription, isLoading: isSubLoading } = useOrgSubscription(activeOrgId);
+  const { data: branches = [], isLoading: isBranchesLoading } = useBranches(activeOrgId);
+  const { data: allEmployees = [], isLoading: isEmployeesLoading } = useEmployees('ALL');
+  const { data: logs = [], isLoading: isLogsLoading } = useOrgLogs(activeOrgId, 10);
+
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [stats, setStats] = useState({ branches: 0, staff: 0 });
-
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingName, setEditingName] = useState('');
 
-  const loadData = useCallback(async () => {
-    try {
-      const activeOrgId = orgService.getActiveOrgId();
-      if (activeOrgId) {
-        const [orgData, membersData, subData, branchesData, employeesData, logsData] =
-          await Promise.all([
-            orgService.getById(activeOrgId),
-            orgService.getMembers(activeOrgId),
-            orgService.getSubscription(activeOrgId),
-            branchService.getAll(activeOrgId),
-            employeeService.getAll(),
-            auditService.getOrgLogs(activeOrgId, 10),
-          ]);
-
-        setOrg(orgData);
-        setEditingName(orgData?.name || '');
-        setMembers(membersData || []);
-        setSubscription(subData);
-        setAllEmployees(employeesData);
-        setBranches(branchesData);
-        setLogs(logsData);
-
-        const orgBranches = branchesData.filter((b) => b.orgId === activeOrgId);
-        setStats({
-          branches: orgBranches.length,
-          staff: employeesData.filter(
-            (e) => e.orgId === activeOrgId || orgBranches.some((b) => b.id === e.branchId)
-          ).length,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load organization data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (org?.name) {
+      setEditingName(org.name);
+    }
+  }, [org?.name]);
+
+  const isLoading =
+    isOrgLoading ||
+    isMembersLoading ||
+    isSubLoading ||
+    isBranchesLoading ||
+    isEmployeesLoading ||
+    isLogsLoading;
+
+  const orgBranches = branches.filter((b) => b.orgId === activeOrgId);
+  const stats = {
+    branches: orgBranches.length,
+    staff: allEmployees.filter(
+      (e) => e.orgId === activeOrgId || orgBranches.some((b) => b.id === e.branchId)
+    ).length,
+  };
 
   const handleUpdateOrg = async () => {
     if (!org || !editingName.trim() || isSubmitting) return;
@@ -80,8 +66,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color: _colo
     setIsSubmitting(true);
     try {
       await orgService.update(org.id, { name: editingName });
-      await loadData();
-      await refreshAll();
+      queryClient.invalidateQueries({ queryKey: queryKeys.org.detail(org.id) });
     } catch (error) {
       console.error('Failed to update organization:', error);
     } finally {
