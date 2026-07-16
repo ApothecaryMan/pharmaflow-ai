@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export type NetworkCategory = 'Auth' | 'PostgREST' | 'Realtime' | 'Functions' | 'Other';
 
@@ -8,6 +8,40 @@ export interface NetworkMetrics {
 }
 
 export type NetworkUsage = Record<NetworkCategory, NetworkMetrics>;
+
+// ---- Per-Request Tracking Types ----
+
+export interface TrackedRequest {
+  id: string;
+  url: string; // path + search only (e.g. /rest/v1/products?id=1)
+  fullUrl: string;
+  method: string;
+  category: NetworkCategory;
+  egress: number;
+  ingress: number;
+  duration: number; // ms (until response headers received)
+  status: number;
+  success: boolean;
+  timestamp: number;
+}
+
+export interface EndpointMetrics {
+  endpoint: string;
+  method: string;
+  category: NetworkCategory;
+  callCount: number;
+  totalEgress: number;
+  totalIngress: number;
+  totalDuration: number;
+  avgDuration: number;
+  minDuration: number;
+  maxDuration: number;
+  errorCount: number;
+  successCount: number;
+  lastCalled: number;
+}
+
+// ---- Existing Cumulative Metrics ----
 
 const initialUsage: NetworkUsage = {
   Auth: { egress: 0, ingress: 0 },
@@ -33,7 +67,11 @@ function notify() {
   listeners.forEach((l) => l(currentUsage));
 }
 
-export function updateMetrics(category: NetworkCategory, type: 'egress' | 'ingress', bytes: number) {
+export function updateMetrics(
+  category: NetworkCategory,
+  type: 'egress' | 'ingress',
+  bytes: number
+) {
   if (bytes > 0) {
     usage[category][type] += bytes;
     notify();
@@ -71,6 +109,134 @@ export function resetNetworkUsage() {
   notify();
 }
 
+// ---- Per-Request History ----
+
+const MAX_HISTORY = 1000;
+let requestHistory: TrackedRequest[] = [];
+let nextRequestId = 1;
+
+type HistoryListener = () => void;
+const historyListeners = new Set<HistoryListener>();
+
+function notifyHistory() {
+  historyListeners.forEach((l) => l());
+}
+
+function getUrlPath(fullUrl: string): string {
+  try {
+    const u = new URL(fullUrl);
+    return u.pathname + u.search;
+  } catch {
+    return fullUrl;
+  }
+}
+
+function addToHistory(entry: Omit<TrackedRequest, 'id' | 'url'> & { url: string }) {
+  const record: TrackedRequest = {
+    ...entry,
+    id: String(nextRequestId++),
+    url: getUrlPath(entry.url),
+  };
+  requestHistory.push(record);
+  if (requestHistory.length > MAX_HISTORY) {
+    requestHistory.splice(0, requestHistory.length - MAX_HISTORY);
+  }
+  notifyHistory();
+}
+
+function computeEndpointMetrics(history: TrackedRequest[]): EndpointMetrics[] {
+  const map = new Map<string, EndpointMetrics>();
+
+  for (const req of history) {
+    const key = `${req.method}:${req.url}`;
+    let m = map.get(key);
+    if (!m) {
+      m = {
+        endpoint: req.url,
+        method: req.method,
+        category: req.category,
+        callCount: 0,
+        totalEgress: 0,
+        totalIngress: 0,
+        totalDuration: 0,
+        avgDuration: 0,
+        minDuration: Infinity,
+        maxDuration: 0,
+        errorCount: 0,
+        successCount: 0,
+        lastCalled: 0,
+      };
+      map.set(key, m);
+    }
+
+    m.callCount++;
+    m.totalEgress += req.egress;
+    m.totalIngress += req.ingress;
+    m.totalDuration += req.duration;
+    m.minDuration = Math.min(m.minDuration, req.duration);
+    m.maxDuration = Math.max(m.maxDuration, req.duration);
+    if (req.success) m.successCount++;
+    else m.errorCount++;
+    m.lastCalled = Math.max(m.lastCalled, req.timestamp);
+  }
+
+  const result: EndpointMetrics[] = [];
+  for (const m of map.values()) {
+    m.avgDuration = m.callCount > 0 ? m.totalDuration / m.callCount : 0;
+    if (m.minDuration === Infinity) m.minDuration = 0;
+    result.push(m);
+  }
+
+  return result;
+}
+
+export function getRecentRequests(n: number = 50): TrackedRequest[] {
+  return requestHistory.slice(-n).reverse();
+}
+
+export function getEndpointMetrics(): EndpointMetrics[] {
+  return computeEndpointMetrics(requestHistory);
+}
+
+export function resetRequestHistory() {
+  requestHistory = [];
+  notifyHistory();
+}
+
+export function useRecentRequests(n: number = 50): TrackedRequest[] {
+  const [history, setHistory] = useState<TrackedRequest[]>(() =>
+    requestHistory.slice(-n).reverse()
+  );
+
+  useEffect(() => {
+    setHistory(requestHistory.slice(-n).reverse());
+    const handler = () => setHistory(requestHistory.slice(-n).reverse());
+    historyListeners.add(handler);
+    return () => {
+      historyListeners.delete(handler);
+    };
+  }, [n]);
+
+  return history;
+}
+
+export function useEndpointMetrics(): EndpointMetrics[] {
+  const [metrics, setMetrics] = useState<EndpointMetrics[]>(() =>
+    computeEndpointMetrics(requestHistory)
+  );
+
+  useEffect(() => {
+    setMetrics(computeEndpointMetrics(requestHistory));
+    const handler = () => setMetrics(computeEndpointMetrics(requestHistory));
+    historyListeners.add(handler);
+    return () => {
+      historyListeners.delete(handler);
+    };
+  }, []);
+
+  return metrics;
+}
+
 // ----------------------------------------------------
 // Trackers
 // ----------------------------------------------------
@@ -92,7 +258,8 @@ export const trackedFetch: typeof fetch = async (input, init) => {
         : input instanceof Request
           ? input.url
           : '';
-          
+
+  const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
   const category = determineCategory(url);
 
   // Calculate Egress
@@ -120,26 +287,65 @@ export const trackedFetch: typeof fetch = async (input, init) => {
   updateMetrics(category, 'egress', egressBytes);
 
   // Perform actual fetch
+  const start = performance.now();
   const response = await window.fetch(input, init);
+  const duration = performance.now() - start;
 
   // Calculate Ingress
   const clone = response.clone();
   const contentLength = clone.headers.get('content-length');
-  
+
   let headerSize = 0;
   clone.headers.forEach((value, key) => {
     headerSize += key.length + value.length + 4; // ": \r\n"
   });
 
+  const status = response.status;
+  const success = response.ok;
+  const timestamp = Date.now();
+
   if (contentLength) {
     const bodySize = parseInt(contentLength, 10);
-    updateMetrics(category, 'ingress', bodySize + headerSize);
+    const ingressBytes = bodySize + headerSize;
+    updateMetrics(category, 'ingress', ingressBytes);
+    addToHistory({
+      url,
+      fullUrl: url,
+      method,
+      category,
+      egress: egressBytes,
+      ingress: ingressBytes,
+      duration,
+      status,
+      success,
+      timestamp,
+    });
   } else {
+    addToHistory({
+      url,
+      fullUrl: url,
+      method,
+      category,
+      egress: egressBytes,
+      ingress: 0,
+      duration,
+      status,
+      success,
+      timestamp,
+    });
     // Fallback to reading the blob if content-length is missing (e.g., chunked transfer)
+    const entryTimestamp = timestamp;
     clone
       .blob()
       .then((blob) => {
-        updateMetrics(category, 'ingress', blob.size + headerSize);
+        const ingressBytes = blob.size + headerSize;
+        updateMetrics(category, 'ingress', ingressBytes);
+        // Update the last matching history entry
+        const last = requestHistory[requestHistory.length - 1];
+        if (last && last.timestamp === entryTimestamp) {
+          last.ingress = ingressBytes;
+          notifyHistory();
+        }
       })
       .catch(() => {
         // Ignore blob read errors in background
