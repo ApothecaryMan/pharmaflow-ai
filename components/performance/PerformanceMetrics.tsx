@@ -74,11 +74,37 @@ function badgeClass(method: string) {
 }
 
 function buildChartData(metrics: EndpointMetrics[], sortKey: keyof EndpointMetrics, limit = 10) {
-  return [...metrics]
+  const grouped = new Map<string, EndpointMetrics>();
+
+  for (const m of metrics) {
+    const path = cleanEndpoint(m.endpoint);
+    const key = `${m.method}:${path}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.callCount += m.callCount;
+      existing.totalEgress += m.totalEgress;
+      existing.totalIngress += m.totalIngress;
+      existing.totalDuration += m.totalDuration;
+      existing.errorCount += m.errorCount;
+      existing.successCount += m.successCount;
+      existing.minDuration = Math.min(existing.minDuration, m.minDuration);
+      existing.maxDuration = Math.max(existing.maxDuration, m.maxDuration);
+      existing.lastCalled = Math.max(existing.lastCalled, m.lastCalled);
+    } else {
+      grouped.set(key, { ...m, endpoint: path });
+    }
+  }
+
+  const merged = Array.from(grouped.values());
+  for (const m of merged) {
+    m.avgDuration = m.callCount > 0 ? m.totalDuration / m.callCount : 0;
+  }
+
+  return [...merged]
     .sort((a, b) => (b[sortKey] as number) - (a[sortKey] as number))
     .slice(0, limit)
     .map((m, i) => ({
-      name: `${m.method} ${cleanEndpoint(m.endpoint)}`,
+      name: `${m.method} ${m.endpoint}`,
       value: m[sortKey] as number,
       fill: CHART_COLORS[i % CHART_COLORS.length],
       errorRate: m.callCount > 0 ? ((m.errorCount / m.callCount) * 100).toFixed(1) : '0.0',
