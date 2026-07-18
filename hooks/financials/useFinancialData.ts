@@ -26,6 +26,8 @@ interface UseFinancialDataResult {
 
 export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFinancialDataResult {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const branches = useAuthStore((s) => s.branches);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [kpis, setKpis] = useState<FinancialKPIs | null>(null);
   const [daily, setDaily] = useState<DailyFinancialData[]>([]);
@@ -36,9 +38,20 @@ export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFin
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastFetchKeyRef = useRef<string | undefined>(undefined);
+  const canView =
+    permissionsService.can('reports.view_intelligence') ||
+    permissionsService.can('reports.view_financial');
 
   const fetchData = useCallback(
     async (isRefresh = false) => {
+      const hasAuthorizedBranch =
+        Boolean(activeBranchId) && branches.some((branch) => branch.id === activeBranchId);
+
+      if (isAuthLoading || !hasAuthorizedBranch) {
+        setLoading(isAuthLoading);
+        return;
+      }
+
       const fetchKey = `${activeBranchId}-${period}`;
 
       // Prevent duplicate fetches for the same branch and period unless it's a manual refresh
@@ -88,16 +101,13 @@ export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFin
         }
       }
     },
-    [period, activeBranchId]
+    [period, activeBranchId, branches, isAuthLoading]
   );
 
   useEffect(() => {
-    const canView =
-      permissionsService.can('reports.view_intelligence') ||
-      permissionsService.can('reports.view_financial');
-    if (canView) {
+    if (canView && !isAuthLoading && activeBranchId) {
       fetchData();
-    } else {
+    } else if (!isAuthLoading) {
       setLoading(false);
     }
 
@@ -107,7 +117,7 @@ export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFin
       }
       lastFetchKeyRef.current = undefined;
     };
-  }, [fetchData]);
+  }, [fetchData, canView, isAuthLoading, activeBranchId]);
 
   const refresh = useCallback(() => {
     fetchData(true);

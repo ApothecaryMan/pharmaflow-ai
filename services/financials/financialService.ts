@@ -11,6 +11,40 @@ import type {
 import { money } from '../../utils/money';
 import { dateRangeService, type FinancialPeriod } from './dateRangeService';
 
+const EMPTY_SUMMARY: FinancialSummary = {
+  gross_revenue: 0,
+  return_revenue: 0,
+  net_revenue: 0,
+  gross_cogs: 0,
+  return_cogs: 0,
+  net_cogs: 0,
+  gross_profit: 0,
+  expenses_total: 0,
+  net_profit: 0,
+  total_transactions: 0,
+  total_units_sold: 0,
+  total_returns_count: 0,
+};
+
+function isRLSError(err: any): boolean {
+  const msg = err?.message || err?.error?.message || err?.details || '';
+  return (
+    msg.includes('infinite recursion') ||
+    msg.includes('42P17') ||
+    msg.includes('policy for relation') ||
+    msg.includes('stack depth') ||
+    msg.includes('max_stack_depth')
+  );
+}
+
+function handleFallbackError(err: unknown, context: string): void {
+  if (isRLSError(err)) {
+    console.error(`[financial] ${context}: RLS policy error detected — returning empty data. Fix required on DB.`, err);
+  } else {
+    console.warn(`[financial] ${context}: fallback error —`, err);
+  }
+}
+
 export interface FinancialSummary extends FinancialReportSummary {
   expenses_total: number;
   net_profit: number;
@@ -371,15 +405,41 @@ export const financialService = {
       .lte('recorded_at', end);
     if (branchId) expensesQuery = expensesQuery.eq('branch_id', branchId);
 
-    const [salesRes, returnsRes, expensesRes] = await Promise.all([
+    const [salesRes, returnsRes, expensesRes] = await Promise.allSettled([
       salesQuery,
       returnsQuery,
       expensesQuery,
     ]);
 
-    const sales = salesRes.data || [];
-    const returns = returnsRes.data || [];
-    const expenses = expensesRes.data || [];
+    if (salesRes.status === 'rejected') {
+      handleFallbackError(salesRes.reason, 'fallbackFinancialSummary sales query rejected');
+      return EMPTY_SUMMARY;
+    }
+    if (returnsRes.status === 'rejected') {
+      handleFallbackError(returnsRes.reason, 'fallbackFinancialSummary returns query rejected');
+      return EMPTY_SUMMARY;
+    }
+    if (expensesRes.status === 'rejected') {
+      handleFallbackError(expensesRes.reason, 'fallbackFinancialSummary expenses query rejected');
+      return EMPTY_SUMMARY;
+    }
+
+    if (salesRes.value.error) {
+      handleFallbackError(salesRes.value.error, 'fallbackFinancialSummary sales query error');
+      return EMPTY_SUMMARY;
+    }
+    if (returnsRes.value.error) {
+      handleFallbackError(returnsRes.value.error, 'fallbackFinancialSummary returns query error');
+      return EMPTY_SUMMARY;
+    }
+    if (expensesRes.value.error) {
+      handleFallbackError(expensesRes.value.error, 'fallbackFinancialSummary expenses query error');
+      return EMPTY_SUMMARY;
+    }
+
+    const sales = salesRes.status === 'fulfilled' ? salesRes.value.data || [] : [];
+    const returns = returnsRes.status === 'fulfilled' ? returnsRes.value.data || [] : [];
+    const expenses = expensesRes.status === 'fulfilled' ? expensesRes.value.data || [] : [];
 
     // Calculate metrics
     let gross_revenue = 0;
@@ -455,11 +515,32 @@ export const financialService = {
       .lte('date', dateTo);
     if (branchId) returnsQuery = returnsQuery.eq('branch_id', branchId);
 
-    const [salesRes, returnsRes] = await Promise.all([salesQuery, returnsQuery]);
+    const [salesRes, returnsRes] = await Promise.allSettled([salesQuery, returnsQuery]);
+
+    if (salesRes.status === 'rejected') {
+      handleFallbackError(salesRes.reason, 'fallbackDailyBreakdown sales');
+      return [];
+    }
+    if (returnsRes.status === 'rejected') {
+      handleFallbackError(returnsRes.reason, 'fallbackDailyBreakdown returns');
+      return [];
+    }
+
+    if (salesRes.value.error) {
+      handleFallbackError(salesRes.value.error, 'fallbackDailyBreakdown sales error');
+      return [];
+    }
+    if (returnsRes.value.error) {
+      handleFallbackError(returnsRes.value.error, 'fallbackDailyBreakdown returns error');
+      return [];
+    }
 
     const dailyMap = new Map<string, DailyFinancialData>();
 
-    salesRes.data?.forEach((s: any) => {
+    const salesData = salesRes.value.data;
+    const returnsData = returnsRes.value.data;
+
+    salesData?.forEach((s: any) => {
       const day = dateRangeService.toLocalDateString(s.date);
       const existing = dailyMap.get(day) || {
         day,
@@ -475,7 +556,7 @@ export const financialService = {
       dailyMap.set(day, existing);
     });
 
-    returnsRes.data?.forEach((r: any) => {
+    returnsData?.forEach((r: any) => {
       const day = dateRangeService.toLocalDateString(r.date);
       const existing = dailyMap.get(day) || {
         day,
@@ -510,7 +591,11 @@ export const financialService = {
       .lte('date', end);
     if (branchId) salesQuery = salesQuery.eq('branch_id', branchId);
 
-    const { data: sales } = await salesQuery;
+    const { data: sales, error } = await salesQuery;
+    if (error) {
+      handleFallbackError(error, 'fallbackTopProducts');
+      return [];
+    }
     const prodMap = new Map<
       string,
       { id: string; name: string; dosageForm: string; qty: number; rev: number; cost: number }

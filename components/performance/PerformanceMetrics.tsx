@@ -12,8 +12,10 @@ import {
 } from 'recharts';
 import {
   type EndpointMetrics,
+  type NetworkMetrics,
   resetRequestHistory,
   useEndpointMetrics,
+  useNetworkUsage,
   useRecentRequests,
 } from '../../utils/networkTracker';
 import { PageHeader } from '../common/PageHeader';
@@ -63,6 +65,8 @@ const CHART_COLORS = [
 ];
 
 function badgeClass(method: string) {
+  if (method.startsWith('WS '))
+    return 'bg-violet-100 dark:bg-violet-900/35 text-violet-700 dark:text-violet-400';
   if (method === 'GET')
     return 'bg-emerald-100 dark:bg-emerald-900/35 text-emerald-700 dark:text-emerald-400';
   if (method === 'POST') return 'bg-sky-100 dark:bg-sky-900/35 text-sky-700 dark:text-sky-400';
@@ -183,6 +187,7 @@ function ChartCard({ data, tickFmt, tooltipFmt, suffix }: ChartCardProps) {
             tickLine={false}
           />
           <Tooltip
+            cursor={false}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
               const d = payload[0].payload as ChartCardProps['data'][0];
@@ -212,15 +217,26 @@ function ChartCard({ data, tickFmt, tooltipFmt, suffix }: ChartCardProps) {
               );
             }}
           />
-          <Bar dataKey='value' radius={[0, 4, 4, 0]} maxBarSize={16}>
+          <Bar
+            dataKey='value'
+            radius={[0, 4, 4, 0]}
+            maxBarSize={16}
+            isAnimationActive={false}
+            activeBar={{ stroke: 'rgba(255, 255, 255, 0.9)', strokeWidth: 1.5 }}
+          >
             {data.map((e) => (
               <Cell key={e.name} fill={e.fill} />
             ))}
             <LabelList
               dataKey='value'
-              position='right'
+              position='insideRight'
+              offset={8}
               formatter={(v: number) => tickFmt(v)}
-              style={{ fontSize: 10, fill: 'var(--text-secondary)', fontWeight: 600 }}
+              fill='#fff'
+              stroke='rgba(0, 0, 0, 0.2)'
+              strokeWidth={2}
+              paintOrder='stroke'
+              style={{ fontSize: 10, fontWeight: 700 }}
             />
           </Bar>
         </BarChart>
@@ -259,6 +275,9 @@ function MetricsTable({
             <th className='text-right py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-16'>
               Method
             </th>
+            <th className='text-right py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-24'>
+              Category
+            </th>
             <th className='text-right py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-16'>
               Calls
             </th>
@@ -294,7 +313,25 @@ function MetricsTable({
                   {m.method}
                 </span>
               </td>
+              <td className='py-2 text-right font-mono text-[11px] opacity-60'>{m.category}</td>
               <td className='py-2 text-right font-mono tabular-nums text-[11px]'>{m.callCount}</td>
+              <td className='py-2 text-right font-mono tabular-nums text-[11px] font-semibold'>
+                {valueFmt(m[sortKey] as number)}
+              </td>
+              <td className='py-2 text-right font-mono tabular-nums text-[11px] opacity-60'>
+                {fmtMs(m.avgDuration)}
+              </td>
+              <td className='py-2 pr-1 text-right font-mono tabular-nums text-[11px]'>
+                <span
+                  className={
+                    m.errorCount > 0
+                      ? 'text-rose-500 dark:text-rose-400 font-semibold'
+                      : 'opacity-40'
+                  }
+                >
+                  {m.errorCount}
+                </span>
+              </td>
               <td className='py-2 text-right font-mono tabular-nums text-[11px] font-semibold'>
                 {valueFmt(m[sortKey] as number)}
               </td>
@@ -320,8 +357,48 @@ function MetricsTable({
   );
 }
 
+type SortKey = 'timestamp' | 'method' | 'category' | 'url' | 'status' | 'duration' | 'egress' | 'ingress';
+
 function LiveLog() {
   const requests = useRecentRequests(200);
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null);
+
+  const sortedRequests = useMemo(() => {
+    if (!sortConfig) return requests;
+    return [...requests].sort((a, b) => {
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+      
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortConfig.direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      
+      // @ts-ignore
+      return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+  }, [requests, sortConfig]);
+
+  const handleSort = (key: SortKey) => {
+    setSortConfig((current) => {
+      if (!current || current.key !== key) {
+        return { key, direction: 'desc' };
+      }
+      if (current.direction === 'desc') {
+        return { key, direction: 'asc' };
+      }
+      return null;
+    });
+  };
+
+  const getSortIcon = (key: SortKey) => {
+    if (sortConfig?.key !== key) return <span className="opacity-0 group-hover:opacity-50 transition-opacity ml-1">↓</span>;
+    return <span className="ml-1 opacity-100">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  const thClass = (key: SortKey, base: string) => {
+    const isActive = sortConfig?.key === key;
+    return `${base} py-2.5 font-semibold text-[11px] uppercase tracking-wider transition-opacity cursor-pointer select-none group ${isActive ? 'opacity-100 text-cyan-600 dark:text-cyan-400' : 'opacity-50 hover:opacity-100'}`;
+  };
 
   if (!requests.length) return <EmptyState />;
 
@@ -329,35 +406,38 @@ function LiveLog() {
     <div className='overflow-x-auto'>
       <table className='w-full text-xs border-collapse'>
         <thead>
-          <tr className='border-b border-(--border-divider) sticky top-0 bg-(--bg-page)'>
+          <tr className='border-b border-(--border-divider) sticky top-0 bg-(--bg-page) z-10'>
             <th className='text-left py-2.5 pl-1 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-8'>
               #
             </th>
-            <th className='text-left py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-20'>
-              Time
+            <th className={thClass('timestamp', 'text-left w-20')} onClick={() => handleSort('timestamp')}>
+              Time {getSortIcon('timestamp')}
             </th>
-            <th className='text-left py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-16'>
-              Method
+            <th className={thClass('method', 'text-left w-16')} onClick={() => handleSort('method')}>
+              Method {getSortIcon('method')}
             </th>
-            <th className='text-left py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50'>
-              Endpoint
+            <th className={thClass('category', 'text-left w-24')} onClick={() => handleSort('category')}>
+              Category {getSortIcon('category')}
             </th>
-            <th className='text-right py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-16'>
-              Status
+            <th className={thClass('url', 'text-left')} onClick={() => handleSort('url')}>
+              Endpoint {getSortIcon('url')}
             </th>
-            <th className='text-right py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-22'>
-              Duration
+            <th className={thClass('status', 'text-right w-16')} onClick={() => handleSort('status')}>
+              Status {getSortIcon('status')}
             </th>
-            <th className='text-right py-2.5 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-22'>
-              ↑ Sent
+            <th className={thClass('duration', 'text-right w-22')} onClick={() => handleSort('duration')}>
+              Duration {getSortIcon('duration')}
             </th>
-            <th className='text-right py-2.5 pr-1 font-semibold text-[11px] uppercase tracking-wider opacity-50 w-22'>
-              ↓ Received
+            <th className={thClass('egress', 'text-right w-22')} onClick={() => handleSort('egress')}>
+              ↑ Sent {getSortIcon('egress')}
+            </th>
+            <th className={thClass('ingress', 'text-right pr-1 w-22')} onClick={() => handleSort('ingress')}>
+              ↓ Received {getSortIcon('ingress')}
             </th>
           </tr>
         </thead>
         <tbody>
-          {requests.map((req, idx) => (
+          {sortedRequests.map((req, idx) => (
             <tr
               key={req.id}
               className='border-b border-(--border-divider)/20 hover:bg-cyan-500/5 transition-colors'
@@ -375,6 +455,7 @@ function LiveLog() {
                   {req.method}
                 </span>
               </td>
+              <td className='py-1.5 pr-3 font-mono text-[11px] opacity-60'>{req.category}</td>
               <td
                 className='py-1.5 pr-3 font-mono text-[11px] truncate max-w-[360px]'
                 title={req.url}
@@ -447,11 +528,12 @@ function metricsCsv(
   const sorted = limit
     ? [...metrics].sort((a, b) => (b[sortKey] as number) - (a[sortKey] as number)).slice(0, limit)
     : [...metrics];
-  const header = `Endpoint,Method,Calls,${valueLabel},Avg Duration (ms),Errors`;
+  const header = `Endpoint,Method,Category,Calls,${valueLabel},Avg Duration (ms),Errors`;
   const rows = sorted.map((m) =>
     [
       `"${cleanEndpoint(m.endpoint)}"`,
       m.method,
+      m.category,
       m.callCount,
       m[sortKey],
       m.avgDuration.toFixed(2),
@@ -533,6 +615,7 @@ const TABS = [
 export const PerformanceMetrics: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('bandwidth');
   const metrics = useEndpointMetrics();
+  const networkUsage = useNetworkUsage();
   const requests = useRecentRequests(1);
 
   const bandwidthData = useMemo(() => buildChartData(metrics, 'totalIngress'), [metrics]);
@@ -542,13 +625,19 @@ export const PerformanceMetrics: React.FC = () => {
 
   const summary = useMemo(() => {
     const totalCalls = metrics.reduce((s, m) => s + m.callCount, 0);
-    const totalIngress = metrics.reduce((s, m) => s + m.totalIngress, 0);
-    const totalEgress = metrics.reduce((s, m) => s + m.totalEgress, 0);
+    const categoryUsage = Object.values(networkUsage) as NetworkMetrics[];
+    const { ingress: totalIngress, egress: totalEgress } = categoryUsage.reduce<NetworkMetrics>(
+      (totals, categoryUsage) => ({
+        ingress: totals.ingress + categoryUsage.ingress,
+        egress: totals.egress + categoryUsage.egress,
+      }),
+      { ingress: 0, egress: 0 }
+    );
     const totalErrors = metrics.reduce((s, m) => s + m.errorCount, 0);
     const avgDuration =
       totalCalls > 0 ? metrics.reduce((s, m) => s + m.totalDuration, 0) / totalCalls : 0;
     return { totalCalls, totalIngress, totalEgress, totalErrors, avgDuration };
-  }, [metrics]);
+  }, [metrics, networkUsage]);
 
   return (
     <div className='h-full flex flex-col overflow-hidden'>

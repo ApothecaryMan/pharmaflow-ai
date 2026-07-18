@@ -249,6 +249,37 @@ function determineCategory(url: string): NetworkCategory {
   return 'Other';
 }
 
+function calculateWebSocketPayloadSize(payload: unknown): number {
+  if (typeof payload === 'string') return new Blob([payload]).size;
+  if (payload instanceof ArrayBuffer) return payload.byteLength;
+  if (payload instanceof Blob) return payload.size;
+  if (ArrayBuffer.isView(payload)) return payload.byteLength;
+  return 0;
+}
+
+function recordWebSocketMessage(
+  url: string,
+  category: NetworkCategory,
+  direction: 'inbound' | 'outbound',
+  bytes: number
+) {
+  const isOutbound = direction === 'outbound';
+  const trackedUrl = new URL(url);
+  trackedUrl.searchParams.delete('apikey');
+  addToHistory({
+    url: trackedUrl.toString(),
+    fullUrl: trackedUrl.toString(),
+    method: isOutbound ? 'WS OUT' : 'WS IN',
+    category,
+    egress: isOutbound ? bytes : 0,
+    ingress: isOutbound ? 0 : bytes,
+    duration: 0,
+    status: 101,
+    success: true,
+    timestamp: Date.now(),
+  });
+}
+
 export const trackedFetch: typeof fetch = async (input, init) => {
   const url =
     typeof input === 'string'
@@ -371,31 +402,17 @@ export function initWebSocketTracker() {
       this.category = determineCategory(url.toString());
 
       this.addEventListener('message', (event) => {
-        let size = 0;
-        if (typeof event.data === 'string') {
-          size = new Blob([event.data]).size;
-        } else if (event.data instanceof ArrayBuffer) {
-          size = event.data.byteLength;
-        } else if (event.data instanceof Blob) {
-          size = event.data.size;
-        }
-        updateMetrics(this.category, 'ingress', size);
+        const ingressBytes = calculateWebSocketPayloadSize(event.data);
+        updateMetrics(this.category, 'ingress', ingressBytes);
+        recordWebSocketMessage(this.url, this.category, 'inbound', ingressBytes);
       });
     }
 
     send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
-      let size = 0;
-      if (typeof data === 'string') {
-        size = new Blob([data]).size;
-      } else if (data instanceof ArrayBuffer) {
-        size = data.byteLength;
-      } else if (data instanceof Blob) {
-        size = data.size;
-      } else if (ArrayBuffer.isView(data)) {
-        size = data.byteLength;
-      }
+      const egressBytes = calculateWebSocketPayloadSize(data) + 8;
       // Add roughly WebSocket framing overhead (~6-10 bytes)
-      updateMetrics(this.category, 'egress', size + 8);
+      updateMetrics(this.category, 'egress', egressBytes);
+      recordWebSocketMessage(this.url, this.category, 'outbound', egressBytes);
       super.send(data);
     }
   }

@@ -2,7 +2,7 @@
 -- Date: 2026-06-20
 -- Description: Applies fixes to already-deployed migrations from 2026-06-19.
 -- 1. Updates close_shift to calculate expected balance server-side.
--- 2. Standardizes RLS policies to use get_user_branch_ids() instead of get_my_branches().
+-- 2. Standardizes RLS policies to use get_my_branches() for stock tables.
 
 BEGIN;
 
@@ -76,13 +76,13 @@ BEGIN
 END;
 $$;
 
--- 2. Update RLS policies to use get_user_branch_ids()
+-- 2. Update RLS policies to use get_my_branches() (plpgsql, safe from inlining)
 DROP POLICY IF EXISTS batch_select_policy ON public.stock_batches;
 CREATE POLICY batch_select_policy ON public.stock_batches
-  FOR SELECT USING (branch_id IN (SELECT get_user_branch_ids()));
+  FOR SELECT USING (branch_id IN (SELECT branch_id FROM get_my_branches()));
 
 DROP POLICY IF EXISTS movement_select_policy ON public.stock_movements;
 CREATE POLICY movement_select_policy ON public.stock_movements
-  FOR SELECT USING (branch_id IN (SELECT get_user_branch_ids()));
+  FOR SELECT USING (branch_id IN (SELECT branch_id FROM get_my_branches()));
 
 COMMIT;
