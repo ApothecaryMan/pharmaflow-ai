@@ -23,6 +23,7 @@ const SESSION_KEY = StorageKeys.SESSION;
 const AUDIT_KEY = StorageKeys.LOGIN_AUDIT;
 
 let cachedSession: UserSession | null = null;
+let _getCurrentUserPromise: Promise<UserSession | null> | null = null;
 
 type SupabaseAuthUser = {
   id: string;
@@ -76,23 +77,33 @@ export const authService = {
       return cachedSession;
     }
 
-    try {
-      const {
-        data: { user: sbUser },
-        error,
-      } = await supabase.auth.getUser();
-
-      if (error || !sbUser) {
-        storage.remove(SESSION_KEY);
-        cachedSession = null;
-        return null;
-      }
-
-      return await this.syncSessionWithDatabase(sbUser.id);
-    } catch (err) {
-      console.warn('Failed to verify Supabase session', err);
-      return this.getCurrentUserSync();
+    if (_getCurrentUserPromise) {
+      return _getCurrentUserPromise;
     }
+
+    _getCurrentUserPromise = (async () => {
+      try {
+        const {
+          data: { user: sbUser },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error || !sbUser) {
+          storage.remove(SESSION_KEY);
+          cachedSession = null;
+          return null;
+        }
+
+        return await this.syncSessionWithDatabase(sbUser.id);
+      } catch (err) {
+        console.warn('Failed to verify Supabase session', err);
+        return this.getCurrentUserSync();
+      } finally {
+        _getCurrentUserPromise = null;
+      }
+    })();
+
+    return _getCurrentUserPromise;
   },
 
   /**

@@ -29,6 +29,7 @@ export const queryKeys = {
   },
   employees: {
     all: (branchId: string) => ['employees', branchId] as const,
+    allByOrg: (orgId: string) => ['employees', 'org', orgId] as const,
   },
   customers: {
     all: (branchId: string) => ['customers', branchId] as const,
@@ -45,8 +46,12 @@ export const queryKeys = {
   branches: {
     all: (orgId: string) => ['branches', orgId] as const,
   },
+  sessions: {
+    active: (userId?: string) => ['sessions', 'active', userId] as const,
+  },
   prefixes: {
     achievements: ['achievements'] as const,
+    sessions: ['sessions'] as const,
     inventory: ['inventory'] as const,
     batches: ['batches'] as const,
     sales: ['sales'] as const,

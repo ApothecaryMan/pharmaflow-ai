@@ -6,11 +6,9 @@ import {
   useDeleteEmployee,
   useUpdateEmployee,
 } from '../../hooks/mutations/useEmployeeMutations';
-import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useAllEmployees, useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { employeeService } from '../../services/hr/employeeService';
-import { orgService } from '../../services/org/orgService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Employee, UserSession } from '../../types';
 import type { FilterConfig } from '../common/FilterPill';
@@ -49,42 +47,13 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
 
   // --- Smart Roles Logic ---
-  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [currentUser] = useState<UserSession | null>(() => authService.getCurrentUserSync());
 
   // Global View State
   const [showAllBranches, setShowAllBranches] = useState(false);
   const [globalFilter, setGlobalFilter] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
-  const [allEmployeesFetched, setAllEmployeesFetched] = useState<Employee[]>([]);
-  const [isFetchingGlobal, setIsFetchingGlobal] = useState(false);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const user = await authService.getCurrentUser();
-      setCurrentUser(user);
-    };
-    fetchUser();
-  }, []);
-
-  // Fetch all employees when "Global View" is toggled
-  // Fetch all employees in the active organization on mount for validation & global view
-  useEffect(() => {
-    if (allEmployeesFetched.length === 0 && !isFetchingGlobal) {
-      const fetchAll = async () => {
-        setIsFetchingGlobal(true);
-        try {
-          const activeOrgId = orgService.getActiveOrgId();
-          const all = await employeeService.getAll('ALL', activeOrgId);
-          setAllEmployeesFetched(all);
-        } catch (err) {
-          console.error('Failed to fetch all employees', err);
-        } finally {
-          setIsFetchingGlobal(false);
-        }
-      };
-      fetchAll();
-    }
-  }, [allEmployeesFetched.length, isFetchingGlobal]);
+  const { data: allEmployees = [] } = useAllEmployees();
 
   // 1. Access Matrix: Filter Departments based on User Role
   const availableDepartments = useMemo(() => {
@@ -130,13 +99,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
       await deleteEmployee.mutateAsync(emp.id);
       playBeep();
 
-      // Refresh global list if in global view
-      if (showAllBranches) {
-        try {
-          const all = await employeeService.getAll('ALL');
-          setAllEmployeesFetched(all);
-        } catch (_err) {}
-      }
     }
   };
 
@@ -194,9 +156,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   );
 
   const filteredEmployees = useMemo(() => {
-    const list = showAllBranches ? allEmployeesFetched : employees;
+    const list = showAllBranches ? allEmployees : employees;
     return list.filter((e) => e.role as any);
-  }, [employees, allEmployeesFetched, showAllBranches]);
+  }, [employees, allEmployees, showAllBranches]);
 
   // --- Columns ---
   const columns = useMemo<ColumnDef<Employee>[]>(
@@ -333,14 +295,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
         };
         await addEmployee.mutateAsync(newEmp);
       }
-
-      // Refresh global list if in global view to ensure parity
-      if (showAllBranches) {
-        try {
-          const all = await employeeService.getAll('ALL');
-          setAllEmployeesFetched(all);
-        } catch (_err) {}
-      }
     } catch (error) {
       console.error('Failed to save employee', error);
       throw error;
@@ -469,7 +423,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
         onClose={closeModal}
         employee={editingEmployee}
         onSave={handleFormSave}
-        employeesListToCheck={allEmployeesFetched.length > 0 ? allEmployeesFetched : employees}
+        employeesListToCheck={allEmployees.length > 0 ? allEmployees : employees}
         branches={branches}
         availableDepartments={availableDepartments}
         language={language}

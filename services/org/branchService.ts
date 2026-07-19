@@ -16,6 +16,8 @@ const ACTIVE_BRANCH_KEY = 'pharma_active_branch_id';
 class BranchServiceImpl extends BaseDomainService<Branch> {
   protected tableName = 'branches';
 
+  private _getAllPromises = new Map<string, Promise<Branch[]>>();
+
   public mapFromDb(db: any): Branch {
     return branchRepository.mapFromDb(db);
   }
@@ -25,15 +27,27 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
   }
 
   async getAll(orgId?: string): Promise<Branch[]> {
-    try {
-      const effectiveOrgId = orgId !== undefined ? orgId : orgService.getActiveOrgId();
-      if (!effectiveOrgId) return [];
-
-      return branchRepository.getAll(effectiveOrgId);
-    } catch (err) {
-      console.error('[BranchService] getAll failed:', err);
-      return [];
+    const cacheKey = orgId ?? '__default__';
+    if (this._getAllPromises.has(cacheKey)) {
+      return this._getAllPromises.get(cacheKey)!;
     }
+
+    const promise = (async () => {
+      try {
+        const effectiveOrgId = orgId !== undefined ? orgId : orgService.getActiveOrgId();
+        if (!effectiveOrgId) return [];
+
+        return branchRepository.getAll(effectiveOrgId);
+      } catch (err) {
+        console.error('[BranchService] getAll failed:', err);
+        return [];
+      } finally {
+        this._getAllPromises.delete(cacheKey);
+      }
+    })();
+
+    this._getAllPromises.set(cacheKey, promise);
+    return promise;
   }
 
   async getAllByOrg(orgId: string): Promise<Branch[]> {

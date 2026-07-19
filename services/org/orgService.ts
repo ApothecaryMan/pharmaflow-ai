@@ -8,6 +8,7 @@ import { storage } from '../../utils/storage';
 import { orgRepository } from './repositories/orgRepository';
 
 const ACTIVE_ORG_KEY = 'pharma_active_org_id';
+const _getUserOrgsPromises = new Map<string, Promise<Organization[]>>();
 
 const generateSlug = (name: string): string => {
   return name
@@ -41,7 +42,14 @@ export const orgService = {
 
   async getUserOrgs(userId: string): Promise<Organization[]> {
     if (!userId || !userId.includes('-')) return [];
-    return orgRepository.getUserOrgs(userId);
+    if (_getUserOrgsPromises.has(userId)) {
+      return _getUserOrgsPromises.get(userId)!;
+    }
+    const promise = orgRepository.getUserOrgs(userId).finally(() => {
+      _getUserOrgsPromises.delete(userId);
+    });
+    _getUserOrgsPromises.set(userId, promise);
+    return promise;
   },
 
   async getById(orgId: string): Promise<Organization | null> {

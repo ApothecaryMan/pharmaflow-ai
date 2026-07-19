@@ -1,13 +1,16 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSessionStatus, isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
+import { useAllEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useActiveSessions } from '../../hooks/queries/useSessionsQuery';
+import { queryClient } from '../../lib/queryClient';
+import { queryKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import { authService } from '../../services/auth/authService';
 import {
   sessionRepository,
   type UserActiveSession,
 } from '../../services/auth/repositories/sessionRepository';
-import { employeeService } from '../../services/hr/employeeService';
 import {
   formatDateWithRelativeLabel,
   getDurationMs,
@@ -47,9 +50,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   t,
   language = 'EN',
 }) => {
-  const [sessions, setSessions] = useState<UserActiveSession[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const currentUser = authService.getCurrentUserSync();
+
+  const currentUserAgent =
+    typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
+
+  const { data: sessions = [], isLoading, isRefetching, refetch } = useActiveSessions(currentUser?.userId);
+  const { data: employees = [] } = useAllEmployees();
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,56 +64,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [isEndingAll, setIsEndingAll] = useState(false);
   const [endingSessions, setEndingSessions] = useState<Set<string>>(new Set());
-  const [refreshing, setRefreshing] = useState(false);
 
   // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
   const [, setTick] = useState(0);
 
-  const currentUser = authService.getCurrentUserSync();
-
-  const currentUserAgent =
-    typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
-
-  const loadSessions = useCallback(async () => {
-    try {
-      setLoading(true);
-      // Scope to current user for faster indexed query
-      const data = await sessionRepository.getActiveSessions(currentUser?.userId);
-      setSessions(data);
-    } catch (err) {
-      console.error(err);
-      setError(t.activeSessions.errorLoading);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser?.userId, t.activeSessions.errorLoading]);
-
-  const refreshSessions = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      const data = await sessionRepository.getActiveSessions(currentUser?.userId);
-      setSessions(data);
-      setError(null);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [currentUser?.userId]);
+  const refreshing = isRefetching;
 
   useEffect(() => {
-    loadSessions();
-
-    const loadEmployees = async () => {
-      try {
-        const data = await employeeService.getAll();
-        setEmployees(data);
-      } catch (err) {
-        console.error('Failed to load employees for sessions', err);
-      }
-    };
-    loadEmployees();
-
     const uniqueChannelName = `active_sessions_changes_${Math.random().toString(36).substring(7)}`;
     const dbChannel = supabase
       .channel(uniqueChannelName)
@@ -114,7 +78,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_active_sessions' },
         () => {
-          sessionRepository.getActiveSessions(currentUser?.userId).then(setSessions);
+          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
         }
       )
       .subscribe();
@@ -127,7 +91,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       supabase.removeChannel(dbChannel);
       clearInterval(tickInterval);
     };
-  }, [currentUser?.userId, loadSessions]);
+  }, []);
 
   const handleLogout = async (sessionId: string) => {
     setEndingSessions((prev) => new Set(prev).add(sessionId));
@@ -156,7 +120,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
         employeeCode: targetCode || undefined,
         employeeName: targetName,
       });
-      await refreshSessions();
+      await refetch();
     } catch (err) {
       console.error('Failed to logout session', err);
     } finally {
@@ -186,7 +150,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
           });
         })
       );
-      await refreshSessions();
+      await refetch();
     } catch (err) {
       console.error('Failed to end other sessions', err);
     } finally {
@@ -217,7 +181,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
         const sessionEmployee = session.employee_id
           ? employees.find((e) => e.id === session.employee_id)
           : null;
-        const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || '';
+        const sessionUserName = sessionEmployee?.name || sessionEmployee?.nameArabic || '';
         return (
           displayDeviceName.toLowerCase().includes(query) ||
           displayBrowserName.toLowerCase().includes(query) ||
@@ -235,8 +199,8 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
           case 'user': {
             const empA = a.employee_id ? employees.find((e) => e.id === a.employee_id) : null;
             const empB = b.employee_id ? employees.find((e) => e.id === b.employee_id) : null;
-            const nameA = (empA?.name || empA?.en_name || '').toLowerCase();
-            const nameB = (empB?.name || empB?.en_name || '').toLowerCase();
+            const nameA = (empA?.name || empA?.nameArabic || '').toLowerCase();
+            const nameB = (empB?.name || empB?.nameArabic || '').toLowerCase();
             cmp = nameA.localeCompare(nameB);
             break;
           }
@@ -294,7 +258,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const getSessionUserName = (session: UserActiveSession): string => {
     const emp = session.employee_id ? employees.find((e) => e.id === session.employee_id) : null;
-    return emp?.name || emp?.en_name || t.activeSessions.unassigned;
+    return emp?.name || emp?.nameArabic || t.activeSessions.unassigned;
   };
 
   const onlineSessions = processedSessions.filter((s) => isSessionOnline(s.last_seen_at));
@@ -548,7 +512,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     position='bottom'
                   >
                     <button
-                      onClick={refreshSessions}
+                      onClick={() => refetch()}
                       disabled={refreshing}
                       className='p-2 border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
                       type='button'
@@ -598,7 +562,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
               </div>
 
               <div className='flex-1 overflow-y-auto md:bg-(--bg-card) md:border border-(--border-divider)'>
-                {loading || refreshing ? (
+                {isLoading || refreshing ? (
                   <div className='flex items-center justify-center min-h-[400px]'>
                     <div className='animate-spin rounded-full h-10 w-10 border-4 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
                   </div>
@@ -661,7 +625,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                           const hasEmployee = !!sessionEmployee;
                           const sessionUserName =
                             sessionEmployee?.name ||
-                            sessionEmployee?.en_name ||
+                            sessionEmployee?.nameArabic ||
                             t.activeSessions.unassigned;
                           const sessionUserImage = sessionEmployee?.image || null;
                           const status = getSessionStatus(session.last_seen_at);
@@ -803,7 +767,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                                 : null;
                                               const prevName =
                                                 prevEmp?.name ||
-                                                prevEmp?.en_name ||
+                                                prevEmp?.nameArabic ||
                                                 t.activeSessions.unassigned;
                                               const prevImg = prevEmp?.image || null;
                                               const prevStartedLabel = formatDateWithRelativeLabel(

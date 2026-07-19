@@ -6,6 +6,9 @@ export interface UserActiveSession {
   org_id?: string;
   branch_id?: string;
   employee_id?: string;
+  employee_name?: string;
+  user_name?: string;
+  role?: string;
   device_info?: string;
   user_agent?: string;
   ip_address?: string;

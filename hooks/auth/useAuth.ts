@@ -203,7 +203,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
             )
             .subscribe();
 
-          // --- Fallback polling every 15s ---
+          // --- Fallback polling every 30s ---
           pollingInterval = setInterval(async () => {
             try {
               const currentSid = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);

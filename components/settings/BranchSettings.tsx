@@ -1,12 +1,15 @@
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 import { useAlert, useSettings } from '../../context';
 import { getLocationName } from '../../data/locations';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { useAllEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useBranches } from '../../hooks/queries/useBranchesQuery';
+import { queryClient } from '../../context/QueryProvider';
+import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { attendanceService } from '../../services/hr/attendanceService';
-import { employeeService } from '../../services/hr/employeeService';
 import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
 import { useAuthStore } from '../../stores/authStore';
@@ -274,9 +277,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
   const refreshAll = useAuthStore((s) => s.refreshAll);
   const { activeBranchId } = useSettings();
 
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const activeOrgId = orgService.getActiveOrgId();
+  const { data: branches = [], isLoading: isBranchesLoading } = useBranches(activeOrgId ?? '');
+  const { data: employees = [], isLoading: isEmployeesLoading } = useAllEmployees(activeOrgId ?? undefined);
+  const isLoading = isBranchesLoading || isEmployeesLoading;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Partial<Branch> | null>(null);
@@ -292,26 +297,6 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
   const [isTokenRevealed, setIsTokenRevealed] = useState(false);
   const [isGeneratingToken, setIsGeneratingToken] = useState(false);
   const canGenerateToken = permissionsService.can('attendance.generate_token');
-
-  const loadData = useCallback(async () => {
-    try {
-      const activeOrgId = orgService.getActiveOrgId();
-      const [bData, eData] = await Promise.all([
-        branchService.getAll(activeOrgId || undefined),
-        employeeService.getAll('ALL'),
-      ]);
-      setBranches(bData);
-      setEmployees(eData);
-    } catch (error) {
-      console.error('Failed to load branch data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
 
   const handleOpenModal = async (branch?: Branch) => {
     if (branch) {
@@ -367,7 +352,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
       success(t.settings.saveSuccess);
       setIsModalOpen(false);
-      await loadData();
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.branches });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
       await refreshAll();
     } catch (err: any) {
       console.error('Failed to save branch:', err);
@@ -391,7 +377,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       try {
         await branchService.update(id, { status: 'inactive' });
         success(t.settings.deactivated);
-        await loadData();
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.branches });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
         await refreshAll();
       } catch (err: any) {
         showAlertError(err.message || 'Failed to delete branch');

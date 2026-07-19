@@ -14,6 +14,8 @@ import { employeeRepository } from './repositories/employeeRepository';
 class EmployeeServiceImpl extends BaseDomainService<Employee> {
   protected tableName = 'employees';
 
+  private _getAllPromises = new Map<string, Promise<Employee[]>>();
+
   public mapFromDb(db: any): Employee {
     return employeeRepository.mapFromDb(db);
   }
@@ -23,18 +25,32 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
   }
 
   async getAll(branchId?: string | 'ALL', orgId?: string): Promise<Employee[]> {
-    const settings = await settingsService.getAll();
-    const effectiveOrgId =
-      orgId !== undefined ? orgId : orgService.getActiveOrgId() || settings.orgId;
+    const cacheKey = `${branchId ?? ''}|${orgId ?? ''}`;
+    if (this._getAllPromises.has(cacheKey)) {
+      return this._getAllPromises.get(cacheKey)!;
+    }
 
-    if (!effectiveOrgId) return [];
+    const promise = (async () => {
+      try {
+        const settings = await settingsService.getAll();
+        const effectiveOrgId =
+          orgId !== undefined ? orgId : orgService.getActiveOrgId() || settings.orgId;
 
-    const isAll = typeof branchId === 'string' && branchId.toLowerCase() === 'all';
-    const effectiveBranchId = isAll
-      ? undefined
-      : branchId || settings.activeBranchId || settings.branchCode;
+        if (!effectiveOrgId) return [];
 
-    return employeeRepository.getAll(effectiveOrgId, effectiveBranchId);
+        const isAll = typeof branchId === 'string' && branchId.toLowerCase() === 'all';
+        const effectiveBranchId = isAll
+          ? undefined
+          : branchId || settings.activeBranchId || settings.branchCode;
+
+        return employeeRepository.getAll(effectiveOrgId, effectiveBranchId);
+      } finally {
+        this._getAllPromises.delete(cacheKey);
+      }
+    })();
+
+    this._getAllPromises.set(cacheKey, promise);
+    return promise;
   }
 
   async getById(id: string): Promise<Employee | null> {
