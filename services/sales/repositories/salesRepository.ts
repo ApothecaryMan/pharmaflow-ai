@@ -120,7 +120,7 @@ export const salesRepository = {
   },
 
   async getAll(effectiveBranchId: string, orgId?: string): Promise<Sale[]> {
-    let query = supabase.from(this.tableName).select('*');
+    let query = supabase.from(this.tableName).select(SALE_LIST_COLUMNS);
     const isAll =
       typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 

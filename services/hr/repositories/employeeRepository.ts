@@ -84,7 +84,7 @@ export const employeeRepository = {
   },
 
   BASE_COLUMNS:
-    'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo, cover_style, design_settings',
+    'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, username, auth_user_id, photo, cover_style',
 
   async getAll(orgId: string, branchId?: string): Promise<Employee[]> {
     let query = supabase.from(this.tableName).select(this.BASE_COLUMNS).eq('org_id', orgId);
