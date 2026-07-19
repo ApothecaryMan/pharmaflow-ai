@@ -2,6 +2,24 @@ import { supabase } from '../../../lib/supabase';
 import type { Purchase } from '../../../types';
 import type { PurchaseFilters, PurchasesPageOptions } from '../types';
 
+interface PurchaseItemRow {
+  id: string;
+  purchase_id: string;
+  branch_id: string;
+  drug_id: string;
+  name: string;
+  dosage_form: string | null;
+  quantity: number;
+  cost_price: number;
+  expiry_date: string | null;
+  discount: number | null;
+  public_price: number;
+  tax: number | null;
+  is_unit: boolean | null;
+  units_per_pack: number | null;
+  drug: Record<string, unknown> | null;
+}
+
 export const purchaseRepository = {
   tableName: 'purchases',
 
@@ -13,7 +31,21 @@ export const purchaseRepository = {
       date: db.date,
       supplierId: db.supplier_id,
       supplierName: db.supplier_name_snapshot,
-      items: db.items || [],
+      items: (db.purchase_items || []).map((item: PurchaseItemRow) => ({
+        ...item.drug,
+        id: item.id,
+        drugId: item.drug_id,
+        name: item.name,
+        quantity: item.quantity,
+        costPrice: item.cost_price,
+        expiryDate: item.expiry_date ?? undefined,
+        dosageForm: item.dosage_form ?? undefined,
+        discount: item.discount ?? undefined,
+        publicPrice: item.public_price,
+        tax: item.tax ?? undefined,
+        isUnit: item.is_unit ?? undefined,
+        unitsPerPack: item.units_per_pack ?? undefined,
+      })),
       subtotal: db.subtotal,
       discount: db.discount,
       totalTax: db.total_tax,
@@ -40,7 +72,6 @@ export const purchaseRepository = {
     if (p.date !== undefined) db.date = p.date;
     if (p.supplierId !== undefined) db.supplier_id = p.supplierId;
     if (p.supplierName !== undefined) db.supplier_name_snapshot = p.supplierName;
-    if (p.items !== undefined) db.items = p.items;
     if (p.subtotal !== undefined) db.subtotal = p.subtotal;
     if (p.discount !== undefined) db.discount = p.discount;
     if (p.totalTax !== undefined) db.total_tax = p.totalTax;
@@ -90,7 +121,7 @@ export const purchaseRepository = {
   async getById(id: string): Promise<Purchase | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select('*, purchase_items:purchase_items(*, drug:drugs(*))')
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;

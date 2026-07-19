@@ -102,18 +102,54 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   async create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> {
     const settings = await settingsService.getAll();
     const effectiveBranchId =
-      branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
+      branchId || purchase.branchId || settings.activeBranchId || settings.branchCode;
 
+    const items = purchase.items;
     const newPurchase: Purchase = {
       ...purchase,
       id: idGenerator.uuid(),
-      status: (purchase as any).status || 'pending',
+      status: purchase.status || 'pending',
       branchId: effectiveBranchId,
       orgId: settings.orgId,
       date: purchase.date || new Date().toISOString(),
-    } as Purchase;
+    };
 
-    return purchaseRepository.insert(newPurchase);
+    const created = await purchaseRepository.insert(newPurchase);
+
+    if (items.length > 0) {
+      const normalizeDate = (d: string | undefined | null): string | null => {
+        if (!d) return null;
+        if (d.length === 7) return d + '-01';
+        return d;
+      };
+
+      const purchaseItems = items.map((item) => ({
+        id: idGenerator.uuid(),
+        purchase_id: created.id,
+        branch_id: effectiveBranchId,
+        drug_id: item.drugId,
+        name: item.name,
+        dosage_form: item.dosageForm || null,
+        quantity: item.quantity,
+        cost_price: item.costPrice,
+        expiry_date: normalizeDate(item.expiryDate),
+        discount: item.discount || 0,
+        public_price: item.publicPrice,
+        tax: item.tax || 0,
+        is_unit: item.isUnit || false,
+        units_per_pack: item.unitsPerPack || 1,
+      }));
+
+      const { error: insertError } = await supabase
+        .from('purchase_items')
+        .insert(purchaseItems);
+
+      if (insertError) {
+        throw new Error(`Failed to insert purchase items: ${insertError.message}`);
+      }
+    }
+
+    return created;
   }
 
   async update(id: string, updates: Partial<Purchase>): Promise<Purchase> {
