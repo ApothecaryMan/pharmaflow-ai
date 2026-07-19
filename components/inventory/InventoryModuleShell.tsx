@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSettings } from '../../context';
+import { useSettings, CatalogProvider } from '../../context';
 import { storage } from '../../utils/storage';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -52,6 +52,7 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
   );
 
   return (
+    <CatalogProvider>
     <InventoryHeaderContext.Provider value={contextValue}>
       <div className='h-full flex flex-col' dir={isRTL ? 'rtl' : 'ltr'}>
         <PageHeader
@@ -97,5 +98,6 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
         <div className='flex-1 overflow-hidden'>{children}</div>
       </div>
     </InventoryHeaderContext.Provider>
+    </CatalogProvider>
   );
 };

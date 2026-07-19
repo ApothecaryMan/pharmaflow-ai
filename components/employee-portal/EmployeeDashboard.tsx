@@ -2,7 +2,7 @@ import { startRegistration } from '@simplewebauthn/browser';
 import { useQueryClient } from '@tanstack/react-query';
 import { Clock, Download, Menu } from 'lucide-react';
 import { lazy, Suspense, useCallback, useState } from 'react';
-import { useSettings } from '../../context';
+import { useSettings, CatalogProvider } from '../../context';
 import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { queryKeys } from '../../lib/queryKeys';
@@ -243,7 +243,11 @@ export function EmployeeDashboard({ view = 'profile', onViewChange, onLogout }: 
         <main className='flex-1 min-h-0 overflow-y-auto overscroll-contain'>
           <div className='p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-28 md:pb-6 relative min-h-[200px]'>
             <Suspense fallback={<PageLoader />}>
-              {activeView === 'pricing' && <PrescriptionPricing />}
+              {activeView === 'pricing' && (
+                <CatalogProvider>
+                  <PrescriptionPricing />
+                </CatalogProvider>
+              )}
 
               {activeView === 'profile' && (
                 <EmployeePortalProfile

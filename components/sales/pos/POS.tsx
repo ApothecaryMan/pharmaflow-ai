@@ -1,7 +1,7 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useAlert, useSettings } from '../../../context';
+import { useAlert, useSettings, CatalogProvider } from '../../../context';
 import { useInventorySearch } from '../../../hooks/inventory/useInventorySearch';
 import { usePageShortcuts } from '../../../hooks/keyboard';
 import { useCustomers } from '../../../hooks/queries/useCustomersQuery';
@@ -1002,6 +1002,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
   );
 
   return (
+    <CatalogProvider>
     <div className='h-full flex flex-col gap-2'>
       <POSPageHeader
         t={t}
@@ -1375,5 +1376,6 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
         {/* Close Main POS Content div */}
       </div>
     </div>
+    </CatalogProvider>
   );
 };

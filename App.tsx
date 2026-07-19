@@ -44,7 +44,7 @@ const EmployeeSetupScreen = lazy(() =>
 import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
 
 import { ROUTES } from './config/routes';
-import { CatalogProvider, useAlert, useSettings } from './context';
+import { useAlert, useSettings } from './context';
 import { useAuth } from './hooks/auth/useAuth';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
 import { useClockSkew } from './hooks/common/useClockSkew';
@@ -243,12 +243,15 @@ const App: React.FC = () => {
   const { setActiveModule: _setActiveModule, setView } = appState;
   const reinitialize = useAuthStore((s) => s.reinitialize);
 
-  // 6.1 Initialize auth data on mount (replaces old DataProvider.initData())
+  // 6.1 Initialize auth data on mount only if not already hydrated
   const isInitializedRef = React.useRef(false);
   React.useEffect(() => {
     if (authState.isAuthenticated && !isInitializedRef.current) {
       isInitializedRef.current = true;
-      reinitialize();
+      const existingOrg = useAuthStore.getState().activeOrgId;
+      if (!existingOrg) {
+        reinitialize();
+      }
     }
   }, [authState.isAuthenticated, reinitialize]);
 
@@ -350,11 +353,7 @@ const App: React.FC = () => {
     <div className='h-dvh flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
       <div className='flex-1 overflow-hidden relative'>
         {showNotificationOverlay !== false && <NotificationOverlay />}
-        {authState.isAuthenticated ? (
-          <CatalogProvider>{finalContent}</CatalogProvider>
-        ) : (
-          finalContent
-        )}
+        {finalContent}
       </div>
 
       {showClockSkewOverlay && (

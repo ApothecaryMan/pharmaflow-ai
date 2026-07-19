@@ -11,6 +11,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { FDA } from '../common/Icons';
 import { PageHeader } from '../common/PageHeader';
 import { SearchEngineInput } from '../common/SearchEngineInput';
+import { CatalogProvider } from '../../context';
 
 interface DrugInteractionsPageProps {
   t: Translations;
@@ -556,6 +557,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
   };
 
   return (
+    <CatalogProvider>
     <div className='h-full flex flex-col selection:bg-(--text-primary)/10'>
       <PageHeader
         leftContent={
@@ -835,6 +837,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
         </div>
       </div>
     </div>
+    </CatalogProvider>
   );
 };
 

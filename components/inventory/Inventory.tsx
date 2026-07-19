@@ -17,6 +17,7 @@ import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
+import { CatalogProvider } from '../../context';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, GroupedDrug } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
@@ -970,6 +971,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
   }, [bottomContentElement, mode, setBottomContent, setShowStatsToggle]);
 
   return (
+    <CatalogProvider>
     <div className='h-full flex flex-col gap-2 overflow-y-auto'>
       {/* Header slots are registered in the useEffect above */}
 
@@ -1328,5 +1330,6 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
         </Modal>
       )}
     </div>
+    </CatalogProvider>
   );
 };
