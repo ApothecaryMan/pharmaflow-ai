@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import type { Drug } from '../../../types';
+import type { InventoryFilters, InventoryStats } from '../types';
 
 const LIST_COLUMNS =
   'id, org_id, branch_id, name, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description';
@@ -148,5 +149,146 @@ export const inventoryRepository = {
     const dbDrugs = drugs.map((d) => this.mapToDb(d));
     const { error } = await supabase.from(this.tableName).upsert(dbDrugs, { onConflict: 'id' });
     if (error) throw error;
+  },
+
+  async search(query: string, branchId?: string, orgId?: string): Promise<Drug[]> {
+    const q = query.toLowerCase();
+    // NOTE: generic_name (JSONB array) is intentionally excluded from the DB search
+    // because PostgREST ilike does not support JSONB arrays. The old client-side
+    // search iterated all drugs in JS to match generic names — a 2x bandwidth cost.
+    // Users should search by trade name, barcode, or internal code instead.
+    let supabaseQuery = supabase
+      .from(this.tableName)
+      .select(LIST_COLUMNS)
+      .or(`name.ilike.%${q}%,barcode.ilike.%${q}%,internal_code.ilike.%${q}%`)
+      .limit(200);
+
+    if (branchId && branchId.toLowerCase() !== 'all') {
+      supabaseQuery = supabaseQuery.eq('branch_id', branchId);
+    } else if (orgId) {
+      supabaseQuery = supabaseQuery.eq('org_id', orgId);
+    }
+
+    const { data, error } = await supabaseQuery;
+    if (error) throw error;
+    return (data || []).map((item) => this.mapFromDb(item));
+  },
+
+  async filterBy(
+    filters: InventoryFilters,
+    branchId?: string,
+    orgId?: string
+  ): Promise<Drug[]> {
+    let query = supabase.from(this.tableName).select(LIST_COLUMNS);
+
+    if (branchId && branchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', branchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+
+    if (filters.category) query = query.eq('category', filters.category);
+    if (filters.lowStock) query = query.lt('stock', 10);
+    if (filters.expiringSoon) {
+      const threshold = new Date();
+      threshold.setDate(threshold.getDate() + filters.expiringSoon);
+      const dateStr = threshold.toISOString().split('T')[0];
+      query = query.lte('expiry_date', dateStr);
+    }
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      query = query.or(`name.ilike.%${q}%,barcode.ilike.%${q}%,internal_code.ilike.%${q}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map((item) => this.mapFromDb(item));
+  },
+
+  async getLowStock(threshold = 10, branchId?: string, orgId?: string): Promise<Drug[]> {
+    let query = supabase
+      .from(this.tableName)
+      .select(LIST_COLUMNS)
+      .lt('stock', threshold);
+
+    if (branchId && branchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', branchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map((item) => this.mapFromDb(item));
+  },
+
+  async getExpiringSoon(days = 30, branchId?: string, orgId?: string): Promise<Drug[]> {
+    const threshold = new Date();
+    threshold.setDate(threshold.getDate() + days);
+    const dateStr = threshold.toISOString().split('T')[0];
+
+    let query = supabase
+      .from(this.tableName)
+      .select(LIST_COLUMNS)
+      .lte('expiry_date', dateStr);
+
+    if (branchId && branchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', branchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map((item) => this.mapFromDb(item));
+  },
+
+  async getStats(branchId?: string, orgId?: string): Promise<InventoryStats> {
+    const applyFilter = (q: any) => {
+      if (branchId && branchId.toLowerCase() !== 'all') return q.eq('branch_id', branchId);
+      if (orgId) return q.eq('org_id', orgId);
+      return q;
+    };
+
+    const now = new Date();
+    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const dateStr = thirtyDays.toISOString().split('T')[0];
+
+    const [{ count: totalCount }, { data: valueData }, { count: expiringCount }] =
+      await Promise.all([
+        applyFilter(
+          supabase.from(this.tableName).select('*', { count: 'exact', head: true })
+        ),
+        applyFilter(
+          supabase.from(this.tableName).select('public_price, stock, units_per_pack')
+        ),
+        applyFilter(
+          supabase
+            .from(this.tableName)
+            .select('*', { count: 'exact', head: true })
+            .lte('expiry_date', dateStr)
+        ),
+      ]);
+
+    const totalValue = (valueData || []).reduce(
+      (sum, d) => sum + (d.public_price || 0) * ((d.stock || 0) / (d.units_per_pack || 1)),
+      0
+    );
+
+    const { data: stockData } = await applyFilter(
+      supabase.from(this.tableName).select('stock, min_stock')
+    );
+    const lowStockCount = (stockData || []).filter(
+      (d) => (d.stock || 0) < (d.min_stock || 10) && (d.stock || 0) > 0
+    ).length;
+    const outOfStockCount = (stockData || []).filter((d) => (d.stock || 0) <= 0).length;
+
+    return {
+      totalProducts: totalCount || 0,
+      totalValue,
+      lowStockCount,
+      expiringSoonCount: expiringCount || 0,
+      outOfStockCount,
+    };
   },
 };
