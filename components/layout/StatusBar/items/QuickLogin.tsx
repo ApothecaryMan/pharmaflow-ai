@@ -226,9 +226,12 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       }
     } else if (step === 'password') {
       if (tempEmployee && onSelectEmployee) {
+        const fresh = tempEmployee.id
+          ? (await employeeRepository.getById(tempEmployee.id)) ?? tempEmployee
+          : tempEmployee;
         const { verifyPassword } = await import('../../../../services/auth/hashUtils');
-        const isValid = tempEmployee.password
-          ? await verifyPassword(inputVal.trim(), tempEmployee.password)
+        const isValid = fresh.password
+          ? await verifyPassword(inputVal.trim(), fresh.password)
           : false;
         if (isValid) {
           playSuccess();
