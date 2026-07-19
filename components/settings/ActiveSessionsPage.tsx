@@ -514,7 +514,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     <button
                       onClick={() => refetch()}
                       disabled={refreshing}
-                      className='p-2 border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
+                      className='w-[36px] h-pageheader flex items-center justify-center border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
                       type='button'
                     >
                       <svg
@@ -535,7 +535,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     <button
                       onClick={handleEndAllOther}
                       disabled={isEndingAll}
-                      className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0'
+                      className='inline-flex items-center gap-2 px-3 h-pageheader text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0'
                       type='button'
                     >
                       {isEndingAll && (

@@ -499,7 +499,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             wrapperClassName='w-full sm:w-64'
           />
 
-          <span className='flex items-center gap-3 h-[34px] px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer flex-shrink-0'>
+          <span className='flex items-center gap-3 h-pageheader px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer flex-shrink-0'>
             <span className='text-sm font-medium text-gray-700 dark:text-gray-300 select-none whitespace-nowrap'>
               {t.loginAudit.showAllBranches}
             </span>
