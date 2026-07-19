@@ -85,8 +85,9 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
               ]}
               value={activeView}
               onChange={(val) => onViewChange(val)}
-              size='md'
+              size='sm'
               shape='pill'
+              useGraphicFont={true}
             />
           }
           rightContent={rightContent}

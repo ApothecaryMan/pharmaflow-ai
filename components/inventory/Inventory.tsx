@@ -819,19 +819,19 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
   const leftContentElement = useMemo(() => {
     if (mode !== 'list') return null;
     return (
-      <div className='relative flex-1 max-w-xl'>
-        <SearchEngineInput
-          value={searchTerm}
-          onSearchChange={setSearchTerm}
-          activeFilters={activeFilters}
-          filterConfigs={filterConfigs}
-          onUpdateFilter={(id, vals) => setActiveFilters((prev) => ({ ...prev, [id]: vals }))}
-          onClear={() => setSearchTerm('')}
-          placeholder={t.searchPlaceholder}
-          color={color}
-          inventory={baseFilteredInventory}
-        />
-      </div>
+      <SearchEngineInput
+        compact
+        value={searchTerm}
+        onSearchChange={setSearchTerm}
+        activeFilters={activeFilters}
+        filterConfigs={filterConfigs}
+        onUpdateFilter={(id, vals) => setActiveFilters((prev) => ({ ...prev, [id]: vals }))}
+        onClear={() => setSearchTerm('')}
+        placeholder={t.searchPlaceholder}
+        color={color}
+        inventory={baseFilteredInventory}
+        wrapperClassName='w-[320px]'
+      />
     );
   }, [mode, searchTerm, activeFilters, filterConfigs, t, color, baseFilteredInventory]);
 

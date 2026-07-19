@@ -167,8 +167,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
 
   React.useEffect(() => {
     setLeftContent(
-      <div className='relative flex-1 max-w-md'>
+      <div className='relative w-[320px]'>
         <SearchInput
+          compact
           placeholder={isRTL ? 'البحث عن صنف...' : 'Search for drug...'}
           value={searchQuery}
           onSearchChange={handleSearchChange}
@@ -242,10 +243,10 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
         <button
           onClick={toggleShowAll}
           title={showAll ? t.stockMovement.todayOnly : t.stockMovement.showAll}
-          className={ICON_BTN(showAll)}
+          className={`h-pageheader aspect-square rounded-lg border border-(--border-divider) transition-colors flex items-center justify-center text-[13px] font-medium ${showAll ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
           type='button'
         >
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+          <span className='material-symbols-rounded text-lg'>
             {showAll ? 'filter_alt_off' : 'all_inclusive'}
           </span>
         </button>
@@ -255,19 +256,18 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
           onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, start: val }))}
           onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, end: val }))}
           color={themeColor}
-          size='sm'
           locale={language === 'AR' ? 'ar-EG' : 'en-US'}
+          rounded='lg'
+          className='h-pageheader'
         />
         <button
           onClick={exportCSV}
           disabled={history.length === 0}
           title={isRTL ? 'تصدير' : 'Export'}
-          className={`${ICON_BTN(false)} disabled:opacity-30 disabled:cursor-not-allowed`}
+          className='h-pageheader aspect-square rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center text-[13px] font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200'
           type='button'
         >
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-            download
-          </span>
+          <span className='material-symbols-rounded text-lg'>download</span>
         </button>
       </div>
     );

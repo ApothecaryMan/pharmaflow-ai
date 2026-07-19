@@ -695,18 +695,18 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
   useEffect(() => {
     setLeftContent(
-      <div className='relative flex-1 max-w-xl'>
-        <SearchEngineInput
-          value={searchTerm}
-          onSearchChange={setSearchTerm}
-          placeholder={t.searchPlaceholder}
-          onClear={() => setSearchTerm('')}
-          color='primary'
-          filterConfigs={filterConfigs}
-          activeFilters={activeFilters}
-          onUpdateFilter={handleUpdateFilter}
-        />
-      </div>
+      <SearchEngineInput
+        compact
+        value={searchTerm}
+        onSearchChange={setSearchTerm}
+        placeholder={t.searchPlaceholder}
+        onClear={() => setSearchTerm('')}
+        color='primary'
+        filterConfigs={filterConfigs}
+        activeFilters={activeFilters}
+        onUpdateFilter={handleUpdateFilter}
+        wrapperClassName='w-[320px]'
+      />
     );
 
     setRightContent(
@@ -714,10 +714,11 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         <button
           type='button'
           onClick={handleExportCSV}
-          className='flex items-center justify-center p-2 bg-black text-white dark:bg-white dark:text-black border border-zinc-950 dark:border-zinc-100 rounded-xl cursor-pointer'
+          className='h-pageheader px-3 rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-[13px] font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200'
           title={t.exportButtonLabel}
         >
           <span className='material-symbols-rounded text-lg'>download</span>
+          <span className='hidden md:inline'>{t.exportButtonLabel || 'Export CSV'}</span>
         </button>
       </div>
     );
