@@ -10,32 +10,32 @@ export function useAddCustomer() {
   return useMutation({
     mutationFn: (customer: any) => customerService.create(customer, branchId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.customers });
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all(branchId) });
     },
   });
 }
 
 export function useUpdateCustomer() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       customerService.update(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.customers });
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all(branchId) });
     },
   });
 }
 
 export function useDeleteCustomer() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: (id: string) => customerService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.customers });
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all(branchId) });
     },
   });
 }

@@ -10,32 +10,34 @@ export function useAddProduct() {
   return useMutation({
     mutationFn: (product: any) => inventoryService.create(product, branchId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
     },
   });
 }
 
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       inventoryService.update(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
     },
   });
 }
 
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: (id: string) => inventoryService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
     },
     onError: (err) => {
       console.error('Failed to delete product:', err);

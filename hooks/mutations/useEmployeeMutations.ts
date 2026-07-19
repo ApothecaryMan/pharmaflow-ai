@@ -10,32 +10,37 @@ export function useAddEmployee() {
   return useMutation({
     mutationFn: (employee: any) => employeeService.create(employee, activeBranchId, activeOrgId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees.all(activeBranchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees.allByOrg(activeOrgId) });
     },
   });
 }
 
 export function useUpdateEmployee() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
+  const orgId = useAuthStore((s) => s.activeOrgId);
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       employeeService.update(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees.allByOrg(orgId) });
     },
   });
 }
 
 export function useDeleteEmployee() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
+  const orgId = useAuthStore((s) => s.activeOrgId);
 
   return useMutation({
     mutationFn: (id: string) => employeeService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees.allByOrg(orgId) });
     },
   });
 }

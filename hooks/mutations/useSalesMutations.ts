@@ -7,6 +7,7 @@ import type { ActionContext, CartItem } from '../../types';
 
 export function useCompleteSale() {
   const queryClient = useQueryClient();
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({
@@ -26,9 +27,10 @@ export function useCompleteSale() {
       context: ActionContext;
     }) => transactionService.processCheckout(saleData, [], context),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sales });
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(branchId) });
     },
   });
 }
@@ -40,7 +42,8 @@ export function useAddSale() {
   return useMutation({
     mutationFn: (sale: any) => salesService.create(sale, branchId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sales });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(branchId) });
     },
   });
 }

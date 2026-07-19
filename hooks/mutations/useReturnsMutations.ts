@@ -6,7 +6,7 @@ import type { ActionContext, Sale } from '../../types';
 
 export function useProcessSalesReturn() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({
@@ -19,24 +19,25 @@ export function useProcessSalesReturn() {
       context: ActionContext;
     }) => transactionService.processReturn(returnData, [], sale, context),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sales });
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.returns.sales(branchId) });
     },
   });
 }
 
 export function useCreatePurchaseReturn() {
   const queryClient = useQueryClient();
-  const _branchId = useAuthStore((s) => s.activeBranchId);
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({ ret, context }: { ret: any; context: ActionContext }) =>
       transactionService.processPurchaseReturnTransaction(ret, context),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.returns.purchases(branchId) });
     },
   });
 }

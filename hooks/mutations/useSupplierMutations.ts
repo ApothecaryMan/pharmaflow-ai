@@ -10,29 +10,31 @@ export function useAddSupplier() {
   return useMutation({
     mutationFn: (supplier: any) => supplierService.create(supplier, branchId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.suppliers });
+      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all(branchId) });
     },
   });
 }
 
 export function useUpdateSupplier() {
   const queryClient = useQueryClient();
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: (supplier: any) => supplierService.update(supplier.id, supplier),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.suppliers });
+      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all(branchId) });
     },
   });
 }
 
 export function useDeleteSupplier() {
   const queryClient = useQueryClient();
+  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: (id: string) => supplierService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.suppliers });
+      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all(branchId) });
     },
   });
 }
