@@ -1,11 +1,11 @@
 /** Type of cash register transaction */
 export type CashTransactionType =
-  | 'opening'
+  | 'opening_balance'
   | 'sale'
   | 'card_sale'
   | 'in'
   | 'out'
-  | 'closing'
+  | 'closing_balance'
   | 'return'
   | 'card_return'
   | 'purchase'

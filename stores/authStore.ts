@@ -234,7 +234,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   updateBranch: async (id: string, updates: Partial<Branch>) => {
-    await branchService.update(id, updates);
+    const updated = await branchService.update(id, updates);
     queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.branches });
+    set((state) => ({
+      branches: state.branches.map((b) => (b.id === id ? updated : b)),
+    }));
   },
 }));

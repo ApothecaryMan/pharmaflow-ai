@@ -557,7 +557,7 @@ export interface Database {
         | 'other';
       item_condition: 'sellable' | 'damaged' | 'expired' | 'other';
       shift_status: 'open' | 'closed';
-      cash_tx_type: 'opening' | 'sale' | 'card_sale' | 'in' | 'out' | 'closing' | 'return';
+      cash_tx_type: 'opening' | 'opening_balance' | 'sale' | 'card_sale' | 'in' | 'out' | 'closing' | 'closing_balance' | 'return';
       movement_type:
         | 'initial'
         | 'sale'
