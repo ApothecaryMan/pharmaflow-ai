@@ -6,6 +6,7 @@ import { useDailyAchievements } from '../../hooks/dashboard/useDailyAchievements
 import { useBatches, useInventory } from '../../hooks/queries/useInventoryQuery';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useDashboardStats } from '../../hooks/queries/useDashboardQuery';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { useAuthStore } from '../../stores/authStore';
 import type { Drug, ExpandedView } from '../../types';
@@ -215,10 +216,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const { data: inventory = [] } = useInventory(activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
-  const { data: purchases = [] } = usePurchases(activeBranchId);
-  const { data: batches = [] } = useBatches(activeBranchId);
+  const { data: dashStats } = useDashboardStats(activeBranchId);
+  const needsFullData = !dashStats || !!expandedView;
+  const { data: inventory = [] } = useInventory(activeBranchId, {
+    enabled: needsFullData,
+  });
+  const { data: sales = [] } = useRecentSales(activeBranchId, 100, {
+    enabled: needsFullData,
+  });
+  const { data: purchases = [] } = usePurchases(activeBranchId, 100, {
+    enabled: needsFullData,
+  });
+  const { data: batches = [] } = useBatches(activeBranchId, {
+    enabled: needsFullData,
+  });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [timeRange, setTimeRange] = useState('7');
   const [topSellingMode, setTopSellingMode] = useState<'revenue' | 'qty'>('revenue');
@@ -936,7 +947,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {
             id: 'lowStock',
             title: t.lowStock,
-            value: lowStockItems.length,
+            value: dashStats?.lowStockCount ?? lowStockItems.length,
             icon: 'warning',
             iconColor: 'orange',
             type: 'number',

@@ -7,7 +7,7 @@ import { isTauri } from '../../utils/platform';
 
 export const WidgetUpdateEmitter = () => {
   const activeBranch = useAuthStore((s) => s.branches.find((b) => b.id === s.activeBranchId));
-  const { data: sales = [] } = useRecentSales(activeBranch?.id ?? '');
+  const { data: sales = [] } = useRecentSales(activeBranch?.id ?? '', 100, { enabled: isTauri() });
   const { darkMode } = useSettings();
   const payloadRef = useRef<{
     revenue: number;
