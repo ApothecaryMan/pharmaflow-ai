@@ -85,6 +85,7 @@
 
   /* Layout Tokens */
   --spacing-page: var(--page-padding);
+  --spacing-pageheader: 34px;
   --max-width-page: var(--page-max-width);
 }
 
