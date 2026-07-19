@@ -1,18 +1,17 @@
 import React, { useCallback, useMemo } from 'react';
 import { useFinancialData } from '../../hooks/financials/useFinancialData';
+import type { SlimDrug, SlimExpiringItem } from '../../hooks/queries/useDashboardQuery';
 import { DashboardService } from '../../services/dashboard/dashboardService';
 import { dateRangeService, type FinancialPeriod } from '../../services/financials/dateRangeService';
-import type { Drug, Sale, StockBatch } from '../../types';
 import { CurrencyValue } from '../common/InsightTooltip';
 
 interface AnalyticsProps {
-  sales: Sale[];
-  inventory: Drug[];
-  batches: StockBatch[];
+  lowStockItems: SlimDrug[];
+  expiringItems: SlimExpiringItem[];
+  inventoryValuation: number;
   totalExpenses: number;
   language?: string;
-  branchId?: string;
-  timeRange: string; // Added to scope financial queries
+  timeRange: string;
 }
 
 const translations = {
@@ -86,12 +85,11 @@ const translations = {
 };
 
 export const useDashboardAnalytics = ({
-  sales,
-  inventory,
-  batches,
+  lowStockItems,
+  expiringItems,
+  inventoryValuation,
   totalExpenses: _totalExpenses,
   language = 'EN',
-  branchId,
   timeRange,
 }: AnalyticsProps) => {
   const t = useCallback(
@@ -102,7 +100,6 @@ export const useDashboardAnalytics = ({
     [language]
   );
 
-  // Map timeRange string to FinancialPeriod
   const period = useMemo<FinancialPeriod>(() => {
     switch (timeRange) {
       case '7':
@@ -116,7 +113,6 @@ export const useDashboardAnalytics = ({
     }
   }, [timeRange]);
 
-  // Fetch financial data from RPC + snapshots via unified hook
   const {
     summary: finSummary,
     daily: finDaily,
@@ -125,7 +121,6 @@ export const useDashboardAnalytics = ({
     error: finError,
   } = useFinancialData(period);
 
-  // Extract metrics from the summary
   const totalRevenue = finSummary?.net_revenue ?? 0;
   const totalReturns = finSummary?.return_revenue ?? 0;
   const totalCogs = finSummary?.net_cogs ?? 0;
@@ -147,32 +142,36 @@ export const useDashboardAnalytics = ({
     return grossRevenue > 0 ? (totalReturns / grossRevenue) * 100 : 0;
   }, [totalReturns, totalRevenue]);
 
-  // Local inventory valuation
-  const inventoryValuation = useMemo(
-    () => DashboardService.calculateInventoryValuation(batches, branchId),
-    [batches, branchId]
-  );
-
-  // Efficiency metrics
+  // Efficiency metrics from pre-computed valuation + COGS
   const { turnoverRatio: inventoryTurnoverRatio, daysOfInventory } = useMemo(
     () => DashboardService.calculateEfficiency(totalCogs, inventoryValuation),
     [totalCogs, inventoryValuation]
   );
 
-  // Local movement analysis (uses filtered sales for local UI highlights)
-  const movingItemsAnalysis = useMemo(
-    () => DashboardService.analyzeMovement(sales, inventory, batches, branchId),
-    [sales, inventory, batches, branchId]
-  );
+  // Movement analysis derived from server-computed lowStockItems
+  const movingItemsAnalysis = useMemo(() => {
+    const critical = lowStockItems.filter((d) => d.stock <= 3);
+    const lowStock = lowStockItems.filter((d) => {
+      const s = d.stock;
+      return s > 3 && s <= 10;
+    });
+    const revenueAtRisk = lowStockItems.reduce((sum, d) => sum + (d.publicPrice || 0) * 5, 0);
+    return {
+      critical,
+      lowStock,
+      lowStockCount: lowStockItems.length,
+      fastMoving: [],
+      slowMoving: [],
+      revenueAtRisk,
+    };
+  }, [lowStockItems]);
 
-  // Health Grades
   const profitGrade = useMemo(() => {
     if (profitMarginPercent > 35) return { label: t('excellent'), color: 'emerald' as const };
     if (profitMarginPercent > 20) return { label: t('healthy'), color: 'primary' as const };
     return { label: t('lowMargin'), color: 'amber' as const };
   }, [profitMarginPercent, t]);
 
-  // Top Selling products mapped to UI-friendly structure
   const topSelling = useMemo(() => {
     return finTopProducts.map((p) => ({
       id: p.product_id,
@@ -195,12 +194,6 @@ export const useDashboardAnalytics = ({
       }));
   }, [finTopProducts]);
 
-  // Expiring items
-  const expiringItems = useMemo(
-    () => DashboardService.getExpiringSoon(inventory, batches, branchId || 'all'),
-    [inventory, batches, branchId]
-  );
-
   // Daily sales trends for charting
   const salesTrends = useMemo(() => {
     if (!finDaily) return [];
@@ -209,12 +202,10 @@ export const useDashboardAnalytics = ({
     let aggregated: { day: string; sales: number }[] = [];
 
     if (timeRange === '7' || timeRange === '30') {
-      // Get the range from dateRangeService to maintain consistency with app-wide verified time
       const range = dateRangeService.getDateRange(period);
       const days = dateRangeService.getDaysInRange(range.start, range.end);
       const dayMap = new Map<string, number>(days.map((day) => [day, 0]));
 
-      // Populate with actual data (convert UTC timestamps to local dates)
       finDaily.forEach((d: unknown) => {
         const data = d as DailyData;
         const dayKey = dateRangeService.toLocalDateString(data.day);
@@ -233,7 +224,7 @@ export const useDashboardAnalytics = ({
         const monthlyMap = new Map<string, { day: string; sales: number }>();
         finDaily.forEach((d: unknown) => {
           const data = d as DailyData;
-          const monthKey = data.day.substring(0, 7); // YYYY-MM
+          const monthKey = data.day.substring(0, 7);
           const existing = monthlyMap.get(monthKey) || { day: `${monthKey}-01`, sales: 0 };
           existing.sales += data.net || 0;
           monthlyMap.set(monthKey, existing);
@@ -246,7 +237,7 @@ export const useDashboardAnalytics = ({
           const dateObj = new Date(data.day);
           const day = dateObj.getDate();
           const weekNum = Math.ceil(day / 7);
-          const monthKey = data.day.substring(0, 7); // YYYY-MM
+          const monthKey = data.day.substring(0, 7);
           const weekKey = `${monthKey}-W${weekNum}`;
 
           const existing = weeklyMap.get(weekKey) || { day: weekKey, sales: 0 };

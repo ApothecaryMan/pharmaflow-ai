@@ -3,13 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
 import { useDailyAchievements } from '../../hooks/dashboard/useDailyAchievements';
-import { useBatches, useInventory } from '../../hooks/queries/useInventoryQuery';
+import { type SlimDrug, useDashboardStats } from '../../hooks/queries/useDashboardQuery';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useDashboardStats } from '../../hooks/queries/useDashboardQuery';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { useAuthStore } from '../../stores/authStore';
-import type { Drug, ExpandedView } from '../../types';
+import type { ExpandedView } from '../../types';
 import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
@@ -209,30 +208,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
   subView,
   language,
 }) => {
-  const [restockDrug, setRestockDrug] = useState<Drug | null>(null);
+  const [restockDrug, setRestockDrug] = useState<SlimDrug | null>(null);
   const [restockQty, setRestockQty] = useState(10);
   const [restockIsUnit, setRestockIsUnit] = useState(false);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const { data: dashStats } = useDashboardStats(activeBranchId);
-  const needsFullData = !dashStats || !!expandedView;
-  const { data: inventory = [] } = useInventory(activeBranchId, {
-    enabled: needsFullData,
-  });
-  const { data: sales = [] } = useRecentSales(activeBranchId, 100, {
-    enabled: needsFullData,
-  });
-  const { data: purchases = [] } = usePurchases(activeBranchId, 100, {
-    enabled: needsFullData,
-  });
-  const { data: batches = [] } = useBatches(activeBranchId, {
-    enabled: needsFullData,
-  });
+  const authLoading = useAuthStore((s) => s.isLoading);
+  const { data: dashStats, isLoading: statsLoading } = useDashboardStats(activeBranchId);
+  const isLoading = authLoading || statsLoading;
+  const { data: sales = [] } = useRecentSales(activeBranchId, 100);
+  const { data: purchases = [] } = usePurchases(activeBranchId, 100);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [timeRange, setTimeRange] = useState('7');
   const [topSellingMode, setTopSellingMode] = useState<'revenue' | 'qty'>('revenue');
+  const [alertsMode, setAlertsMode] = useState<'lowStock' | 'expiring'>('lowStock');
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -384,12 +374,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     loading: finLoading,
     expensesTotal,
   } = useDashboardAnalytics({
-    sales: filteredData.sales,
-    inventory,
-    batches,
+    lowStockItems: dashStats?.lowStockItems ?? [],
+    expiringItems: dashStats?.expiringItems ?? [],
+    inventoryValuation: dashStats?.inventoryValuation ?? 0,
     totalExpenses: 0,
     language,
-    branchId: activeBranchId,
     timeRange,
   });
 
@@ -623,20 +612,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
         actions: exportBtn('low_stock', lowStockItems),
         children: (
           <div className='grid gap-3'>
-            {lowStockItems.map((item, idx) => (
-              <GenericListItem
-                key={item.id || `low-${idx}`}
-                title={getDisplayName(item, textTransform)}
-                subtitle={item.category || ''}
-                badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
-                badgeColor='badge-orange'
-                onClick={() => {
-                  setRestockDrug(item);
-                  setExpandedView(null);
-                }}
-                actionLabel={t.restock}
-              />
-            ))}
+            {lowStockItems.length === 0 ? (
+              <div className='h-32 flex items-center justify-center text-gray-400 text-sm'>
+                {t.allGood ||
+                  (language === 'AR' ? 'لا توجد نواقص في المخزون' : 'All stock is good')}
+              </div>
+            ) : (
+              lowStockItems.map((item, idx) => (
+                <GenericListItem
+                  key={item.id || `low-${idx}`}
+                  title={getDisplayName(item, textTransform)}
+                  subtitle={item.category || ''}
+                  badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
+                  badgeColor='badge-orange'
+                  onClick={() => {
+                    setRestockDrug(item);
+                    setExpandedView(null);
+                  }}
+                  actionLabel={t.restock}
+                />
+              ))
+            )}
           </div>
         ),
       },
@@ -665,21 +661,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
         actions: exportBtn('expiring_items', expiringItems),
         children: (
           <div className='space-y-3'>
-            {expiringItems.map((item, idx) => {
-              const days = getDaysUntilExpiry(item.expiryDate);
-              const isExpired = days < 0;
-              return (
-                <GenericListItem
-                  key={item.id || `exp-${idx}`}
-                  icon='event_busy'
-                  title={getDisplayName(item, textTransform)}
-                  subtitle={`${item.category} • ${item.stock} in stock`}
-                  badge={isExpired ? t.expired : `${days} ${t.days}`}
-                  badgeColor={isExpired ? 'badge-danger' : 'badge-warning'}
-                  value={item.expiryDate}
-                />
-              );
-            })}
+            {expiringItems.length === 0 ? (
+              <div className='h-32 flex items-center justify-center text-gray-400 text-sm'>
+                {t.noExpiring ||
+                  (language === 'AR'
+                    ? 'لا توجد أصناف تنتهي صلاحيتها قريباً'
+                    : 'No items expiring soon')}
+              </div>
+            ) : (
+              expiringItems.map((item, idx) => {
+                const days = getDaysUntilExpiry(item.expiryDate);
+                const isExpired = days < 0;
+                return (
+                  <GenericListItem
+                    key={item.id || `exp-${idx}`}
+                    icon='event_busy'
+                    title={getDisplayName(item, textTransform)}
+                    subtitle={`${item.category} • ${item.stock} in stock`}
+                    badge={isExpired ? t.expired : `${days} ${t.days}`}
+                    badgeColor={isExpired ? 'badge-danger' : 'badge-warning'}
+                    value={item.expiryDate}
+                  />
+                );
+              })
+            )}
           </div>
         ),
       },
@@ -953,7 +958,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             type: 'number',
             tooltip: lowStockTooltip,
           },
-          ].map((card, _idx) => {
+        ].map((card, _idx) => {
           const cardContent = (
             // biome-ignore lint/correctness/useJsxKeyInIterable: key provided by wrapper renderCard
             <SmallCard
@@ -972,10 +977,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
           const renderCard = (key: string) => (
             <div
               key={key}
-              role="button"
+              role='button'
               tabIndex={0}
               onClick={() => setExpandedView(card.id as ExpandedView)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView(card.id as ExpandedView); } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setExpandedView(card.id as ExpandedView);
+                }
+              }}
               className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
             >
               {cardContent}
@@ -1113,16 +1123,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Row 3: Alerts & Recent Sales */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
         {/* Alerts Area */}
-        <div className='flex flex-col gap-4'>
-          {[
-            {
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-[400px] flex flex-col group`}>
+          {(() => {
+            const lowStockCard = {
               id: 'lowStock',
-              title: t.attention,
+              title: t.attention || 'Attention',
               icon: 'priority_high',
               iconColor: 'text-orange-500',
-              iconBg: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
-              data: lowStockItems.slice(0, 5),
-              emptyText: t.allGood,
+              data: (lowStockItems || []).slice(0, 10),
+              emptyText:
+                t.allGood || (language === 'AR' ? 'لا توجد نواقص في المخزون' : 'All stock is good'),
               onExpand: () => setExpandedView('lowStock'),
               renderItem: (item: any) => (
                 <div
@@ -1150,14 +1160,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                 </div>
               ),
-            },
-            {
+            };
+
+            const expiringCard = {
               id: 'expiring',
-              title: t.expiringSoon,
+              title: t.expiringSoon || 'Expiring Soon',
               icon: 'event_busy',
               iconColor: 'text-red-500',
-              data: expiringItems.slice(0, 5),
-              emptyText: t.noExpiring,
+              data: (expiringItems || []).slice(0, 10),
+              emptyText:
+                t.noExpiring ||
+                (language === 'AR'
+                  ? 'لا توجد أصناف تنتهي صلاحيتها قريباً'
+                  : 'No items expiring soon'),
               onExpand: () => setExpandedView('expiring'),
               renderItem: (item: any) => {
                 const days = getDaysUntilExpiry(item.expiryDate);
@@ -1185,47 +1200,68 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                 );
               },
-            },
-          ].map((card) => (
-            <div key={card.id} className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
-              <SectionHeader
-                icon={card.icon}
-                title={card.title}
-                onExpand={card.onExpand}
-                iconColor={card.iconColor}
-              />
-              <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
-                {isLoading ? (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={`card-sk-${i}`}
-                      className='flex justify-between items-center p-2 animate-pulse'
-                    >
-                      <div className='flex items-center gap-3 overflow-hidden'>
-                        <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
-                        <div className='space-y-1.5'>
-                          <div className='h-3.5 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
-                          <div className='h-2.5 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
-                        </div>
-                      </div>
-                      <div className='h-8 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg ms-2' />
-                    </div>
-                  ))
-                ) : card.data.length === 0 ? (
-                  <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
-                    {card.emptyText}
+            };
+
+            const activeCard = alertsMode === 'lowStock' ? lowStockCard : expiringCard;
+
+            return (
+              <>
+                <div className='flex justify-between items-center mb-3'>
+                  <h3 className='text-base font-semibold text-(--text-primary) flex items-center gap-2 truncate'>
+                    <span className='truncate'>{activeCard.title}</span>
+                  </h3>
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <SegmentedControl
+                      options={[
+                        {
+                          label: t.dashboard?.lowStockItems || t.lowStock || 'Low Stock',
+                          value: 'lowStock',
+                        },
+                        {
+                          label: t.expiringSoon || 'Expiring',
+                          value: 'expiring',
+                        },
+                      ]}
+                      value={alertsMode}
+                      onChange={(val) => setAlertsMode(String(val) as 'lowStock' | 'expiring')}
+                      size='sm'
+                    />
+                    <ExpandButton onClick={activeCard.onExpand} />
                   </div>
-                ) : (
-                  card.data.map(card.renderItem)
-                )}
-              </div>
-            </div>
-          ))}
+                </div>
+                <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
+                  {isLoading ? (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div
+                        key={`card-sk-${i}`}
+                        className='flex justify-between items-center p-2 animate-pulse'
+                      >
+                        <div className='flex items-center gap-3 overflow-hidden'>
+                          <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
+                          <div className='space-y-1.5'>
+                            <div className='h-3.5 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                            <div className='h-2.5 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+                          </div>
+                        </div>
+                        <div className='h-8 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg ms-2' />
+                      </div>
+                    ))
+                  ) : activeCard.data.length === 0 ? (
+                    <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
+                      {activeCard.emptyText}
+                    </div>
+                  ) : (
+                    activeCard.data.map(activeCard.renderItem)
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Recent Transactions */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} h-auto max-h-[530px] flex flex-col group`}>
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-[400px] flex flex-col group`}>
           <SectionHeader
             icon='receipt_long'
             title={t.recentSales}
