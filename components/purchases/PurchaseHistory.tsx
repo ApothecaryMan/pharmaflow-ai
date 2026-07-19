@@ -204,8 +204,13 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   const columns = useMemo<ColumnDef<Purchase>[]>(
     () => [
       {
-        header: t.tableHeaders?.orderId || 'Order #',
+        header: 'ID',
         accessorKey: 'invoiceId',
+        cell: (info) => (
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            {info.getValue() as string}
+          </span>
+        ),
         meta: { align: 'start' },
       },
       {

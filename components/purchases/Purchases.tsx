@@ -1674,7 +1674,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {/* System Order ID (Read Only) */}
               <div className='group relative'>
                 <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
-                  {t.tableHeaders?.orderId || 'Order #'}
+                  {'ID'}
                 </span>
                 <div
                   dir='ltr'
