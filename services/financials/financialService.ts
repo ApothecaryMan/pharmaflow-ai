@@ -26,25 +26,6 @@ const EMPTY_SUMMARY: FinancialSummary = {
   total_returns_count: 0,
 };
 
-function isRLSError(err: any): boolean {
-  const msg = err?.message || err?.error?.message || err?.details || '';
-  return (
-    msg.includes('infinite recursion') ||
-    msg.includes('42P17') ||
-    msg.includes('policy for relation') ||
-    msg.includes('stack depth') ||
-    msg.includes('max_stack_depth')
-  );
-}
-
-function handleFallbackError(err: unknown, context: string): void {
-  if (isRLSError(err)) {
-    console.error(`[financial] ${context}: RLS policy error detected — returning empty data. Fix required on DB.`, err);
-  } else {
-    console.warn(`[financial] ${context}: fallback error —`, err);
-  }
-}
-
 export interface FinancialSummary extends FinancialReportSummary {
   expenses_total: number;
   net_profit: number;
@@ -67,9 +48,6 @@ function calculateChange(
 }
 
 export const financialService = {
-  isDev(): boolean {
-    return import.meta.env.DEV;
-  },
   /**
    * Calculates Total Revenue and Total Returns using precision math.
    * Duplicated from DashboardService for localized/isolated computations.
@@ -142,14 +120,8 @@ export const financialService = {
       });
 
       if (error) {
-        if (this.isDev()) {
-          console.warn(
-            'RPC compute_financial_summary_with_snapshots failed, running client fallback:',
-            error
-          );
-          return this.fallbackFinancialSummary(start, end, branchId);
-        }
-        throw error;
+        console.error('RPC compute_financial_summary_with_snapshots failed:', error);
+        return EMPTY_SUMMARY;
       }
 
       const s = data as any;
@@ -168,14 +140,8 @@ export const financialService = {
         total_returns_count: Number(s.total_returns_count || 0),
       } as FinancialSummary;
     } catch (err) {
-      if (this.isDev()) {
-        console.warn(
-          'RPC compute_financial_summary_with_snapshots error, running client fallback:',
-          err
-        );
-        return this.fallbackFinancialSummary(start, end, branchId);
-      }
-      throw err;
+      console.error('RPC compute_financial_summary_with_snapshots error:', err);
+      return EMPTY_SUMMARY;
     }
   },
 
@@ -246,20 +212,14 @@ export const financialService = {
       });
 
       if (error) {
-        if (this.isDev()) {
-          console.warn('RPC get_daily_financial_breakdown failed, running client fallback:', error);
-          return this.fallbackDailyBreakdown(dateFrom, dateTo, branchId);
-        }
-        throw error;
+        console.error('RPC get_daily_financial_breakdown failed:', error);
+        return [];
       }
 
       return (data || []) as DailyFinancialData[];
     } catch (err) {
-      if (this.isDev()) {
-        console.warn('RPC get_daily_financial_breakdown error, running client fallback:', err);
-        return this.fallbackDailyBreakdown(dateFrom, dateTo, branchId);
-      }
-      throw err;
+      console.error('RPC get_daily_financial_breakdown error:', err);
+      return [];
     }
   },
 
@@ -281,20 +241,14 @@ export const financialService = {
       });
 
       if (error) {
-        if (this.isDev()) {
-          console.warn('RPC get_top_products_financial failed, running client fallback:', error);
-          return this.fallbackTopProducts(range.start, range.end, branchId, limit);
-        }
-        throw error;
+        console.error('RPC get_top_products_financial failed:', error);
+        return [];
       }
 
       return (data || []) as ProductFinancialItem[];
     } catch (err) {
-      if (this.isDev()) {
-        console.warn('RPC get_top_products_financial error, running client fallback:', err);
-        return this.fallbackTopProducts(range.start, range.end, branchId, limit);
-      }
-      throw err;
+      console.error('RPC get_top_products_financial error:', err);
+      return [];
     }
   },
 
@@ -325,23 +279,14 @@ export const financialService = {
       });
 
       if (error) {
-        if (this.isDev()) {
-          console.warn(
-            'RPC get_category_financial_breakdown failed, running client fallback:',
-            error
-          );
-          return this.fallbackCategoryBreakdown(start, end, branchId);
-        }
-        throw error;
+        console.error('RPC get_category_financial_breakdown failed:', error);
+        return [];
       }
 
       return (data || []) as CategoryFinancialReport[];
     } catch (err) {
-      if (this.isDev()) {
-        console.warn('RPC get_category_financial_breakdown error, running client fallback:', err);
-        return this.fallbackCategoryBreakdown(start, end, branchId);
-      }
-      throw err;
+      console.error('RPC get_category_financial_breakdown error:', err);
+      return [];
     }
   },
 
@@ -367,313 +312,4 @@ export const financialService = {
     };
   },
 
-  // ─────────────────────────────────────────────
-  //  Client-side Fallbacks (Contingency)
-  // ─────────────────────────────────────────────
-
-  async fallbackFinancialSummary(
-    start: string,
-    end: string,
-    branchId?: string
-  ): Promise<FinancialSummary> {
-    // 1. Fetch sales
-    let salesQuery = supabase
-      .from('sales')
-      .select(
-        'id, total, status, date, global_discount, items:sale_items(id, quantity, unit_price, cost_price, is_unit)'
-      )
-      .eq('status', 'completed')
-      .gte('date', start)
-      .lte('date', end);
-    if (branchId) salesQuery = salesQuery.eq('branch_id', branchId);
-
-    // 2. Fetch returns
-    let returnsQuery = supabase
-      .from('returns')
-      .select(
-        'id, total_refund, date, items:return_items(drug_id, quantity_returned, refund_amount, sale_item_id)'
-      )
-      .gte('date', start)
-      .lte('date', end);
-    if (branchId) returnsQuery = returnsQuery.eq('branch_id', branchId);
-
-    // 3. Fetch expenses
-    let expensesQuery = supabase
-      .from('expenses')
-      .select('amount')
-      .gte('recorded_at', start)
-      .lte('recorded_at', end);
-    if (branchId) expensesQuery = expensesQuery.eq('branch_id', branchId);
-
-    const [salesRes, returnsRes, expensesRes] = await Promise.allSettled([
-      salesQuery,
-      returnsQuery,
-      expensesQuery,
-    ]);
-
-    if (salesRes.status === 'rejected') {
-      handleFallbackError(salesRes.reason, 'fallbackFinancialSummary sales query rejected');
-      return EMPTY_SUMMARY;
-    }
-    if (returnsRes.status === 'rejected') {
-      handleFallbackError(returnsRes.reason, 'fallbackFinancialSummary returns query rejected');
-      return EMPTY_SUMMARY;
-    }
-    if (expensesRes.status === 'rejected') {
-      handleFallbackError(expensesRes.reason, 'fallbackFinancialSummary expenses query rejected');
-      return EMPTY_SUMMARY;
-    }
-
-    if (salesRes.value.error) {
-      handleFallbackError(salesRes.value.error, 'fallbackFinancialSummary sales query error');
-      return EMPTY_SUMMARY;
-    }
-    if (returnsRes.value.error) {
-      handleFallbackError(returnsRes.value.error, 'fallbackFinancialSummary returns query error');
-      return EMPTY_SUMMARY;
-    }
-    if (expensesRes.value.error) {
-      handleFallbackError(expensesRes.value.error, 'fallbackFinancialSummary expenses query error');
-      return EMPTY_SUMMARY;
-    }
-
-    const sales = salesRes.status === 'fulfilled' ? salesRes.value.data || [] : [];
-    const returns = returnsRes.status === 'fulfilled' ? returnsRes.value.data || [] : [];
-    const expenses = expensesRes.status === 'fulfilled' ? expensesRes.value.data || [] : [];
-
-    // Calculate metrics
-    let gross_revenue = 0;
-    let gross_cogs = 0;
-    let total_units_sold = 0;
-
-    sales.forEach((s: any) => {
-      gross_revenue = money.add(gross_revenue, s.total || 0);
-      s.items?.forEach((item: any) => {
-        total_units_sold += item.quantity || 0;
-        const itemCost = money.multiply(item.cost_price || 0, item.quantity || 0, 0);
-        gross_cogs = money.add(gross_cogs, itemCost);
-      });
-    });
-
-    let total_refunds = 0;
-    let return_cogs = 0;
-
-    returns.forEach((r: any) => {
-      total_refunds = money.add(total_refunds, r.total_refund || 0);
-      r.items?.forEach((item: any) => {
-        // Fallback return cogs calculation: locate original sale item if possible, or assume 70% of refund
-        const refundAmt = item.refund_amount || 0;
-        const estCost = money.multiply(refundAmt, 70, 2);
-        return_cogs = money.add(return_cogs, estCost);
-      });
-    });
-
-    const net_revenue = money.subtract(gross_revenue, total_refunds);
-    const net_cogs = money.subtract(gross_cogs, return_cogs);
-    const gross_profit = money.subtract(net_revenue, net_cogs);
-
-    let expenses_total = 0;
-    expenses.forEach((e: any) => {
-      expenses_total = money.add(expenses_total, e.amount || 0);
-    });
-
-    const net_profit = money.subtract(gross_profit, expenses_total);
-
-    return {
-      gross_revenue,
-      return_revenue: total_refunds,
-      net_revenue,
-      gross_cogs,
-      return_cogs,
-      net_cogs,
-      gross_profit,
-      expenses_total,
-      net_profit,
-      total_transactions: sales.length,
-      total_units_sold,
-      total_returns_count: returns.length,
-    };
-  },
-
-  async fallbackDailyBreakdown(
-    dateFrom: string,
-    dateTo: string,
-    branchId?: string
-  ): Promise<DailyFinancialData[]> {
-    let salesQuery = supabase
-      .from('sales')
-      .select('total, date')
-      .eq('status', 'completed')
-      .gte('date', dateFrom)
-      .lte('date', dateTo);
-    if (branchId) salesQuery = salesQuery.eq('branch_id', branchId);
-
-    let returnsQuery = supabase
-      .from('returns')
-      .select('total_refund, date')
-      .gte('date', dateFrom)
-      .lte('date', dateTo);
-    if (branchId) returnsQuery = returnsQuery.eq('branch_id', branchId);
-
-    const [salesRes, returnsRes] = await Promise.allSettled([salesQuery, returnsQuery]);
-
-    if (salesRes.status === 'rejected') {
-      handleFallbackError(salesRes.reason, 'fallbackDailyBreakdown sales');
-      return [];
-    }
-    if (returnsRes.status === 'rejected') {
-      handleFallbackError(returnsRes.reason, 'fallbackDailyBreakdown returns');
-      return [];
-    }
-
-    if (salesRes.value.error) {
-      handleFallbackError(salesRes.value.error, 'fallbackDailyBreakdown sales error');
-      return [];
-    }
-    if (returnsRes.value.error) {
-      handleFallbackError(returnsRes.value.error, 'fallbackDailyBreakdown returns error');
-      return [];
-    }
-
-    const dailyMap = new Map<string, DailyFinancialData>();
-
-    const salesData = salesRes.value.data;
-    const returnsData = returnsRes.value.data;
-
-    salesData?.forEach((s: any) => {
-      const day = dateRangeService.toLocalDateString(s.date);
-      const existing = dailyMap.get(day) || {
-        day,
-        revenue: 0,
-        refund: 0,
-        net: 0,
-        sale_count: 0,
-        return_count: 0,
-      };
-      existing.revenue = money.add(existing.revenue, s.total || 0);
-      existing.sale_count += 1;
-      existing.net = money.subtract(existing.revenue, existing.refund);
-      dailyMap.set(day, existing);
-    });
-
-    returnsData?.forEach((r: any) => {
-      const day = dateRangeService.toLocalDateString(r.date);
-      const existing = dailyMap.get(day) || {
-        day,
-        revenue: 0,
-        refund: 0,
-        net: 0,
-        sale_count: 0,
-        return_count: 0,
-      };
-      existing.refund = money.add(existing.refund, r.total_refund || 0);
-      existing.return_count += 1;
-      existing.net = money.subtract(existing.revenue, existing.refund);
-      dailyMap.set(day, existing);
-    });
-
-    return Array.from(dailyMap.values()).sort((a, b) => a.day.localeCompare(b.day));
-  },
-
-  async fallbackTopProducts(
-    start: string,
-    end: string,
-    branchId?: string,
-    limit: number = 10
-  ): Promise<ProductFinancialItem[]> {
-    let salesQuery = supabase
-      .from('sales')
-      .select(
-        'id, items:sale_items(drug_id, quantity, unit_price, cost_price, drugs(name, dosage_form))'
-      )
-      .eq('status', 'completed')
-      .gte('date', start)
-      .lte('date', end);
-    if (branchId) salesQuery = salesQuery.eq('branch_id', branchId);
-
-    const { data: sales, error } = await salesQuery;
-    if (error) {
-      handleFallbackError(error, 'fallbackTopProducts');
-      return [];
-    }
-    const prodMap = new Map<
-      string,
-      { id: string; name: string; dosageForm: string; qty: number; rev: number; cost: number }
-    >();
-
-    sales?.forEach((s: any) => {
-      s.items?.forEach((item: any) => {
-        const drugId = item.drug_id;
-        const existing = prodMap.get(drugId) || {
-          id: drugId,
-          name: 'Unknown Product',
-          dosageForm: '',
-          qty: 0,
-          rev: 0,
-          cost: 0,
-        };
-
-        existing.qty += item.quantity || 0;
-        existing.rev = money.add(
-          existing.rev,
-          money.multiply(item.unit_price || 0, item.quantity || 0, 0)
-        );
-        existing.cost = money.add(
-          existing.cost,
-          money.multiply(item.cost_price || 0, item.quantity || 0, 0)
-        );
-        prodMap.set(drugId, existing);
-      });
-    });
-
-    const items: ProductFinancialItem[] = Array.from(prodMap.values()).map((p) => {
-      const gross_profit = money.subtract(p.rev, p.cost);
-      return {
-        id: p.id,
-        product_id: p.id,
-        product_name: p.name,
-        abc_class: 'C' as const,
-        quantity_sold: p.qty,
-        revenue: p.rev,
-        cogs: p.cost,
-        gross_profit,
-        margin_percent: p.rev > 0 ? Math.round((gross_profit / p.rev) * 100) : 0,
-      };
-    });
-
-    // Sort by revenue desc
-    items.sort((a, b) => b.revenue - a.revenue);
-
-    // Apply Pareto ABC
-    const totalRev = items.reduce((sum, item) => sum + item.revenue, 0);
-    let cumulative = 0;
-    items.forEach((item) => {
-      cumulative += item.revenue;
-      const ratio = totalRev > 0 ? cumulative / totalRev : 1;
-      if (ratio <= 0.8) (item as any).abc_class = 'A';
-      else if (ratio <= 0.95) (item as any).abc_class = 'B';
-      else (item as any).abc_class = 'C';
-    });
-
-    return items.slice(0, limit);
-  },
-
-  async fallbackCategoryBreakdown(
-    start: string,
-    end: string,
-    branchId?: string
-  ): Promise<CategoryFinancialReport[]> {
-    // Simply fetch top products (up to 200) and group them by a dummy general category or look up drugs.
-    const products = await this.fallbackTopProducts(start, end, branchId, 200);
-
-    // For local fallback, put everything in "GENERAL"
-    const general = { category: 'GENERAL', revenue: 0, cogs: 0, profit: 0 };
-    products.forEach((p) => {
-      general.revenue = money.add(general.revenue, p.revenue);
-      general.cogs = money.add(general.cogs, p.cogs);
-      general.profit = money.add(general.profit, p.gross_profit);
-    });
-
-    return [general];
-  },
 };
