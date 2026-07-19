@@ -1,6 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase';
 import { STALE_TIMES } from '../../lib/queryClient';
+import { supabase } from '../../lib/supabase';
+
+export interface SlimDrug {
+  id: string;
+  name: string;
+  dosageForm?: string;
+  stock: number;
+  category: string;
+  publicPrice: number;
+}
+
+export interface SlimExpiringItem extends SlimDrug {
+  expiryDate: string;
+  batchId: string;
+  batchQuantity: number;
+}
 
 export interface DashboardStats {
   totalProducts: number;
@@ -11,6 +26,29 @@ export interface DashboardStats {
   todayTransactions: number;
   expiringSoonCount: number;
   recentPurchases: any[];
+  lowStockItems: SlimDrug[];
+  expiringItems: SlimExpiringItem[];
+  inventoryValuation: number;
+}
+
+function toSlimDrug(db: any): SlimDrug {
+  return {
+    id: db.id,
+    name: db.name,
+    dosageForm: db.dosage_form || undefined,
+    stock: db.stock ?? 0,
+    category: db.category,
+    publicPrice: db.public_price ?? 0,
+  };
+}
+
+function toSlimExpiring(db: any): SlimExpiringItem {
+  return {
+    ...toSlimDrug(db),
+    expiryDate: db.expiry_date || '',
+    batchId: db.batch_id,
+    batchQuantity: db.batch_quantity ?? 0,
+  };
 }
 
 export function useDashboardStats(branchId: string) {
@@ -20,14 +58,8 @@ export function useDashboardStats(branchId: string) {
       if (!branchId) return null;
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      const todayEnd = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1,
-      ).toISOString();
-      const thirtyDaysFromNow = new Date(
-        now.getTime() + 30 * 24 * 60 * 60 * 1000,
-      )
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0];
 
@@ -38,6 +70,9 @@ export function useDashboardStats(branchId: string) {
         { data: salesToday },
         { count: expiringCount },
         { data: recentPurchases },
+        { data: lowStockRaw },
+        { data: expiringRaw },
+        { data: invValuation },
       ] = await Promise.all([
         supabase
           .from('drugs')
@@ -47,10 +82,7 @@ export function useDashboardStats(branchId: string) {
           .from('drugs')
           .select('public_price, stock, units_per_pack')
           .eq('branch_id', branchId),
-        supabase
-          .from('drugs')
-          .select('stock, min_stock')
-          .eq('branch_id', branchId),
+        supabase.from('drugs').select('stock, min_stock').eq('branch_id', branchId),
         supabase
           .from('sales')
           .select('total')
@@ -70,24 +102,33 @@ export function useDashboardStats(branchId: string) {
           .eq('branch_id', branchId)
           .order('date', { ascending: false })
           .limit(5),
+        supabase.rpc('get_dashboard_low_stock', {
+          p_branch_id: branchId,
+          p_limit: 50,
+        }),
+        supabase.rpc('get_dashboard_expiring_items', {
+          p_branch_id: branchId,
+          p_days: 90,
+          p_limit: 50,
+        }),
+        supabase.rpc('get_dashboard_inventory_valuation', {
+          p_branch_id: branchId,
+        }),
       ]);
 
       const totalValue = (valueData || []).reduce(
-        (sum, d) =>
-          sum +
-          (d.public_price || 0) * ((d.stock || 0) / (d.units_per_pack || 1)),
-        0,
+        (sum, d) => sum + (d.public_price || 0) * ((d.stock || 0) / (d.units_per_pack || 1)),
+        0
       );
       const lowStockCount = (lowStockData || []).filter(
-        (d) => (d.stock || 0) < (d.min_stock || 10) && (d.stock || 0) > 0,
+        (d) => (d.stock || 0) < (d.min_stock || 10) && (d.stock || 0) > 0
       ).length;
-      const outOfStockCount = (lowStockData || []).filter(
-        (d) => (d.stock || 0) <= 0,
-      ).length;
-      const todayRevenue = (salesToday || []).reduce(
-        (sum, s) => sum + (s.total || 0),
-        0,
-      );
+      const outOfStockCount = (lowStockData || []).filter((d) => (d.stock || 0) <= 0).length;
+      const todayRevenue = (salesToday || []).reduce((sum, s) => sum + (s.total || 0), 0);
+
+      const lowStockItems: SlimDrug[] = (lowStockRaw || []).map(toSlimDrug);
+      const expiringItems: SlimExpiringItem[] = (expiringRaw || []).map(toSlimExpiring);
+      const inventoryValuation = (invValuation as number) || 0;
 
       return {
         totalProducts: totalCount || 0,
@@ -98,6 +139,9 @@ export function useDashboardStats(branchId: string) {
         todayTransactions: salesToday?.length || 0,
         expiringSoonCount: expiringCount || 0,
         recentPurchases: recentPurchases || [],
+        lowStockItems,
+        expiringItems,
+        inventoryValuation,
       };
     },
     staleTime: STALE_TIMES.inventory,

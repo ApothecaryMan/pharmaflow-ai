@@ -29,3 +29,25 @@ export function useSale(saleId: string, options?: { enabled?: boolean }) {
     enabled: !!saleId && (options?.enabled ?? true),
   });
 }
+
+export function useSalesPage(
+  branchId: string,
+  page: number,
+  pageSize: number,
+  filters: any,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: ['sales', 'page', branchId, page, pageSize, filters],
+    queryFn: () =>
+      salesService.listPage({
+        branchId,
+        page,
+        pageSize,
+        filters,
+        sort: { column: 'date', ascending: false },
+      }),
+    enabled: !!branchId && (options?.enabled ?? true),
+    staleTime: 60 * 1000, // 1 minute
+  });
+}

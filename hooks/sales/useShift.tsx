@@ -178,24 +178,8 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           activeBranchId
         );
 
-        // If there was an opening transaction, it's handled by openShift service usually,
-        // but let's check if we need to add it explicitly.
-        // Looking at cashService.openShift, it creates the shift but doesn't add the 'opening' transaction record.
-        // Let's add it if provided in the newShift.
-        if (newShift.transactions && newShift.transactions.length > 0) {
-          const openingTx = newShift.transactions.find((t) => t.type === 'opening');
-          if (openingTx) {
-            await cashService.addTransaction(createdShift.id, {
-              branchId: activeBranchId,
-              shiftId: createdShift.id,
-              time: openingTx.time,
-              type: 'opening',
-              amount: openingTx.amount,
-              reason: openingTx.reason,
-              userId: openingTx.userId,
-            });
-          }
-        }
+        // The open_shift RPC already inserts the opening_balance transaction server-side,
+        // so no need to add it here.
 
         await refreshShifts();
       } catch (err) {
