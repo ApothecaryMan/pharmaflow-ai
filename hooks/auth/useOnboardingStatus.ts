@@ -2,8 +2,14 @@ import { useEffect, useState } from 'react';
 import { authService } from '../../services/auth/authService';
 import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
+import type { Employee } from '../../types';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;
+
+// Module-level cache — survives re-renders within a page session
+// Prevents re-fetching data already loaded by authStore.reinitialize
+let cachedBranches: Awaited<ReturnType<typeof branchService.getAll>> | null = null;
+let cachedEmployees: Employee[] | null = null;
 
 export const useOnboardingStatus = (isAuthenticated?: boolean) => {
   const [activeStep, setActiveStep] = useState<OnboardingStep>(0);
@@ -47,7 +53,8 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       }
 
       // 2. Check Branches
-      const branches = await branchService.getAll(activeOrgId || undefined);
+      const branches = cachedBranches ?? await branchService.getAll(activeOrgId || undefined);
+      cachedBranches = branches;
       const isDummyBranchOnly =
         branches.length === 1 &&
         branches[0].code === 'MAIN-01' &&
@@ -60,7 +67,8 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
 
       // 3. Check Employees
       const { employeeService } = await import('../../services/hr/employeeService');
-      const all = await employeeService.getAll('ALL', activeOrgId || undefined);
+      const all = cachedEmployees ?? await employeeService.getAll('ALL', activeOrgId || undefined);
+      cachedEmployees = all;
       const hasRealEmployees = all.some((e) => e.userId !== user?.userId);
 
       if (!hasRealEmployees) {
