@@ -5,28 +5,28 @@ import type { Drug, StockBatch } from '../../types';
 
 import { useComputedInventory } from '../inventory/useComputedInventory';
 
-export function useRawInventory(branchId: string) {
+export function useRawInventory(branchId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.inventory.all(branchId),
     queryFn: () => inventoryService.getAll(branchId) as Promise<Drug[]>,
-    enabled: !!branchId,
+    enabled: !!branchId && (options?.enabled ?? true),
     staleTime: 5 * 60 * 1000,
   });
 }
 
-export function useInventory(branchId: string) {
+export function useInventory(branchId: string, options?: { enabled?: boolean }) {
   const {
     data: rawInventory = [],
     isLoading: isInvLoading,
     error: invError,
     refetch: refetchInv,
-  } = useRawInventory(branchId);
+  } = useRawInventory(branchId, { enabled: options?.enabled });
   const {
     data: batches = [],
     isLoading: isBatchesLoading,
     error: batchesError,
     refetch: refetchBatches,
-  } = useBatches(branchId);
+  } = useBatches(branchId, { enabled: options?.enabled });
 
   const computedInventory = useComputedInventory(rawInventory, batches, branchId);
 
@@ -49,19 +49,19 @@ export function useDrug(drugId: string) {
   });
 }
 
-export function useLowStock(branchId: string, threshold = 10) {
+export function useLowStock(branchId: string, threshold = 10, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.inventory.lowStock(branchId, threshold),
     queryFn: () => inventoryService.getLowStock(threshold, branchId) as Promise<Drug[]>,
-    enabled: !!branchId,
+    enabled: !!branchId && (options?.enabled ?? true),
   });
 }
 
-export function useBatches(branchId: string) {
+export function useBatches(branchId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.batches.all(branchId),
     queryFn: () => batchService.getAllBatches(branchId) as Promise<StockBatch[]>,
-    enabled: !!branchId,
+    enabled: !!branchId && (options?.enabled ?? true),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -74,12 +74,12 @@ export function useBatch(batchId: string) {
   });
 }
 
-export function useSuppliers(branchId: string) {
+export function useSuppliers(branchId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.suppliers.all(branchId),
     queryFn: () =>
       import('../../services/suppliers').then((m) => m.supplierService.getAll(branchId)),
-    enabled: !!branchId,
-    staleTime: 10 * 60 * 1000,
+    enabled: !!branchId && (options?.enabled ?? true),
+    staleTime: 30 * 60 * 1000,
   });
 }

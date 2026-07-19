@@ -5,28 +5,28 @@ import { customerService } from '../../services/customers';
 import type { Customer, Sale } from '../../types';
 import { useRecentSales } from './useSalesQuery';
 
-export function useRawCustomers(branchId: string) {
+export function useRawCustomers(branchId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.customers.all(branchId),
     queryFn: () => customerService.getAll(branchId) as Promise<Customer[]>,
-    enabled: !!branchId,
-    staleTime: 10 * 60 * 1000,
+    enabled: !!branchId && (options?.enabled ?? true),
+    staleTime: 30 * 60 * 1000,
   });
 }
 
-export function useCustomers(branchId: string) {
+export function useCustomers(branchId: string, options?: { enabled?: boolean }) {
   const {
     data: rawCustomers = [],
     isLoading: isCustLoading,
     error: custError,
     refetch: refetchCust,
-  } = useRawCustomers(branchId);
+  } = useRawCustomers(branchId, { enabled: options?.enabled });
   const {
     data: sales = [],
     isLoading: isSalesLoading,
     error: salesError,
     refetch: refetchSales,
-  } = useRecentSales(branchId);
+  } = useRecentSales(branchId, 100, { enabled: options?.enabled });
 
   const enrichedCustomers = useMemo(() => {
     return rawCustomers.map((customer: Customer) => {
