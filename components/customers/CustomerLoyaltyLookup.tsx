@@ -138,9 +138,11 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       },
       {
         accessorKey: 'serialId',
-        header: t.orderId || 'Order ID',
+        header: 'ID',
         cell: (info) => (
-          <span className='font-mono text-gray-500'>#{info.getValue() as string}</span>
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            {info.getValue() as string}
+          </span>
         ),
         meta: { align: 'start' },
       },

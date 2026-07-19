@@ -373,8 +373,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       },
       {
         accessorKey: 'serialId',
-        header: '#',
-        meta: { width: 60, align: 'start' },
+        header: 'ID',
+        cell: (info) => (
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            {info.getValue() as string}
+          </span>
+        ),
+        meta: { width: 80, align: 'start' },
       },
       {
         accessorKey: 'code',
@@ -999,7 +1004,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 onRowLongPress={handleLongPress}
                 tableId='customers_table'
                 searchPlaceholder={t.searchPlaceholder}
-                defaultHiddenColumns={['serialId']}
+                defaultHiddenColumns={[]}
                 color={color}
                 isLoading={isLoading && filteredCustomers.length === 0}
                 globalFilter={searchQuery}

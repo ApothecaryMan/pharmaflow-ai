@@ -141,11 +141,14 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
       },
       {
         accessorKey: 'dailyOrderNumber',
-        header: t.customerHistory?.table.invoiceNo || 'Invoice #',
-        cell: (info) =>
-          info.row.original.dailyOrderNumber
-            ? `#${info.row.original.dailyOrderNumber}`
-            : info.row.original.id.substring(0, 8),
+        header: 'ID',
+        cell: (info) => (
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            {info.row.original.dailyOrderNumber
+              ? `${info.row.original.dailyOrderNumber}`
+              : info.row.original.id.substring(0, 8)}
+          </span>
+        ),
         meta: { width: 150, align: 'center' },
       },
       {
@@ -228,8 +231,13 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
         meta: { width: 180 },
       },
       {
-        accessorKey: 'id',
-        header: t.customerHistory?.table.returnNo || 'Return #',
+        accessorKey: 'serialId',
+        header: 'ID',
+        cell: (info) => (
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            {info.getValue() as string}
+          </span>
+        ),
         meta: { width: 100, align: 'start' },
       },
       {
