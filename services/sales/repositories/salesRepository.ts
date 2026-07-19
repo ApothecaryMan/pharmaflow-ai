@@ -1,8 +1,36 @@
 import { supabase } from '../../../lib/supabase';
-import type { Sale } from '../../../types';
+import type { Sale, BatchAllocation } from '../../../types';
 import { money } from '../../../utils/money';
 import { dateRangeService } from '../../financials/dateRangeService';
 import type { PagedResult, SalesFilters, SalesPageOptions, SalesStats } from '../types';
+
+interface SaleItemRow {
+  id: string;
+  sale_id: string;
+  branch_id: string;
+  drug_id: string;
+  name: string;
+  quantity: number;
+  public_price: number;
+  cost_price: number;
+  discount: number | null;
+  is_unit: boolean | null;
+  drug: Record<string, unknown> | null;
+  batch_allocations: BatchAllocationRow[] | null;
+}
+
+interface BatchAllocationRow {
+  id: string;
+  sale_item_id: string;
+  batch_id: string;
+  quantity: number;
+  branch_id: string;
+  expiry_date: string;
+  stock_batches?: {
+    expiry_date: string;
+    batch_number: string;
+  };
+}
 
 const SALE_LIST_COLUMNS = [
   'id',
@@ -33,7 +61,7 @@ const SALE_LIST_COLUMNS = [
   'net_total',
   'item_returned_quantities',
   'daily_order_number',
-  'items',
+  'sale_items:sale_items(id, drug_id, name, quantity, public_price, is_unit, discount)',
 ].join(',');
 
 const SALE_FULL_COLUMNS = `${SALE_LIST_COLUMNS}, notes, modification_history`;
@@ -54,7 +82,22 @@ export const salesRepository = {
       customerPhone: db.customer_phone,
       customerAddress: db.customer_address,
       customerStreetAddress: db.customer_street_address,
-      items: db.items || [],
+      items: (db.sale_items || []).map((item: SaleItemRow) => ({
+        ...item.drug,
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        publicPrice: item.public_price,
+        costPrice: item.cost_price,
+        discount: item.discount ?? undefined,
+        isUnit: item.is_unit ?? undefined,
+        batchAllocations: item.batch_allocations?.map((b: BatchAllocationRow) => ({
+          batchId: b.batch_id,
+          quantity: b.quantity,
+          expiryDate: b.stock_batches?.expiry_date,
+          batchNumber: b.stock_batches?.batch_number,
+        })),
+      })),
       subtotal: money.fromSmallestUnit(money.toSmallestUnit(db.subtotal || 0)),
       globalDiscount: db.global_discount || 0,
       tax: money.fromSmallestUnit(money.toSmallestUnit(db.tax || 0)),
@@ -92,7 +135,6 @@ export const salesRepository = {
     if (s.customerPhone !== undefined) db.customer_phone = s.customerPhone;
     if (s.customerAddress !== undefined) db.customer_address = s.customerAddress;
     if (s.customerStreetAddress !== undefined) db.customer_street_address = s.customerStreetAddress;
-    if (s.items !== undefined) db.items = s.items;
     if (s.subtotal !== undefined)
       db.subtotal = money.fromSmallestUnit(money.toSmallestUnit(s.subtotal || 0));
     if (s.globalDiscount !== undefined) db.global_discount = s.globalDiscount;
@@ -236,7 +278,6 @@ export const salesRepository = {
       const term = filters.search.trim().replace(/[%_,]/g, '');
       query = query.or(
         [
-          `id.ilike.%${term}%`,
           `customer_name.ilike.%${term}%`,
           `customer_code.ilike.%${term}%`,
           `customer_phone.ilike.%${term}%`,
@@ -272,7 +313,7 @@ export const salesRepository = {
   async getById(id: string): Promise<Sale | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select(SALE_FULL_COLUMNS)
+      .select('*, sale_items:sale_items(*, drug:drugs(*), batch_allocations:sale_item_batches(*, stock_batches(*)))')
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;

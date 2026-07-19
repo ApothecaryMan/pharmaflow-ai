@@ -1,7 +1,7 @@
 import { supabase } from '../../../lib/supabase';
 
 const SESSION_LIST_COLUMNS =
-  'id, user_id, org_id, branch_id, employee_id, employee_name, user_name, role, device_info, user_agent, ip_address, is_active, created_at, last_seen_at, logged_out_at';
+  'id, user_id, org_id, branch_id, employee_id, device_info, user_agent, ip_address, is_active, created_at, last_seen_at, logged_out_at, employee:employees(name, name_arabic, role, username)';
 
 export interface UserActiveSession {
   id: string;
@@ -22,6 +22,18 @@ export interface UserActiveSession {
 }
 
 let registerPromise: Promise<string | null> | null = null;
+
+type DbSessionRecord = Omit<
+  UserActiveSession,
+  'employee_name' | 'user_name' | 'role'
+> & {
+  employee?: {
+    name: string;
+    name_arabic: string | null;
+    username: string;
+    role: string;
+  };
+};
 
 export const sessionRepository = {
   /**
@@ -95,7 +107,24 @@ export const sessionRepository = {
       return [];
     }
 
-    return data || [];
+    // Map nested relational data back to flat DTO structure expected by the frontend
+    return (data as DbSessionRecord[] || []).map((s) => ({
+      id: s.id,
+      user_id: s.user_id,
+      org_id: s.org_id,
+      branch_id: s.branch_id,
+      employee_id: s.employee_id,
+      employee_name: s.employee ? (s.employee.name_arabic || s.employee.name) : undefined,
+      user_name: s.employee ? s.employee.username : undefined,
+      role: s.employee ? s.employee.role : undefined,
+      device_info: s.device_info,
+      user_agent: s.user_agent,
+      ip_address: s.ip_address,
+      is_active: s.is_active,
+      created_at: s.created_at,
+      last_seen_at: s.last_seen_at,
+      logged_out_at: s.logged_out_at,
+    }));
   },
 
   /**

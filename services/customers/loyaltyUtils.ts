@@ -20,7 +20,7 @@ export const calculateSalePoints = (sale: Sale) => {
 
   // 2. Item-level Points (based on price)
   let itemPoints = 0;
-  sale.items.forEach((item) => {
+  (sale.items || []).forEach((item) => {
     let itemRate = 0;
     let price = item.publicPrice;
     if (item.isUnit && item.unitsPerPack) {

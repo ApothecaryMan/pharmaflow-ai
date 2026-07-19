@@ -100,7 +100,7 @@ export const pricingService = {
     if (selectedItems.size === 0) return 0;
 
     // 1. Calculate the weights for all items in the original sale
-    const itemWeights = sale.items.map((item: any) => {
+    const itemWeights = (sale.items || []).map((item: any) => {
       // Use Unit-First logic to get the correct line total
       const totalUnits = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
       const unitPrice =
@@ -117,7 +117,7 @@ export const pricingService = {
 
     // 3. Sum up the allocated shares for the selected items and their quantities
     let totalRefund = 0;
-    sale.items.forEach((item: any, index: number) => {
+    (sale.items || []).forEach((item: any, index: number) => {
       // Improved drugId resolution using the optimized Map
       const rawId = item.drugId ?? item.drug_id ?? item.id;
       const drug = inventoryMap?.get(rawId);

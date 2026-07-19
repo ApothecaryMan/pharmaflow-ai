@@ -48,7 +48,7 @@ export class DashboardService {
     sales.forEach((sale) => {
       let saleItemRevenueCents = 0;
 
-      sale.items.forEach((item) => {
+      (sale.items || []).forEach((item) => {
         const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
         const returnedQty =
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
@@ -100,7 +100,7 @@ export class DashboardService {
     let cogsCents = 0;
 
     sales.forEach((sale) => {
-      sale.items.forEach((item) => {
+      (sale.items || []).forEach((item) => {
         const drug = inventory.find((d) => d.id === item.id);
         const costPrice = drug?.costPrice || 0;
 
@@ -194,7 +194,7 @@ export class DashboardService {
 
     // 1. Calculate Net Sales per Drug (Item-aware)
     sales.forEach((sale) => {
-      sale.items.forEach((item) => {
+      (sale.items || []).forEach((item) => {
         const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
         const returnedQty =
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
@@ -363,7 +363,7 @@ export class DashboardService {
     const productMap: Record<string, TopProduct> = {};
 
     sales.forEach((sale) => {
-      sale.items.forEach((item) => {
+      (sale.items || []).forEach((item) => {
         const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
         const returnedQty =
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;

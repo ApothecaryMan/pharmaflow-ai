@@ -155,7 +155,8 @@ export interface Sale {
   dailyOrderNumber?: number;
   /**
    * Cart items in this sale. Uses CartItem (extends Drug) for frontend display.
-   * When persisting to Supabase, map to SaleItem[] via the service layer.
+   * Computed from the `sale_items` relational join — no longer stored as JSONB.
+   * Always present on detail queries (`getById`); empty array `[]` on list queries.
    */
   items: CartItem[];
   total: number;

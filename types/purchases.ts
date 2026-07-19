@@ -55,7 +55,11 @@ export interface Purchase {
   supplierId: string;
   /** Supplier name for display */
   supplierName: string;
-  /** Items in this purchase */
+  /**
+   * Items in this purchase.
+   * Computed from the `purchase_items` relational join — no longer stored as JSONB.
+   * Always present on detail queries (`getById`); empty array `[]` on list queries.
+   */
   items: PurchaseItem[];
   /** Total cost of purchase */
   totalCost: number;

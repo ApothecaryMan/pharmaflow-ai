@@ -101,7 +101,7 @@ export function getEmployeeSalesStats(
   employeeSales.forEach((sale) => {
     const returnedQty = sale.itemReturnedQuantities || {};
 
-    sale.items.forEach((item) => {
+    (sale.items || []).forEach((item) => {
       // Calculate sold quantity (original - returned)
       const returned = returnedQty[item.id] || 0;
       const soldQty = item.quantity - returned;
@@ -157,7 +157,7 @@ export function getEmployeeSalesStats(
   let maxItemPrice = 0;
 
   employeeSales.forEach((sale) => {
-    sale.items.forEach((item) => {
+    (sale.items || []).forEach((item) => {
       if (item.publicPrice > maxItemPrice) {
         maxItemPrice = item.publicPrice;
         highestPricedItemSold = {

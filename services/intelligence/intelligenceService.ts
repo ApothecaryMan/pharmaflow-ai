@@ -145,7 +145,7 @@ export const intelligenceService = {
     for (const sale of completedSales) {
       const saleDate = new Date(sale.date);
 
-      for (const item of sale.items) {
+      for (const item of (sale.items || [])) {
         const drug = drugMap.get(item.id);
         if (!drug) continue;
 
@@ -534,7 +534,7 @@ export const intelligenceService = {
 
       const cashierName = employeeMap.get(sale.soldByEmployeeId!) || 'UNKNOWN';
 
-      for (const item of sale.items) {
+      for (const item of (sale.items || [])) {
         transactions.push({
           id: `${sale.id}-${item.id}`,
           timestamp: sale.date,
