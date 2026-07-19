@@ -1,6 +1,9 @@
 import { supabase } from '../../../lib/supabase';
 import type { AuditEntry } from '../types';
 
+const AUDIT_LIST_COLUMNS =
+  'id, timestamp, org_id, branch_id, actor_id, action, entity_type, entity_id, details, ip_address';
+
 const mapAuditToDb = (a: any): any => {
   const db: any = {};
   if (a.id) db.id = a.id;
@@ -49,7 +52,7 @@ export const auditRepository = {
   async getLogs(branchId?: string, limit = 100): Promise<AuditEntry[]> {
     let query = supabase
       .from('audit_logs')
-      .select('*')
+      .select(AUDIT_LIST_COLUMNS)
       .order('timestamp', { ascending: false })
       .limit(limit);
     if (branchId) {
@@ -63,7 +66,7 @@ export const auditRepository = {
   async getOrgLogs(orgId: string, limit = 50): Promise<AuditEntry[]> {
     const { data, error } = await supabase
       .from('audit_logs')
-      .select('*')
+      .select(AUDIT_LIST_COLUMNS)
       .eq('org_id', orgId)
       .order('timestamp', { ascending: false })
       .limit(limit);

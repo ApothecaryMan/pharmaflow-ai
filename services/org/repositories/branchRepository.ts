@@ -1,6 +1,11 @@
 import { supabase } from '../../../lib/supabase';
 import type { Branch } from '../../../types';
 
+const BRANCH_LIST_COLUMNS =
+  'id, org_id, code, name, status, phone, governorate, city, area';
+
+const BRANCH_FULL_COLUMNS = `${BRANCH_LIST_COLUMNS}, address, delivery_fee, monthly_sales_target, shift_start_time, latitude, longitude, print_settings, created_at, updated_at`;
+
 export const branchRepository = {
   tableName: 'branches',
 
@@ -52,7 +57,7 @@ export const branchRepository = {
   async getAll(orgId: string): Promise<Branch[]> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(BRANCH_LIST_COLUMNS)
       .eq('org_id', orgId)
       .order('name', { ascending: true });
 
@@ -63,7 +68,7 @@ export const branchRepository = {
   async getById(id: string): Promise<Branch | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(BRANCH_FULL_COLUMNS)
       .eq('id', id)
       .maybeSingle();
 

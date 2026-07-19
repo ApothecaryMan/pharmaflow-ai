@@ -3,6 +3,16 @@ import type { CashTransaction, Shift } from '../../../types';
 
 import type { CashTransactionType } from '../../../types/cash';
 
+const SHIFT_LIST_COLUMNS =
+  'id, branch_id, org_id, status, open_time, close_time, opened_by, opening_balance, closing_balance, expected_balance, cash_sales, card_sales';
+
+const SHIFT_FULL_COLUMNS = `${SHIFT_LIST_COLUMNS}, branch_name, closed_by, cash_in, cash_out, returns, cash_purchases, cash_purchase_returns, notes`;
+
+const TX_LIST_COLUMNS =
+  'id, branch_id, shift_id, time, type, amount, reason, user_id';
+
+const TX_FULL_COLUMNS = `${TX_LIST_COLUMNS}, org_id, related_sale_id`;
+
 interface ShiftDbRow {
   id?: string;
   branch_id?: string;
@@ -95,7 +105,7 @@ export const cashRepository = {
   async getCurrentShift(branchId: string): Promise<Shift | null> {
     const { data, error } = await supabase
       .from('shifts')
-      .select('*')
+      .select(SHIFT_FULL_COLUMNS)
       .eq('branch_id', branchId)
       .eq('status', 'open')
       .maybeSingle();
@@ -107,7 +117,7 @@ export const cashRepository = {
   async getAllShifts(branchId: string): Promise<Shift[]> {
     const { data, error } = await supabase
       .from('shifts')
-      .select('*')
+      .select(SHIFT_LIST_COLUMNS)
       .eq('branch_id', branchId)
       .order('open_time', { ascending: false });
 
@@ -116,7 +126,7 @@ export const cashRepository = {
   },
 
   async getShiftById(id: string): Promise<Shift | null> {
-    const { data, error } = await supabase.from('shifts').select('*').eq('id', id).maybeSingle();
+    const { data, error } = await supabase.from('shifts').select(SHIFT_FULL_COLUMNS).eq('id', id).maybeSingle();
 
     if (error) throw error;
     return data ? this.mapShiftFromDb(data) : null;
@@ -156,7 +166,7 @@ export const cashRepository = {
   async getTransactions(shiftId: string): Promise<CashTransaction[]> {
     const { data, error } = await supabase
       .from('cash_transactions')
-      .select('*')
+      .select(TX_FULL_COLUMNS)
       .eq('shift_id', shiftId)
       .order('time', { ascending: false });
 
@@ -167,7 +177,7 @@ export const cashRepository = {
   async getAllTransactions(branchId: string): Promise<CashTransaction[]> {
     const { data, error } = await supabase
       .from('cash_transactions')
-      .select('*')
+      .select(TX_LIST_COLUMNS)
       .eq('branch_id', branchId)
       .order('time', { ascending: false });
 

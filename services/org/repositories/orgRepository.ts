@@ -8,6 +8,15 @@ import type {
   SubscriptionStatus,
 } from '../../../types';
 
+const ORG_LIST_COLUMNS =
+  'id, name, slug, owner_id, status, created_at';
+
+const MEMBER_LIST_COLUMNS =
+  'org_id, user_id, role';
+
+const SUBSCRIPTION_LIST_COLUMNS =
+  'id, org_id, plan, status, max_branches, max_employees, max_drugs, trial_ends_at, current_period_start, current_period_end';
+
 interface OrganizationDbRow {
   id: string;
   name: string;
@@ -16,15 +25,15 @@ interface OrganizationDbRow {
   logo_url?: string;
   status: 'active' | 'suspended' | 'deleted';
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 interface OrgMemberDbRow {
-  id: string;
+  id?: string;
   org_id: string;
   user_id: string;
   role: OrgRole;
-  joined_at: string;
+  joined_at?: string;
 }
 
 interface SubscriptionDbRow {
@@ -64,7 +73,7 @@ export const orgRepository = {
 
   mapMember(row: OrgMemberDbRow): OrgMember {
     return {
-      id: row.id,
+      id: row.id || `${row.org_id}-${row.user_id}`,
       orgId: row.org_id,
       userId: row.user_id,
       role: row.role,
@@ -92,7 +101,7 @@ export const orgRepository = {
   async getById(orgId: string): Promise<Organization | null> {
     const { data, error } = await supabase
       .from('organizations')
-      .select('*')
+      .select(ORG_LIST_COLUMNS)
       .eq('id', orgId)
       .maybeSingle();
     if (error || !data) return null;
@@ -110,7 +119,7 @@ export const orgRepository = {
     const orgIds = memberships.map((m: { org_id: string }) => m.org_id);
     const { data: orgs, error: orgError } = await supabase
       .from('organizations')
-      .select('*')
+      .select(ORG_LIST_COLUMNS)
       .in('id', orgIds)
       .eq('status', 'active');
 
@@ -131,7 +140,7 @@ export const orgRepository = {
   },
 
   async getMembers(orgId: string): Promise<OrgMember[]> {
-    const { data, error } = await supabase.from('org_members').select('*').eq('org_id', orgId);
+    const { data, error } = await supabase.from('org_members').select(MEMBER_LIST_COLUMNS).eq('org_id', orgId);
     if (error) return [];
     return (data || []).map((row) => this.mapMember(row));
   },
@@ -151,7 +160,7 @@ export const orgRepository = {
   async getMemberByUserId(userId: string): Promise<OrgMember | null> {
     const { data, error } = await supabase
       .from('org_members')
-      .select('*')
+      .select(MEMBER_LIST_COLUMNS)
       .eq('user_id', userId)
       .limit(1)
       .maybeSingle();
@@ -188,7 +197,7 @@ export const orgRepository = {
   async getSubscription(orgId: string): Promise<Subscription | null> {
     const { data, error } = await supabase
       .from('subscriptions')
-      .select('*')
+      .select(SUBSCRIPTION_LIST_COLUMNS)
       .eq('org_id', orgId)
       .maybeSingle();
     if (error || !data) return null;

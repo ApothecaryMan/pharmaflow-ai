@@ -14,6 +14,11 @@ export abstract class BaseDomainService<
   protected abstract tableName: string;
 
   /**
+   * Column string to select. Override in subclasses for column-specific queries.
+   */
+  protected columns: string = '*';
+
+  /**
    * Maps a database record to the domain object.
    */
   public abstract mapFromDb(db: any): T;
@@ -33,7 +38,7 @@ export abstract class BaseDomainService<
       typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
     try {
-      let query = (supabase as any).from(this.tableName).select('*');
+      let query = (supabase as any).from(this.tableName).select(this.columns);
 
       if (effectiveBranchId && !isAllBranch) {
         query = query.eq('branch_id', effectiveBranchId);
@@ -59,7 +64,7 @@ export abstract class BaseDomainService<
     try {
       const { data, error } = await (supabase as any)
         .from(this.tableName)
-        .select('*')
+        .select(this.columns)
         .eq('id', id)
         .single();
 

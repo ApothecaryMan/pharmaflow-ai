@@ -1,6 +1,11 @@
 import { supabase } from '../../../lib/supabase';
 import type { Expense, ExpenseCategory, ExpenseSummary } from '../../../types';
 
+const EXPENSE_LIST_COLUMNS =
+  'id, org_id, branch_id, amount, category, description, payment_method, recorded_at, approved, employee_id';
+
+const EXPENSE_FULL_COLUMNS = `${EXPENSE_LIST_COLUMNS}, shift_id, approved_by, created_at`;
+
 export const expenseRepository = {
   mapFromDb(db: any): Expense {
     return {
@@ -49,7 +54,7 @@ export const expenseRepository = {
   ): Promise<Expense[]> {
     let query = supabase
       .from('expenses')
-      .select('*')
+      .select(EXPENSE_LIST_COLUMNS)
       .eq('branch_id', branchId)
       .order('recorded_at', { ascending: false });
 
@@ -74,7 +79,7 @@ export const expenseRepository = {
   },
 
   async getById(id: string): Promise<Expense | null> {
-    const { data, error } = await supabase.from('expenses').select('*').eq('id', id).maybeSingle();
+    const { data, error } = await supabase.from('expenses').select(EXPENSE_FULL_COLUMNS).eq('id', id).maybeSingle();
 
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
@@ -119,7 +124,7 @@ export const expenseRepository = {
   },
 
   async getSummary(branchId: string, dateFrom?: string, dateTo?: string): Promise<ExpenseSummary> {
-    let query = supabase.from('expenses').select('*').eq('branch_id', branchId);
+    let query = supabase.from('expenses').select(EXPENSE_LIST_COLUMNS).eq('branch_id', branchId);
 
     if (dateFrom) query = query.gte('recorded_at', dateFrom);
     if (dateTo) query = query.lte('recorded_at', dateTo);

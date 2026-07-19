@@ -1,5 +1,8 @@
 import { supabase } from '../../../lib/supabase';
 
+const SESSION_LIST_COLUMNS =
+  'id, user_id, org_id, branch_id, employee_id, employee_name, user_name, role, device_info, user_agent, ip_address, is_active, created_at, last_seen_at, logged_out_at';
+
 export interface UserActiveSession {
   id: string;
   user_id: string;
@@ -78,7 +81,7 @@ export const sessionRepository = {
    * Optionally filter by userId for owner views (faster query path).
    */
   async getActiveSessions(userId?: string): Promise<UserActiveSession[]> {
-    let query = supabase.from('user_active_sessions').select('*').eq('is_active', true);
+    let query = supabase.from('user_active_sessions').select(SESSION_LIST_COLUMNS).eq('is_active', true);
 
     // Scope to specific user for faster indexed lookups (owner view)
     if (userId) {

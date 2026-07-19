@@ -36,6 +36,8 @@ const SALE_LIST_COLUMNS = [
   'items',
 ].join(',');
 
+const SALE_FULL_COLUMNS = `${SALE_LIST_COLUMNS}, notes, modification_history`;
+
 export const salesRepository = {
   tableName: 'sales',
 
@@ -270,7 +272,7 @@ export const salesRepository = {
   async getById(id: string): Promise<Sale | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(SALE_FULL_COLUMNS)
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;
@@ -282,7 +284,7 @@ export const salesRepository = {
     effectiveBranchId: string,
     orgId?: string
   ): Promise<Sale[]> {
-    let query = supabase.from(this.tableName).select('*');
+    let query = supabase.from(this.tableName).select(SALE_LIST_COLUMNS);
     if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (orgId) {

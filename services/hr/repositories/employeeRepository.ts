@@ -1,6 +1,11 @@
 import { supabase } from '../../../lib/supabase';
 import type { Employee } from '../../../types';
 
+const EMPLOYEE_LIST_COLUMNS =
+  'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, username, auth_user_id, photo, cover_style';
+
+const EMPLOYEE_FULL_COLUMNS = `${EMPLOYEE_LIST_COLUMNS}, notes, password, biometric_credential_id, biometric_public_key, national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card, design_settings`;
+
 export const employeeRepository = {
   tableName: 'employees',
 
@@ -83,8 +88,7 @@ export const employeeRepository = {
     return db;
   },
 
-  BASE_COLUMNS:
-    'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, username, auth_user_id, photo, cover_style',
+  BASE_COLUMNS: EMPLOYEE_LIST_COLUMNS,
 
   async getAll(orgId: string, branchId?: string): Promise<Employee[]> {
     let query = supabase.from(this.tableName).select(this.BASE_COLUMNS).eq('org_id', orgId);
@@ -102,7 +106,7 @@ export const employeeRepository = {
   async getById(id: string): Promise<Employee | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(EMPLOYEE_FULL_COLUMNS)
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;
@@ -161,7 +165,7 @@ export const employeeRepository = {
   async getByAuthUserId(userId: string): Promise<Employee | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(EMPLOYEE_FULL_COLUMNS)
       .eq('auth_user_id', userId)
       .limit(1)
       .maybeSingle();
@@ -183,7 +187,7 @@ export const employeeRepository = {
   async getByUsername(username: string): Promise<Employee | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(EMPLOYEE_FULL_COLUMNS)
       .eq('username', username)
       .maybeSingle();
     if (error) throw error;
@@ -199,7 +203,7 @@ export const employeeRepository = {
   async getByEmail(email: string): Promise<Employee | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(EMPLOYEE_FULL_COLUMNS)
       .eq('email', email)
       .maybeSingle();
     if (error) throw error;

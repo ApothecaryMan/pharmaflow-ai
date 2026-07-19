@@ -2,6 +2,11 @@ import { supabase } from '../../../lib/supabase';
 import type { Customer } from '../../../types';
 import type { CustomerFilters } from '../types';
 
+const CUSTOMER_LIST_COLUMNS =
+  'id, org_id, branch_id, code, name, phone, total_purchases, points, last_visit, vip, status';
+
+const CUSTOMER_FULL_COLUMNS = `${CUSTOMER_LIST_COLUMNS}, email, governorate, city, area, street_address, insurance_provider, policy_number, preferred_location, preferred_contact, chronic_conditions, notes, registered_by, created_at`;
+
 export const customerRepository = {
   tableName: 'customers',
 
@@ -63,7 +68,7 @@ export const customerRepository = {
   },
 
   async getAll(effectiveBranchId: string, orgId?: string): Promise<Customer[]> {
-    let query = supabase.from(this.tableName).select('*');
+    let query = supabase.from(this.tableName).select(CUSTOMER_LIST_COLUMNS);
     if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (orgId) {
@@ -77,7 +82,7 @@ export const customerRepository = {
   async getById(id: string): Promise<Customer | null> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .select('*')
+      .select(CUSTOMER_FULL_COLUMNS)
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;
@@ -89,7 +94,7 @@ export const customerRepository = {
     effectiveBranchId: string,
     orgId?: string
   ): Promise<Customer | null> {
-    let query = supabase.from(this.tableName).select('*').eq('phone', phone);
+    let query = supabase.from(this.tableName).select(CUSTOMER_FULL_COLUMNS).eq('phone', phone);
     if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (orgId) {
@@ -101,7 +106,7 @@ export const customerRepository = {
   },
 
   async getByCode(code: string, orgId?: string): Promise<Customer | null> {
-    let query = supabase.from(this.tableName).select('*').eq('code', code);
+    let query = supabase.from(this.tableName).select(CUSTOMER_FULL_COLUMNS).eq('code', code);
     if (orgId) query = query.eq('org_id', orgId);
 
     const { data, error } = await query.maybeSingle();
@@ -119,7 +124,7 @@ export const customerRepository = {
     effectiveBranchId: string,
     orgId?: string
   ): Promise<Customer[]> {
-    let query = supabase.from(this.tableName).select('*');
+    let query = supabase.from(this.tableName).select(CUSTOMER_LIST_COLUMNS);
     if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (orgId) {
