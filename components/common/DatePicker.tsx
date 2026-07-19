@@ -479,8 +479,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       // Convert to ISO string for output, handling timezone offset properly
       // We want to preserve the selected local time in the string
       const offset = tempDate.getTimezoneOffset() * 60000;
-      const localISOTime = new Date(tempDate.getTime() - offset).toISOString().slice(0, 16);
-      onChange(localISOTime);
+      const localISODate = new Date(tempDate.getTime() - offset).toISOString().slice(0, 10);
+      onChange(localISODate);
     } else {
       onChange('');
     }
@@ -530,14 +530,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
     if (variant === 'pill-dark') {
       return value
-        ? 'bg-(--bg-card) border-gray-200 dark:border-(--border-divider) text-(--text-primary) font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
-        : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-white dark:hover:bg-(--bg-card)/50 font-bold';
+        ? 'bg-gray-100/80 dark:bg-(--bg-card) border-gray-200 dark:border-(--border-divider) text-(--text-primary) font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
+        : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-gray-100/80 dark:hover:bg-(--bg-card)/50 font-bold';
     }
 
     // Default variant
     return value
-      ? 'bg-white dark:bg-(--bg-card) border-gray-200 dark:border-(--border-divider) text-gray-900 dark:text-white font-bold shadow-sm'
-      : 'bg-(--bg-card) dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 text-(--text-secondary) hover:border-gray-300 dark:hover:border-gray-600 hover:bg-(--bg-card) dark:hover:bg-gray-800';
+      ? 'bg-white dark:bg-(--bg-input) border-gray-200 dark:border-(--border-divider) text-gray-900 dark:text-white font-bold shadow-sm'
+      : 'bg-(--bg-card) dark:bg-(--bg-input) border-gray-200 dark:border-gray-700/60 text-(--text-secondary) hover:border-gray-300 dark:hover:border-gray-600 hover:bg-(--bg-card) dark:hover:bg-(--bg-input)';
   };
 
   return (
@@ -762,7 +762,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <div
-      className={`relative inline-flex items-center p-1 gap-1 bg-gray-100/80 dark:bg-black/20 ${roundedClass} shadow-[inset_0_0px_3px_1px_rgba(0,0,0,0.08)] dark:shadow-none ${className}`}
+      className={`relative inline-flex items-center p-1 gap-1 bg-(--bg-input) border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding ${roundedClass} ${className}`}
     >
       <DatePicker
         value={startDate}
