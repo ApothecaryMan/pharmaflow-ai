@@ -9,5 +9,6 @@ export function useActiveSessions(userId?: string) {
     queryFn: () => sessionRepository.getActiveSessions(userId) as Promise<UserActiveSession[]>,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 }
