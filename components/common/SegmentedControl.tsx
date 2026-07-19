@@ -34,7 +34,7 @@ interface SegmentedControlProps<T> {
 
 const SIZES = {
   xs: { b: 'py-0.5 px-2 text-[11px] h-[26px]', i: '--icon-xs' },
-  sm: { b: 'py-1 px-3 text-[13px] h-[32px]', i: '--icon-sm' },
+  sm: { b: 'py-1 px-2 text-[13px] h-[30px]', i: '--icon-md' },
   md: { b: 'py-1.5 px-4 text-sm h-[36px]', i: '--icon-md' },
   lg: { b: 'py-2 px-5 text-base h-[44px]', i: '--icon-lg' },
 };

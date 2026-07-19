@@ -108,7 +108,12 @@ function useRowChangeAnimation(
         }
       }
 
-      if (addedIds.size > 0) {
+      // Mathematical Heuristic: If many rows are added at once, it's a bulk operation (page/filter change)
+      // and we should NOT trigger individual "new row" animations.
+      // This is necessary because cached page navigations bypass `isLoading` flags instantly.
+      const isBulkLoad = addedIds.size > 3;
+
+      if (addedIds.size > 0 && !isBulkLoad) {
         setNewRowIds((prev) => new Set([...prev, ...addedIds]));
         setTimeout(() => {
           setNewRowIds((prev) => {
@@ -145,6 +150,7 @@ interface TablePaginationBarProps {
   };
   enableShowAll: boolean;
   tableContainerRef: React.RefObject<HTMLDivElement | null>;
+  rowCount?: number;
 }
 
 const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
@@ -155,9 +161,11 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
   translations: t,
   enableShowAll,
   tableContainerRef,
+  rowCount,
 }) => {
   // Jump-to-page state lives here — only pagination needs it
   const [isJumping, setIsJumping] = React.useState(false);
+  const totalRows = rowCount ?? table.getFilteredRowModel().rows.length;
   const [jumpValue, setJumpValue] = React.useState('');
 
   return (
@@ -186,12 +194,12 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) *
                     table.getState().pagination.pageSize,
-                  table.getFilteredRowModel().rows.length
+                  totalRows
                 ).toLocaleString()}
               </span>
               <span className='shrink-0 px-1'>{t.of || 'of'}</span>
               <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
-                {table.getFilteredRowModel().rows.length.toLocaleString()}
+                {totalRows.toLocaleString()}
               </span>
             </div>
           )}
@@ -349,6 +357,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   pageSize = 20,
   enableShowAll = false,
   enableVirtualization = false,
+  manualPagination = false,
+  pageCount,
+  rowCount,
+  onPaginationChange: customPaginationChange,
 
   filterableColumns = [],
   initialFilters = {},
@@ -500,11 +512,19 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const [pagination, setPagination] = React.useState({
     pageIndex: initialSettings?.pagination?.pageIndex ?? 0,
-    pageSize:
-      initialSettings?.pagination?.pageSize === 'auto'
-        ? 20
-        : (initialSettings?.pagination?.pageSize ?? (pageSize === 'auto' ? 20 : pageSize)),
+    pageSize: manualPagination
+      ? (pageSize === 'auto' ? 20 : pageSize)
+      : (initialSettings?.pagination?.pageSize === 'auto'
+          ? 20
+          : (initialSettings?.pagination?.pageSize ?? (pageSize === 'auto' ? 20 : pageSize))),
   });
+
+  // Sync pageSize prop changes into internal state if manualPagination is true
+  React.useEffect(() => {
+    if (manualPagination && pageSize !== 'auto') {
+      setPagination((p) => (p.pageSize !== pageSize ? { ...p, pageSize } : p));
+    }
+  }, [manualPagination, pageSize]);
 
   // Persist settings to localStorage on change
   React.useEffect(() => {
@@ -515,6 +535,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     };
     storage.set(`table-settings-${tableId}`, settings);
   }, [tableId, columnVisibility, columnAlignment, pagination, defaultColumnAlignment, getDiff]);
+
+  React.useEffect(() => {
+    if (customPaginationChange) {
+      customPaginationChange(pagination);
+    }
+  }, [pagination, customPaginationChange]);
 
   // ─── Optimization: stable global keydown handler via refs ───
   const enableGlobalSearchFocusRef = useRef(enableGlobalSearchFocus);
@@ -610,6 +636,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
     onColumnSizingChange: setColumnSizing,
+    manualPagination,
+    pageCount,
+    rowCount,
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     columnResizeDirection: isRtl ? 'rtl' : 'ltr',
@@ -617,6 +646,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
+    autoResetPageIndex: false,
     // ─── Optimization: use module-level stable reference ───
     globalFilterFn: globalFilterFnStable,
     enableSorting: true,
@@ -983,32 +1013,14 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               </thead>
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
               <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
-                {(isLoading || localLoading) && rows.length === 0 ? (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading
-                  [...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map(
-                    (_, i) => (
-                      <tr
-                        key={`skeleton-row-${i}`}
-                        className='animate-pulse border-b border-(--border-divider)'
-                      >
-                        {// biome-ignore lint/suspicious/noArrayIndexKey: col.id gives uniqueness per row
-                        visibleColumns.map((col) => (
-                          <td
-                            key={`skeleton-cell-${col.id}-${i}`}
-                            className={`${dense ? 'py-2' : 'py-4'} px-4`}
-                          >
-                            <div className='flex flex-col gap-2 [direction:ltr] items-start'>
-                              <div className='h-3 bg-zinc-200/60 dark:bg-zinc-800/40 rounded-md w-24' />
-                              {/* Sub-line for some columns to look more natural */}
-                              {col.id.toLowerCase().includes('name') && (
-                                <div className='h-2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded-md w-16' />
-                              )}
-                            </div>
-                          </td>
-                        ))}
-                      </tr>
-                    )
-                  )
+                {(isLoading || localLoading) ? (
+                  <tr>
+                    <td colSpan={visibleColumns.length} className='p-0 align-middle'>
+                      <div className='flex items-center justify-center min-h-[60vh] w-full'>
+                        <div className='animate-spin rounded-full h-14 w-14 border-[4px] border-primary/20 border-t-primary drop-shadow-sm'></div>
+                      </div>
+                    </td>
+                  </tr>
                 ) : rows.length > 0 ? (
                   <>
                     {enableVirtualization && paddingTop > 0 && (
@@ -1061,21 +1073,23 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                   <tr>
                     <td
                       colSpan={visibleColumnsCount}
-                      className='py-12 text-center text-gray-500 dark:text-gray-400 empty-state'
+                      className='p-0 align-middle text-center text-gray-500 dark:text-gray-400 empty-state'
                     >
-                      {customEmptyState ? (
-                        customEmptyState
-                      ) : (
-                        <div className='flex flex-col items-center justify-center'>
-                          <span
-                            className='material-symbols-rounded mb-4 opacity-20'
-                            style={{ fontSize: 'var(--icon-5xl)' }}
-                          >
-                            inbox
-                          </span>
-                          {emptyMessage && <p>{emptyMessage}</p>}
-                        </div>
-                      )}
+                      <div className='flex flex-col items-center justify-center min-h-[60vh] w-full'>
+                        {customEmptyState ? (
+                          customEmptyState
+                        ) : (
+                          <>
+                            <span
+                              className='material-symbols-rounded mb-4 opacity-20'
+                              style={{ fontSize: 'var(--icon-5xl)' }}
+                            >
+                              inbox
+                            </span>
+                            {emptyMessage && <p>{emptyMessage}</p>}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -1099,6 +1113,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             }}
             enableShowAll={enableShowAll}
             tableContainerRef={tableContainerRef}
+            rowCount={rowCount}
           />
         )}
       </div>

@@ -42,6 +42,10 @@ export interface TanStackTableProps<TData extends { id: string | number }, TValu
   enablePagination?: boolean;
   pageSize?: number | 'auto';
   enableVirtualization?: boolean;
+  manualPagination?: boolean;
+  pageCount?: number;
+  rowCount?: number;
+  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void;
 
   // New Filter Props
   filterableColumns?: FilterConfig[]; // Definitions for the pills

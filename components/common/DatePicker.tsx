@@ -602,7 +602,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             tabIndex={0}
             onClick={clearSelection}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clearSelection(e); } }}
-            className='hidden sm:flex items-center justify-center w-4 h-4 rounded -ml-[5px] text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-[#1F1F1F] transition-colors cursor-pointer'
+            className='hidden sm:flex items-center justify-center w-4 h-4 rounded -me-[5px] text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-[#1F1F1F] transition-colors cursor-pointer'
           >
             <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
               close

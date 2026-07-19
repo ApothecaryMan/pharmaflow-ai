@@ -267,7 +267,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <button
                   type='button'
                   onClick={() => setExpanded(true)}
-                  className='flex items-center gap-2 px-3 h-8 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
+                  className='flex items-center justify-center gap-2 px-3 h-pageheader rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
                 >
                   <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <title>Search</title>
@@ -285,7 +285,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             <div className='hidden sm:block'>
               <div
                 className={`
-                  flex items-center gap-1 px-2 py-1.5 text-sm rounded-lg border
+                  flex items-center gap-1 px-2 h-pageheader text-sm rounded-lg border
                   border-gray-300 dark:border-gray-600 custom-card-css-target no-padding
                   bg-(--bg-input)
                   focus-within:ring-2 focus-within:ring-primary-500
@@ -327,7 +327,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       return (
         <div
           className={`
-            flex items-center gap-1 px-2 py-1.5 text-sm rounded-lg border
+            flex items-center gap-1 px-2 h-pageheader text-sm rounded-lg border
             border-gray-300 dark:border-gray-600 custom-card-css-target no-padding
             bg-(--bg-input)
             focus-within:ring-2 focus-within:ring-primary-500
