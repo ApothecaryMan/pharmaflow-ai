@@ -148,7 +148,6 @@ export const purchaseRepository = {
       const term = filters.search.trim().replace(/[%_,]/g, '');
       query = query.or(
         [
-          `id.ilike.%${term}%`,
           `invoice_id.ilike.%${term}%`,
           `external_invoice_id.ilike.%${term}%`,
           `supplier_name_snapshot.ilike.%${term}%`,
