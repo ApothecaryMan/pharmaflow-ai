@@ -564,7 +564,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const isSearchActive = view === 'medicine-search' || isCartOpen;
   const branchKey = isSearchActive ? activeBranchId : '';
-  const { data: inventory = [] } = useInventory(branchKey);
+  const { data: inventory = [] } = useInventory(branchKey, { enabled: permissionsService.can('inventory.view') && !!branchKey });
   const { playSuccess } = usePosSounds();
   const { showMenu } = useContextMenu();
 
