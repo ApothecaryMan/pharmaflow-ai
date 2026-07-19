@@ -73,17 +73,17 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
 
   // Debounced invalidators to prevent invalidate storms
   const debouncedInvalidateSales = useMemo(
-    () => debounce(() => invalidateBranchQueries('sales', activeBranchId), 500),
+    () => debounce(() => invalidateBranchQueries('sales', activeBranchId), 1500),
     [activeBranchId]
   );
 
   const debouncedInvalidateReturns = useMemo(
-    () => debounce(() => invalidateBranchQueries('returns', activeBranchId), 500),
+    () => debounce(() => invalidateBranchQueries('returns', activeBranchId), 1500),
     [activeBranchId]
   );
 
   const debouncedInvalidatePurchases = useMemo(
-    () => debounce(() => invalidateBranchQueries('purchases', activeBranchId), 500),
+    () => debounce(() => invalidateBranchQueries('purchases', activeBranchId), 1500),
     [activeBranchId]
   );
 

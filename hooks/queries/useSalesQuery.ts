@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { STALE_TIMES } from '../../lib/queryClient';
 import { queryKeys } from '../../lib/queryKeys';
 import { salesService } from '../../services/sales';
 import type { Sale } from '../../types';
@@ -17,7 +18,7 @@ export function useTodaySales(branchId: string, options?: { enabled?: boolean })
     queryKey: queryKeys.sales.today(branchId),
     queryFn: () => salesService.getToday(branchId) as Promise<Sale[]>,
     enabled: !!branchId && (options?.enabled ?? true),
-    staleTime: 30 * 1000,
+    staleTime: STALE_TIMES.todaySales,
   });
 }
 
