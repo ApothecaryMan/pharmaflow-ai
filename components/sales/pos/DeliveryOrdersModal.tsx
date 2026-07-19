@@ -704,7 +704,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
     () => [
       // Order Serial ID (Order Number)
       columnHelper.accessor('serialId', {
-        header: t.orderId || 'Order #',
+        header: 'ID',
         size: 130,
         meta: { align: 'start' },
         cell: (info) => (

@@ -301,17 +301,27 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       if (selectedItems.has(lineKey)) {
         const quantity = selectedItems.get(lineKey) || 0;
 
+        const batchAllocations = item.batchAllocations
+          ?.map((b: any) => ({
+            batchId: b.batchId,
+            quantity: Math.min(b.quantity, quantity),
+            expiryDate: b.expiryDate,
+            batchNumber: b.batchNumber,
+          }))
+          .filter((b: any) => b.quantity > 0);
+
         returnItems.push({
           drugId: drugId,
-          saleItemId: (item as any).saleItemId || null,
+          saleItemId: item.id,
           name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
           reason: returnReason,
           condition: 'sellable',
-          // Financials are now calculated server-side, passing 0 as placeholder
           publicPrice: 0,
           refundAmount: 0,
+          expiryDate: batchAllocations?.[0]?.expiryDate,
+          batchAllocations,
         });
       }
     });

@@ -4,10 +4,8 @@ import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
-import { useSalesHandlers } from '../../hooks/sales/useSalesHandlers';
+import { useSalesPage } from '../../hooks/queries/useSalesQuery';
 import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -42,54 +40,24 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
-  const { data: inventory = [] } = useInventory(activeBranchId);
   const { data: returns = [] } = useSalesReturns(activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
   const infra = useHandlerInfrastructure();
   const { currentShift } = infra;
-  const { handleProcessReturn: handleSalesReturn } = useSalesHandlers({
-    currentEmployeeId,
-    employees,
-    activeBranchId,
-    activeOrgId,
-    inventory,
-    setInventory: infra.setInventory,
-    sales,
-    setSales: infra.setSales,
-    setBatches: infra.setBatches,
-    setCustomers: infra.setCustomers,
-    setReturns: infra.setReturns,
-    currentShift,
-    addTransaction: infra.addTransaction,
-    getVerifiedDate: infra.getVerifiedDate,
-    validateTransactionTime: infra.validateTransactionTime,
-    updateLastTransactionTime: infra.updateLastTransactionTime,
-    completeSale: infra.completeSale,
-    processSalesReturn: infra.processSalesReturn,
-  });
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().slice(0, 10);
-  });
+  const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
   const [isHistOpen, setIsHistOpen] = useState(false);
-  const [pendingIds, setPendingIds] = useState<Set<string | number>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [page, setPage] = useState(1);
-  const [pagedSales, setPagedSales] = useState<Sale[]>(sales || []);
-  const [_totalSales, setTotalSales] = useState(sales?.length || 0);
-  const [isPageLoading, setIsPageLoading] = useState(false);
   const { textTransform } = useSettings();
-  const pageSize = 50;
+  const pageSize = 20;
   const initialSorting = useMemo(() => [{ id: 'date', desc: true }], []);
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
@@ -488,38 +456,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     };
   }, [activeFilters, startDate, endDate, searchTerm, currentEmployeeId]);
 
-  React.useEffect(() => {
-    let isCancelled = false;
-    setIsPageLoading(true);
-
-    salesService
-      .listPage({
-        branchId: activeBranchId,
-        orgId: activeOrgId,
-        page,
-        pageSize,
-        filters: serverFilters,
-        sort: { column: 'date', ascending: false },
-      })
-      .then((result) => {
-        if (isCancelled) return;
-        setPagedSales(result.rows);
-        setTotalSales(result.total);
-      })
-      .catch((error) => {
-        if (isCancelled) return;
-        console.error('[SalesHistory] Failed to load sales page:', error);
-        setPagedSales([]);
-        setTotalSales(0);
-      })
-      .finally(() => {
-        if (!isCancelled) setIsPageLoading(false);
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [activeBranchId, activeOrgId, page, serverFilters]);
+  const { data: pageData, isLoading: isPageLoading } = useSalesPage(
+    activeBranchId,
+    page,
+    pageSize,
+    serverFilters
+  );
+  
+  const pagedSales = pageData?.rows || [];
+  const _totalSales = pageData?.total || 0;
 
   const handleSearchChange = React.useCallback((value: string) => {
     setSearchTerm(value);
@@ -546,13 +491,16 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   }, []);
 
   const handleSelectSale = useCallback(async (sale: Sale) => {
+    setSelectedSale(sale);
+    setIsHistOpen(false);
     setIsDetailLoading(true);
     try {
       const fullSale = await salesService.getById(sale.id);
-      setSelectedSale(fullSale || sale);
+      if (fullSale) {
+        setSelectedSale(fullSale);
+      }
     } catch (error) {
-      console.error('[SalesHistory] Failed to load sale details:', error);
-      setSelectedSale(sale);
+      console.error('[SalesHistory] Failed to load full sale details:', error);
     } finally {
       setIsDetailLoading(false);
     }
@@ -605,54 +553,40 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
   // Wrap onProcessReturn to track pending state for the "real" duration
   const handleProcessReturn = async (returnData: Return) => {
-    if (!returnData.saleId) return;
+    if (!returnData.saleId || !selectedSale) return;
 
-    setPendingIds((prev) => new Set(prev).add(returnData.saleId));
     try {
-      await handleSalesReturn(returnData);
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      const context = {
+        performerId: currentEmployeeId,
+        performerName: currentUser?.name || 'System',
+        branchId: activeBranchId,
+        orgId: activeOrgId,
+        shiftId: currentShift?.id,
+        timestamp: new Date().toISOString(),
+      };
+      
+      await infra.processSalesReturn(returnData, selectedSale, context);
 
-      // Update pagedSales locally immediately to reflect return status and net totals
-      setPagedSales((prevPaged) =>
-        prevPaged.map((sale) => {
-          if (sale.id === returnData.saleId) {
-            const returnedQuantities = { ...(sale.itemReturnedQuantities || {}) };
-            const totalRefund = returnData.totalRefund || 0;
-            let netTotal = sale.netTotal !== undefined ? sale.netTotal : sale.total;
-            netTotal = Math.max(0, netTotal - totalRefund);
-
-            returnData.items.forEach((item) => {
-              const lineKey = item.isUnit ? `${item.drugId}_unit` : `${item.drugId}_pack`;
-              returnedQuantities[lineKey] =
-                (returnedQuantities[lineKey] || 0) + item.quantityReturned;
-            });
-
-            return {
-              ...sale,
-              netTotal,
-              itemReturnedQuantities: returnedQuantities,
-              updatedAt: new Date().toISOString(),
-            };
-          }
-          return sale;
-        })
-      );
-    } finally {
-      // Small delay to let the "success" pulse take over naturally after data refresh
-      setTimeout(() => {
-        setPendingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(returnData.saleId);
-          return next;
-        });
-      }, 300);
+      // Fetch the updated sale from the server to get the fresh modificationHistory and net totals
+      const updatedSale = await salesService.getById(returnData.saleId);
+      if (updatedSale) {
+        setSelectedSale(updatedSale);
+        // Also update the global sales store so other parts of the app stay in sync
+        infra.setSales((prevSales) =>
+          prevSales.map((sale) => (sale.id === updatedSale.id ? updatedSale : sale))
+        );
+      }
+    } catch (error) {
+      console.error('[SalesHistory] Return failed:', error);
     }
   };
 
-  const showLoading = isLoading || isPageLoading || isDetailLoading;
+  const showLoading = isLoading || isPageLoading;
 
   const rightControls = useMemo(
     () => (
-      <div className='flex justify-center sm:justify-end w-full gap-1'>
+      <div className='flex items-center justify-center sm:justify-end w-full gap-2'>
         <SearchInput
           compact
           expandable
@@ -669,14 +603,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           color={color}
           locale={locale}
           rounded='lg'
-          className='h-8'
+          className='h-pageheader'
         />
 
         <button
           type='button'
           onClick={exportToCSV}
           disabled={pagedSales.length === 0}
-          className='inline-flex items-center gap-2 px-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0 text-gray-700 dark:text-gray-200 h-8'
+          className='inline-flex items-center justify-center gap-2 px-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0 text-gray-700 dark:text-gray-200 h-pageheader'
         >
           <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <title>Export</title>
@@ -707,7 +641,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   );
 
   return (
-    <div className='flex flex-col h-full bg-(--bg-page-surface)'>
+    <div className='flex flex-col h-full'>
       <div
         className='flex-1 pt-4 sm:pt-6 overflow-hidden flex flex-col transition-opacity duration-300 opacity-100'
         dir={language === 'AR' ? 'rtl' : 'ltr'}
@@ -744,35 +678,39 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           dense={true}
           initialSorting={initialSorting}
           enablePagination={true}
+          manualPagination={true}
+          rowCount={_totalSales}
+          pageCount={Math.ceil(_totalSales / pageSize)}
+          onPaginationChange={_handlePaginationChange}
           enableVirtualization={true}
           pageSize={pageSize}
           enableShowAll={false}
-          pendingRowIds={pendingIds}
           rightCustomControls={rightControls}
         />
       </div>
 
-      {/* Sale Details Modal (includes Return logic internally) */}
-      <SaleDetailModal
-        sale={selectedSale}
-        isOpen={!!selectedSale}
-        onClose={() => setSelectedSale(null)}
-        t={t}
-        language={language}
-        color={color}
-        textTransform={textTransform}
-        currentShift={currentShift}
-        currentEmployeeId={currentEmployeeId}
-        currentDailyRefunds={currentDailyRefunds}
-        onProcessReturn={handleProcessReturn}
-      />
+      {selectedSale && (
+        <SaleDetailModal
+          sale={selectedSale}
+          isOpen={!!selectedSale}
+          onClose={() => setSelectedSale(null)}
+          t={t}
+          language={language}
+          color={color}
+          textTransform={textTransform}
+          currentShift={currentShift}
+          currentEmployeeId={currentEmployeeId}
+          currentDailyRefunds={currentDailyRefunds}
+          onProcessReturn={handleProcessReturn}
+        />
+      )}
 
       {/* Customer History Modal */}
       <POSCustomerHistoryModal
         isOpen={isHistOpen}
         onClose={() => setIsHistOpen(false)}
         customer={selectedCust}
-        sales={sales}
+        sales={pagedSales}
         color={color}
         t={t}
         language={language}

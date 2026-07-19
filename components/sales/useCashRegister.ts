@@ -38,6 +38,7 @@ export const useCashRegister = ({
 
   // --- Local UI State ---
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [amountInput, setAmountInput] = useState<string>('');
   const [reasonInput, setReasonInput] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -88,7 +89,7 @@ export const useCashRegister = ({
       if (filterType === 'purchases')
         return tx.type === 'purchase' || tx.type === 'purchase_return';
       if (filterType === 'operations')
-        return ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type);
+        return ['in', 'out', 'opening', 'opening_balance', 'closing', 'closing_balance', 'expense'].includes(tx.type);
       return true;
     });
   }, [currentShift, filterType]);
@@ -104,7 +105,7 @@ export const useCashRegister = ({
         (tx) => tx.type === 'purchase' || tx.type === 'purchase_return'
       ).length,
       operations: currentShift.transactions.filter((tx) =>
-        ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type)
+        ['in', 'out', 'opening', 'opening_balance', 'closing', 'closing_balance', 'expense'].includes(tx.type)
       ).length,
     };
   }, [currentShift]);
@@ -163,7 +164,7 @@ export const useCashRegister = ({
           branchId: activeBranchId,
           shiftId: newShiftId,
           time: getVerifiedDate().toISOString(),
-          type: 'opening',
+          type: 'opening_balance',
           amount: amount,
           reason: reasonInput || 'Start of shift',
           userId: currentEmployeeId || 'System',
@@ -194,7 +195,7 @@ export const useCashRegister = ({
   ]);
 
   const handleCloseShift = useCallback(() => {
-    if (!currentShift) return;
+    if (!currentShift || isProcessing) return;
     const amount = parseFloat(amountInput);
 
     if (amountInput === '' || Number.isNaN(amount)) {
@@ -278,7 +279,7 @@ export const useCashRegister = ({
           branchId: activeBranchId,
           shiftId: currentShift.id,
           time: getVerifiedDate().toISOString(),
-          type: 'closing',
+          type: 'closing_balance',
           amount: amount,
           reason: 'End of shift',
           userId: currentEmployeeId || 'System',
@@ -286,30 +287,30 @@ export const useCashRegister = ({
       ],
     };
 
+    setIsProcessing(true);
     endShift(closedShift)
-      .then(() => {
+      .then(async () => {
         closeModal();
+        try {
+          const html = generateShiftReceiptHTML(closedShift, language, employees);
+          await printDocument({
+            html,
+            width: 80,
+            height: 297,
+            kind: 'receipt',
+            orientation: 'portrait',
+            autoPrintFallback: true,
+          });
+        } catch (e) {
+          console.error('Print failed:', e);
+        }
       })
       .catch((err) => {
         setValidationError(err.message || 'Failed to close shift');
+      })
+      .finally(() => {
+        setIsProcessing(false);
       });
-
-    // Printing Logic
-    setTimeout(async () => {
-      try {
-        const html = generateShiftReceiptHTML(closedShift, language, employees);
-        await printDocument({
-          html,
-          width: 80,
-          height: 297,
-          kind: 'receipt',
-          orientation: 'portrait',
-          autoPrintFallback: true,
-        });
-      } catch (e) {
-        console.error('Print failed:', e);
-      }
-    }, 500);
   }, [
     currentShift,
     amountInput,
@@ -327,10 +328,11 @@ export const useCashRegister = ({
     activeBranchId,
     endShift,
     closeModal,
+    isProcessing,
   ]);
 
   const handleCashTransaction = useCallback(async () => {
-    if (!currentShift || !modalMode) return;
+    if (!currentShift || !modalMode || isProcessing) return;
     const amount = parseFloat(amountInput);
 
     if (amountInput === '' || Number.isNaN(amount)) {
@@ -372,6 +374,7 @@ export const useCashRegister = ({
       return;
     }
 
+    setIsProcessing(true);
     try {
       if (modalMode === 'out') {
         // Route through expenseService to maintain single source of truth
@@ -401,6 +404,8 @@ export const useCashRegister = ({
       closeModal();
     } catch (err: any) {
       setValidationError(err.message || 'Failed to record transaction');
+    } finally {
+      setIsProcessing(false);
     }
   }, [
     currentShift,
@@ -423,6 +428,7 @@ export const useCashRegister = ({
     // State
     currentShift,
     isLoading,
+    isProcessing,
     modalMode,
     setModalMode,
     amountInput,

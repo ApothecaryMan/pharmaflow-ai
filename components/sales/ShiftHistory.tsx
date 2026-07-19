@@ -30,10 +30,12 @@ const getTxBadgeClass = (type: string): string => {
   switch (type) {
     case 'in':
     case 'opening':
+    case 'opening_balance':
     case 'purchase_return':
       return 'badge-neutral';
     case 'out':
     case 'closing':
+    case 'closing_balance':
     case 'purchase':
       return 'badge-danger';
     case 'sale':
@@ -470,9 +472,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       <PageHeader
         centerContent={
           <SegmentedControl
-            size='md'
-            shape='pill'
-            iconSize='--icon-lg'
+          shape='pill'  
+          size='sm'
             useGraphicFont={true}
             options={[
               {
@@ -488,11 +489,12 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         }
         leftContent={
           <SearchInput
+            compact
             value={searchTerm}
             onSearchChange={setSearchTerm}
             placeholder={t.shiftHistory?.searchPlaceholder || 'Search...'}
             color={color}
-            width='320px'
+            wrapperClassName='w-[320px]'
           />
         }
         rightContent={
@@ -504,11 +506,13 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
               onEndDateChange={setEndDate}
               color={color}
               locale={locale}
+              rounded='lg'
+              className='h-pageheader'
             />
             <button
               onClick={exportToCSV}
               disabled={filteredShifts.length === 0}
-              className={`px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200`}
+              className={`h-pageheader px-3 rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-[13px] font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200`}
               type='button'
             >
               <span className='material-symbols-rounded text-lg'>download</span>
@@ -767,9 +771,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                         </div>
                       </div>
                       <div
-                        className={`text-sm font-bold tabular-nums ${['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(tx.type) ? 'text-green-600' : 'text-red-600'}`}
+                        className={`text-sm font-bold tabular-nums ${['in', 'opening', 'opening_balance', 'sale', 'card_sale', 'purchase_return'].includes(tx.type) ? 'text-green-600' : 'text-red-600'}`}
                       >
-                        {['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(tx.type)
+                        {['in', 'opening', 'opening_balance', 'sale', 'card_sale', 'purchase_return'].includes(tx.type)
                           ? '+'
                           : '-'}
                         <PriceDisplay value={tx.amount} />

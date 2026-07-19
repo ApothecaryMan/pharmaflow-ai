@@ -35,6 +35,7 @@ const getTxBadgeClass = (type: string): string => {
       return 'badge-neutral';
     case 'out':
     case 'closing':
+    case 'closing_balance':
     case 'expense':
       return 'badge-danger';
     case 'purchase':
@@ -44,6 +45,7 @@ const getTxBadgeClass = (type: string): string => {
     case 'card_sale':
       return 'badge-purple';
     case 'opening':
+    case 'opening_balance':
       return 'badge-purple';
     case 'return':
       return 'badge-orange';
@@ -54,7 +56,9 @@ const getTxBadgeClass = (type: string): string => {
 
 const TX_ICONS: Record<string, string> = {
   opening: 'lock_open',
+  opening_balance: 'lock_open',
   closing: 'lock',
+  closing_balance: 'lock',
   in: 'move_to_inbox',
   out: 'outbox',
   sale: 'receipt_long',
@@ -80,6 +84,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   const {
     currentShift,
     isLoading,
+    isProcessing,
     modalMode,
     setModalMode,
     amountInput,
@@ -213,7 +218,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         cell: (info) => {
           const amountVal = info.getValue() as number;
           const row = info.row.original;
-          const isPositive = ['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(
+          const isPositive = ['in', 'opening', 'opening_balance', 'sale', 'card_sale', 'purchase_return'].includes(
             row.type
           );
           const displayValue = isPositive ? Math.abs(amountVal) : -Math.abs(amountVal);
@@ -241,9 +246,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         mb='mb-0'
         centerContent={
           <SegmentedControl
-            size='md'
+            size='sm'
             shape='pill'
-            iconSize='--icon-lg'
             useGraphicFont={true}
             options={[
               {
@@ -261,15 +265,15 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           <div className='flex gap-3'>
             {isLoading ? (
               <>
-                <div className='px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse flex items-center gap-2'>
+                <div className='h-pageheader px-4 rounded-lg bg-zinc-200 dark:bg-zinc-700 animate-pulse flex items-center gap-2'>
                   <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
                   <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
-                <div className='px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden md:flex items-center gap-2'>
+                <div className='h-pageheader px-4 rounded-lg bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden md:flex items-center gap-2'>
                   <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
                   <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
-                <div className='px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden lg:flex items-center gap-2'>
+                <div className='h-pageheader px-4 rounded-lg bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden lg:flex items-center gap-2'>
                   <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
                   <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
@@ -279,7 +283,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canAddCash && (
                   <button
                     onClick={() => setModalMode('in')}
-                    className={`px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
+                    className={`h-pageheader px-3 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap text-[13px]`}
                     type='button'
                   >
                     <span
@@ -294,7 +298,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canRemoveCash && (
                   <button
                     onClick={() => setModalMode('out')}
-                    className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
+                    className={`h-pageheader px-3 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap text-[13px]`}
                     type='button'
                   >
                     <span
@@ -309,7 +313,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canCloseShift && (
                   <button
                     onClick={() => setModalMode('close')}
-                    className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
+                    className={`h-pageheader px-3 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap text-[13px]`}
                     type='button'
                   >
                     <span
@@ -326,7 +330,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               permissions.canOpenShift && (
                 <button
                   onClick={() => setModalMode('open')}
-                  className={`px-6 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-950 dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2`}
+                  className={`h-pageheader px-4 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-950 dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2 text-[13px]`}
                   type='button'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
@@ -760,7 +764,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 tableId='cash-register-table'
                 searchPlaceholder={t.global?.actions?.search || 'Search...'}
                 emptyMessage={t.cashRegister.messages.noTransactions}
-                enablePagination={false}
+                enablePagination={true}
+                pageSize='auto'
                 enableSearch={false}
                 color={color}
               />
@@ -776,10 +781,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           onClose={closeModal}
           size='md'
           zIndex={50}
-          disabled={isLoading}
+          disabled={isLoading || isProcessing}
           footer={
             <div className='flex gap-3'>
-              <button onClick={closeModal} className={MODAL_FOOTER_BTN_CANCEL} type='button'>
+              <button onClick={closeModal} disabled={isProcessing} className={MODAL_FOOTER_BTN_CANCEL} type='button'>
                 {t.cashRegister.modal.cancel}
               </button>
               <button
@@ -788,10 +793,15 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   if (modalMode === 'close') handleCloseShift();
                   if (modalMode === 'in' || modalMode === 'out') handleCashTransaction();
                 }}
+                disabled={isProcessing}
                 className={MODAL_FOOTER_BTN_PRIMARY}
                 type='button'
               >
-                {t.cashRegister.modal.confirm}
+                {isProcessing ? (
+                  <span className='material-symbols-rounded text-[20px] animate-spin'>sync</span>
+                ) : (
+                  t.cashRegister.modal.confirm
+                )}
               </button>
             </div>
           }

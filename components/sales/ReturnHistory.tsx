@@ -191,8 +191,13 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
     () => [
       {
         accessorKey: 'serialId',
-        header: t.headers.returnId,
+        header: 'ID',
         meta: { width: 202, align: 'start' },
+        cell: (info) => (
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            {info.getValue() as string}
+          </span>
+        ),
       },
       {
         accessorKey: 'saleId',
@@ -210,7 +215,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
               className='text-primary-600 dark:text-primary-400 hover:underline font-bold text-xs'
               type='button'
             >
-              #{sales.find((s) => s.id === sid)?.serialId || sid}
+              {sales.find((s) => s.id === sid)?.serialId || sid}
             </button>
           );
         },
