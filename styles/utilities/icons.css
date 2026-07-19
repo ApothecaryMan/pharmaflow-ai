@@ -1,6 +1,5 @@
 /* 
   PharmaFlow AI - Icon & Symbol System
-  Migrated from index.html (2026-05-16)
 */
 
 @layer base {
@@ -18,7 +17,7 @@
 
   /* Global Icon Loading State - Prevents ligature text from showing before font loads */
   html:not(.fonts-loaded) .material-symbols-rounded {
-    color: transparent;
+    color: transparent !important;
     position: relative;
     overflow: hidden;
     background: var(--border-divider);
@@ -27,7 +26,7 @@
     min-height: 1em;
     max-width: 1em;
     max-height: 1em;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
     animation: icon-shimmer 1.5s infinite ease-in-out;
@@ -40,15 +39,8 @@
   }
 
   @keyframes icon-shimmer {
-    0%,
-    100% {
-      opacity: 0.3;
-      transform: scale(0.9);
-    }
-    50% {
-      opacity: 0.6;
-      transform: scale(1);
-    }
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 0.6; transform: scale(1); }
   }
 
   .icon-filled {
