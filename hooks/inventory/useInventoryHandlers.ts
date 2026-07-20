@@ -1,6 +1,8 @@
 import type React from 'react';
 import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAlert } from '../../context';
+import { queryKeys } from '../../lib/queryKeys';
 import { auditService } from '../../services/audit/auditService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
@@ -28,6 +30,7 @@ export function useInventoryHandlers({
   employees,
   activeBranchId,
 }: UseInventoryHandlersParams) {
+  const queryClient = useQueryClient();
   const { success, error } = useAlert();
 
   const handleAddDrug = useCallback(
@@ -80,12 +83,16 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
+
         success(`${result.name} added to inventory successfully!`);
       } catch (err) {
         error(`Failed to add product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, setBatches, currentEmployeeId, employees, activeBranchId, error, success]
+    [setInventory, setBatches, currentEmployeeId, employees, activeBranchId, error, success, queryClient]
   );
 
   const handleUpdateDrug = useCallback(
@@ -131,6 +138,10 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
+
         success(`${drug.name} updated successfully!`);
       } catch (err) {
         error(`Failed to update product: ${err instanceof Error ? err.message : String(err)}`);
@@ -145,6 +156,7 @@ export function useInventoryHandlers({
       error,
       success,
       setBatches,
+      queryClient,
     ]
   );
 
@@ -192,6 +204,10 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
+
         success('Product deleted successfully!');
       } catch (err) {
         error(`Failed to delete product: ${err instanceof Error ? err.message : String(err)}`);
@@ -206,6 +222,7 @@ export function useInventoryHandlers({
       activeBranchId,
       error,
       success,
+      queryClient,
     ]
   );
 
@@ -258,6 +275,10 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
+
         success('Restock completed successfully!');
       } catch (err) {
         error(`Failed to restock product: ${err instanceof Error ? err.message : String(err)}`);
@@ -272,6 +293,7 @@ export function useInventoryHandlers({
       activeBranchId,
       error,
       success,
+      queryClient,
     ]
   );
 

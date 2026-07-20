@@ -1,5 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const { mockSuccess, mockError } = vi.hoisted(() => ({
   mockSuccess: vi.fn(),
@@ -118,11 +120,19 @@ beforeEach(() => {
   (permissionsService.can as any).mockReturnValue(true);
 });
 
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
+
+const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+
 describe('useSalesHandlers — handleCompleteSale', () => {
   it('completes sale successfully', async () => {
     defaultProps.completeSale.mockResolvedValue({ serialId: 'PF-0001', id: 'sale-1' });
 
-    const { result } = renderHook(() => useSalesHandlers(defaultProps));
+    const { result } = renderHook(() => useSalesHandlers(defaultProps), { wrapper });
 
     const outcome = await act(async () => result.current.handleCompleteSale(makeSaleData()));
 
@@ -131,8 +141,9 @@ describe('useSalesHandlers — handleCompleteSale', () => {
   });
 
   it('rejects when no employee is logged in', async () => {
-    const { result } = renderHook(() =>
-      useSalesHandlers({ ...defaultProps, currentEmployeeId: null })
+    const { result } = renderHook(
+      () => useSalesHandlers({ ...defaultProps, currentEmployeeId: null }),
+      { wrapper }
     );
 
     const outcome = await act(async () => result.current.handleCompleteSale(makeSaleData()));
@@ -145,7 +156,7 @@ describe('useSalesHandlers — handleCompleteSale', () => {
   it('rejects when user lacks sale.create permission', async () => {
     (permissionsService.can as any).mockReturnValue(false);
 
-    const { result } = renderHook(() => useSalesHandlers(defaultProps));
+    const { result } = renderHook(() => useSalesHandlers(defaultProps), { wrapper });
 
     const outcome = await act(async () => result.current.handleCompleteSale(makeSaleData()));
 
@@ -161,7 +172,7 @@ describe('useSalesHandlers — handleCompleteSale', () => {
       message: 'Cart is empty',
     });
 
-    const { result } = renderHook(() => useSalesHandlers(defaultProps));
+    const { result } = renderHook(() => useSalesHandlers(defaultProps), { wrapper });
 
     const outcome = await act(async () => result.current.handleCompleteSale(makeSaleData()));
 
@@ -176,7 +187,7 @@ describe('useSalesHandlers — handleCompleteSale', () => {
       message: 'Outside business hours',
     });
 
-    const { result } = renderHook(() => useSalesHandlers(defaultProps));
+    const { result } = renderHook(() => useSalesHandlers(defaultProps), { wrapper });
 
     const outcome = await act(async () => result.current.handleCompleteSale(makeSaleData()));
 
@@ -188,7 +199,7 @@ describe('useSalesHandlers — handleCompleteSale', () => {
   it('handles mutation failure gracefully', async () => {
     defaultProps.completeSale.mockRejectedValue(new Error('Server error'));
 
-    const { result } = renderHook(() => useSalesHandlers(defaultProps));
+    const { result } = renderHook(() => useSalesHandlers(defaultProps), { wrapper });
 
     const outcome = await act(async () => result.current.handleCompleteSale(makeSaleData()));
 
@@ -199,7 +210,7 @@ describe('useSalesHandlers — handleCompleteSale', () => {
   it('calls updateLastTransactionTime on success', async () => {
     defaultProps.completeSale.mockResolvedValue({ serialId: 'PF-0001', id: 'sale-1' });
 
-    const { result } = renderHook(() => useSalesHandlers(defaultProps));
+    const { result } = renderHook(() => useSalesHandlers(defaultProps), { wrapper });
 
     await act(async () => result.current.handleCompleteSale(makeSaleData()));
 
@@ -209,7 +220,7 @@ describe('useSalesHandlers — handleCompleteSale', () => {
   it('passes context with performer and branch info', async () => {
     defaultProps.completeSale.mockResolvedValue({ serialId: 'PF-0001', id: 'sale-1' });
 
-    const { result } = renderHook(() => useSalesHandlers(defaultProps));
+    const { result } = renderHook(() => useSalesHandlers(defaultProps), { wrapper });
 
     await act(async () => result.current.handleCompleteSale(makeSaleData()));
 
