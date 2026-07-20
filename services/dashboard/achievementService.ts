@@ -10,7 +10,7 @@
  *   3. Zero changes to the widget, hook, or Dashboard
  */
 
-import { supabase } from '../../lib/supabase';
+import { achievementRepository } from './repositories/achievementRepository';
 import { formatCurrency } from '../../utils/currency';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -216,23 +216,12 @@ class AchievementService {
 
     // ── STEP 1: Fetch achievements + branch target IN PARALLEL ────────
     // FUTURE: Replace the first query with a ClickHouse REST API call
-    const [achievementsResult, branchResult] = await withRetry(() =>
+    const [rows, monthlyTarget] = await withRetry(() =>
       Promise.all([
-        supabase
-          .from('daily_target_achievements')
-          .select('date, revenue, target, achievement_pct, is_future')
-          .eq('branch_id', branchId)
-          .gte('date', `${monthStr}-01`)
-          .lte('date', `${monthStr}-${String(daysInMonth).padStart(2, '0')}`)
-          .order('date', { ascending: true }),
-        supabase.from('branches').select('monthly_sales_target').eq('id', branchId).single(),
+        achievementRepository.getDailyAchievements(branchId, monthStr, daysInMonth),
+        achievementRepository.getBranchMonthlyTarget(branchId),
       ])
     );
-
-    if (achievementsResult.error) throw achievementsResult.error;
-
-    // ── STEP 2: Build day map ─────────────────────────────────────────
-    const rows = achievementsResult.data;
     const dayMap = new Map<string, (typeof rows)[0]>();
     for (const row of rows ?? []) {
       dayMap.set(row.date, row);
@@ -271,7 +260,6 @@ class AchievementService {
     }
 
     // ── STEP 4: Compute monthly totals ─────────────────────────────────
-    const monthlyTarget = Number(branchResult.data?.monthly_sales_target ?? 0);
     const overallPct = monthlyTarget > 0 ? Math.round((monthlyRevenue / monthlyTarget) * 100) : 0;
 
     const result: MonthAchievements = {

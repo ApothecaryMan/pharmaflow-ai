@@ -3,7 +3,6 @@
  * Business logic layer that orchestrates data access via ReturnsRepository.
  */
 
-import { supabase } from '../../lib/supabase';
 import type { PurchaseReturn, Return } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { authService } from '../auth/authService';
@@ -43,7 +42,7 @@ export const returnService: ReturnService = {
   createSalesReturn: async (ret: Omit<Return, 'id'>, branchId?: string): Promise<Return> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId =
-      branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
+      branchId || ret.branchId || settings.activeBranchId || settings.branchCode;
 
     const newReturn: Return = {
       ...ret,
@@ -96,7 +95,7 @@ export const returnService: ReturnService = {
   ): Promise<PurchaseReturn> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId =
-      branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
+      branchId || ret.branchId || settings.activeBranchId || settings.branchCode;
 
     const newReturn: PurchaseReturn = {
       ...ret,
@@ -107,16 +106,13 @@ export const returnService: ReturnService = {
     } as PurchaseReturn;
 
     const session = authService.getCurrentUserSync();
-    const { error } = await supabase.rpc('process_purchase_return', {
-      p_payload: {
-        ...newReturn,
-        processedBy: session?.employeeId,
-        processedByName: session?.username,
-      },
+    const result = await returnsRepository.processPurchaseReturnRPC({
+      ...newReturn,
+      processedBy: session?.employeeId,
+      processedByName: session?.username,
     });
-    if (error) throw error;
 
-    return newReturn;
+    return { ...newReturn, serialId: result?.serialId };
   },
 
   saveSalesReturns: async (returns: Return[], branchId?: string): Promise<void> => {

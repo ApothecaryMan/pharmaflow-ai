@@ -49,6 +49,43 @@ interface CashTransactionDbRow {
   related_sale_id?: string;
 }
 
+interface ShiftRpcPayload {
+  branchId: string;
+  openedBy: string;
+  openingBalance: number;
+  openTime: string;
+}
+
+interface CloseShiftPayload {
+  id: string;
+  closedBy: string;
+  closingBalance: number;
+  notes?: string;
+  closeTime: string;
+}
+
+interface ShiftRpcResult {
+  success?: boolean;
+  error?: string;
+  shiftId?: string;
+}
+
+interface CashTransactionPayload {
+  shiftId: string;
+  branchId: string;
+  type: string;
+  amount: number;
+  reason?: string;
+  userId: string;
+  time: string;
+}
+
+interface CashTransactionRpcResult {
+  success?: boolean;
+  error?: string;
+  transactionId?: string;
+}
+
 export const cashRepository = {
   // --- Shifts ---
   mapShiftFromDb(db: ShiftDbRow): Shift {
@@ -189,5 +226,24 @@ export const cashRepository = {
     const { error } = await supabase.from('cash_transactions').delete().eq('id', transactionId);
     if (error) throw error;
     return true;
+  },
+
+  // RPC Methods
+  async openShiftRPC(payload: ShiftRpcPayload): Promise<ShiftRpcResult | null> {
+    const { data, error } = await supabase.rpc('open_shift', { p_payload: payload });
+    if (error) throw error;
+    return data as ShiftRpcResult | null;
+  },
+
+  async closeShiftRPC(payload: CloseShiftPayload): Promise<ShiftRpcResult | null> {
+    const { data, error } = await supabase.rpc('close_shift', { p_payload: payload });
+    if (error) throw error;
+    return data as ShiftRpcResult | null;
+  },
+
+  async processCashTransactionRPC(payload: CashTransactionPayload): Promise<CashTransactionRpcResult | null> {
+    const { data, error } = await supabase.rpc('process_cash_transaction', { p_payload: payload });
+    if (error) throw error;
+    return data as CashTransactionRpcResult | null;
   },
 };

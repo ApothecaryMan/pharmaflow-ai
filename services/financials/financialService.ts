@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+import { financialRepository } from './repositories/financialRepository';
 import type { Sale } from '../../types';
 import type {
   CategoryFinancialReport,
@@ -113,37 +113,31 @@ export const financialService = {
     branchId?: string
   ): Promise<FinancialSummary> {
     try {
-      const { data, error } = await supabase.rpc('compute_financial_summary_with_snapshots', {
-        p_branch_id: branchId || null,
-        p_date_from: start,
-        p_date_to: end,
-      });
-
-      if (error) {
-        console.error('RPC compute_financial_summary_with_snapshots failed:', error);
-        return EMPTY_SUMMARY;
-      }
-
-      const s = data as any;
+      const s = await financialRepository.computeFinancialSummary(
+        branchId || null, start, end
+      );
       return {
-        gross_revenue: Number(s.gross_revenue || 0),
-        return_revenue: Number(s.total_refunds || 0),
-        net_revenue: Number(s.net_revenue || 0),
-        gross_cogs: Number(s.gross_cogs || 0),
-        return_cogs: Number(s.return_cogs || 0),
-        net_cogs: Number(s.net_cogs || 0),
-        gross_profit: Number(s.gross_profit || 0),
-        expenses_total: Number(s.expenses_total || 0),
-        net_profit: Number(s.net_profit || 0),
-        total_transactions: Number(s.total_transactions || 0),
-        total_units_sold: Number(s.total_units_sold || 0),
-        total_returns_count: Number(s.total_returns_count || 0),
+        gross_revenue: Number(s?.gross_revenue ?? 0),
+        return_revenue: Number(s?.total_refunds ?? 0),
+        net_revenue: Number(s?.net_revenue ?? 0),
+        gross_cogs: Number(s?.gross_cogs ?? 0),
+        return_cogs: Number(s?.return_cogs ?? 0),
+        net_cogs: Number(s?.net_cogs ?? 0),
+        gross_profit: Number(s?.gross_profit ?? 0),
+        expenses_total: Number(s?.expenses_total ?? 0),
+        net_profit: Number(s?.net_profit ?? 0),
+        total_transactions: Number(s?.total_transactions ?? 0),
+        total_units_sold: Number(s?.total_units_sold ?? 0),
+        total_returns_count: Number(s?.total_returns_count ?? 0),
       } as FinancialSummary;
     } catch (err) {
       console.error('RPC compute_financial_summary_with_snapshots error:', err);
       return EMPTY_SUMMARY;
     }
   },
+
+  // Keep backward-compatible export for callers using supabase directly
+  // All RPC calls now go through financialRepository
 
   /**
    * Gets Financial KPIs comparing current period with previous.
@@ -205,17 +199,7 @@ export const financialService = {
     branchId?: string
   ): Promise<DailyFinancialData[]> {
     try {
-      const { data, error } = await supabase.rpc('get_daily_financial_breakdown', {
-        p_branch_id: branchId || null,
-        p_date_from: dateFrom,
-        p_date_to: dateTo,
-      });
-
-      if (error) {
-        console.error('RPC get_daily_financial_breakdown failed:', error);
-        return [];
-      }
-
+      const data = await financialRepository.getDailyBreakdown(branchId || null, dateFrom, dateTo);
       return (data || []) as DailyFinancialData[];
     } catch (err) {
       console.error('RPC get_daily_financial_breakdown error:', err);
@@ -233,18 +217,9 @@ export const financialService = {
   ): Promise<ProductFinancialItem[]> {
     const range = dateRangeService.getDateRange(period);
     try {
-      const { data, error } = await supabase.rpc('get_top_products_financial', {
-        p_branch_id: branchId || null,
-        p_date_from: range.start,
-        p_date_to: range.end,
-        p_limit: limit,
-      });
-
-      if (error) {
-        console.error('RPC get_top_products_financial failed:', error);
-        return [];
-      }
-
+      const data = await financialRepository.getTopProducts(
+        branchId || null, range.start, range.end, limit
+      );
       return (data || []) as ProductFinancialItem[];
     } catch (err) {
       console.error('RPC get_top_products_financial error:', err);
@@ -272,17 +247,9 @@ export const financialService = {
     branchId?: string
   ): Promise<CategoryFinancialReport[]> {
     try {
-      const { data, error } = await supabase.rpc('get_category_financial_breakdown', {
-        p_branch_id: branchId || null,
-        p_date_from: start,
-        p_date_to: end,
-      });
-
-      if (error) {
-        console.error('RPC get_category_financial_breakdown failed:', error);
-        return [];
-      }
-
+      const data = await financialRepository.getCategoryBreakdown(
+        branchId || null, start, end
+      );
       return (data || []) as CategoryFinancialReport[];
     } catch (err) {
       console.error('RPC get_category_financial_breakdown error:', err);

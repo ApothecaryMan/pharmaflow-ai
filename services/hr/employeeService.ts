@@ -3,7 +3,6 @@
  * Business logic layer that orchestrates data access via EmployeeRepository.
  */
 
-import { supabase } from '../../lib/supabase';
 import type { Employee } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { BaseDomainService } from '../core/baseDomainService';
@@ -87,19 +86,14 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
       while (!inserted && loopCount < 50) {
         loopCount++;
         // Use increment_sequence RPC which runs with elevated privileges (bypassing RLS)
-        const { data: seqValue, error: seqError } = await supabase.rpc('increment_sequence', {
-          p_branch_id: effectiveOrgId,
-          p_entity_type: 'employees',
-        });
-
-        if (seqError) throw seqError;
+        const seqValue = await employeeRepository.incrementSequenceRPC(effectiveOrgId, 'employees');
 
         const employeeCodeValue = `EMP-${seqValue}`;
         newEmployee.employeeCode = employeeCodeValue;
         // Also ensure the Local POS Username is the sequential number (e.g., "1")
         // This is decoupled from the employeeCode ("EMP-1") for faster quick-POS typing.
         if (!newEmployee.username) {
-          (newEmployee as any).username = String(seqValue);
+          newEmployee.username = String(seqValue);
         }
 
         try {

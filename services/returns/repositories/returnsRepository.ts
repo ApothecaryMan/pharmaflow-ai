@@ -2,6 +2,58 @@ import { supabase } from '../../../lib/supabase';
 import type { PurchaseReturn, Return } from '../../../types';
 import type { ReturnsPageOptions } from '../types';
 
+interface ReturnItemDbRow {
+  drug_id?: string;
+  sale_item_id?: string;
+  name?: string;
+  quantity_returned?: number;
+  is_unit?: boolean;
+  public_price?: number;
+  refund_amount?: number;
+  reason?: string;
+  condition?: string;
+  dosage_form?: string;
+  expiry_date?: string;
+}
+
+interface ReturnInsertItem {
+  return_id: string;
+  drug_id: string;
+  sale_item_id: string;
+  name: string;
+  quantity_returned: number;
+  is_unit: boolean;
+  public_price: number;
+  refund_amount: number;
+  condition: string;
+  dosage_form?: string;
+  expiry_date?: string;
+}
+
+interface PurchaseReturnPayload {
+  id: string;
+  branchId: string;
+  purchaseId: string;
+  date: string;
+  items: unknown[];
+  totalRefund: number;
+  processedBy?: string;
+  processedByName?: string;
+}
+
+interface PurchaseReturnItemDbRow {
+  drug_id?: string;
+  name?: string;
+  quantity_returned?: number;
+  is_unit?: boolean;
+  public_price?: number;
+  refund_amount?: number;
+  reason?: string;
+  condition?: string;
+  dosage_form?: string;
+  expiry_date?: string;
+}
+
 export const returnsRepository = {
   salesTableName: 'returns',
   purchaseTableName: 'purchase_returns',
@@ -16,18 +68,18 @@ export const returnsRepository = {
       date: db.date,
       saleId: db.sale_id,
       returnType: db.return_type || 'partial',
-      items: (db.items || []).map((item: any) => ({
-        drugId: item.drug_id,
-        saleItemId: item.sale_item_id,
-        name: item.name,
-        quantityReturned: item.quantity_returned,
-        isUnit: item.is_unit,
-        publicPrice: item.public_price,
-        refundAmount: item.refund_amount,
-        reason: item.reason,
-        condition: item.condition,
-        dosageForm: item.dosage_form,
-        expiryDate: item.expiry_date,
+      items: (db.items || []).map((item: ReturnItemDbRow) => ({
+        drugId: item.drug_id as string,
+        saleItemId: item.sale_item_id as string,
+        name: item.name as string,
+        quantityReturned: item.quantity_returned as number,
+        isUnit: item.is_unit as boolean,
+        publicPrice: item.public_price as number,
+        refundAmount: item.refund_amount as number,
+        reason: item.reason as string,
+        condition: item.condition as string,
+        dosageForm: item.dosage_form as string,
+        expiryDate: item.expiry_date as string,
       })),
       totalRefund: db.total_refund || db.total_amount || 0,
       reason: db.reason,
@@ -56,20 +108,24 @@ export const returnsRepository = {
   mapPurchaseFromDb(db: any): PurchaseReturn {
     return {
       id: db.id,
+      serialId: db.serial_id || undefined,
       orgId: db.org_id,
       branchId: db.branch_id,
       date: db.date,
       purchaseId: db.purchase_id,
       supplierId: db.supplier_id,
       supplierName: db.supplier_name_snapshot,
-      items: (db.items || []).map((item: any) => ({
-        drugId: item.drug_id,
-        name: item.name,
-        quantityReturned: item.quantity_returned,
-        isUnit: item.is_unit,
-        costPrice: item.cost_price,
-        refundAmount: item.refund_amount,
-        dosageForm: item.dosage_form,
+    items: (db.items || []).map((item: PurchaseReturnItemDbRow) => ({
+        drugId: item.drug_id as string,
+        name: item.name as string,
+        quantityReturned: item.quantity_returned as number,
+        isUnit: item.is_unit as boolean,
+        publicPrice: item.public_price as number,
+        refundAmount: item.refund_amount as number,
+        reason: item.reason as string,
+        condition: item.condition as string,
+        dosageForm: item.dosage_form as string,
+        expiryDate: item.expiry_date as string,
       })),
       totalRefund: db.total_refund,
       status: db.status || 'completed',
@@ -80,6 +136,7 @@ export const returnsRepository = {
   mapPurchaseToDb(r: Partial<PurchaseReturn>): any {
     const db: any = {};
     if (r.id !== undefined) db.id = r.id;
+    if (r.serialId !== undefined) db.serial_id = r.serialId;
     if (r.orgId !== undefined) db.org_id = r.orgId;
     if (r.branchId !== undefined) db.branch_id = r.branchId;
     if (r.date !== undefined) db.date = r.date;
@@ -196,7 +253,7 @@ export const returnsRepository = {
     return true;
   },
 
-  async insertReturnItems(items: any[]): Promise<void> {
+  async insertReturnItems(items: ReturnInsertItem[]): Promise<void> {
     const { error } = await supabase.from('return_items').insert(items);
     if (error) throw error;
   },
@@ -312,5 +369,13 @@ export const returnsRepository = {
     const dbReturns = returns.map((r) => this.mapPurchaseToDb(r));
     const { error } = await supabase.from(this.purchaseTableName).upsert(dbReturns);
     if (error) throw error;
+  },
+
+  async processPurchaseReturnRPC(payload: PurchaseReturnPayload): Promise<{ serialId?: string } | null> {
+    const { data, error } = await supabase.rpc('process_purchase_return', {
+      p_payload: payload,
+    });
+    if (error) throw error;
+    return data as { serialId?: string } | null;
   },
 };

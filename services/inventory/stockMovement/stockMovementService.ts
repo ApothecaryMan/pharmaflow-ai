@@ -1,8 +1,10 @@
-import { supabase } from '../../../lib/supabase';
+import { stockMovementRepository } from '../repositories/stockMovementRepository';
 import { idGenerator } from '../../../utils/idGenerator';
 import { authService } from '../../auth/authService';
 import { BaseReportService } from '../../core/baseReportService';
 import { settingsService } from '../../settings/settingsService';
+import { pricingService } from '../../sales/pricingService';
+import type { Drug } from '../../../types';
 import type {
   PaginatedStockMovements,
   StockMovement,
@@ -32,6 +34,7 @@ class StockMovementServiceImpl
       reason: db.reason || undefined,
       notes: db.notes || undefined,
       referenceId: db.reference_id || undefined,
+      referenceSerialId: db.reference_serial_id || undefined,
       transactionId: db.transaction_id || undefined,
       batchId: db.batch_id || undefined,
       performedBy: db.performed_by,
@@ -61,6 +64,7 @@ class StockMovementServiceImpl
     if (m.reason) db.reason = m.reason;
     if (m.notes) db.notes = m.notes;
     if (m.referenceId) db.reference_id = m.referenceId;
+    if (m.referenceSerialId) db.reference_serial_id = m.referenceSerialId;
     if (m.transactionId) db.transaction_id = m.transactionId;
     if (m.batchId) db.batch_id = m.batchId;
     if (m.performedBy) db.performed_by = m.performedBy;
@@ -125,7 +129,7 @@ class StockMovementServiceImpl
     };
 
     const dbMovement = this.mapDomainToDb(newMovement);
-    const { error } = await (supabase as any).from(this.tableName).insert(dbMovement);
+    const { error } = await this.supabase.from(this.tableName).insert(dbMovement);
     if (error) throw error;
 
     return newMovement;
@@ -138,7 +142,7 @@ class StockMovementServiceImpl
     filters: StockMovementFilters
   ): Promise<StockMovement[] | PaginatedStockMovements> {
     try {
-      let query = (supabase as any).from(this.tableName).select('*', { count: 'exact' });
+      let query = this.supabase.from(this.tableName).select('*', { count: 'exact' });
 
       // Apply Base Filters
       if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
@@ -272,7 +276,7 @@ class StockMovementServiceImpl
   ): Promise<void> {
     const reviewedAt = new Date().toISOString();
 
-    const { error } = await (supabase as any)
+    const { error } = await this.supabase
       .from(this.tableName)
       .update({ status, reviewed_by: userId, reviewed_at: reviewedAt })
       .eq('id', id);
@@ -297,21 +301,23 @@ class StockMovementServiceImpl
     }));
 
     const dbMovements = newMovements.map((m) => this.mapDomainToDb(m as StockMovement));
-    const { error } = await (supabase as any).from(this.tableName).insert(dbMovements);
+    const { error } = await this.supabase.from(this.tableName).insert(dbMovements);
     if (error) throw error;
 
     return newMovements as StockMovement[];
   }
 
-  calculateMovementValue(movement: StockMovement, drug: any): number {
+  calculateMovementValue(movement: StockMovement, drug: Drug): number {
     const qty = Math.abs(movement.quantity);
     if (['sale', 'return_customer'].includes(movement.type)) {
-      const price =
-        movement.publicPrice !== undefined ? movement.publicPrice : drug?.publicPrice || 0;
-      return qty * price;
+      // unitPrice × totalUnits works for both pack and unit sales.
+      // For new trigger-created records unitPrice is always stored;
+      // for old records fall back to publicPrice (which may be pack or unit price).
+      const unitPrice = movement.unitPrice ?? movement.publicPrice ?? drug?.publicPrice ?? 0;
+      return pricingService.calculateItemGrossTotal({ publicPrice: unitPrice, quantity: qty } as any);
     }
-    const cost = movement.costPrice !== undefined ? movement.costPrice : drug?.costPrice || 0;
-    return qty * cost;
+    const unitCost = movement.unitCostPrice ?? movement.costPrice ?? drug?.costPrice ?? 0;
+    return pricingService.calculateItemGrossTotal({ publicPrice: unitCost, quantity: qty } as any);
   }
 
   async setContext(
@@ -322,15 +328,7 @@ class StockMovementServiceImpl
     reason?: string,
     notes?: string
   ): Promise<void> {
-    const { error } = await supabase.rpc('set_stock_context', {
-      p_type: type,
-      p_ref_id: refId || null,
-      p_perf_id: perfId || null,
-      p_perf_name: perfName || null,
-      p_reason: reason || null,
-      p_notes: notes || null,
-    });
-    if (error) console.error('[StockMovementService] Failed to set context:', error);
+    await stockMovementRepository.setStockContextRPC(type, refId, perfId, perfName, reason, notes);
   }
 }
 

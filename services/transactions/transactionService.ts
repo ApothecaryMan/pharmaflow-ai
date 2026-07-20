@@ -1,12 +1,8 @@
-/**
- * Transaction Service - Orchestrates atomic operations across services
- * Online-Only implementation
- */
-
-import { supabase } from '../../lib/supabase';
+import { transactionRepository } from './repositories/transactionRepository';
 import type {
   ActionContext,
   CartItem,
+  CashTransaction,
   Drug,
   Purchase,
   PurchaseReturn,
@@ -33,6 +29,22 @@ export interface CheckoutResult extends TransactionResult<Sale> {
 }
 
 import { UndoManager } from './undoManager';
+
+interface CheckoutData {
+  items: CartItem[];
+  customerName: string;
+  customerCode?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  customerStreetAddress?: string;
+  paymentMethod: 'cash' | 'visa';
+  saleType?: 'walk-in' | 'delivery';
+  status?: string;
+  total: number;
+  subtotal: number;
+  globalDiscount: number;
+  deliveryFee?: number;
+}
 
 export const transactionService = {
   /**
@@ -65,9 +77,7 @@ export const transactionService = {
       const payload = this._buildCheckoutPayload(saleData, context);
 
       // 2. Invoke the Atomic RPC
-      const { data, error } = await supabase.rpc('process_checkout', {
-        p_payload: payload,
-      });
+      const { data, error } = await transactionRepository.processCheckout(payload);
 
       console.timeEnd(perfLabel);
 
@@ -97,8 +107,8 @@ export const transactionService = {
   /**
    * Internal factory to standardize the checkout payload structure.
    */
-  _buildCheckoutPayload(saleData: any, context: ActionContext) {
-    const earnedPoints = calculateSalePoints(saleData as Sale).totalEarned;
+  _buildCheckoutPayload(saleData: CheckoutData, context: ActionContext) {
+    const earnedPoints = calculateSalePoints(saleData as unknown as Sale).totalEarned;
 
     return {
       branchId: context.branchId,
@@ -144,14 +154,12 @@ export const transactionService = {
     context: ActionContext
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data, error } = await supabase.rpc('process_cancellation', {
-        p_payload: {
-          saleId: sale.id,
-          branchId: context.branchId,
-          orgId: context.orgId,
-          performerId: context.performerId,
-          performerName: context.performerName,
-        },
+      const { data, error } = await transactionRepository.processCancellation({
+        saleId: sale.id,
+        branchId: context.branchId,
+        orgId: context.orgId,
+        performerId: context.performerId,
+        performerName: context.performerName,
       });
 
       if (error) {
@@ -181,26 +189,24 @@ export const transactionService = {
     context: ActionContext
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data, error } = await supabase.rpc('process_order_modification', {
-        p_payload: {
-          saleId: sale.id,
-          branchId: context.branchId,
-          orgId: context.orgId,
-          performerId: context.performerId,
-          performerName: context.performerName,
-          total: updates.total ?? sale.total,
-          subtotal: updates.subtotal ?? sale.subtotal,
-          globalDiscount: updates.globalDiscount ?? sale.globalDiscount,
-          items: (updates.items || sale.items).map((item) => ({
-            id: item.id,
-            name: (item as any).name,
-            dosageForm: (item as any).dosageForm,
-            quantity: item.quantity,
-            isUnit: !!item.isUnit,
-            publicPrice: item.publicPrice,
-            discount: item.discount || 0,
-          })),
-        },
+      const { data, error } = await transactionRepository.processOrderModification({
+        saleId: sale.id,
+        branchId: context.branchId,
+        orgId: context.orgId,
+        performerId: context.performerId,
+        performerName: context.performerName,
+        total: updates.total ?? sale.total,
+        subtotal: updates.subtotal ?? sale.subtotal,
+        globalDiscount: updates.globalDiscount ?? sale.globalDiscount,
+        items: (updates.items || sale.items).map((item) => ({
+          id: item.id,
+          name: item.name,
+          dosageForm: item.dosageForm,
+          quantity: item.quantity,
+          isUnit: !!item.isUnit,
+          publicPrice: item.publicPrice,
+          discount: item.discount || 0,
+        })),
       });
 
       if (error || !data?.success) {
@@ -219,7 +225,7 @@ export const transactionService = {
     _inventory: Drug[],
     sale: Sale,
     context: ActionContext
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<{ success: boolean; error?: string; returnId?: string; totalRefund?: number }> {
     try {
       const payload = {
         saleId: sale.id,
@@ -239,9 +245,7 @@ export const transactionService = {
         })),
       };
 
-      const { data, error } = await supabase.rpc('process_return', {
-        p_payload: payload,
-      });
+      const { data, error } = await transactionRepository.processReturn(payload);
 
       if (error) {
         console.error('[TransactionService] RPC error:', error);
@@ -252,7 +256,7 @@ export const transactionService = {
         return { success: false, error: data.error || 'Return failed' };
       }
 
-      return { success: true };
+      return { success: true, returnId: data?.returnId, totalRefund: data?.totalRefund };
     } catch (err: any) {
       console.error('[TransactionService] Return failed:', err);
       return { success: false, error: err.message || 'Return failed' };
@@ -311,7 +315,7 @@ export const transactionService = {
       undoManager.push(async () => {
         await stockMovementRepository.deleteByReferenceId(newPurchase.id);
         await batchRepository.deleteByPurchaseId(newPurchase.id);
-        await supabase.from('purchases').delete().eq('id', newPurchase.id);
+        await transactionRepository.deletePurchase(newPurchase.id);
       });
 
       // 2. Immediately mark as received to update inventory and deduct cash via RPC
@@ -343,7 +347,7 @@ export const transactionService = {
           ...returnInput,
           paymentMethod: originalPurchase.paymentMethod,
           shiftId: context.shiftId,
-        } as any,
+        } as unknown as PurchaseReturn,
         context.branchId
       );
 
@@ -365,13 +369,11 @@ export const transactionService = {
     context: ActionContext
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data, error } = await supabase.rpc('finalize_delivery_order', {
-        p_payload: {
-          saleId,
-          shiftId: context.shiftId,
-          performerId: context.performerId,
-          performerName: context.performerName,
-        },
+      const { data, error } = await transactionRepository.finalizeDeliveryOrder({
+        saleId,
+        shiftId: context.shiftId,
+        performerId: context.performerId,
+        performerName: context.performerName,
       });
 
       if (error) {
@@ -393,7 +395,7 @@ export const transactionService = {
     }
   },
 
-  async addTransaction(shiftId: string, tx: any): Promise<any> {
+  async addTransaction(shiftId: string, tx: Omit<CashTransaction, 'id'>): Promise<CashTransaction> {
     return cashService.addTransaction(shiftId, tx);
   },
 };

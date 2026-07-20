@@ -1,4 +1,5 @@
-import { supabase } from '../../lib/supabase';
+import { supabase as defaultSupabase } from '../../lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface BaseReportFilters {
   branchId?: string;
@@ -31,6 +32,8 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
   protected dateColumn: string = 'timestamp';
   protected branchColumn: string = 'branch_id';
 
+  constructor(protected supabase: SupabaseClient = defaultSupabase) {}
+
   /**
    * Maps a database record to the domain object.
    */
@@ -46,7 +49,7 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
    */
   async getHistory(filters: TFilters): Promise<T[] | PaginatedResult<T>> {
     try {
-      let query = supabase
+      let query = this.supabase
         .from(this.tableName)
         .select('*', { count: filters.page !== undefined ? 'exact' : undefined });
 
@@ -120,7 +123,7 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
     try {
       // If we only need count, we can use head: true
       const selectColumns = sumColumns.length > 0 ? sumColumns.join(',') : 'id';
-      let query = supabase.from(this.tableName).select(selectColumns, { count: 'exact' });
+      let query = this.supabase.from(this.tableName).select(selectColumns, { count: 'exact' });
 
       if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
         query = query.eq(this.branchColumn, filters.branchId);
@@ -151,7 +154,7 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
 
       const sums: Record<string, number> = {};
       sumColumns.forEach((col) => {
-        sums[col] = (data || []).reduce((acc, row: any) => acc + (Number(row[col]) || 0), 0);
+        sums[col] = (data || []).reduce<number>((acc, row) => acc + (Number((row as unknown as Record<string, unknown>)[col as string]) || 0), 0);
       });
 
       return {

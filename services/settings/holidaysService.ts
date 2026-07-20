@@ -3,7 +3,8 @@
  * Scopes data dynamically from Supabase database with automatic offline fallback.
  */
 
-import { supabase } from '../../lib/supabase';
+import { holidaysRepository } from './repositories/holidaysRepository';
+import type { HolidayRow } from './repositories/holidaysRepository';
 
 export interface Holiday {
   id: string;
@@ -262,19 +263,10 @@ export const holidaysService = {
    */
   async getHolidays(year: number): Promise<Holiday[]> {
     try {
-      const { data, error } = await supabase
-        .from('holidays')
-        .select('*')
-        .gte('date', `${year}-01-01`)
-        .lte('date', `${year}-12-31`)
-        .order('date', { ascending: true });
-
-      if (error) {
-        throw error;
-      }
+      const data = await holidaysRepository.getByYear(year);
 
       if (data && data.length > 0) {
-        return data.map((item: any) => ({
+        return data.map((item: HolidayRow) => ({
           id: item.id,
           date: item.date,
           type: item.type,
@@ -303,17 +295,10 @@ export const holidaysService = {
    */
   subscribeToHolidays(onUpdate: () => void): () => void {
     try {
-      const channel = supabase
-        .channel('realtime-holidays')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'holidays' }, () => {
-          console.log('[Holidays] Realtime update received!');
-          onUpdate();
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      return holidaysRepository.subscribe(() => {
+        console.log('[Holidays] Realtime update received!');
+        onUpdate();
+      });
     } catch (e: any) {
       console.warn('[Holidays] Realtime subscription failed:', e.message);
       return () => {};
@@ -326,7 +311,7 @@ export const holidaysService = {
   async addOrUpdateHoliday(holiday: Omit<Holiday, 'id'> & { id?: string }): Promise<Holiday> {
     const payload = {
       date: holiday.date,
-      actual_date: holiday.date, // Default actual to base date, shifted handled at runtime or edited later
+      actual_date: holiday.date,
       name_en: holiday.nameEN,
       name_ar: holiday.nameAR,
       type: holiday.type,
@@ -336,20 +321,11 @@ export const holidaysService = {
       updated_at: new Date().toISOString(),
     };
 
-    let result: Record<string, any> | null;
+    let result: HolidayRow;
     if (holiday.id && !holiday.id.includes('-offline-')) {
-      const { data, error } = await supabase
-        .from('holidays')
-        .update(payload)
-        .eq('id', holiday.id)
-        .select('*')
-        .single();
-      if (error) throw error;
-      result = data;
+      result = await holidaysRepository.update(holiday.id, payload);
     } else {
-      const { data, error } = await supabase.from('holidays').insert(payload).select('*').single();
-      if (error) throw error;
-      result = data;
+      result = await holidaysRepository.upsert(payload);
     }
 
     return {
@@ -369,11 +345,8 @@ export const holidaysService = {
    */
   async syncHolidays(year: number): Promise<void> {
     try {
-      const { data, error } = await supabase.functions.invoke('sync-holidays', {
-        body: { year },
-      });
-      if (error) throw error;
-      console.log('[Holidays] Sync completed successfully:', data);
+      await holidaysRepository.syncFromEdgeFunction(year);
+      console.log('[Holidays] Sync completed successfully');
     } catch (e: any) {
       console.error('[Holidays] Sync from Calendarific Edge Function failed:', e.message);
       throw e;

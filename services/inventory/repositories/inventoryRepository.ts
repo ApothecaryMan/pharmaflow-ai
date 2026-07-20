@@ -1,5 +1,7 @@
 import { supabase } from '../../../lib/supabase';
 import type { Drug } from '../../../types';
+import type { ProcessStockAdjustmentPayload } from '../types';
+import type { StockMovementFilters } from '../stockMovement/types';
 import type { InventoryFilters, InventoryStats } from '../types';
 
 const LIST_COLUMNS =
@@ -290,5 +292,10 @@ export const inventoryRepository = {
       expiringSoonCount: expiringCount || 0,
       outOfStockCount,
     };
+  },
+
+  async processStockAdjustmentRPC(payload: ProcessStockAdjustmentPayload): Promise<void> {
+    const { error } = await supabase.rpc('process_stock_adjustment', { p_payload: payload });
+    if (error) throw error;
   },
 };

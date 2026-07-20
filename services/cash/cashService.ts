@@ -3,7 +3,6 @@
  * Business logic layer that orchestrates data access via CashRepository.
  */
 
-import { supabase } from '../../lib/supabase';
 import type { CashTransaction, Shift } from '../../types';
 import { settingsService } from '../settings/settingsService';
 import { cashRepository } from './repositories/cashRepository';
@@ -67,8 +66,7 @@ export const cashService: CashServiceInterface = {
       openTime: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase.rpc('open_shift', { p_payload: payload });
-    if (error) throw new Error(error.message);
+    const data = await cashRepository.openShiftRPC(payload);
     if (!data?.success) throw new Error(data?.error || 'Failed to open shift');
 
     const newShift = await cashRepository.getShiftById(data.shiftId);
@@ -93,8 +91,7 @@ export const cashService: CashServiceInterface = {
       closeTime: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase.rpc('close_shift', { p_payload: payload });
-    if (error) throw new Error(error.message);
+    const data = await cashRepository.closeShiftRPC(payload);
     if (!data?.success) throw new Error(data?.error || 'Failed to close shift');
 
     const closedShift = await cashRepository.getShiftById(shiftId);
@@ -116,8 +113,7 @@ export const cashService: CashServiceInterface = {
       time: transaction.time || new Date().toISOString(),
     };
 
-    const { data, error } = await supabase.rpc('process_cash_transaction', { p_payload: payload });
-    if (error) throw new Error(error.message);
+    const data = await cashRepository.processCashTransactionRPC(payload);
     if (!data?.success) throw new Error(data?.error || 'Failed to process transaction');
 
     return {

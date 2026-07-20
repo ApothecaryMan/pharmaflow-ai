@@ -1,4 +1,3 @@
-import { supabase } from '../../lib/supabase';
 import type { Drug } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { BaseDomainService } from '../core/baseDomainService';
@@ -68,7 +67,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
   async create(drug: Omit<Drug, 'id'>, branchId?: string): Promise<Drug> {
     const settings = await settingsService.getAll();
     const effectiveBranchId =
-      branchId || (drug as any).branchId || settings.activeBranchId || settings.branchCode;
+      branchId || drug.branchId || settings.activeBranchId || settings.branchCode;
 
     const internalCode = drug.internalCode || (await idGenerator.code('DRUG', effectiveBranchId));
 
@@ -77,7 +76,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       id: idGenerator.uuid(),
       internalCode,
       branchId: effectiveBranchId,
-      orgId: (drug as any).orgId || settings.orgId,
+      orgId: drug.orgId || settings.orgId,
       status: drug.status || 'active',
     } as Drug;
 
@@ -108,8 +107,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
   async processStockAdjustment(payload: ProcessStockAdjustmentPayload): Promise<void> {
     if (payload.adjustments.length === 0) return;
 
-    const { error } = await supabase.rpc('process_stock_adjustment', { p_payload: payload });
-    if (error) throw error;
+    await inventoryRepository.processStockAdjustmentRPC(payload);
   }
 
   async getStats(branchId?: string): Promise<InventoryStats> {

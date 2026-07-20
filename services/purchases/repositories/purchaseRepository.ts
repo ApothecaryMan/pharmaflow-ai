@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase';
-import type { Purchase } from '../../../types';
+import type { Drug, Purchase } from '../../../types';
 import type { PurchaseFilters, PurchasesPageOptions } from '../types';
 
 interface PurchaseItemRow {
@@ -17,7 +17,34 @@ interface PurchaseItemRow {
   tax: number | null;
   is_unit: boolean | null;
   units_per_pack: number | null;
-  drug: Record<string, unknown> | null;
+  drug: Drug | null;
+}
+
+interface PurchaseItemInsert {
+  purchase_id: string;
+  drug_id: string;
+  name: string;
+  quantity: number;
+  cost_price: number;
+  expiry_date?: string;
+  public_price: number;
+  discount?: number;
+  tax?: number;
+  is_unit?: boolean;
+  dosage_form?: string;
+  units_per_pack?: number;
+}
+
+interface ReceiptPayload {
+  purchaseId: string;
+  performerId: string;
+  performerName: string;
+  shiftId?: string;
+}
+
+interface ReceiptRpcResult {
+  success?: boolean;
+  error?: string;
 }
 
 export const purchaseRepository = {
@@ -227,5 +254,32 @@ export const purchaseRepository = {
     const dbPurchases = purchases.map((p) => this.mapToDb(p));
     const { error } = await supabase.from(this.tableName).upsert(dbPurchases);
     if (error) throw error;
+  },
+
+  async getNextInvoiceId(effectiveBranchId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select('invoice_id')
+      .eq('branch_id', effectiveBranchId)
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data?.invoice_id || null;
+  },
+
+  async insertPurchaseItems(items: PurchaseItemInsert[]): Promise<void> {
+    const { error } = await supabase.from('purchase_items').insert(items);
+    if (error) throw error;
+  },
+
+  async processReceiptRPC(payload: ReceiptPayload): Promise<ReceiptRpcResult | null> {
+    const { data, error } = await supabase.rpc('process_purchase_receipt', {
+      p_payload: payload,
+    });
+
+    if (error) throw error;
+    return data as ReceiptRpcResult | null;
   },
 };

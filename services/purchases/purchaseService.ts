@@ -3,7 +3,6 @@
  * Business logic layer that orchestrates data access via PurchaseRepository.
  */
 
-import { supabase } from '../../lib/supabase';
 import type { Purchase, PurchaseStatus } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
@@ -76,25 +75,19 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   async getNextInvoiceId(branchId?: string): Promise<string> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('invoice_id')
-      .eq('branch_id', effectiveBranchId)
-      .order('date', { ascending: false })
-      .limit(1)
-      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
-      console.warn('Failed to get latest invoice ID', error);
-      return 'INV-000001';
-    }
+    try {
+      const invoiceId = await purchaseRepository.getNextInvoiceId(effectiveBranchId);
 
-    if (data?.invoice_id) {
-      const parts = data.invoice_id.split('-');
-      if (parts.length === 2 && !Number.isNaN(Number.parseInt(parts[1], 10))) {
-        const nextNum = Number.parseInt(parts[1], 10) + 1;
-        return `INV-${nextNum.toString().padStart(6, '0')}`;
+      if (invoiceId) {
+        const parts = invoiceId.split('-');
+        if (parts.length === 2 && !Number.isNaN(Number.parseInt(parts[1], 10))) {
+          const nextNum = Number.parseInt(parts[1], 10) + 1;
+          return `INV-${nextNum.toString().padStart(6, '0')}`;
+        }
       }
+    } catch (error) {
+      console.warn('Failed to get latest invoice ID', error);
     }
     return 'INV-000001';
   }
@@ -140,11 +133,9 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         units_per_pack: item.unitsPerPack || 1,
       }));
 
-      const { error: insertError } = await supabase
-        .from('purchase_items')
-        .insert(purchaseItems);
-
-      if (insertError) {
+      try {
+        await purchaseRepository.insertPurchaseItems(purchaseItems);
+      } catch (insertError: any) {
         throw new Error(`Failed to insert purchase items: ${insertError.message}`);
       }
     }
@@ -191,17 +182,15 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     performerName: string,
     shiftId?: string
   ): Promise<void> {
-    const { data, error } = await supabase.rpc('process_purchase_receipt', {
-      p_payload: {
-        purchaseId: purchase.id,
-        performerId,
-        performerName,
-        shiftId,
-      },
+    const data = await purchaseRepository.processReceiptRPC({
+      purchaseId: purchase.id,
+      performerId,
+      performerName,
+      shiftId,
     });
 
-    if (error || !data?.success) {
-      throw new Error(error?.message || data?.error || 'Purchase receipt RPC failed');
+    if (!data?.success) {
+      throw new Error(data?.error || 'Purchase receipt RPC failed');
     }
   }
 

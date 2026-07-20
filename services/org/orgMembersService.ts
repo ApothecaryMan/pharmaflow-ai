@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+import { orgMembersRepository } from './repositories/orgMembersRepository';
 import type { OrgRole } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 
@@ -33,7 +33,7 @@ export const orgMembersService = {
 
     // Store in Supabase if available
     try {
-      const { error } = await supabase.from('org_invites').insert({
+      await orgMembersRepository.insertInvite({
         id: invite.id,
         org_id: orgId,
         email,
@@ -42,7 +42,6 @@ export const orgMembersService = {
         expires_at: invite.expiresAt,
         status: 'pending',
       });
-      if (error) throw error;
     } catch (err) {
       console.warn('Failed to store invite in Supabase, continuing locally', err);
     }
@@ -55,14 +54,8 @@ export const orgMembersService = {
    */
   getInviteByToken: async (token: string): Promise<OrgInvite | null> => {
     try {
-      const { data, error } = await supabase
-        .from('org_invites')
-        .select('*')
-        .eq('token', token)
-        .eq('status', 'pending')
-        .single();
-
-      if (error || !data) return null;
+      const data = await orgMembersRepository.getInviteByToken(token);
+      if (!data) return null;
 
       return {
         id: data.id,
@@ -87,16 +80,14 @@ export const orgMembersService = {
       if (!invite) return false;
 
       // 1. Add to org_members
-      const { error: memberError } = await supabase.from('org_members').insert({
+      await orgMembersRepository.insertMember({
         org_id: invite.orgId,
         user_id: userId,
         role: invite.role,
       });
 
-      if (memberError) throw memberError;
-
       // 2. Mark invite as accepted
-      await supabase.from('org_invites').update({ status: 'accepted' }).eq('id', invite.id);
+      await orgMembersRepository.acceptInvite(invite.id);
 
       return true;
     } catch (err) {
@@ -110,13 +101,8 @@ export const orgMembersService = {
    */
   removeMember: async (orgId: string, memberId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('org_members')
-        .delete()
-        .eq('org_id', orgId)
-        .eq('id', memberId);
-
-      return !error;
+      await orgMembersRepository.removeMember(orgId, memberId);
+      return true;
     } catch {
       return false;
     }

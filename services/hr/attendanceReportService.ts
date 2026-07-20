@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+import { attendanceRepository } from './repositories/attendanceRepository';
 import type { AttendanceEvent } from '../../types/hr';
 import { calculateWorkingHours, checkLateness } from '../../utils/attendanceUtils';
 import { type BaseReportFilters, BaseReportService } from '../core/baseReportService';
@@ -112,36 +112,19 @@ export class AttendanceReportService extends BaseReportService<
     endOfDay.setHours(23, 59, 59, 999);
 
     // 1. Fetch shift start time for this branch
-    const { data: branchData } = await supabase
-      .from('branches')
-      .select('shift_start_time')
-      .eq('id', branchId)
-      .single();
-
-    const shiftStartTime = branchData?.shift_start_time || '09:00';
+    const shiftStartTime = (await attendanceRepository.getBranchShiftStartTime(branchId)) || '09:00';
 
     // 2. Fetch all events for this day
-    const { data: events, error } = await supabase
-      .from(this.tableName)
-      .select('*, employees(name, employee_code)')
-      .eq('branch_id', branchId)
-      .gte('timestamp', startOfDay.toISOString())
-      .lte('timestamp', endOfDay.toISOString())
-      .order('timestamp', { ascending: true });
-
-    if (error) {
-      console.error('[AttendanceReportService] Error:', error);
-      throw error;
-    }
+    const events = await attendanceRepository.getEventsWithEmployees(
+      branchId,
+      startOfDay.toISOString(),
+      endOfDay.toISOString()
+    );
 
     // 3. Fetch all active employees for this branch
-    const { data: allEmployees } = await supabase
-      .from('employees')
-      .select('id, name, employee_code')
-      .eq('branch_id', branchId)
-      .eq('status', 'active');
+    const allEmployees = await attendanceRepository.getActiveEmployees(branchId);
 
-    const mappedEvents = (events || []).map((e) => this.mapDbToDomain(e));
+    const mappedEvents = events.map((e) => this.mapDbToDomain(e));
     const summaries = calculateWorkingHours(mappedEvents);
 
     // 4. Build per-employee summary
@@ -215,37 +198,25 @@ export class AttendanceReportService extends BaseReportService<
   ): Promise<MonthlyEmployeeReport> {
     // [Supabase RPC] Uses: supabase/attendance_report_rpc.sql
     // This RPC handles high-performance server-side pairing and aggregation.
-    const { data, error } = await supabase.rpc('get_monthly_attendance_report', {
-      p_branch_id: branchId,
-      p_employee_id: employeeId,
-      p_year: year,
-      p_month: month,
-    });
-
-    if (error) {
-      console.error('[AttendanceReportService] RPC Error:', error);
-      throw error;
-    }
+    const data = await attendanceRepository.getMonthlyAttendanceReport(
+      branchId, employeeId, year, month
+    );
 
     // 2. Fetch employee basic info (one simple query)
-    const { data: empInfo } = await supabase
-      .from('employees')
-      .select('name, employee_code')
-      .eq('id', employeeId)
-      .single();
+    const empInfo = await attendanceRepository.getEmployeeInfo(employeeId);
 
     // 3. Transform the RPC results into the MonthlyEmployeeReport structure
-    const days: DayAttendanceSummary[] = (data.days || []).map((d: any) => ({
+    const days: DayAttendanceSummary[] = (data.days || []).map((d) => ({
       date: d.date,
       dayOfWeek: new Date(d.date).getDay(),
-      firstIn: d.firstIn,
-      lastOut: d.lastOut,
-      totalMinutes: d.totalMinutes,
-      isPresent: d.isPresent,
-      isLate: d.lateMinutes > 0,
-      lateMinutes: d.lateMinutes,
-      isOngoing: d.isOngoing,
-      sessions: 0, // Not strictly needed for the profile view
+      firstIn: d.first_in,
+      lastOut: d.last_out,
+      totalMinutes: d.total_minutes,
+      isPresent: d.is_present,
+      isLate: d.late_minutes > 0,
+      lateMinutes: d.late_minutes,
+      isOngoing: d.is_ongoing,
+      sessions: 0,
     }));
 
     const daysInMonth = days.length;

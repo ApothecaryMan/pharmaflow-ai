@@ -6,6 +6,31 @@ const EMPLOYEE_LIST_COLUMNS =
 
 const EMPLOYEE_FULL_COLUMNS = `${EMPLOYEE_LIST_COLUMNS}, notes, password, biometric_credential_id, biometric_public_key, national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card, design_settings`;
 
+interface WorkspaceRpcRow {
+  id: string;
+  org_id: string;
+  branch_id: string;
+  org_name: string;
+  branch_name: string;
+  employee_code: string;
+  name: string;
+  name_arabic?: string;
+  phone: string;
+  email?: string;
+  position: string;
+  department: string;
+  role: string;
+  start_date: string;
+  status: string;
+  end_date?: string;
+  salary?: number;
+  username?: string;
+  auth_user_id?: string;
+  photo?: string;
+  cover_style?: string;
+  [key: string]: unknown;
+}
+
 export const employeeRepository = {
   tableName: 'employees',
 
@@ -177,7 +202,7 @@ export const employeeRepository = {
     // Use RPC to bypass RLS circular dependency on organizations/branches
     const { data, error } = await supabase.rpc('get_my_workspaces');
     if (error) throw error;
-    return (data || []).map((item: any) => ({
+    return (data || []).map((item: WorkspaceRpcRow) => ({
       ...this.mapFromDb(item),
       orgName: item.org_name,
       branchName: item.branch_name,
@@ -261,5 +286,14 @@ export const employeeRepository = {
     }
 
     return this.mapFromDb(updatedEmployee);
+  },
+
+  async incrementSequenceRPC(branchId: string, entityType: string): Promise<number> {
+    const { data, error } = await supabase.rpc('increment_sequence', {
+      p_branch_id: branchId,
+      p_entity_type: entityType,
+    });
+    if (error) throw error;
+    return data as number;
   },
 };
