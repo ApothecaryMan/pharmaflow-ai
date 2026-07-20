@@ -1,6 +1,8 @@
 import type React from 'react';
 import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAlert } from '../../context';
+import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
@@ -88,6 +90,7 @@ export function useSalesHandlers({
   completeSale,
   processSalesReturn,
 }: UseSalesHandlersParams) {
+  const queryClient = useQueryClient();
   const { success, error } = useAlert();
 
   const handleCompleteSale = useCallback(
@@ -216,6 +219,11 @@ export function useSalesHandlers({
           )
         );
 
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
+
         success(`Order #${sale.serialId || sale.id} cancelled and stock returned.`);
         return;
       }
@@ -243,6 +251,11 @@ export function useSalesHandlers({
         const freshInventory = await inventoryService.getAll(activeBranchId);
         setInventory(freshInventory);
 
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
+
         success(`Order #${sale.serialId || sale.id} modified successfully.`);
       }
 
@@ -262,6 +275,11 @@ export function useSalesHandlers({
             return;
           }
           updates.shiftTransactionRecorded = true;
+
+          queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
+          queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
+
           success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);
         }
       }
