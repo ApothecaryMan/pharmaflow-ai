@@ -5575,7 +5575,7 @@ export const TRANSLATIONS = {
       customers: 'العملاء',
       reg: 'مسجل',
       anon: 'عابر',
-      hourlyTrend: 'التوجه الساعي',
+      hourlyTrend: 'مبيعات الساعة',
       byQty: 'حسب الكمية',
       noData: 'لا توجد بيانات بعد',
       salesByCategory: 'المبيعات حسب الفئة',

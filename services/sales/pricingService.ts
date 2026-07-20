@@ -11,14 +11,7 @@ export const pricingService = {
    * Always uses Unit-First logic: UnitPrice * TotalUnits.
    */
   calculateItemGrossTotal: (item: CartItem): number => {
-    const totalUnits = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
-    const unitPrice =
-      item.unitPrice ||
-      (item.unitsPerPack && item.unitsPerPack > 1
-        ? money.divide(item.publicPrice, item.unitsPerPack)
-        : item.publicPrice);
-
-    return money.multiply(unitPrice, totalUnits, 0);
+    return money.multiply(item.publicPrice, item.quantity, 0);
   },
 
   /**
@@ -101,14 +94,7 @@ export const pricingService = {
 
     // 1. Calculate the weights for all items in the original sale
     const itemWeights = (sale.items || []).map((item: any) => {
-      // Use Unit-First logic to get the correct line total
-      const totalUnits = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
-      const unitPrice =
-        item.unitsPerPack && item.unitsPerPack > 1
-          ? money.divide(item.publicPrice, item.unitsPerPack)
-          : item.publicPrice;
-
-      const itemTotal = money.multiply(unitPrice, totalUnits, 0);
+      const itemTotal = money.multiply(item.publicPrice, item.quantity, 0);
       return money.toSmallestUnit(itemTotal);
     });
 
