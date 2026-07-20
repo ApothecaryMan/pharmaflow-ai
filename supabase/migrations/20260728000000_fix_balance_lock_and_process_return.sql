@@ -1,0 +1,260 @@
+-- ============================================================
+-- Fix balance lock and process_return atomicity
+-- Phase A: Expand atomic_increment_shift balance lock to
+--          protect against returns and negative cash_sales
+--          (cancellations) in addition to cash_out and
+--          cash_purchases.
+-- Phase B: Rewrite process_return to use
+--          atomic_increment_shift instead of raw UPDATE shifts
+--          so the balance lock is enforced.
+-- ============================================================
+
+BEGIN;
+
+-- ══════════════════════════════════════════════════════════════
+-- Phase A: Expanded balance lock
+-- ══════════════════════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION atomic_increment_shift(
+  p_shift_id UUID,
+  p_cash_in NUMERIC DEFAULT 0,
+  p_cash_out NUMERIC DEFAULT 0,
+  p_cash_sales NUMERIC DEFAULT 0,
+  p_card_sales NUMERIC DEFAULT 0,
+  p_returns NUMERIC DEFAULT 0,
+  p_cash_purchases NUMERIC DEFAULT 0,
+  p_cash_purchase_returns NUMERIC DEFAULT 0
+)
+RETURNS void AS $$
+DECLARE
+  v_available_above_base NUMERIC;
+BEGIN
+  -- Calculate current balance above opening balance
+  SELECT 
+    (COALESCE(cash_in, 0) + COALESCE(cash_sales, 0) + COALESCE(cash_purchase_returns, 0)) - 
+    (COALESCE(cash_out, 0) + COALESCE(returns, 0) + COALESCE(cash_purchases, 0))
+  INTO v_available_above_base
+  FROM shifts 
+  WHERE id = p_shift_id;
+
+  -- Enforce balance lock for all deduction types:
+  --   cash_out, cash_purchases, returns, and negative cash_sales (cancellations)
+  IF (p_cash_out > 0 OR p_cash_purchases > 0 OR p_returns > 0 OR p_cash_sales < 0) THEN
+    IF v_available_above_base < (p_cash_out + p_cash_purchases + p_returns + GREATEST(-p_cash_sales, 0)) THEN
+      RAISE EXCEPTION 'Insufficient balance: Cannot withdraw more than available cash above base (% available)', v_available_above_base;
+    END IF;
+  END IF;
+
+  UPDATE shifts SET
+    cash_in     = COALESCE(cash_in, 0)     + p_cash_in,
+    cash_out    = COALESCE(cash_out, 0)    + p_cash_out,
+    cash_sales  = COALESCE(cash_sales, 0)  + p_cash_sales,
+    card_sales  = COALESCE(card_sales, 0)  + p_card_sales,
+    returns     = COALESCE(returns, 0)     + p_returns,
+    cash_purchases = COALESCE(cash_purchases, 0) + p_cash_purchases,
+    cash_purchase_returns = COALESCE(cash_purchase_returns, 0) + p_cash_purchase_returns
+  WHERE id = p_shift_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- ══════════════════════════════════════════════════════════════
+-- Phase B: process_return — use atomic_increment_shift
+-- ══════════════════════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION public.process_return(p_payload JSONB)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_return_id UUID;
+    v_branch_id UUID := (p_payload->>'branchId')::UUID;
+    v_org_id UUID := (p_payload->>'orgId')::UUID;
+    v_sale_id UUID := (p_payload->>'saleId')::UUID;
+    v_performer_id UUID := (p_payload->>'performerId')::UUID;
+    v_shift_id UUID;
+    v_item JSONB;
+    v_running_total_refund DECIMAL := 0;
+    v_item_refund DECIMAL;
+    v_batch_id UUID;
+    v_expiry_date DATE;
+    v_drug_id UUID;
+    v_sale_item_id UUID;
+    v_qty INT;
+    v_return_serial TEXT;
+    v_payment_method TEXT;
+    v_drug_record RECORD;
+    v_sale_item_record RECORD;
+    v_already_returned INT;
+    v_available_to_return INT;
+    v_return_key TEXT;
+    v_sale_record RECORD;
+    v_customer_phone TEXT;
+    v_customer_code TEXT;
+    v_sale_earned_points INTEGER;
+    v_points_to_deduct INTEGER;
+    v_phone_clean TEXT;
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM public.employees WHERE id = v_performer_id) THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Employee not found');
+    END IF;
+
+    SELECT * INTO v_sale_record FROM sales WHERE id = v_sale_id FOR UPDATE;
+    IF v_sale_record.id IS NULL THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Sale not found');
+    END IF;
+
+    v_payment_method := v_sale_record.payment_method;
+    v_customer_phone := v_sale_record.customer_phone;
+    v_customer_code := v_sale_record.customer_code;
+    v_sale_earned_points := COALESCE(v_sale_record.earned_points, 0);
+
+    SELECT id INTO v_shift_id FROM shifts
+    WHERE branch_id = v_branch_id AND status = 'open'
+    LIMIT 1
+    FOR UPDATE;
+
+    IF v_shift_id IS NULL THEN
+        RETURN jsonb_build_object('success', false, 'error', 'No active shift found');
+    END IF;
+
+    v_return_serial := 'RET-' || to_char(CURRENT_DATE, 'YYYYMMDD') || LPAD(increment_sequence(v_branch_id, 'returns')::TEXT, 3, '0');
+
+    INSERT INTO public.returns (
+        org_id, branch_id, sale_id, serial_id,
+        total_refund, return_type, reason, notes,
+        processed_by, date
+    ) VALUES (
+        v_org_id, v_branch_id, v_sale_id, v_return_serial,
+        0,
+        (p_payload->>'returnType')::text::return_type,
+        (p_payload->>'reason')::text::return_reason,
+        p_payload->>'notes',
+        v_performer_id, CURRENT_TIMESTAMP
+    ) RETURNING id INTO v_return_id;
+
+    PERFORM set_stock_context('return_customer', v_return_id, v_performer_id, p_payload->>'performerName');
+
+    FOR v_item IN SELECT * FROM jsonb_array_elements(p_payload->'items')
+    LOOP
+        v_drug_id := (v_item->>'drugId')::UUID;
+        v_qty := (v_item->>'quantity')::INT;
+        v_sale_item_id := (v_item->>'saleItemId')::UUID;
+
+        IF v_sale_item_id IS NOT NULL THEN
+            SELECT * INTO v_sale_item_record FROM sale_items WHERE id = v_sale_item_id;
+        ELSE
+            SELECT * INTO v_sale_item_record FROM sale_items
+            WHERE sale_id = v_sale_id AND drug_id = v_drug_id
+            AND is_unit = COALESCE((v_item->>'isUnit')::BOOLEAN, FALSE)
+            LIMIT 1;
+        END IF;
+
+        IF v_sale_item_record.id IS NULL THEN
+            RAISE EXCEPTION 'Sale item not found for drug %', v_drug_id;
+        END IF;
+
+        v_drug_id := v_sale_item_record.drug_id;
+        v_return_key := CASE WHEN v_sale_item_record.is_unit THEN v_sale_item_record.id::TEXT || '_unit' ELSE v_sale_item_record.id::TEXT || '_pack' END;
+        v_already_returned := COALESCE((v_sale_record.item_returned_quantities->>v_return_key)::INT, 0);
+        v_available_to_return := v_sale_item_record.quantity - v_already_returned;
+
+        IF v_qty > v_available_to_return THEN
+            RAISE EXCEPTION 'Cannot return % units of %. Only % units available to return.', v_qty, v_sale_item_record.name, v_available_to_return;
+        END IF;
+
+        v_item_refund := ROUND(v_qty * v_sale_item_record.public_price * (v_sale_record.total / NULLIF(v_sale_record.subtotal, 0)), 2);
+        v_running_total_refund := v_running_total_refund + v_item_refund;
+
+        SELECT name, dosage_form, units_per_pack INTO v_drug_record FROM drugs WHERE id = v_drug_id;
+
+        SELECT batch_id, expiry_date INTO v_batch_id, v_expiry_date
+        FROM stock_movements
+        WHERE reference_id = v_sale_id AND drug_id = v_drug_id AND type = 'sale'
+        ORDER BY timestamp DESC LIMIT 1
+        FOR UPDATE;
+
+        INSERT INTO return_items (
+            branch_id, return_id, drug_id, sale_item_id, name,
+            quantity_returned, is_unit, public_price, refund_amount,
+            condition, dosage_form, expiry_date
+        ) VALUES (
+            v_branch_id, v_return_id, v_drug_id, v_sale_item_record.id, v_drug_record.name,
+            v_qty, v_sale_item_record.is_unit, v_sale_item_record.public_price,
+            v_item_refund,
+            (v_item->>'condition')::text::item_condition, v_drug_record.dosage_form, v_expiry_date
+        );
+
+        IF (v_item->>'condition') = 'sellable' AND v_batch_id IS NOT NULL THEN
+            DECLARE
+                v_return_units INT;
+            BEGIN
+                IF v_sale_item_record.is_unit THEN
+                    v_return_units := v_qty;
+                ELSE
+                    v_return_units := v_qty * COALESCE(v_drug_record.units_per_pack, 1);
+                END IF;
+                UPDATE stock_batches SET quantity = quantity + v_return_units WHERE id = v_batch_id;
+            END;
+        END IF;
+
+        UPDATE sales SET item_returned_quantities =
+            COALESCE(item_returned_quantities, '{}'::JSONB) ||
+            jsonb_build_object(v_return_key, v_already_returned + v_qty)
+        WHERE id = v_sale_id;
+    END LOOP;
+
+    UPDATE public.returns SET total_refund = v_running_total_refund WHERE id = v_return_id;
+
+    UPDATE sales
+    SET net_total = COALESCE(net_total, total) - v_running_total_refund,
+        status = CASE WHEN (p_payload->>'returnType') = 'full' THEN 'returned'::sale_status ELSE status END
+    WHERE id = v_sale_id;
+
+    v_points_to_deduct := ROUND(v_sale_earned_points * (v_running_total_refund / NULLIF(v_sale_record.total, 0)))::INTEGER;
+
+    v_phone_clean := REGEXP_REPLACE(v_customer_phone, '[\s\-\(\)]', '', 'g');
+
+    IF v_phone_clean IS NOT NULL AND v_phone_clean != '' THEN
+        UPDATE customers
+        SET
+            total_purchases = GREATEST(COALESCE(total_purchases, 0) - v_running_total_refund, 0),
+            points = GREATEST(COALESCE(points, 0) - v_points_to_deduct, 0)
+        WHERE branch_id = v_branch_id
+        AND REGEXP_REPLACE(phone, '[\s\-\(\)\+]', '', 'g') = v_phone_clean;
+    END IF;
+
+    IF v_customer_code IS NOT NULL AND v_customer_code != '' THEN
+        UPDATE customers
+        SET
+            total_purchases = GREATEST(COALESCE(total_purchases, 0) - v_running_total_refund, 0),
+            points = GREATEST(COALESCE(points, 0) - v_points_to_deduct, 0)
+        WHERE code = v_customer_code AND branch_id = v_branch_id
+        AND (v_phone_clean IS NULL OR v_phone_clean = ''
+             OR NOT EXISTS (
+                 SELECT 1 FROM customers
+                 WHERE branch_id = v_branch_id
+                 AND REGEXP_REPLACE(phone, '[\s\-\(\)\+]', '', 'g') = v_phone_clean
+             ));
+    END IF;
+
+    IF v_payment_method = 'cash' THEN
+        INSERT INTO cash_transactions (
+            branch_id, shift_id, type, amount, reason,
+            user_id, related_sale_id, org_id
+        ) VALUES (
+            v_branch_id, v_shift_id, 'return', -v_running_total_refund,
+            'Return ' || v_return_serial, v_performer_id, v_sale_id, v_org_id
+        );
+        PERFORM atomic_increment_shift(v_shift_id, 0, 0, 0, 0, v_running_total_refund, 0, 0);
+    END IF;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'returnId', v_return_id,
+        'serialId', v_return_serial,
+        'totalRefund', v_running_total_refund
+    );
+END;
+$$;
+
+COMMIT;
