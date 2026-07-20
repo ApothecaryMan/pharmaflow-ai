@@ -149,9 +149,16 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
           <button type='button' onClick={onClose} className={MODAL_FOOTER_BTN_CANCEL}>
             {t.expenses.modal.cancel}
           </button>
-          <button type='submit' form='record-expense-form' className={MODAL_FOOTER_BTN_PRIMARY}>
-            {isSubmitting ? t.common.loading : t.expenses.modal.confirm}
-          </button>
+          {currentShift ? (
+            <button type='submit' form='record-expense-form' className={MODAL_FOOTER_BTN_PRIMARY}>
+              {isSubmitting ? t.common.loading : t.expenses.modal.confirm}
+            </button>
+          ) : (
+            <div className='flex-1 py-3 rounded-full font-bold text-xs bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 flex items-center justify-center gap-2'>
+              <span className='material-symbols-rounded text-[16px]'>warning</span>
+              {t.pos.noOpenShift}
+            </div>
+          )}
         </div>
       }
     >

@@ -32,6 +32,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
   const { currentShift } = useShift();
+  const hasOpenShift = !!currentShift;
   const {
     expenses,
     summary,
@@ -282,14 +283,21 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           />
         }
         rightContent={
-          <button
-            onClick={() => setIsRecordModalOpen(true)}
-            className='h-10 px-4 text-sm font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl flex items-center gap-2 transition-all active:scale-95'
-            type='button'
-          >
-            <span className='material-symbols-rounded'>receipt_long</span>
-            {t.expenses.recordExpense}
-          </button>
+          hasOpenShift ? (
+            <button
+              onClick={() => setIsRecordModalOpen(true)}
+              className='h-10 px-4 text-sm font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl flex items-center gap-2 transition-all active:scale-95'
+              type='button'
+            >
+              <span className='material-symbols-rounded'>receipt_long</span>
+              {t.expenses.recordExpense}
+            </button>
+          ) : (
+            <div className='h-10 px-4 text-sm font-semibold rounded-xl flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400'>
+              <span className='material-symbols-rounded'>warning</span>
+              {t.pos.noOpenShift}
+            </div>
+          )
         }
         sticky={true}
         mb='mb-4'
@@ -467,10 +475,9 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                   renderItem={(item) => <span>{item.label}</span>}
                   variant='input'
                   dense={true}
-                  className='w-48 shrink-0'
+                  className='h-pageheader w-48 shrink-0'
                   color='emerald'
                   floating={true}
-                  minHeight={32}
                   rounded='lg'
                 />
 
@@ -484,10 +491,9 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                   renderItem={(item) => <span>{item.label}</span>}
                   variant='input'
                   dense={true}
-                  className='w-48 shrink-0'
+                  className='h-pageheader w-48 shrink-0'
                   color='emerald'
                   floating={true}
-                  minHeight={32}
                   rounded='lg'
                 />
               </div>
