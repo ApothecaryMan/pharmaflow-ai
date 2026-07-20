@@ -96,6 +96,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     filterType,
     setFilterType,
     currentBalance,
+    availableAboveBase,
     permissions,
     filteredTransactions,
     counts,
@@ -468,7 +469,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     <p
                       className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300`}
                     >
-                      {t.cashRegister.summary.expectedBalance}
+                      {t.cashRegister.summary.availableBalance || 'Available'}
                     </p>
                   </div>
                   <div
@@ -476,13 +477,16 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   >
                     {!isLoading && (
                       <>
-                        <AnimatedCounter value={currentBalance} mode='rolling' />
+                        <AnimatedCounter value={availableAboveBase} mode='rolling' />
                         <span className='text-base font-normal opacity-40'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
                       </>
                     )}
                   </div>
+                  <p className='text-[10px] text-gray-400 mt-1'>
+                    {t.cashRegister.summary.aboveBase || 'Cash above opening balance'}
+                  </p>
                 </div>
               )}
 

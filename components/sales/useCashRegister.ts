@@ -58,6 +58,21 @@ export const useCashRegister = ({
     );
   }, [currentShift]);
 
+  // Cash above opening balance — this is what the RPC's balance lock enforces
+  // for withdrawals and expenses. The opening balance is locked and cannot
+  // be withdrawn below.
+  const availableAboveBase = useMemo(() => {
+    if (!currentShift) return 0;
+    return (
+      currentShift.cashSales +
+      currentShift.cashIn +
+      (currentShift.cashPurchaseReturns || 0) -
+      currentShift.cashOut -
+      (currentShift.returns || 0) -
+      (currentShift.cashPurchases || 0)
+    );
+  }, [currentShift]);
+
   // --- Permission Checks ---
   const permissions = useMemo(() => {
     if (!currentEmployeeId || !employees) {
@@ -443,6 +458,7 @@ export const useCashRegister = ({
 
     // Derived
     currentBalance,
+    availableAboveBase,
     permissions,
     filteredTransactions,
     counts,
