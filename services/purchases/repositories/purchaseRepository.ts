@@ -204,13 +204,18 @@ export const purchaseRepository = {
 
     if (filters.search?.trim()) {
       const term = filters.search.trim().replace(/[%_,]/g, '');
-      query = query.or(
-        [
-          `invoice_id.ilike.%${term}%`,
-          `external_invoice_id.ilike.%${term}%`,
-          `supplier_name_snapshot.ilike.%${term}%`,
-        ].join(',')
-      );
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+      if (isUuid) {
+        query = query.or(`id.eq.${term}`);
+      } else {
+        query = query.or(
+          [
+            `invoice_id.ilike.%${term}%`,
+            `external_invoice_id.ilike.%${term}%`,
+            `supplier_name_snapshot.ilike.%${term}%`,
+          ].join(',')
+        );
+      }
     }
 
     const sortColumn = options.sort?.column || 'date';

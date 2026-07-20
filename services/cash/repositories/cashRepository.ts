@@ -4,9 +4,9 @@ import type { CashTransaction, Shift } from '../../../types';
 import type { CashTransactionType } from '../../../types/cash';
 
 const SHIFT_LIST_COLUMNS =
-  'id, branch_id, org_id, status, open_time, close_time, opened_by, opening_balance, closing_balance, expected_balance, cash_sales, card_sales';
+  'id, branch_id, org_id, status, open_time, close_time, opened_by, opening_balance, closing_balance, expected_balance, cash_sales, card_sales, cash_in, cash_out, returns, cash_purchases, cash_purchase_returns';
 
-const SHIFT_FULL_COLUMNS = `${SHIFT_LIST_COLUMNS}, branch_name, closed_by, cash_in, cash_out, returns, cash_purchases, cash_purchase_returns, notes`;
+const SHIFT_FULL_COLUMNS = `${SHIFT_LIST_COLUMNS}, branch_name, closed_by, notes`;
 
 const TX_LIST_COLUMNS =
   'id, branch_id, shift_id, time, type, amount, reason, user_id';

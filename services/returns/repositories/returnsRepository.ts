@@ -216,9 +216,12 @@ export const returnsRepository = {
 
     if (filters.search?.trim()) {
       const term = filters.search.trim().replace(/[%_,]/g, '');
-      query = query.or(
-        [`id.ilike.%${term}%`, `serial_id.ilike.%${term}%`, `sale_id.ilike.%${term}%`].join(',')
-      );
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+      if (isUuid) {
+        query = query.or(`id.eq.${term},sale_id.eq.${term}`);
+      } else {
+        query = query.or(`serial_id.ilike.%${term}%`);
+      }
     }
 
     const sortColumn = options.sort?.column || 'date';
@@ -337,11 +340,12 @@ export const returnsRepository = {
 
     if (filters.search?.trim()) {
       const term = filters.search.trim().replace(/[%_,]/g, '');
-      query = query.or(
-        [`id.ilike.%${term}%`, `purchase_id.ilike.%${term}%`, `supplier_name.ilike.%${term}%`].join(
-          ','
-        )
-      );
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+      if (isUuid) {
+        query = query.or(`id.eq.${term},purchase_id.eq.${term}`);
+      } else {
+        query = query.or(`serial_id.ilike.%${term}%,supplier_name.ilike.%${term}%`);
+      }
     }
 
     const sortColumn = options.sort?.column || 'date';

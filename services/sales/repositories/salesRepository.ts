@@ -276,13 +276,19 @@ export const salesRepository = {
     if (filters.maxAmount !== undefined) query = query.lte('total', filters.maxAmount);
     if (filters.search?.trim()) {
       const term = filters.search.trim().replace(/[%_,]/g, '');
-      query = query.or(
-        [
-          `customer_name.ilike.%${term}%`,
-          `customer_code.ilike.%${term}%`,
-          `customer_phone.ilike.%${term}%`,
-        ].join(',')
-      );
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+      if (isUuid) {
+        query = query.or(`id.eq.${term}`);
+      } else {
+        query = query.or(
+          [
+            `customer_name.ilike.%${term}%`,
+            `customer_code.ilike.%${term}%`,
+            `customer_phone.ilike.%${term}%`,
+            `serial_id.ilike.%${term}%`,
+          ].join(',')
+        );
+      }
     }
 
     const sortColumn = options.sort?.column || 'date';
