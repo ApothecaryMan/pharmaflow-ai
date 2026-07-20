@@ -4,8 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAlert } from '../../context';
 import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { batchService } from '../../services/inventory/batchService';
-import { inventoryService } from '../../services/inventory/inventoryService';
 import { salesService } from '../../services/sales/salesService';
 import { transactionService } from '../../services/transactions/transactionService';
 import { formatCurrency } from '../../utils/currency';
@@ -53,7 +51,6 @@ export interface UseSalesHandlersParams {
   activeBranchId: string;
   activeOrgId: string;
   inventory: Drug[];
-  setInventory: React.Dispatch<React.SetStateAction<Drug[]>>;
   sales: Sale[];
   setSales: React.Dispatch<React.SetStateAction<Sale[]>>;
   setBatches: (batches: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => void;
@@ -76,7 +73,6 @@ export function useSalesHandlers({
   activeBranchId,
   activeOrgId,
   inventory,
-  setInventory,
   sales,
   setSales,
   setBatches: _setBatches,
@@ -208,37 +204,83 @@ export function useSalesHandlers({
           return;
         }
 
-        // Optimistic patch for inventory cache using setQueryData pattern
-        setInventory((prev) => {
-          const newInv = [...prev];
+        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
+          if (!old) return old;
+          const newInv = [...old];
           sale.items.forEach((saleItem) => {
             const index = newInv.findIndex((d) => d.id === saleItem.id);
             if (index !== -1) {
               const drug = newInv[index];
-              const qtyToAdd = saleItem.isUnit ? saleItem.quantity / (drug.unitsPerPack || 1) : saleItem.quantity;
-              newInv[index] = { ...drug, stock: drug.stock + qtyToAdd };
+              const qtyInUnits = saleItem.isUnit ? saleItem.quantity : saleItem.quantity * (drug.unitsPerPack || 1);
+              newInv[index] = { ...drug, stock: drug.stock + qtyInUnits };
             }
           });
           return newInv;
         });
 
-        setSales((prev) =>
-          prev.map((s) =>
-            s.id === saleId ? { ...s, status: 'cancelled', updatedAt: context.timestamp } : s
-          )
-        );
-
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
-        // Cancellation RPC inserts a cash_transaction row — refresh shift
-        queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
-        if (currentShift?.id) {
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
+        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
+          if (!old) return old;
+          const newBatches = [...old];
+          sale.items.forEach((saleItem) => {
+            const drugId = saleItem.id;
+            const qtyInUnits = saleItem.isUnit ? saleItem.quantity : saleItem.quantity * (saleItem.unitsPerPack || 1);
+            if (qtyInUnits <= 0) return;
+            const batchEntries = newBatches
+              .map((b, i) => ({ batch: b, index: i }))
+              .filter(({ batch }) => batch.drugId === drugId)
+              .sort((a, b) => new Date(b.batch.expiryDate).getTime() - new Date(a.batch.expiryDate).getTime());
+            if (batchEntries.length > 0) {
+              const { index } = batchEntries[0];
+              newBatches[index] = { ...newBatches[index], quantity: newBatches[index].quantity + qtyInUnits };
+            }
           });
+          return newBatches;
+        });
+
+        queryClient.setQueryData<Sale[]>(queryKeys.sales.recent(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.map((s) => (s.id === saleId ? { ...s, status: 'cancelled' as const, updatedAt: context.timestamp } : s));
+        });
+        queryClient.setQueryData<Sale[]>(queryKeys.sales.today(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.map((s) => (s.id === saleId ? { ...s, status: 'cancelled' as const, updatedAt: context.timestamp } : s));
+        });
+        queryClient.setQueryData<Sale>(queryKeys.sales.detail(saleId), (old) => {
+          if (!old) return old;
+          return { ...old, status: 'cancelled' as const, updatedAt: context.timestamp };
+        });
+        queryClient.setQueryData<Shift[]>(queryKeys.shifts.all(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.map((s) =>
+            s.id === currentShift?.id
+              ? {
+                  ...s,
+                  cashSales: Math.max(0, s.cashSales - (sale.paymentMethod === 'cash' ? sale.total : 0)),
+                  cardSales: Math.max(0, s.cardSales - (sale.paymentMethod === 'visa' ? sale.total : 0)),
+                }
+              : s,
+          );
+        });
+        if (currentShift?.id) {
+          queryClient.setQueryData<CashTransaction[]>(
+            queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
+            (old) => {
+              if (!old) return old;
+              return [
+                ...old,
+                {
+                  id: `cancel-${saleId}`,
+                  branchId: activeBranchId,
+                  shiftId: currentShift.id,
+                  time: context.timestamp,
+                  type: 'return' as const,
+                  amount: -sale.total,
+                  userId: context.performerId,
+                  relatedSaleId: saleId,
+                },
+              ];
+            },
+          );
         }
 
         success(`Order #${sale.serialId || sale.id} cancelled and stock returned.`);
@@ -263,37 +305,77 @@ export function useSalesHandlers({
           return;
         }
 
-        // Optimistic patch for inventory cache using setQueryData pattern
-        setInventory((prev) => {
-          const newInv = [...prev];
-          // 1. Restore old items
+        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
+          if (!old) return old;
+          const newInv = [...old];
           sale.items.forEach((oldItem) => {
             const index = newInv.findIndex((d) => d.id === oldItem.id);
             if (index !== -1) {
               const drug = newInv[index];
-              const qty = oldItem.isUnit ? oldItem.quantity / (drug.unitsPerPack || 1) : oldItem.quantity;
-              newInv[index] = { ...drug, stock: drug.stock + qty };
+              const qtyInUnits = oldItem.isUnit ? oldItem.quantity : oldItem.quantity * (drug.unitsPerPack || 1);
+              newInv[index] = { ...drug, stock: drug.stock + qtyInUnits };
             }
           });
-          // 2. Deduct new items
           updates.items!.forEach((newItem) => {
             const index = newInv.findIndex((d) => d.id === newItem.id);
             if (index !== -1) {
               const drug = newInv[index];
-              const qty = newItem.isUnit ? newItem.quantity / (drug.unitsPerPack || 1) : newItem.quantity;
-              newInv[index] = { ...drug, stock: drug.stock - qty };
+              const qtyInUnits = newItem.isUnit ? newItem.quantity : newItem.quantity * (drug.unitsPerPack || 1);
+              newInv[index] = { ...drug, stock: drug.stock - qtyInUnits };
             }
           });
           return newInv;
         });
 
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
+        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
+          if (!old) return old;
+          let newBatches = [...old];
+          sale.items.forEach((oldItem) => {
+            const qtyInUnits = oldItem.isUnit ? oldItem.quantity : oldItem.quantity * (oldItem.unitsPerPack || 1);
+            if (qtyInUnits <= 0) return;
+            const entries = newBatches
+              .map((b, i) => ({ batch: b, index: i }))
+              .filter(({ batch }) => batch.drugId === oldItem.id)
+              .sort((a, b) => new Date(b.batch.expiryDate).getTime() - new Date(a.batch.expiryDate).getTime());
+            if (entries.length > 0) {
+              const { index } = entries[0];
+              newBatches[index] = { ...newBatches[index], quantity: newBatches[index].quantity + qtyInUnits };
+            }
+          });
+          updates.items!.forEach((newItem) => {
+            const qtyInUnits = newItem.isUnit ? newItem.quantity : newItem.quantity * (newItem.unitsPerPack || 1);
+            if (qtyInUnits <= 0) return;
+            const entries = newBatches
+              .map((b, i) => ({ batch: b, index: i }))
+              .filter(({ batch }) => batch.drugId === newItem.id)
+              .sort((a, b) => new Date(a.batch.expiryDate).getTime() - new Date(b.batch.expiryDate).getTime());
+            let remaining = qtyInUnits;
+            for (const { index } of entries) {
+              if (remaining <= 0) break;
+              const batch = newBatches[index];
+              const deduct = Math.min(batch.quantity, remaining);
+              newBatches[index] = { ...batch, quantity: batch.quantity - deduct };
+              remaining -= deduct;
+            }
+          });
+          return newBatches;
+        });
+
+        queryClient.setQueryData<Sale[]>(queryKeys.sales.recent(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.map((s) => (s.id === saleId ? { ...s, ...updates, updatedAt: context.timestamp } : s));
+        });
+        queryClient.setQueryData<Sale[]>(queryKeys.sales.today(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.map((s) => (s.id === saleId ? { ...s, ...updates, updatedAt: context.timestamp } : s));
+        });
+        queryClient.setQueryData<Sale>(queryKeys.sales.detail(saleId), (old) => {
+          if (!old) return old;
+          return { ...old, ...updates, updatedAt: context.timestamp };
+        });
 
         success(`Order #${sale.serialId || sale.id} modified successfully.`);
+        return;
       }
 
       if (
@@ -313,19 +395,75 @@ export function useSalesHandlers({
           }
           updates.shiftTransactionRecorded = true;
 
-          queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
-          queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
-          queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
-          // Delivery finalization inserts a cash_transaction row — refresh shift
-          queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
+          queryClient.setQueryData(
+            queryKeys.sales.recent(activeBranchId),
+            (old: Sale[] | undefined) => {
+              if (!old) return old;
+              return old.map((s) =>
+                s.id === saleId
+                  ? { ...s, status: 'completed', shiftTransactionRecorded: true, updatedAt: context.timestamp }
+                  : s
+              );
+            }
+          );
+          queryClient.setQueryData(
+            queryKeys.sales.today(activeBranchId),
+            (old: Sale[] | undefined) => {
+              if (!old) return old;
+              return old.map((s) =>
+                s.id === saleId
+                  ? { ...s, status: 'completed', shiftTransactionRecorded: true, updatedAt: context.timestamp }
+                  : s
+              );
+            }
+          );
+          queryClient.setQueryData(
+            queryKeys.sales.detail(saleId),
+            (old: Sale | undefined) => {
+              if (!old) return old;
+              return { ...old, status: 'completed', shiftTransactionRecorded: true, updatedAt: context.timestamp };
+            }
+          );
+          queryClient.setQueryData(
+            queryKeys.shifts.all(activeBranchId),
+            (old: Shift[] | undefined) => {
+              if (!old) return old;
+              return old.map((s) =>
+                s.id === currentShift.id
+                  ? {
+                      ...s,
+                      cashSales: sale.paymentMethod === 'cash' ? s.cashSales + sale.total : s.cashSales,
+                      cardSales: sale.paymentMethod === 'visa' ? s.cardSales + sale.total : s.cardSales,
+                    }
+                  : s
+              );
+            }
+          );
           if (currentShift?.id) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
-            });
+            queryClient.setQueryData(
+              queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
+              (old: CashTransaction[] | undefined) => {
+                if (!old) return old;
+                return [
+                  ...old,
+                  {
+                    id: `optimistic-${saleId}`,
+                    branchId: activeBranchId,
+                    shiftId: currentShift.id,
+                    time: context.timestamp,
+                    type: sale.paymentMethod === 'cash' ? 'sale' : 'card_sale',
+                    amount: sale.total,
+                    userId: context.performerId,
+                    relatedSaleId: saleId,
+                  },
+                ];
+              }
+            );
           }
           queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
           success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);
+          return;
         }
       }
 
@@ -348,7 +486,6 @@ export function useSalesHandlers({
       currentEmployeeId,
       employees,
       activeBranchId,
-      setInventory,
       _setBatches,
       setSales,
       currentShift,

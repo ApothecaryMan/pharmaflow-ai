@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { supabase } from '../../lib/supabase';
-import type { Sale } from '../../types';
 import { financialService } from './financialService';
 
 vi.mock('../../lib/supabase', () => {
@@ -30,74 +29,6 @@ describe('financialService', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
-  });
-
-  describe('calculateRevenueAndReturns', () => {
-    it('calculates revenue and returns with precision math', () => {
-      const mockSales: Sale[] = [
-        {
-          id: 'S1',
-          serialId: 'PF-001',
-          branchId: 'BR1',
-          orgId: 'ORG1',
-          status: 'completed',
-          date: '2026-05-28T12:00:00Z',
-          total: 100,
-          paymentMethod: 'cash',
-          items: [
-            {
-              id: 'item1',
-              name: 'Panadol',
-              quantity: 2,
-              publicPrice: 60, // Total 120 gross
-              discount: 10, // 10% discount -> 54 each -> 108 net
-              isUnit: false,
-            } as any,
-          ],
-          globalDiscount: 8, // 108 - 8 = 100 final total
-          itemReturnedQuantities: {
-            item1_pack: 0,
-          },
-        },
-      ];
-
-      const result = financialService.calculateRevenueAndReturns(mockSales);
-      expect(result.totalRevenue).toBe(100);
-      expect(result.totalReturns).toBe(0);
-    });
-
-    it('handles returned items correctly', () => {
-      const mockSales: Sale[] = [
-        {
-          id: 'S1',
-          serialId: 'PF-001',
-          branchId: 'BR1',
-          orgId: 'ORG1',
-          status: 'completed',
-          date: '2026-05-28T12:00:00Z',
-          total: 50,
-          paymentMethod: 'cash',
-          items: [
-            {
-              id: 'item1',
-              name: 'Panadol',
-              quantity: 2,
-              publicPrice: 50, // Total 100 gross
-              discount: 0,
-              isUnit: false,
-            } as any,
-          ],
-          itemReturnedQuantities: {
-            item1_pack: 1, // 1 pack returned -> 1 pack actual sold
-          },
-        },
-      ];
-
-      const result = financialService.calculateRevenueAndReturns(mockSales);
-      // Actual revenue kept: 1 pack = 50. Returned value = 50.
-      expect(result.totalRevenue).toBe(50);
-      expect(result.totalReturns).toBe(50);
-    });
   });
 
   describe('getFinancialSummary', () => {

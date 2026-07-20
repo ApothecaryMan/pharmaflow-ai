@@ -71,7 +71,8 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // --- Load from database (backward-compatible) ---
   const refreshShifts = useCallback(async () => {
     if (!activeBranchId) return;
-    await queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
+    const data = await cashService.getAllShifts(activeBranchId);
+    queryClient.setQueryData(queryKeys.shifts.all(activeBranchId), data);
   }, [activeBranchId, queryClient]);
 
   // --- Actions ---
@@ -85,16 +86,16 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           activeBranchId
         );
 
-        // The open_shift RPC already inserts the opening_balance transaction server-side,
-        // so no need to add it here.
-
-        await refreshShifts();
+        queryClient.setQueryData(queryKeys.shifts.all(activeBranchId), (old: Shift[]) => {
+          if (!old) return old;
+          return [createdShift, ...old];
+        });
       } catch (err) {
         console.error('[ShiftProvider] startShift failed:', err);
         throw err;
       }
     },
-    [activeBranchId, refreshShifts]
+    [activeBranchId, queryClient]
   );
 
   const endShift = useCallback(
@@ -106,13 +107,16 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           closedShift.closedBy || '',
           closedShift.notes
         );
-        await refreshShifts();
+        queryClient.setQueryData(queryKeys.shifts.all(activeBranchId), (old: Shift[]) => {
+          if (!old) return old;
+          return old.map((s) => (s.id === closedShift.id ? closedShift : s));
+        });
       } catch (err) {
         console.error('[ShiftProvider] endShift failed:', err);
         throw err;
       }
     },
-    [refreshShifts]
+    [activeBranchId, queryClient]
   );
 
   const addTransaction = useCallback(
@@ -128,18 +132,26 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           userId: transaction.userId,
           relatedSaleId: transaction.relatedSaleId,
         });
-        await refreshShifts();
-        if (activeBranchId) {
-          await queryClient.invalidateQueries({
-            queryKey: queryKeys.cashTransactions.byShift(shiftId, activeBranchId),
+        queryClient.setQueryData(
+          queryKeys.cashTransactions.byShift(shiftId, activeBranchId),
+          (old: CashTransaction[]) => {
+            if (!old) return old;
+            return [...old, transaction];
+          }
+        );
+        queryClient.setQueryData(queryKeys.shifts.all(activeBranchId), (old: Shift[]) => {
+          if (!old) return old;
+          return old.map((s) => {
+            if (s.id !== shiftId) return s;
+            return { ...s, ..._updates };
           });
-        }
+        });
       } catch (err) {
         console.error('[ShiftProvider] addTransaction failed:', err);
         throw err;
       }
     },
-    [activeBranchId, refreshShifts]
+    [activeBranchId, queryClient]
   );
 
   // Memoize context value to prevent unnecessary consumer re-renders (memory-leak-audit #7)
