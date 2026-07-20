@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { StorageKeys } from '../../config/storageKeys';
+import { queryKeys } from '../../lib/queryKeys';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
 import { useRecentSales } from '../../hooks/queries/useSalesQuery';
@@ -27,8 +29,9 @@ export const useCashRegister = ({
   employees,
   currentEmployeeId,
 }: UseCashRegisterProps) => {
+  const queryClient = useQueryClient();
   const { getVerifiedDate } = useStatusBar();
-  const { currentShift, isLoading, startShift, endShift, addTransaction } = useShift();
+  const { currentShift, isLoading, startShift, endShift, addTransaction, refreshShifts } = useShift();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const branches = useAuthStore((s) => s.branches);
@@ -403,6 +406,14 @@ export const useCashRegister = ({
           paymentMethod: 'cash',
           shiftId: currentShift?.id,
         });
+        // The record_expense RPC updates the shift balance and inserts a cash_transaction row.
+        // Invalidate both caches so the cash register is fresh.
+        await refreshShifts();
+        if (activeBranchId && currentShift?.id) {
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
+          });
+        }
       } else {
         // Keep cash-in transactions going directly to the shift's transactions
         const transaction: CashTransaction = {

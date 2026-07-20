@@ -39,6 +39,21 @@ export function useCompleteSale() {
           queryKey: queryKeys.cashTransactions.byShift(vars.context.shiftId, branchId),
         });
       }
+      // Optimistic patch for inventory cache using setQueryData pattern
+      queryClient.setQueryData<any[]>(queryKeys.inventory.all(branchId), (old) => {
+        if (!old) return old;
+        const newInv = [...old];
+        vars.saleData.items.forEach((saleItem) => {
+          const index = newInv.findIndex((d) => d.id === saleItem.id);
+          if (index !== -1) {
+            const drug = newInv[index];
+            const qtyToDeduct = saleItem.isUnit ? saleItem.quantity / (drug.unitsPerPack || 1) : saleItem.quantity;
+            newInv[index] = { ...drug, stock: Math.max(0, drug.stock - qtyToDeduct) };
+          }
+        });
+        return newInv;
+      });
+
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });

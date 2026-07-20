@@ -208,10 +208,19 @@ export function useSalesHandlers({
           return;
         }
 
-        const [updatedBatches] = await Promise.all([batchService.getAllBatches(activeBranchId)]);
-        _setBatches(updatedBatches);
-        const freshInventory = await inventoryService.getAll(activeBranchId);
-        setInventory(freshInventory);
+        // Optimistic patch for inventory cache using setQueryData pattern
+        setInventory((prev) => {
+          const newInv = [...prev];
+          sale.items.forEach((saleItem) => {
+            const index = newInv.findIndex((d) => d.id === saleItem.id);
+            if (index !== -1) {
+              const drug = newInv[index];
+              const qtyToAdd = saleItem.isUnit ? saleItem.quantity / (drug.unitsPerPack || 1) : saleItem.quantity;
+              newInv[index] = { ...drug, stock: drug.stock + qtyToAdd };
+            }
+          });
+          return newInv;
+        });
 
         setSales((prev) =>
           prev.map((s) =>
@@ -254,10 +263,29 @@ export function useSalesHandlers({
           return;
         }
 
-        const [updatedBatches] = await Promise.all([batchService.getAllBatches(activeBranchId)]);
-        _setBatches(updatedBatches);
-        const freshInventory = await inventoryService.getAll(activeBranchId);
-        setInventory(freshInventory);
+        // Optimistic patch for inventory cache using setQueryData pattern
+        setInventory((prev) => {
+          const newInv = [...prev];
+          // 1. Restore old items
+          sale.items.forEach((oldItem) => {
+            const index = newInv.findIndex((d) => d.id === oldItem.id);
+            if (index !== -1) {
+              const drug = newInv[index];
+              const qty = oldItem.isUnit ? oldItem.quantity / (drug.unitsPerPack || 1) : oldItem.quantity;
+              newInv[index] = { ...drug, stock: drug.stock + qty };
+            }
+          });
+          // 2. Deduct new items
+          updates.items!.forEach((newItem) => {
+            const index = newInv.findIndex((d) => d.id === newItem.id);
+            if (index !== -1) {
+              const drug = newInv[index];
+              const qty = newItem.isUnit ? newItem.quantity / (drug.unitsPerPack || 1) : newItem.quantity;
+              newInv[index] = { ...drug, stock: drug.stock - qty };
+            }
+          });
+          return newInv;
+        });
 
         queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });

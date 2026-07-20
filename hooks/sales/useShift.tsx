@@ -129,6 +129,11 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           relatedSaleId: transaction.relatedSaleId,
         });
         await refreshShifts();
+        if (activeBranchId) {
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.cashTransactions.byShift(shiftId, activeBranchId),
+          });
+        }
       } catch (err) {
         console.error('[ShiftProvider] addTransaction failed:', err);
         throw err;

@@ -69,9 +69,14 @@ export function useCreatePurchaseReturn() {
   return useMutation({
     mutationFn: ({ ret, context }: { ret: any; context: ActionContext }) =>
       transactionService.processPurchaseReturnTransaction(ret, context),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       // Purchase return creates a cash transaction — refresh shift
       queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(branchId) });
+      if (variables.context.shiftId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.cashTransactions.byShift(variables.context.shiftId, branchId),
+        });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.returns.purchases(branchId) });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
