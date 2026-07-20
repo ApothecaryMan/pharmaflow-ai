@@ -101,6 +101,7 @@ export const useExpenses = () => {
       category: ExpenseCategory;
       description: string;
       paymentMethod: ExpensePaymentMethod;
+      shiftId?: string;
     }) => {
       if (!activeBranchId || !activeOrgId || !currentEmployee) {
         throw new Error('User context not fully loaded. Try again.');
@@ -114,13 +115,23 @@ export const useExpenses = () => {
         category: payload.category,
         description: payload.description,
         paymentMethod: payload.paymentMethod,
+        shiftId: payload.shiftId,
       });
 
+      // Invalidate expenses caches
       await invalidateExpenses();
+
+      // Also refresh shift data since a cash expense affects the shift balance
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
+      if (payload.shiftId) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.cashTransactions.byShift(payload.shiftId, activeBranchId),
+        });
+      }
 
       return newExpense;
     },
-    [activeBranchId, activeOrgId, currentEmployee, invalidateExpenses]
+    [activeBranchId, activeOrgId, currentEmployee, invalidateExpenses, queryClient]
   );
 
   // Delete an expense (only if allowed)

@@ -88,7 +88,7 @@ export const expenseRepository = {
   async insert(
     expense: Omit<Expense, 'id' | 'createdAt' | 'recordedAt' | 'approved'>
   ): Promise<Expense> {
-    const payload = {
+    const payload: Record<string, any> = {
       orgId: expense.orgId,
       branchId: expense.branchId,
       employeeId: expense.employeeId,
@@ -97,6 +97,9 @@ export const expenseRepository = {
       description: expense.description,
       paymentMethod: expense.paymentMethod,
     };
+    if (expense.shiftId) {
+      payload.shiftId = expense.shiftId;
+    }
 
     const { data, error } = await supabase.rpc('record_expense', {
       p_payload: payload,

@@ -386,6 +386,7 @@ export const useCashRegister = ({
           category: 'misc', // Cash register withdrawals default to miscellaneous expenses
           description: reasonInput,
           paymentMethod: 'cash',
+          shiftId: currentShift?.id,
         });
       } else {
         // Keep cash-in transactions going directly to the shift's transactions

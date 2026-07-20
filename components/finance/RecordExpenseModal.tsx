@@ -17,6 +17,7 @@ interface RecordExpenseModalProps {
     category: ExpenseCategory;
     description: string;
     paymentMethod: ExpensePaymentMethod;
+    shiftId?: string;
   }) => Promise<any>;
   currentShift: Shift | null;
 }
@@ -113,6 +114,7 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
         category,
         description: description.trim(),
         paymentMethod,
+        shiftId: currentShift?.id,
       });
       onClose();
     } catch (err: any) {
