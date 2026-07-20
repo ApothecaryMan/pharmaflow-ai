@@ -8,6 +8,7 @@ import { KeyboardProvider } from '../../hooks/keyboard';
 import type { AppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
 import { useRealtimeSync } from '../../hooks/realtime/useRealtimeSync';
+import { useRealtimeDispatcher } from '../../services/realtime/useRealtimeDispatcher';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
@@ -85,8 +86,11 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- Domain Data from React Query ---
   // Components fetch their own data internally.
 
-  // --- Realtime Sync ---
+  // --- Realtime Sync — legacy (to be removed in Phase 5) ---
   useRealtimeSync({ activeBranchId });
+
+  // --- Realtime Sync — new central dispatcher (additive, runs alongside) ---
+  useRealtimeDispatcher({ activeBranchId, activeOrgId });
 
   // --- Navigation Hook ---
   const { handleViewChange, handleNavigate, handleModuleChange, filteredMenuItems } = useNavigation(
