@@ -16,6 +16,7 @@ vi.mock('./repositories/salesRepository', () => ({
     insert: vi.fn(),
     update: vi.fn(),
     upsert: vi.fn(),
+    getStats: vi.fn(),
   },
 }));
 
@@ -72,6 +73,13 @@ describe('SalesService', () => {
     vi.mocked(salesRepository.getAll).mockResolvedValue([...mockSales]);
     vi.mocked(salesRepository.insert).mockImplementation(async (_s) => {
       return;
+    });
+    vi.mocked(salesRepository.getStats).mockResolvedValue({
+      totalSales: 2,
+      totalRevenue: 150,
+      averageTransaction: 75,
+      todaySales: 0,
+      todayRevenue: 0,
     });
   });
 

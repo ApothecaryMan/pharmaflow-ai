@@ -13,6 +13,8 @@ vi.mock('./repositories/inventoryRepository', () => ({
     insert: vi.fn(),
     update: vi.fn(),
     upsert: vi.fn(),
+    filterBy: vi.fn(),
+    getStats: vi.fn(),
   },
 }));
 
@@ -63,6 +65,27 @@ describe('InventoryService', () => {
       branchCode: 'B1',
       orgId: 'ORG_1',
     } as any);
+    vi.mocked(inventoryRepository.filterBy).mockImplementation(
+      async (filters, _branchId, _orgId) => {
+        let results = [...mockInventory];
+        if (filters.lowStock) {
+          results = results.filter((d) => d.stock < (d.minStock || 0));
+        }
+        if (filters.expiringSoon) {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() + filters.expiringSoon);
+          results = results.filter((d) => new Date(d.expiryDate) <= cutoff);
+        }
+        return results;
+      }
+    );
+    vi.mocked(inventoryRepository.getStats).mockResolvedValue({
+      totalProducts: 2,
+      totalValue: 525,
+      lowStockCount: 1,
+      expiringSoonCount: 1,
+      outOfStockCount: 0,
+    });
   });
 
   it('should filter low stock', async () => {
