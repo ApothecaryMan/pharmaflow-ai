@@ -4,7 +4,7 @@ import { useSettings } from '../../../../context';
 import { salesService } from '../../../../services/sales/salesService';
 import type { Drug } from '../../../../types';
 import { money } from '../../../../utils/currency';
-import { resolveUnits } from '../../../../utils/stockUtils';
+import { resolveUnits, resolvePrice, resolveCostPrice } from '../../../../utils/stockUtils';
 import { pricingService } from '../../../../services/sales/pricingService';
 import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
@@ -189,7 +189,10 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
               : daysToExpiry <= 0
                 ? viewingDrug.stock
                 : 0,
-          profitPerUnit: money.subtract(viewingDrug.publicPrice, viewingDrug.costPrice || 0),
+          profitPerUnit: money.subtract(
+            resolvePrice(viewingDrug.publicPrice, viewingDrug.isUnit || false, viewingDrug.unitsPerPack, viewingDrug.unitPrice),
+            resolveCostPrice(viewingDrug.costPrice || 0, viewingDrug.isUnit || false, viewingDrug.unitsPerPack, viewingDrug.unitCostPrice)
+          ),
           stockValue: money.multiply(
             viewingDrug.costPrice || viewingDrug.publicPrice,
             viewingDrug.stock,

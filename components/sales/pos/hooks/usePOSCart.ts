@@ -5,7 +5,7 @@ import { permissionsService } from '../../../../services/auth/permissionsService
 import { batchService } from '../../../../services/inventory/batchService';
 import type { CartItem, Drug } from '../../../../types';
 import { money } from '../../../../utils/money';
-import { isStockConstraintMet, resolvePrice } from '../../../../utils/stockUtils';
+import { isStockConstraintMet, resolvePrice, resolveCostPrice } from '../../../../utils/stockUtils';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -165,11 +165,12 @@ export const usePOSCart = ({
               (drug.unitsPerPack && drug.unitsPerPack > 1
                 ? money.divide(drug.publicPrice, drug.unitsPerPack)
                 : drug.publicPrice),
-            unitCostPrice:
-              drug.unitCostPrice ||
-              (drug.unitsPerPack && drug.unitsPerPack > 1
-                ? money.divide(drug.costPrice || 0, drug.unitsPerPack)
-                : drug.costPrice || 0),
+            unitCostPrice: resolveCostPrice(
+              drug.costPrice || 0,
+              isUnitMode,
+              drug.unitsPerPack,
+              drug.unitCostPrice
+            ),
             publicPrice: resolvePrice(
               drug.publicPrice,
               isUnitMode,

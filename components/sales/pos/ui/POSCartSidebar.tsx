@@ -9,6 +9,7 @@ import { useAuthStore } from '../../../../stores/authStore';
 import type { CartItem, Drug, Employee } from '../../../../types';
 import { formatCurrency, getCurrencySymbol } from '../../../../utils/currency';
 import { money } from '../../../../utils/money';
+import { resolvePrice, resolveCostPrice } from '../../../../utils/stockUtils';
 import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
 import { useContextMenu, useContextMenuTrigger } from '../../../common/ContextMenu';
 import { Tooltip } from '../../../common/Tooltip';
@@ -250,11 +251,13 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
 
       const totalCost = cart.reduce((acc, item) => {
         const totalUnits = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
-        const unitCost =
-          item.unitCostPrice ||
-          (item.unitsPerPack && item.unitsPerPack > 1
-            ? money.divide(item.costPrice || 0, item.unitsPerPack)
-            : item.costPrice || 0);
+        // ALWAYS request the unit cost price because totalUnits is always in units.
+        const unitCost = resolveCostPrice(
+          item.costPrice || 0,
+          true, // Force isUnit=true to get the cost per single unit
+          item.unitsPerPack,
+          item.unitCostPrice
+        );
 
         return money.add(acc, money.multiply(unitCost, totalUnits, 0));
       }, 0);

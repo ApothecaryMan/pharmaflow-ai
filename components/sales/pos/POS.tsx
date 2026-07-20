@@ -224,7 +224,6 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     activeBranchId,
     activeOrgId,
     inventory,
-    setInventory: infra.setInventory,
     sales,
     setSales: infra.setSales,
     setBatches: infra.setBatches,
