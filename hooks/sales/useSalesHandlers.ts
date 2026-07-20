@@ -223,6 +223,7 @@ export function useSalesHandlers({
         queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
 
         success(`Order #${sale.serialId || sale.id} cancelled and stock returned.`);
         return;
@@ -255,6 +256,7 @@ export function useSalesHandlers({
         queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
 
         success(`Order #${sale.serialId || sale.id} modified successfully.`);
       }
@@ -278,6 +280,7 @@ export function useSalesHandlers({
 
           queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
           queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
           queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
           success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);

@@ -139,6 +139,7 @@ export function useInventoryHandlers({
         });
 
         queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.detail(drug.id) });
         queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
@@ -205,6 +206,7 @@ export function useInventoryHandlers({
         });
 
         queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
+        queryClient.removeQueries({ queryKey: queryKeys.inventory.detail(id), exact: true });
         queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 

@@ -26,7 +26,11 @@ export function useCompleteSale() {
       };
       context: ActionContext;
     }) => transactionService.processCheckout(saleData, [], context),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const saleId = data.sale?.id;
+      if (saleId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });
@@ -42,7 +46,11 @@ export function useAddSale() {
 
   return useMutation({
     mutationFn: (sale: any) => salesService.create(sale, branchId),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const saleId = data?.id;
+      if (saleId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(branchId) });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });

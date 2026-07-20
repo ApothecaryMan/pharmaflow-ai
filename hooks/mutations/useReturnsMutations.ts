@@ -46,6 +46,7 @@ export function useProcessSalesReturn() {
         return oldData;
       });
 
+      queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.returns.sales(branchId) });

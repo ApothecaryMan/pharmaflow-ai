@@ -43,7 +43,11 @@ export function useApprovePurchase() {
       if (!result.success) throw new Error(result.error || 'Approval failed');
       return result.data!;
     },
-    onSuccess: () => {
+    onSuccess: (data, vars) => {
+      const purchaseId = data?.id || vars.id;
+      if (purchaseId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.purchases.detail(purchaseId) });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
@@ -68,7 +72,8 @@ export function useMarkPurchaseReceived() {
       receiverName: string;
       shiftId?: string;
     }) => purchaseService.markAsReceived(id, receiverId, receiverName, shiftId),
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.detail(vars.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
@@ -83,7 +88,8 @@ export function useRejectPurchase() {
 
   return useMutation({
     mutationFn: (id: string) => purchaseService.reject(id, 'Rejected by manager'),
-    onSuccess: () => {
+    onSuccess: (data, id) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.detail(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
