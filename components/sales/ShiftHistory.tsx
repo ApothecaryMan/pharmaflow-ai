@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useShiftTransactions } from '../../hooks/queries/useShiftsQuery';
 import { useShift } from '../../hooks/sales/useShift';
 import { auditService } from '../../services/audit/auditService';
 import { useAuthStore } from '../../stores/authStore';
@@ -72,6 +73,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [shiftDetailTab, setShiftDetailTab] = useState<'details' | 'log'>('details');
   const [showSummary, setShowSummary] = useState(false);
+
+  const { data: selectedShiftTransactions = [], isLoading: isTransactionsLoading } =
+    useShiftTransactions(selectedShift?.id, activeBranchId || '');
 
   // Load shifts from useShift hook (sharded storage)
   const { shifts: allShiftsFromHook, isLoading, endShift: _endShift } = useShift();
@@ -658,7 +662,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                   {
                     icon: 'receipt_long',
                     label: t.shiftHistory?.details?.transactions || 'Transactions',
-                    value: selectedShift.transactions.length,
+                    value: selectedShiftTransactions.length,
                     color: '',
                   },
                 ]// biome-ignore lint/suspicious/noArrayIndexKey: inline config objects have no id
@@ -739,8 +743,12 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           ) : (
             <div>
               <div className='space-y-2'>
-                {selectedShift.transactions.length > 0 ? (
-                  selectedShift.transactions.map((tx, idx) => (
+                {isTransactionsLoading ? (
+                  <div className='py-8 text-center text-gray-400 italic text-sm'>
+                    {language === 'AR' ? 'جاري التحميل...' : 'Loading...'}
+                  </div>
+                ) : selectedShiftTransactions.length > 0 ? (
+                  selectedShiftTransactions.map((tx, idx) => (
                     <div
                       key={tx.id || idx}
                       className='flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent hover:border-gray-100 dark:hover:border-gray-700 transition-colors'

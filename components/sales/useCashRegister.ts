@@ -14,6 +14,7 @@ import type { CashTransaction, Employee, Language, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { printDocument } from '../../utils/printing';
 import { storage } from '../../utils/storage';
+import { calculateShiftBalances } from '../../utils/shiftCalculations';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 
 interface UseCashRegisterProps {
@@ -48,33 +49,7 @@ export const useCashRegister = ({
   const [filterType, setFilterType] = useState('all');
 
   // --- Derived State: Balance ---
-  const currentBalance = useMemo(() => {
-    if (!currentShift) return 0;
-    return (
-      currentShift.openingBalance +
-      currentShift.cashSales +
-      currentShift.cashIn +
-      (currentShift.cashPurchaseReturns || 0) -
-      currentShift.cashOut -
-      (currentShift.returns || 0) -
-      (currentShift.cashPurchases || 0)
-    );
-  }, [currentShift]);
-
-  // Cash above opening balance — this is what the RPC's balance lock enforces
-  // for withdrawals and expenses. The opening balance is locked and cannot
-  // be withdrawn below.
-  const availableAboveBase = useMemo(() => {
-    if (!currentShift) return 0;
-    return (
-      currentShift.cashSales +
-      currentShift.cashIn +
-      (currentShift.cashPurchaseReturns || 0) -
-      currentShift.cashOut -
-      (currentShift.returns || 0) -
-      (currentShift.cashPurchases || 0)
-    );
-  }, [currentShift]);
+  const { currentBalance, availableAboveBase } = useMemo(() => calculateShiftBalances(currentShift), [currentShift]);
 
   // --- Permission Checks ---
   const permissions = useMemo(() => {
@@ -280,7 +255,7 @@ export const useCashRegister = ({
       closeTime: closeTs.toISOString(),
       closedBy: currentEmployeeId, // Use ID for DB
       closingBalance: amount,
-      expectedBalance: currentBalance,
+      expectedBalance: availableAboveBase,
       cashPurchases,
       cashPurchaseReturns,
       totalDiscounts,
@@ -395,24 +370,37 @@ export const useCashRegister = ({
     setIsProcessing(true);
     try {
       if (modalMode === 'out') {
-        // Route through expenseService to maintain single source of truth
-        await expenseService.recordExpense({
+        const newExpense = await expenseService.recordExpense({
           orgId: activeOrgId,
           branchId: activeBranchId,
           employeeId: currentEmployeeId || 'System',
           amount: amount,
-          category: 'misc', // Cash register withdrawals default to miscellaneous expenses
+          category: 'misc',
           description: reasonInput,
           paymentMethod: 'cash',
           shiftId: currentShift?.id,
         });
-        // The record_expense RPC updates the shift balance and inserts a cash_transaction row.
-        // Invalidate both caches so the cash register is fresh.
         await refreshShifts();
         if (activeBranchId && currentShift?.id) {
-          await queryClient.invalidateQueries({
-            queryKey: queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
-          });
+          queryClient.setQueryData(
+            queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
+            (old: CashTransaction[]) => {
+              if (!old) return old;
+              return [
+                ...old,
+                {
+                  id: newExpense?.id || crypto.randomUUID(),
+                  branchId: activeBranchId,
+                  shiftId: currentShift.id,
+                  time: new Date().toISOString(),
+                  type: 'expense' as const,
+                  amount: amount,
+                  reason: reasonInput,
+                  userId: currentEmployeeId || 'System',
+                },
+              ];
+            }
+          );
         }
       } else {
         // Keep cash-in transactions going directly to the shift's transactions

@@ -312,7 +312,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
         returnItems.push({
           drugId: drugId,
-          saleItemId: item.id,
+          saleItemId: item.saleItemId || item.id,
           name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,

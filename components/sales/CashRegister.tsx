@@ -169,7 +169,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         cell: (info) => {
           const reason = info.getValue() as string;
           if (!reason) return '-';
-          const match = reason.match(/^(Sale|Return|Return for Sale|Refund)\s*#(\d+)$/i);
+          const match = reason.match(/^(Sale|Return|Return for Sale|Refund)\s*(?:#?\s*)([A-Za-z0-9\-]+)$/i);
 
           let content: React.ReactNode;
           if (match) {
@@ -690,7 +690,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                           remove
                         </span>
                         <AnimatedCounter
-                          value={currentShift?.returns || 0}
+                          value={(currentShift?.returns || 0) + (currentShift?.cardReturns || 0)}
                           fractionDigits={0}
                           mode='rolling'
                         />
@@ -892,16 +892,16 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 <div className='flex justify-between'>
                   <span>{t.cashRegister.messages.expected}</span>
                   <span className='font-bold'>
-                    <PriceDisplay value={currentBalance} />
+                    <PriceDisplay value={availableAboveBase} />
                   </span>
                 </div>
                 {amountInput && !Number.isNaN(parseFloat(amountInput)) && (
                   <div className='flex justify-between mt-1 pt-1 border-t border-yellow-200 dark:border-yellow-900'>
                     <span>{t.cashRegister.summary.variance}</span>
                     <span
-                      className={`font-bold ${Math.abs(parseFloat(amountInput) - currentBalance) <= 50 ? 'text-emerald-500' : 'text-red-500'}`}
+                      className={`font-bold ${Math.abs(parseFloat(amountInput) - availableAboveBase) <= 50 ? 'text-emerald-500' : 'text-red-500'}`}
                     >
-                      <PriceDisplay value={parseFloat(amountInput) - currentBalance} showSign />
+                      <PriceDisplay value={parseFloat(amountInput) - availableAboveBase} showSign />
                     </span>
                   </div>
                 )}
