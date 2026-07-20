@@ -1,6 +1,7 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { inventorySearchEngine } from '../search/drugSearchService';
 import { queryKeys } from '../../lib/queryKeys';
+import { queryClient } from '../../lib/queryClient';
 import {
   patchListCache,
   patchDetailCache,
@@ -93,6 +94,36 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       handlers: [
         invalidateBranchScope('purchases', branchId),
         patchDetailCache((id: string) => queryKeys.purchases.detail(id)),
+      ],
+    },
+
+    // ── Shifts ──────────────────────────────────────────────────────
+    {
+      table: 'shifts',
+      events: ['*'],
+      filter: (oid: string) => `org_id=eq.${oid}`,
+      handlers: [
+        patchListCache((bid: string) => queryKeys.shifts.all(bid), branchId),
+        patchDetailCache((id: string) => queryKeys.shifts.detail(id)),
+      ],
+    },
+
+    // ── Cash Transactions ───────────────────────────────────────────
+    {
+      table: 'cash_transactions',
+      events: ['*'],
+      filter: (oid: string) => `org_id=eq.${oid}`,
+      handlers: [
+        // Invalidate all cash-transaction queries for the current branch.
+        // The query key includes branchId so invalidateBranchScope works.
+        invalidateBranchScope('cashTransactions', branchId),
+        // Also invalidate the parent shifts list so the open shift's
+        // embedded transactions reflect the change.
+        (payload, currentBranchId) => {
+          const recordBranchId = payload.new?.branch_id || payload.old?.branch_id;
+          if (recordBranchId !== currentBranchId) return;
+          queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(currentBranchId) });
+        },
       ],
     },
   ];

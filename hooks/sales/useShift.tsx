@@ -4,21 +4,21 @@ import {
   type ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { cashService } from '../../services/cash/cashService';
 import { useAuthStore } from '../../stores/authStore';
 import type { CashTransaction, Shift } from '../../types';
+import { useShifts, useShiftTransactions } from '../queries/useShiftsQuery';
 
 /**
  * ShiftContext
  *
  * Provides global shift state management across the app.
  * All components consuming this context will see the same state and updates in real-time.
- * Synchronized with Supabase via cashService.
+ * Backed by React Query + central realtime dispatcher.
  */
 
 interface ShiftContextType {
@@ -38,134 +38,41 @@ interface ShiftContextType {
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
 
 export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
 
-  // --- Derived: Current Open Shift ---
+  // --- React Query backed data ---
+  const { data: allShifts = [], isLoading } = useShifts(activeBranchId || '');
+
+  // Open shift for this branch
+  const openShift = useMemo(() => {
+    if (!activeBranchId) return null;
+    return allShifts.find((s) => s.status === 'open' && s.branchId === activeBranchId) || null;
+  }, [allShifts, activeBranchId]);
+
+  // Transactions for the open shift
+  const { data: openShiftTransactions = [] } = useShiftTransactions(
+    openShift?.id,
+    activeBranchId || ''
+  );
+
+  // Merge transactions into open shift for currentShift
   const currentShift = useMemo(() => {
-    return shifts.find((s) => s.status === 'open' && s.branchId === activeBranchId) || null;
-  }, [shifts, activeBranchId]);
+    if (!openShift) return null;
+    return { ...openShift, transactions: openShiftTransactions };
+  }, [openShift, openShiftTransactions]);
 
-  // --- Load from database on mount ---
+  // --- Branch-scoped shifts ---
+  const branchShifts = useMemo(() => {
+    if (!activeBranchId) return [];
+    return allShifts.filter((s) => s.branchId === activeBranchId);
+  }, [allShifts, activeBranchId]);
+
+  // --- Load from database (backward-compatible) ---
   const refreshShifts = useCallback(async () => {
-    if (!activeBranchId) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const loadedShifts = await cashService.getAllShifts(activeBranchId);
-
-      // Sort by openTime descending
-      loadedShifts.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
-
-      // Fetch transactions for the open shift if it exists
-      const openShift = loadedShifts.find((s) => s.status === 'open');
-      if (openShift) {
-        const txs = await cashService.getTransactions(openShift.id);
-        openShift.transactions = txs;
-      }
-
-      setShifts(loadedShifts);
-    } catch (err) {
-      console.error('[ShiftProvider] Failed to load shifts:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeBranchId]);
-
-  useEffect(() => {
     if (!activeBranchId) return;
-
-    refreshShifts();
-
-    // Listen for realtime updates from Supabase
-    const channel = supabase
-      .channel(`shifts-realtime-${activeBranchId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'shifts',
-          filter: `branch_id=eq.${activeBranchId}`,
-        },
-        (payload: any) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const newShift = cashService.mapFromDb(payload.new);
-            setShifts((prev) => {
-              const existing = prev.find((s) => s.id === newShift.id);
-              // Preserve transactions if they exist in the current state
-              // Critical fix: ensure we don't overwrite if existing has transactions and new one doesn't
-              newShift.transactions = existing?.transactions?.length
-                ? existing.transactions
-                : newShift.transactions || [];
-
-              const filtered = prev.filter((s) => s.id !== newShift.id);
-              const updated = [newShift, ...filtered];
-              // Keep sorted
-              return updated.sort(
-                (a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime()
-              );
-            });
-          } else if (payload.eventType === 'DELETE') {
-            setShifts((prev) => prev.filter((s) => s.id !== payload.old.id));
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'cash_transactions',
-          filter: `branch_id=eq.${activeBranchId}`,
-        },
-        (payload: any) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const newTx = cashService.mapFromDbTransaction(payload.new);
-
-            // Update the shifts list to include this transaction
-            setShifts((prev) =>
-              prev.map((s) => {
-                if (s.id === newTx.shiftId) {
-                  const existingTxs = s.transactions || [];
-                  // Replace or add the transaction
-                  const filtered = existingTxs.filter((t) => t.id !== newTx.id);
-                  const updatedTxs = [newTx, ...filtered];
-                  // Sort transactions by time descending
-                  updatedTxs.sort(
-                    (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
-                  );
-                  return { ...s, transactions: updatedTxs };
-                }
-                return s;
-              })
-            );
-          } else if (payload.eventType === 'DELETE') {
-            const deletedId = payload.old.id;
-            setShifts((prev) =>
-              prev.map((s) => ({
-                ...s,
-                transactions: (s.transactions || []).filter((t) => t.id !== deletedId),
-              }))
-            );
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          // Optionally refresh again on successful subscription to avoid misses
-          refreshShifts();
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeBranchId, refreshShifts]);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
+  }, [activeBranchId, queryClient]);
 
   // --- Actions ---
 
@@ -229,10 +136,6 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     },
     [activeBranchId, refreshShifts]
   );
-
-  const branchShifts = useMemo(() => {
-    return shifts.filter((s) => s.branchId === activeBranchId);
-  }, [shifts, activeBranchId]);
 
   // Memoize context value to prevent unnecessary consumer re-renders (memory-leak-audit #7)
   const value = useMemo<ShiftContextType>(
