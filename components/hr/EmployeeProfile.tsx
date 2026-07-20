@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useEmployeeSales, useTodaySales } from '../../hooks/queries/useSalesQuery';
 import { useShift } from '../../hooks/sales/useShift';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
@@ -354,10 +354,10 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   const currentEmployee = useAuthStore((s) => s.currentEmployee);
   const branchId = useAuthStore((s) => s.activeBranchId);
   const { data: employees = [] } = useEmployees(branchId);
-  const { data: sales = [] } = useRecentSales(branchId);
   const currentEmployeeId = initialEmployeeId || currentEmployee?.id || null;
-
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(currentEmployeeId || '');
+  const { data: todaysBranchSales = [] } = useTodaySales(branchId);
+  const { data: sales = [] } = useEmployeeSales(selectedEmployeeId, branchId);
   const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
   const [dateFilterMode, setDateFilterMode] = useState<FilterMode>('month');
   const [isExpandedChartOpen, setIsExpandedChartOpen] = useState(false);
@@ -541,7 +541,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
           // Get all employees who made sales in this shift
           const employeeSalesMap = new Map<string, number>();
 
-          sales.forEach((sale) => {
+          todaysBranchSales.forEach((sale) => {
             const saleTime = new Date(sale.date).getTime();
             if (saleTime >= startTime.getTime() && saleTime <= effectiveEndTime.getTime()) {
               const empId = sale.soldByEmployeeId || 'unknown';

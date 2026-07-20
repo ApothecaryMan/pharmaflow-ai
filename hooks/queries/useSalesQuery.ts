@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '../../lib/queryClient';
 import { queryKeys } from '../../lib/queryKeys';
 import { salesService } from '../../services/sales';
-import type { Sale } from '../../types';
+import type { DateRange, Sale } from '../../types';
 
 export function useRecentSales(branchId: string, limit = 100, options?: { enabled?: boolean }) {
   return useQuery({
@@ -49,5 +49,35 @@ export function useSalesPage(
       }),
     enabled: !!branchId && (options?.enabled ?? true),
     staleTime: 60 * 1000, // 1 minute
+  });
+}
+
+export function useEmployeeSales(
+  employeeId: string | undefined,
+  branchId: string | undefined,
+  dateRange?: DateRange
+) {
+  return useQuery({
+    queryKey: ['sales', 'employee', employeeId, branchId, dateRange] as const,
+    queryFn: () =>
+      salesService.filter(
+        {
+          soldByEmployeeId: employeeId,
+          dateFrom: dateRange?.start,
+          dateTo: dateRange?.end,
+        },
+        branchId
+      ) as Promise<Sale[]>,
+    enabled: !!employeeId && !!branchId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useCustomerSales(customerId: string | undefined, branchId: string | undefined) {
+  return useQuery({
+    queryKey: ['sales', 'customer', customerId, branchId] as const,
+    queryFn: () => salesService.getByCustomer(customerId!, branchId) as Promise<Sale[]>,
+    enabled: !!customerId && !!branchId,
+    staleTime: 2 * 60 * 1000,
   });
 }

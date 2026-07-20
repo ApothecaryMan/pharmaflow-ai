@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { getLocationName } from '../../data/locations';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useSalesPage } from '../../hooks/queries/useSalesQuery';
 import { useAuthStore } from '../../stores/authStore';
 import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -55,7 +55,8 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: salesPage } = useSalesPage(activeBranchId, 1, 500, {});
+  const sales = salesPage?.rows ?? [];
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
 
   // --- STATS CALCULATIONS ---

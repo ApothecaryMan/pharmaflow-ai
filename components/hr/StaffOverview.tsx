@@ -2,7 +2,7 @@ import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useTodaySales } from '../../hooks/queries/useSalesQuery';
 import { useAuthStore } from '../../stores/authStore';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { PageHeader } from '../common/PageHeader';
@@ -26,7 +26,7 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: todaysSales = [] } = useTodaySales(activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
   const isRTL = language === 'AR';
@@ -42,17 +42,6 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
     }
     return name.slice(0, 2).toUpperCase();
   }, []);
-
-  // Filter to today's sales
-  const todaysSales = useMemo(() => {
-    const today = getVerifiedDate();
-    today.setHours(0, 0, 0, 0);
-
-    return sales.filter((s) => {
-      const d = new Date(s.date);
-      return d >= today && d < new Date(today.getTime() + 86400000);
-    });
-  }, [sales, getVerifiedDate]);
 
   // Staff Performance Analysis (extracted to hook)
   const staffAnalysis = useStaffAnalytics({

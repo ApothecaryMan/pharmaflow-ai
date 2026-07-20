@@ -4,7 +4,7 @@ import { useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
 import { usePurchaseHandlers } from '../../hooks/purchases/usePurchaseHandlers';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { usePurchases, usePurchasesPage } from '../../hooks/queries/usePurchasesQuery';
 import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -53,6 +53,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: purchases = [] } = usePurchases(activeBranchId);
+  const { data: pendingPage } = usePurchasesPage(activeBranchId, 1, 100, { status: 'pending' });
+  const pendingPurchases = pendingPage?.rows ?? [];
   const { data: employees = [] } = useEmployees(activeBranchId);
   const currentEmployeeId = useAuthStore((s) => s.currentEmployee?.id ?? null);
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
@@ -104,8 +106,6 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
   const helpContent = PENDING_APPROVAL_HELP[language as 'EN' | 'AR'] || PENDING_APPROVAL_HELP.EN;
   usePageHelp(helpContent);
-
-  const pendingPurchases = purchases.filter((p) => p.status === 'pending');
 
   const filteredPendingPurchases = pendingPurchases.filter((p) => {
     const searchVal = externalSearch || search;

@@ -19,3 +19,24 @@ export function usePurchase(purchaseId: string, options?: { enabled?: boolean })
     enabled: !!purchaseId && (options?.enabled ?? true),
   });
 }
+
+export function usePurchasesPage(
+  branchId: string,
+  page: number,
+  pageSize: number,
+  filters: Record<string, any>
+) {
+  return useQuery({
+    queryKey: ['purchases', 'page', branchId, page, pageSize, filters] as const,
+    queryFn: () =>
+      purchaseService.listPage({
+        branchId,
+        page,
+        pageSize,
+        filters,
+        sort: { column: 'date', ascending: false },
+      }),
+    enabled: !!branchId,
+    staleTime: 60 * 1000,
+  });
+}

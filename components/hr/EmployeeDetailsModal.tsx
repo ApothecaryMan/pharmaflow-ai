@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { getRoleLabel } from '../../config/employeeRoles';
 import { useEmployeeAllTimeAttendance } from '../../hooks/hr/useEmployeeAllTimeAttendance';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useEmployeeSales } from '../../hooks/queries/useSalesQuery';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
@@ -45,7 +45,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   const branchId = useAuthStore((s) => s.activeBranchId);
   const { data: employeesData } = useEmployees(branchId);
   const employees = employeesData ?? [];
-  const { data: sales } = useRecentSales(branchId);
+  const { data: sales } = useEmployeeSales(employee?.id, branchId);
 
   const relatedEmployees = React.useMemo(() => {
     if (!employee || !employees) return employee ? [employee] : [];

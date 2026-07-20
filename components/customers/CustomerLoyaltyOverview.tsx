@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useSalesPage } from '../../hooks/queries/useSalesQuery';
 import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { formatCurrency } from '../../utils/currency';
@@ -36,7 +36,8 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: salesPage } = useSalesPage(activeBranchId, 1, 90, {});
+  const sales = salesPage?.rows ?? [];
   const [timeRange, setTimeRange] = useState('30');
   const isRTL = language === 'AR';
 

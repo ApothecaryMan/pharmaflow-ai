@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useSalesReturns } from '../../hooks/queries/useReturnsQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useSalesPage } from '../../hooks/queries/useSalesQuery';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import { useAuthStore } from '../../stores/authStore';
 import type { Return, Sale } from '../../types';
@@ -33,7 +33,8 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: salesPage } = useSalesPage(activeBranchId, 1, 2000, {});
+  const sales = salesPage?.rows ?? [];
   const { data: returns = [] } = useSalesReturns(activeBranchId);
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
