@@ -224,6 +224,13 @@ export function useSalesHandlers({
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
+        // Cancellation RPC inserts a cash_transaction row — refresh shift
+        queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
+        if (currentShift?.id) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
+          });
+        }
 
         success(`Order #${sale.serialId || sale.id} cancelled and stock returned.`);
         return;
@@ -281,6 +288,13 @@ export function useSalesHandlers({
           queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(activeBranchId) });
           queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(activeBranchId) });
           queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
+          // Delivery finalization inserts a cash_transaction row — refresh shift
+          queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
+          if (currentShift?.id) {
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.cashTransactions.byShift(currentShift.id, activeBranchId),
+            });
+          }
           queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
           success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);

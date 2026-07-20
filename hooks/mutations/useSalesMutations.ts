@@ -26,10 +26,18 @@ export function useCompleteSale() {
       };
       context: ActionContext;
     }) => transactionService.processCheckout(saleData, [], context),
-    onSuccess: (data) => {
+    onSuccess: (data, vars) => {
       const saleId = data.sale?.id;
       if (saleId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.sales.detail(saleId) });
+      }
+      // Checkout RPC updates shifts (cashSales/cardSales) and inserts a
+      // cash_transactions row — invalidate both so the cash register is fresh.
+      queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(branchId) });
+      if (vars.context.shiftId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.cashTransactions.byShift(vars.context.shiftId, branchId),
+        });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
