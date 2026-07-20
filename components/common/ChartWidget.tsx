@@ -4,8 +4,10 @@ import {
   Area,
   Bar,
   CartesianGrid,
+  Cell,
   ComposedChart,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -118,27 +120,49 @@ CustomTooltipContent.displayName = 'CustomTooltipContent';
 
 // --- Custom XAxis Tick Component ---
 const MultiLineTick = (props: any) => {
-  const { x, y, payload, tickFormatter, fill, fontSize, dy = 10 } = props;
-  const formattedValue = tickFormatter ? tickFormatter(payload.value) : payload.value;
+  const { x, y, payload, tickFormatter, fill, fontSize, index, dataLength, xAxisInterval } = props;
 
-  if (typeof formattedValue === 'string' && formattedValue.includes('\n')) {
-    const lines = formattedValue.split('\n');
+  // Custom Tick Mark (Dash)
+  const tickMark = <line x1={0} y1={0} x2={0} y2={4} stroke='var(--text-tertiary)' strokeWidth={1} />;
+
+  // Conditionally hide the text to prevent overlap, but ALWAYS draw the tick mark
+  const isSkipped = xAxisInterval === undefined && dataLength > 20 && index % 2 !== 0;
+
+  if (isSkipped) {
     return (
-      <text x={x} y={y} dy={dy} textAnchor='middle' fill={fill} fontSize={fontSize}>
-        {lines.map((line: string, i: number) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: split lines have no stable id
-          <tspan x={x} dy={i === 0 ? 0 : 14} key={`tick-line-${i}`}>
-            {line}
-          </tspan>
-        ))}
-      </text>
+      <g transform={`translate(${x},${y})`}>
+        {tickMark}
+      </g>
     );
   }
 
+  const formattedValue = tickFormatter ? tickFormatter(payload.value) : payload.value;
+  const lines = typeof formattedValue === 'string' && formattedValue.includes('\n')
+    ? formattedValue.split('\n')
+    : [String(formattedValue)];
+
   return (
-    <text x={x} y={y} dy={dy} textAnchor='middle' fill={fill} fontSize={fontSize}>
-      {formattedValue}
-    </text>
+    <g transform={`translate(${x},${y})`}>
+      {lines.map((line: string, i: number) => {
+        // If 2 lines: start slightly higher (12) and use tighter line-height (12)
+        // If 1 line: normal start (14)
+        const startY = lines.length > 1 ? 12 : 14;
+        const lineHeight = 12;
+        return (
+          <text
+            key={`tick-line-${i}`}
+            x={0}
+            y={startY + i * lineHeight}
+            textAnchor='middle'
+            fill={fill}
+            fontSize={fontSize}
+            fontWeight={500}
+          >
+            {line}
+          </text>
+        );
+      })}
+    </g>
   );
 };
 
@@ -248,6 +272,17 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
     else setInternalChartType(val);
   };
 
+  // Calculate split offset for negative values in Area chart
+  const dataMax = Math.max(...(data || []).map((i: any) => i[dataKeys.primary] || 0));
+  const dataMin = Math.min(...(data || []).map((i: any) => i[dataKeys.primary] || 0));
+  
+  let gradientOffset = 1; // Default: all positive (color)
+  if (dataMax <= 0) {
+    gradientOffset = 0; // All negative (red)
+  } else if (dataMin < 0) {
+    gradientOffset = dataMax / (dataMax - dataMin); // Split proportion
+  }
+
   return (
     <div className={`lg:col-span-2 ${CARD_BASE} p-5 rounded-3xl group ${className || ''}`}>
       {/* Header */}
@@ -340,7 +375,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
           <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0} debounce={50}>
             <ComposedChart
               data={data}
-              margin={chartMargin || { top: 15, right: 0, left: 0, bottom: 20 }}
+              margin={chartMargin || { top: 15, right: 25, left: 0, bottom: 5 }}
             >
               <defs>
                 <linearGradient
@@ -350,32 +385,48 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   x2='0'
                   y2='1'
                 >
-                  <stop offset='5%' stopColor={color} stopOpacity={0.3} />
-                  <stop offset='95%' stopColor={color} stopOpacity={0} />
+                  <stop offset='0%' stopColor={color} stopOpacity={0.4} />
+                  <stop offset={gradientOffset} stopColor={color} stopOpacity={0} />
+                  <stop offset={gradientOffset} stopColor='var(--color-error)' stopOpacity={0} />
+                  <stop offset='100%' stopColor='var(--color-error)' stopOpacity={0.4} />
+                </linearGradient>
+                <linearGradient
+                  id={`stroke-${title.replace(/[^a-zA-Z0-9]/g, '-')}`}
+                  x1='0'
+                  y1='0'
+                  x2='0'
+                  y2='1'
+                >
+                  <stop offset={gradientOffset} stopColor={color} stopOpacity={1} />
+                  <stop offset={gradientOffset} stopColor='var(--color-error)' stopOpacity={1} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-color)' />
+              <ReferenceLine y={0} stroke='var(--border-primary)' strokeOpacity={0.8} strokeWidth={2} />
               <XAxis
                 dataKey={xAxisKey}
-                axisLine={false}
+                axisLine={{ stroke: 'var(--text-tertiary)', strokeWidth: 1 }}
                 tickLine={false}
+                tickMargin={0}
                 tickFormatter={xAxisFormatter}
                 tick={(props: any) => (
                   <MultiLineTick
                     {...props}
                     tickFormatter={xAxisFormatter}
-                    fill='var(--text-secondary)'
-                    fontSize={10}
+                    fill='var(--text-tertiary)'
+                    fontSize={11}
+                    dataLength={data?.length}
+                    xAxisInterval={xAxisInterval}
                   />
                 )}
-                interval={xAxisInterval ?? 0}
-                padding={{ left: 20, right: 20 }}
-                dy={10}
+                interval={xAxisInterval !== undefined ? xAxisInterval : 0}
+                height={40}
               />
               <YAxis
                 width={45}
                 axisLine={false}
                 tickLine={false}
+                allowDecimals={false}
                 tickFormatter={(value) =>
                   value === 0 ? '' : value.toLocaleString('en-US', { notation: 'compact' })
                 }
@@ -468,7 +519,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                 <Area
                   type='monotone'
                   dataKey={dataKeys.primary}
-                  stroke={color}
+                  stroke={`url(#stroke-${title.replace(/[^a-zA-Z0-9]/g, '-')})`}
                   strokeWidth={2}
                   fillOpacity={1}
                   fill={`url(#gradient-${title.replace(/[^a-zA-Z0-9]/g, '-')})`}
@@ -483,7 +534,14 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   radius={[20, 20, 20, 20]}
                   animationDuration={1000}
                   animationEasing='ease-out'
-                />
+                >
+                  {(data || []).map((entry: any, index: number) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry[dataKeys.primary] < 0 ? 'var(--color-error)' : color}
+                    />
+                  ))}
+                </Bar>
               )}
             </ComposedChart>
           </ResponsiveContainer>

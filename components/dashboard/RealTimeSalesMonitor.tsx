@@ -23,10 +23,11 @@ import { useShift } from '../../hooks/sales/useShift';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
 import { useAuthStore } from '../../stores/authStore';
 import type { Sale, ThemeColor } from '../../types';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { money } from '../../utils/money';
 import { isTauri } from '../../utils/platform';
+import { pricingService } from '../../services/sales/pricingService';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { ChartWidget } from '../common/ChartWidget';
@@ -553,7 +554,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const paymentPieData = useMemo(
     () => [
       { name: t.cash || 'Cash', value: paymentAnalysis.cashRevenue, color: '#10b981' },
-      { name: t.visa || 'Card', value: paymentAnalysis.cardRevenue, color: '#6366f1' },
+      { name: t.visa || 'Card', value: paymentAnalysis.cardRevenue, color: '#3b82f6' },
     ],
     [paymentAnalysis, t]
   );
@@ -564,7 +565,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       sale.items.forEach((item) => {
         const product = products.find((p) => p.id === item.id);
         const cat = (product?.category || item.category || 'General').toLowerCase();
-        const itemTotal = money.multiply(item.publicPrice || 0, item.quantity || 0, 0);
+        const itemTotal = pricingService.calculateItemGrossTotal(item);
 
         if (cat.match(/tablet|capsule|syrup|injection|medicine|drug/))
           groups.medicine = money.add(groups.medicine, itemTotal);
@@ -574,10 +575,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       });
     });
     return [
-      { name: t.realTimeSales?.medicine || 'Medicine', value: groups.medicine, color: '#3b82f6' },
-      { name: t.realTimeSales?.cosmetic || 'Cosmetic', value: groups.cosmetic, color: '#ec4899' },
-      { name: t.realTimeSales?.general || 'General', value: groups.general, color: '#94a3b8' },
-    ].filter((d) => d.value > 0);
+      { name: t.realTimeSales?.medicine || 'Medicine', value: groups.medicine, color: '#10b981' },
+      { name: t.realTimeSales?.cosmetic || 'Cosmetic', value: groups.cosmetic, color: '#f59e0b' },
+      { name: t.realTimeSales?.general || 'General', value: groups.general, color: '#ef4444' },
+    ];
   }, [todaysSales, products, t]);
 
   return (
@@ -967,9 +968,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             allowChartTypeSelection={false}
             className='card-shadow rounded-3xl! border-0 p-0!'
             headerClassName='px-6 pt-5'
-            chartClassName='h-[200px] w-full px-2'
+            chartClassName='h-[200px] min-h-[200px] w-full px-2'
             xAxisInterval={2}
-            chartMargin={{ top: 15, right: 10, left: -30, bottom: 20 }}
+            chartMargin={{ top: 15, right: 10, left: -10, bottom: 0 }}
             isLoading={isLoading}
           />
           <div className={`p-5 rounded-3xl ${CARD_BASE} flex-1 flex flex-col`}>
@@ -1025,94 +1026,126 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Payment Methods Chart */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col min-w-0`}>
           <h3 className='text-lg font-bold mb-4'>{t.realTimeSales?.paymentMethods}</h3>
-          <div className='flex-1 w-full min-w-0 relative h-[220px]'>
+          <div className='flex-1 flex items-center w-full min-w-0 relative h-[220px]'>
             {isLoading ? (
               <div className='absolute inset-0 flex items-center justify-center'>
                 <div className='w-40 h-40 rounded-full border-8 border-gray-100 dark:border-gray-800 border-t-primary-500 animate-spin opacity-20' />
-                <div className='absolute w-32 h-32 rounded-full bg-gray-50 dark:bg-gray-800/50 animate-pulse' />
               </div>
             ) : (
-              <ResponsiveContainer width='100%' height='100%' debounce={50}>
-                <PieChart>
-                  <Pie
-                    data={paymentPieData}
-                    cx='50%'
-                    cy='50%'
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey='value'
-                  >
-                    {paymentPieData.map((e, i) => (
-                      <Cell key={`${e.name}-${i}`} fill={e.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(val: number) => formatCurrency(val)} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className='flex-1 space-y-4 pe-2'>
+                  {paymentPieData.map((item) => {
+                    const totalPaymentRevenue = paymentPieData.reduce((acc, curr) => acc + curr.value, 0);
+                    const percentage = totalPaymentRevenue > 0 ? Math.round((item.value / totalPaymentRevenue) * 100) : 0;
+                    return (
+                      <div key={item.name} className='flex items-center justify-between gap-3 text-sm'>
+                        <span className='text-gray-700 dark:text-gray-300 font-medium truncate flex-1 text-start'>
+                          {item.name}
+                        </span>
+                        <div
+                          className='px-2 py-0.5 rounded-full shrink-0 text-xs font-bold min-w-[36px] text-center'
+                          style={{ 
+                            backgroundColor: `${item.color}25`,
+                            color: item.color 
+                          }}
+                        >
+                          {percentage}%
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className='flex items-center justify-between gap-3 text-sm pt-3 mt-3 border-t border-[var(--border-divider)]'>
+                    <span className='text-gray-900 dark:text-gray-100 font-bold truncate flex-1 text-start'>
+                      {t.realTimeSales?.total || t.total || 'Total'}
+                    </span>
+                    <span className='font-bold text-gray-900 dark:text-gray-100 shrink-0 flex items-baseline gap-1'>
+                      {(() => {
+                        const { amount, symbol } = formatCurrencyParts(revenue, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us');
+                        return (
+                          <>
+                            <span>{amount}</span>
+                            <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span>
+                          </>
+                        );
+                      })()}
+                    </span>
+                  </div>
+                </div>
+                <ResponsiveContainer width='55%' height='100%' debounce={50}>
+                  <PieChart>
+                    <Pie
+                      data={paymentPieData}
+                      cx='50%'
+                      cy='50%'
+                      innerRadius={60}
+                      outerRadius={80}
+                      strokeWidth={0}
+                      dataKey='value'
+                    >
+                      {paymentPieData.map((e, i) => (
+                        <Cell key={`${e.name}-${i}`} fill={e.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </>
             )}
-            <div className='absolute inset-0 flex flex-col items-center justify-center pointer-events-none'>
-              <p className='text-xs text-gray-400'>Total</p>
-              <div className='text-xl font-bold'>
-                {isLoading ? (
-                  <div className='h-6 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse' />
-                ) : (
-                  <AnimatedCounter value={revenue} />
-                )}
-              </div>
-            </div>
-          </div>
-          <div className='flex justify-center gap-6 mt-2'>
-            <div className='flex items-center gap-2'>
-              <span className='w-3 h-3 rounded-full bg-emerald-500' />
-              <span>Cash</span>
-            </div>
-            <div className='flex items-center gap-2'>
-              <span className='w-3 h-3 rounded-full bg-indigo-500' />
-              <span>Card</span>
-            </div>
           </div>
         </div>
 
         {/* Category Chart */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col min-w-0`}>
           <h3 className='text-lg font-bold mb-4'>{t.realTimeSales?.salesByCategory}</h3>
-          <div className='w-full h-[250px] min-w-0 relative'>
+          <div className='flex-1 flex items-center w-full min-w-0 relative h-[220px]'>
             {isLoading ? (
               <div className='absolute inset-0 flex items-center justify-center'>
                 <div className='w-40 h-40 rounded-full border-8 border-gray-100 dark:border-gray-800 border-t-primary-500 animate-spin opacity-20' />
-                <div className='absolute w-32 h-32 rounded-full bg-gray-50 dark:bg-gray-800/50 animate-pulse' />
               </div>
             ) : (
-              <ResponsiveContainer width='100%' height='100%' debounce={50}>
-                <PieChart>
-                  <Pie
-                    data={categoryPieData}
-                    cx='50%'
-                    cy='50%'
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey='value'
-                  >
-                    {categoryPieData.map((e, i) => (
-                      <Cell key={`${e.name}-${i}`} fill={e.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(val: number) => formatCurrency(val)} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className='flex-1 space-y-4 pe-2'>
+                  {categoryPieData.map((item) => {
+                    const totalRevenueCategory = categoryPieData.reduce((acc, curr) => acc + curr.value, 0);
+                    const percentage = totalRevenueCategory > 0 ? Math.round((item.value / totalRevenueCategory) * 100) : 0;
+                    return (
+                      <div key={item.name} className='flex items-center justify-between gap-3 text-sm'>
+                        <span className='text-gray-700 dark:text-gray-300 font-medium truncate flex-1 text-start'>
+                          {item.name}
+                        </span>
+                        <div
+                          className='px-2 py-0.5 rounded-full shrink-0 text-xs font-bold min-w-[36px] text-center'
+                          style={{ 
+                            backgroundColor: `${item.color}25`,
+                            color: item.color 
+                          }}
+                        >
+                          {percentage}%
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <ResponsiveContainer width='55%' height='100%' debounce={50}>
+                  <PieChart>
+                    <Pie
+                      data={categoryPieData}
+                      cx='50%'
+                      cy='50%'
+                      innerRadius={60}
+                      outerRadius={80}
+                      strokeWidth={0}
+                      dataKey='value'
+                    >
+                      {categoryPieData.map((e, i) => (
+                        <Cell key={`${e.name}-${i}`} fill={e.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </>
             )}
-            <div className='absolute inset-0 flex flex-col items-center justify-center pointer-events-none'>
-              <span className='text-xs text-gray-400'>Items</span>
-              <div className='text-xl font-bold'>
-                {isLoading ? (
-                  <div className='h-6 w-12 bg-gray-100 dark:bg-gray-800 rounded animate-pulse' />
-                ) : (
-                  <AnimatedCounter value={itemsSold} />
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
