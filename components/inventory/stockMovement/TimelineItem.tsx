@@ -210,7 +210,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                   >
                     tag
                   </span>
-                  <span>{batchId}</span>
+                  <span className='font-mono font-bold text-xs'>{batchId?.substring(0, 8)}</span>
                 </div>
               )}
 

@@ -643,7 +643,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
               <div className='font-bold text-sm text-gray-900 dark:text-gray-100'>
                 {displayName}
               </div>
-              <div className='text-sm text-gray-500'>{item.drugId}</div>
+              <div className='font-mono font-bold text-xs text-gray-400'>{item.drugId?.substring(0, 8)}</div>
             </div>
           );
         },
@@ -667,7 +667,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                   className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase'
                   dir='ltr'
                 >
-                  {item.batchId}
+                  <span className='font-mono font-bold'>{item.batchId?.substring(0, 8)}</span>
                 </div>
               )}
             </div>
@@ -806,17 +806,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
   const historyColumns = useMemo<ColumnDef<StockMovement>[]>(
     () => [
       {
-        accessorKey: 'transactionId',
-        header: t.common?.id || 'ID',
-        cell: (info) => {
-          const val = info.getValue() as string;
-          return val ? (
-            <span className='text-sm text-gray-500 dark:text-gray-400'>{val}</span>
-          ) : (
-            <span className='text-gray-400 text-xs italic'>-</span>
-          );
-        },
-        meta: { width: 140 },
+        id: 'serial',
+        header: 'ID',
+        cell: (info) => (
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            #{info.row.index + 1}
+          </span>
+        ),
+        meta: { width: 80 },
       },
       {
         accessorKey: 'timestamp',
@@ -835,7 +832,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
             <div>
               <div className='font-bold text-sm text-(--text-primary)'>{displayName}</div>
               <div className='text-sm text-gray-400 mt-0.5 uppercase tracking-tight'>
-                {drug?.barcode || item.drugId}
+                {drug?.barcode || item.drugId?.substring(0, 8)}
               </div>
             </div>
           );
@@ -866,7 +863,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
                   className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase'
                   dir='ltr'
                 >
-                  {item.batchId}
+                  <span className='font-mono font-bold'>{item.batchId?.substring(0, 8)}</span>
                 </div>
               )}
             </div>

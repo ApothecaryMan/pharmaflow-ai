@@ -1,6 +1,7 @@
 /**
  * Types for Stock Movement Service
  */
+import type { Drug } from '../../../types';
 
 export type StockMovementType =
   | 'initial' // Initial stock entry
@@ -31,6 +32,7 @@ export interface StockMovement {
   notes?: string;
 
   referenceId?: string; // ID of Sale, Purchase, Return, etc.
+  referenceSerialId?: string; // Human-readable serial ID of referenced entity
   transactionId?: string; // Grouping ID for bulk adjustments
   batchId?: string; // If using batch tracking
 
@@ -107,7 +109,7 @@ export interface StockMovementService {
   getKPISummary: (filters: StockMovementFilters) => Promise<StockMovementKPISummary>;
   approveMovement: (id: string, userId: string) => Promise<void>;
   rejectMovement: (id: string, userId: string) => Promise<void>;
-  calculateMovementValue: (movement: StockMovement, drug: any) => number;
+  calculateMovementValue: (movement: StockMovement, drug: Drug) => number;
   setContext: (
     type: string,
     refId?: string,

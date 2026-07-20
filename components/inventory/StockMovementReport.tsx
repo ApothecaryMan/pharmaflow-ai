@@ -50,6 +50,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     t,
     themeColor,
     textTransform,
+    inventoryMap,
 
     // Handlers
     setShowSearch,
@@ -557,7 +558,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                   </div>
                 ) : viewType === 'timeline' ? (
                   <div className='max-w-3xl mx-auto py-4'>
-                    {filteredHistory.map((m, _idx) => (
+                    {filteredHistory.map((m, _idx) => {
+                      const movementDrug = selectedDrug || inventoryMap.get(m.drugId);
+                      return (
                       <TimelineItem
                         key={m.id}
                         type={m.type}
@@ -573,27 +576,38 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         status={m.status}
                         batchId={m.batchId}
                         expiryDate={m.expiryDate}
-                        value={stockMovementService.calculateMovementValue(m, selectedDrug)}
-                        unitsPerPack={selectedDrug?.unitsPerPack}
+                        value={stockMovementService.calculateMovementValue(m, movementDrug as Drug)}
+                        unitsPerPack={movementDrug?.unitsPerPack}
                         drugName={
                           showAll ? getDisplayName({ name: m.drugName }, textTransform) : undefined
                         }
                       />
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   <div className='overflow-x-auto h-full'>
-                    <table className='w-full text-left rtl:text-right border-separate border-spacing-y-2 table-fixed'>
+                    <table className='w-full text-left rtl:text-right border-separate border-spacing-0 table-fixed'>
                       <tbody className='align-top'>
-                        {filteredHistory.map((m) => (
+                        {filteredHistory.map((m) => {
+                          const movementDrug = selectedDrug || inventoryMap.get(m.drugId);
+                          const isExpanded = expandedRows.has(m.id);
+                          return (
                           <React.Fragment key={m.id}>
                             <tr
-                              className='bg-gray-50/50 dark:bg-(--bg-surface-neutral) hover:bg-gray-50 dark:hover:bg-(--bg-input) transition-colors group cursor-pointer'
+                              className={`transition-colors group cursor-pointer ${
+                                isExpanded
+                                  ? '[&>td]:bg-gray-50 dark:[&>td]:bg-(--bg-input)'
+                                  : '[&>td]:bg-gray-50/50 dark:[&>td]:bg-(--bg-surface-neutral) hover:[&>td]:bg-gray-50 dark:hover:[&>td]:bg-(--bg-input)'
+                              }`}
                               onClick={() => toggleRow(m.id)}
                             >
                               <td
                                 style={{ width: columns[0].width }}
-                                className='py-2 pl-4 rtl:pl-0 rtl:pr-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl'
+                                className={`py-2 pl-4 rtl:pl-0 rtl:pr-4 ${
+                                  isExpanded
+                                    ? 'rounded-tl-2xl rtl:rounded-tl-none rtl:rounded-tr-2xl'
+                                    : 'rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl'
+                                }`}
                               >
                                 <span className='text-sm font-normal text-gray-900 dark:text-gray-100'>
                                   {new Date(m.timestamp).toLocaleDateString(
@@ -691,7 +705,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   {m.quantity > 0 ? '+' : m.quantity < 0 ? '-' : ''}
                                   {formatStockAmount(
                                     Math.abs(m.quantity),
-                                    selectedDrug?.unitsPerPack,
+                                    movementDrug?.unitsPerPack,
                                     isRTL ? 'علبة' : 'Packs'
                                   )}
                                 </span>
@@ -743,7 +757,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                 >
                                   {formatCurrency(
                                     Math.abs(
-                                      stockMovementService.calculateMovementValue(m, selectedDrug)
+                                      stockMovementService.calculateMovementValue(m, movementDrug as Drug)
                                     )
                                   )}
                                 </span>
@@ -756,7 +770,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   <span className='font-normal text-gray-400'>
                                     {formatStockAmount(
                                       m.previousStock,
-                                      selectedDrug?.unitsPerPack,
+                                      movementDrug?.unitsPerPack,
                                       ''
                                     )}
                                   </span>
@@ -767,7 +781,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                     {isRTL ? 'arrow_back' : 'arrow_forward'}
                                   </span>
                                   <span className='font-medium text-gray-900 dark:text-gray-100'>
-                                    {formatStockAmount(m.newStock, selectedDrug?.unitsPerPack, '')}
+                                    {formatStockAmount(m.newStock, movementDrug?.unitsPerPack, '')}
                                   </span>
                                 </div>
                               </td>
@@ -791,22 +805,26 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                               </td>
                               <td
                                 style={{ width: columns[showAll ? 8 : 7].width }}
-                                className='py-2 pr-4 rtl:pr-0 rtl:pl-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl text-right rtl:text-left'
+                                className={`py-2 pr-4 rtl:pr-0 rtl:pl-4 text-right rtl:text-left ${
+                                  isExpanded
+                                    ? 'rounded-tr-2xl rtl:rounded-tr-none rtl:rounded-tl-2xl'
+                                    : 'rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl'
+                                }`}
                               >
                                 <span
                                   className='material-symbols-rounded transition-transform duration-200 text-gray-400'
                                   style={{
                                     fontSize: 'var(--icon-md)',
-                                    transform: expandedRows.has(m.id) ? 'rotate(180deg)' : 'none',
+                                    transform: isExpanded ? 'rotate(180deg)' : 'none',
                                   }}
                                 >
                                   expand_more
                                 </span>
                               </td>
                             </tr>
-                            {expandedRows.has(m.id) && (
-                              <tr className='bg-gray-50/20 dark:bg-(--bg-input)'>
-                                <td colSpan={8} className='px-6 py-4 rounded-2xl'>
+                            {isExpanded && (
+                              <tr className='[&>td]:bg-gray-50 dark:[&>td]:bg-(--bg-input)'>
+                                <td colSpan={columns.length} className='px-6 py-4 rounded-b-2xl'>
                                   <div className='flex flex-wrap gap-x-8 gap-y-2 text-xs'>
                                     <div>
                                       <span className='text-gray-400 block mb-1 uppercase tracking-widest text-[9px] font-bold'>
@@ -875,8 +893,12 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                 </td>
                               </tr>
                             )}
+                            {/* Spacer */}
+                            <tr>
+                              <td colSpan={columns.length} className='p-1'></td>
+                            </tr>
                           </React.Fragment>
-                        ))}
+                        )})}
                       </tbody>
                     </table>
                   </div>

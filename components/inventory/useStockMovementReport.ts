@@ -214,29 +214,34 @@ export const useStockMovementReport = ({
     []
   );
 
-  return {
-    // State
-    selectedDrug,
-    searchQuery,
-    showSearch,
-    showAll,
-    dateRange,
-    history,
-    summary,
-    isLoading,
-    isDataLoading,
-    viewType,
-    expandedRows,
-    activeFilters,
-    filteredHistory,
-    searchResults,
-    suggestions,
-    highlightedIndex,
-    columns,
-    isRTL,
-    t,
-    themeColor,
-    textTransform,
+    const inventoryMap = useMemo(() => {
+      return new Map(inventory.map((d) => [d.id, d]));
+    }, [inventory]);
+
+    return {
+      // State
+      selectedDrug,
+      searchQuery,
+      showSearch,
+      showAll,
+      dateRange,
+      history,
+      summary,
+      isLoading,
+      isDataLoading,
+      viewType,
+      expandedRows,
+      activeFilters,
+      filteredHistory,
+      searchResults,
+      suggestions,
+      highlightedIndex,
+      columns,
+      isRTL,
+      t,
+      themeColor,
+      textTransform,
+      inventoryMap,
 
     // Handlers
     setSelectedDrug,

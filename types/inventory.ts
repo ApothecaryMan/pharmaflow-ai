@@ -198,6 +198,7 @@ export interface StockMovement {
   notes?: string;
 
   referenceId?: string; // ID of Sale, Purchase, Return, etc.
+  referenceSerialId?: string; // Human-readable serial ID of referenced entity
   transactionId?: string; // Grouping ID for bulk adjustments
   batchId?: string; // If using batch tracking
 
