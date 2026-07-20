@@ -9,9 +9,25 @@ export function useAddProduct() {
 
   return useMutation({
     mutationFn: (product: any) => inventoryService.create(product, branchId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
+    onSuccess: (data) => {
+      queryClient.setQueryData<any[]>(queryKeys.inventory.all(branchId), (old) => {
+        if (!old) return old;
+        return [...old, data];
+      });
+      queryClient.setQueryData<any[]>(queryKeys.batches.all(branchId), (old) => {
+        if (!old) return old;
+        return [...old, {
+          drugId: data.id,
+          quantity: data.stock,
+          expiryDate: data.expiryDate,
+          costPrice: data.costPrice,
+          batchNumber: 'INITIAL',
+          dateReceived: new Date().toISOString(),
+          branchId,
+          orgId: data.orgId,
+          version: 1,
+        }];
+      });
     },
   });
 }
@@ -23,9 +39,19 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       inventoryService.update(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
+    onSuccess: (data) => {
+      queryClient.setQueryData<any[]>(queryKeys.inventory.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map((d) => (d.id === data.id ? data : d));
+      });
+      queryClient.setQueryData<any[]>(queryKeys.batches.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map((b) =>
+          b.drugId === data.id
+            ? { ...b, quantity: data.stock, expiryDate: data.expiryDate, costPrice: data.costPrice }
+            : b
+        );
+      });
     },
   });
 }
@@ -36,8 +62,16 @@ export function useDeleteProduct() {
 
   return useMutation({
     mutationFn: (id: string) => inventoryService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData<any[]>(queryKeys.inventory.all(branchId), (old) => {
+        if (!old) return old;
+        return old.filter((d) => d.id !== id);
+      });
+      queryClient.setQueryData<any[]>(queryKeys.batches.all(branchId), (old) => {
+        if (!old) return old;
+        return old.filter((b) => b.drugId !== id);
+      });
+      queryClient.removeQueries({ queryKey: queryKeys.inventory.detail(id), exact: true });
     },
     onError: (err) => {
       console.error('Failed to delete product:', err);

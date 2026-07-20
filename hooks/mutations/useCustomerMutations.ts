@@ -9,8 +9,11 @@ export function useAddCustomer() {
 
   return useMutation({
     mutationFn: (customer: any) => customerService.create(customer, branchId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all(branchId) });
+    onSuccess: (data) => {
+      queryClient.setQueryData<any[]>(queryKeys.customers.all(branchId), (old) => {
+        if (!old) return old;
+        return [data, ...old];
+      });
     },
   });
 }
@@ -22,8 +25,11 @@ export function useUpdateCustomer() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       customerService.update(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all(branchId) });
+    onSuccess: (data, { id, updates }) => {
+      queryClient.setQueryData<any[]>(queryKeys.customers.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map(c => c.id === id ? { ...c, ...data } : c);
+      });
     },
   });
 }
@@ -34,8 +40,11 @@ export function useDeleteCustomer() {
 
   return useMutation({
     mutationFn: (id: string) => customerService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all(branchId) });
+    onSuccess: (data, id) => {
+      queryClient.setQueryData<any[]>(queryKeys.customers.all(branchId), (old) => {
+        if (!old) return old;
+        return old.filter(c => c.id !== id);
+      });
     },
   });
 }

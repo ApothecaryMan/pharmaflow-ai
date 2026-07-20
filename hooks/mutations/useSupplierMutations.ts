@@ -9,8 +9,11 @@ export function useAddSupplier() {
 
   return useMutation({
     mutationFn: (supplier: any) => supplierService.create(supplier, branchId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all(branchId) });
+    onSuccess: (data) => {
+      queryClient.setQueryData<any[]>(queryKeys.suppliers.all(branchId), (old) => {
+        if (!old) return old;
+        return [data, ...old];
+      });
     },
   });
 }
@@ -21,8 +24,11 @@ export function useUpdateSupplier() {
 
   return useMutation({
     mutationFn: (supplier: any) => supplierService.update(supplier.id, supplier),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all(branchId) });
+    onSuccess: (data, supplier) => {
+      queryClient.setQueryData<any[]>(queryKeys.suppliers.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map(s => s.id === supplier.id ? { ...s, ...data } : s);
+      });
     },
   });
 }
@@ -33,8 +39,11 @@ export function useDeleteSupplier() {
 
   return useMutation({
     mutationFn: (id: string) => supplierService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all(branchId) });
+    onSuccess: (data, id) => {
+      queryClient.setQueryData<any[]>(queryKeys.suppliers.all(branchId), (old) => {
+        if (!old) return old;
+        return old.filter(s => s.id !== id);
+      });
     },
   });
 }

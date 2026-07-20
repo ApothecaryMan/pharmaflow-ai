@@ -9,9 +9,15 @@ export function useAddEmployee() {
 
   return useMutation({
     mutationFn: (employee: any) => employeeService.create(employee, activeBranchId, activeOrgId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.all(activeBranchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.allByOrg(activeOrgId) });
+    onSuccess: (data) => {
+      queryClient.setQueryData<any[]>(queryKeys.employees.all(activeBranchId), (old) => {
+        if (!old) return old;
+        return [data, ...old];
+      });
+      queryClient.setQueryData<any[]>(queryKeys.employees.allByOrg(activeOrgId), (old) => {
+        if (!old) return old;
+        return [data, ...old];
+      });
     },
   });
 }
@@ -24,9 +30,15 @@ export function useUpdateEmployee() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       employeeService.update(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.allByOrg(orgId) });
+    onSuccess: (data, { id, updates }) => {
+      queryClient.setQueryData<any[]>(queryKeys.employees.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map(emp => emp.id === id ? { ...emp, ...data } : emp);
+      });
+      queryClient.setQueryData<any[]>(queryKeys.employees.allByOrg(orgId), (old) => {
+        if (!old) return old;
+        return old.map(emp => emp.id === id ? { ...emp, ...data } : emp);
+      });
     },
   });
 }
@@ -38,9 +50,15 @@ export function useDeleteEmployee() {
 
   return useMutation({
     mutationFn: (id: string) => employeeService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.allByOrg(orgId) });
+    onSuccess: (data, id) => {
+      queryClient.setQueryData<any[]>(queryKeys.employees.all(branchId), (old) => {
+        if (!old) return old;
+        return old.filter(emp => emp.id !== id);
+      });
+      queryClient.setQueryData<any[]>(queryKeys.employees.allByOrg(orgId), (old) => {
+        if (!old) return old;
+        return old.filter(emp => emp.id !== id);
+      });
     },
   });
 }

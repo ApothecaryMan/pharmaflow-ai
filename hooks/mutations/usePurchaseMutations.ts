@@ -3,7 +3,8 @@ import { queryKeys } from '../../lib/queryKeys';
 import { purchaseService } from '../../services/purchases';
 import { transactionService } from '../../services/transactions/transactionService';
 import { useAuthStore } from '../../stores/authStore';
-import type { ActionContext } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
+import type { ActionContext, Drug, StockBatch, Purchase } from '../../types';
 
 export function useAddPurchase() {
   const queryClient = useQueryClient();
@@ -22,13 +23,43 @@ export function useAddPurchase() {
         orgId: activeOrgId,
       });
     },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(activeBranchId) });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
+    onSuccess: (data, vars) => {
       if (vars.purchase.status === 'completed') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
+        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
+          if (!old) return old;
+          const newInv = [...old];
+          (data?.items || []).forEach((item) => {
+            const idx = newInv.findIndex((d) => d.id === item.drugId);
+            if (idx !== -1) {
+              const qty = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+              newInv[idx] = { ...newInv[idx], stock: newInv[idx].stock + qty };
+            }
+          });
+          return newInv;
+        });
+        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
+          if (!old) return old;
+          const newBatches = [...old];
+          (data?.items || []).forEach((item) => {
+            newBatches.push({
+              id: idGenerator.uuid(),
+              branchId: activeBranchId,
+              drugId: item.drugId,
+              quantity: item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1),
+              expiryDate: item.expiryDate,
+              costPrice: item.costPrice,
+              purchaseId: data.id,
+              dateReceived: new Date().toISOString(),
+              version: 1,
+            });
+          });
+          return newBatches;
+        });
       }
+      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(activeBranchId), (old) => {
+        if (!old) return old;
+        return [data, ...old];
+      });
     },
   });
 }
@@ -41,17 +72,54 @@ export function useApprovePurchase() {
     mutationFn: async ({ id, context }: { id: string; context: ActionContext }) => {
       const result = await transactionService.processPurchaseTransaction(id, context);
       if (!result.success) throw new Error(result.error || 'Approval failed');
-      return result.data!;
+      const fullPurchase = await purchaseService.getById(id);
+      return { ...result.data, items: fullPurchase?.items || [] };
     },
     onSuccess: (data, vars) => {
       const purchaseId = data?.id || vars.id;
-      if (purchaseId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.purchases.detail(purchaseId) });
+      const items = data?.items || [];
+
+      if (items.length > 0) {
+        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(branchId), (old) => {
+          if (!old) return old;
+          const newInv = [...old];
+          items.forEach((item) => {
+            const idx = newInv.findIndex((d) => d.id === item.drugId);
+            if (idx !== -1) {
+              const qty = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+              newInv[idx] = { ...newInv[idx], stock: newInv[idx].stock + qty };
+            }
+          });
+          return newInv;
+        });
+        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(branchId), (old) => {
+          if (!old) return old;
+          const newBatches = [...old];
+          items.forEach((item) => {
+            newBatches.push({
+              id: idGenerator.uuid(),
+              branchId,
+              drugId: item.drugId,
+              quantity: item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1),
+              expiryDate: item.expiryDate,
+              costPrice: item.costPrice,
+              purchaseId,
+              dateReceived: new Date().toISOString(),
+              version: 1,
+            });
+          });
+          return newBatches;
+        });
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
+
+      queryClient.setQueryData<Purchase>(queryKeys.purchases.detail(purchaseId), (old) => {
+        if (!old) return old;
+        return { ...data, items: old.items };
+      });
+      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map((p) => (p.id === purchaseId ? { ...p, ...data } : p));
+      });
     },
   });
 }
@@ -72,12 +140,47 @@ export function useMarkPurchaseReceived() {
       receiverName: string;
       shiftId?: string;
     }) => purchaseService.markAsReceived(id, receiverId, receiverName, shiftId),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.detail(vars.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
+    onSuccess: (data, vars) => {
+      const purchaseId = data?.id || vars.id;
+
+      queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(branchId), (old) => {
+        if (!old) return old;
+        const newInv = [...old];
+        (data?.items || []).forEach((item) => {
+          const idx = newInv.findIndex((d) => d.id === item.drugId);
+          if (idx !== -1) {
+            const qty = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+            newInv[idx] = { ...newInv[idx], stock: newInv[idx].stock + qty };
+          }
+        });
+        return newInv;
+      });
+      queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(branchId), (old) => {
+        if (!old) return old;
+        const newBatches = [...old];
+        (data?.items || []).forEach((item) => {
+          newBatches.push({
+            id: crypto.randomUUID(),
+            branchId,
+            drugId: item.drugId,
+            quantity: item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1),
+            expiryDate: item.expiryDate,
+            costPrice: item.costPrice,
+            purchaseId,
+            dateReceived: new Date().toISOString(),
+            version: 1,
+          });
+        });
+        return newBatches;
+      });
+      queryClient.setQueryData<Purchase>(queryKeys.purchases.detail(purchaseId), (old) => {
+        if (!old) return old;
+        return { ...old, ...data };
+      });
+      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map((p) => (p.id === purchaseId ? { ...p, ...data } : p));
+      });
     },
   });
 }
@@ -89,11 +192,14 @@ export function useRejectPurchase() {
   return useMutation({
     mutationFn: (id: string) => purchaseService.reject(id, 'Rejected by manager'),
     onSuccess: (data, id) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.detail(id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
+      queryClient.setQueryData<Purchase>(queryKeys.purchases.detail(id), (old) => {
+        if (!old) return old;
+        return { ...data, items: old.items };
+      });
+      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(branchId), (old) => {
+        if (!old) return old;
+        return old.map((p) => (p.id === id ? { ...p, ...data } : p));
+      });
     },
   });
 }

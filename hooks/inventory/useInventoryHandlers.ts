@@ -1,4 +1,3 @@
-import type React from 'react';
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAlert } from '../../context';
@@ -8,24 +7,19 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
+import { idGenerator } from '../../utils/idGenerator';
 import type { Drug, Employee, StockBatch } from '../../types';
 import { getFullDisplayName } from '../../utils/drugDisplayName';
 import { resolveUnits } from '../../utils/stockUtils';
 import { validateDrug } from '../../utils/validation';
 
 export interface UseInventoryHandlersParams {
-  inventory: Drug[];
-  setInventory: React.Dispatch<React.SetStateAction<Drug[]>>;
-  setBatches: (batches: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => void;
   currentEmployeeId: string | null;
   employees: Employee[];
   activeBranchId: string;
 }
 
 export function useInventoryHandlers({
-  inventory,
-  setInventory,
-  setBatches,
   currentEmployeeId,
   employees,
   activeBranchId,
@@ -54,7 +48,11 @@ export function useInventoryHandlers({
 
       try {
         const result = await inventoryService.create(drug, activeBranchId);
-        setInventory((prev) => [...prev, result]);
+
+        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
+          if (!old) return old;
+          return [...old, result];
+        });
 
         if (result.stock > 0) {
           await stockMovementService.logMovement({
@@ -73,8 +71,24 @@ export function useInventoryHandlers({
           });
         }
 
-        const updatedBatches = await batchService.getAllBatches(activeBranchId);
-        setBatches(updatedBatches);
+        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
+          if (!old) return old;
+          return [
+            ...old,
+            {
+              id: idGenerator.uuid(),
+              branchId: activeBranchId,
+              orgId: result.orgId,
+              drugId: result.id,
+              quantity: result.stock,
+              expiryDate: result.expiryDate,
+              costPrice: result.costPrice,
+              dateReceived: new Date().toISOString(),
+              batchNumber: 'INITIAL',
+              version: 1,
+            },
+          ];
+        });
 
         auditService.log('inventory.add', {
           userId: currentEmployeeId,
@@ -83,8 +97,6 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
         success(`${result.name} added to inventory successfully!`);
@@ -92,7 +104,7 @@ export function useInventoryHandlers({
         error(`Failed to add product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, setBatches, currentEmployeeId, employees, activeBranchId, error, success, queryClient]
+    [currentEmployeeId, employees, activeBranchId, error, success, queryClient]
   );
 
   const handleUpdateDrug = useCallback(
@@ -108,9 +120,14 @@ export function useInventoryHandlers({
       }
 
       try {
-        const oldDrug = inventory.find((d) => d.id === drug.id);
+        const cachedInventory = queryClient.getQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId));
+        const oldDrug = cachedInventory?.find((d) => d.id === drug.id);
         const result = await inventoryService.update(drug.id, drug);
-        setInventory((prev) => prev.map((d) => (d.id === drug.id ? result : d)));
+
+        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.map((d) => (d.id === drug.id ? result : d));
+        });
 
         if (oldDrug && oldDrug.stock !== result.stock) {
           const diff = result.stock - oldDrug.stock;
@@ -127,9 +144,18 @@ export function useInventoryHandlers({
               },
             ],
           });
-          const updatedBatches = await batchService.getAllBatches(activeBranchId);
-          setBatches(updatedBatches);
+
+          queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
+            if (!old) return old;
+            return old.map((b) =>
+              b.drugId === drug.id
+                ? { ...b, quantity: result.stock, expiryDate: result.expiryDate, costPrice: result.costPrice }
+                : b
+            );
+          });
         }
+
+        queryClient.setQueryData<Drug>(queryKeys.inventory.detail(drug.id), result);
 
         auditService.log('inventory.update', {
           userId: currentEmployeeId,
@@ -138,9 +164,6 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.detail(drug.id) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
         success(`${drug.name} updated successfully!`);
@@ -148,17 +171,7 @@ export function useInventoryHandlers({
         error(`Failed to update product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [
-      setInventory,
-      inventory,
-      currentEmployeeId,
-      employees,
-      activeBranchId,
-      error,
-      success,
-      setBatches,
-      queryClient,
-    ]
+    [currentEmployeeId, employees, activeBranchId, error, success, queryClient]
   );
 
   const handleDeleteDrug = useCallback(
@@ -174,7 +187,8 @@ export function useInventoryHandlers({
       }
 
       try {
-        const drug = inventory.find((d) => d.id === id);
+        const cachedInventory = queryClient.getQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId));
+        const drug = cachedInventory?.find((d) => d.id === id);
         if (drug && drug.stock > 0) {
           stockMovementService.logMovement({
             drugId: drug.id,
@@ -194,9 +208,15 @@ export function useInventoryHandlers({
         await batchService.deleteBatchesByDrugId(id);
         await inventoryService.delete(id);
 
-        setInventory((prev) => prev.filter((d) => d.id !== id));
-        const updatedBatches = await batchService.getAllBatches(activeBranchId);
-        setBatches(updatedBatches);
+        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.filter((d) => d.id !== id);
+        });
+
+        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
+          if (!old) return old;
+          return old.filter((b) => b.drugId !== id);
+        });
 
         auditService.log('inventory.delete', {
           userId: currentEmployeeId,
@@ -205,9 +225,7 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
         queryClient.removeQueries({ queryKey: queryKeys.inventory.detail(id), exact: true });
-        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
         success('Product deleted successfully!');
@@ -215,17 +233,7 @@ export function useInventoryHandlers({
         error(`Failed to delete product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [
-      setInventory,
-      setBatches,
-      inventory,
-      currentEmployeeId,
-      employees,
-      activeBranchId,
-      error,
-      success,
-      queryClient,
-    ]
+    [currentEmployeeId, employees, activeBranchId, error, success, queryClient]
   );
 
   const handleRestock = useCallback(
@@ -240,11 +248,11 @@ export function useInventoryHandlers({
         return;
       }
 
-      const drug = inventory.find((d) => d.id === id);
+      const cachedInventory = queryClient.getQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId));
+      const drug = cachedInventory?.find((d) => d.id === id);
       if (!drug) return;
 
       try {
-        // Convert to units if needed — the RPC works in base units
         const unitsToAdd = resolveUnits(qty, !!isUnit, drug.unitsPerPack);
 
         await inventoryService.processStockAdjustment({
@@ -262,13 +270,22 @@ export function useInventoryHandlers({
           ],
         });
 
-        // Refresh local state from server
         const updatedDrug = await inventoryService.getById(id);
         if (updatedDrug) {
-          setInventory((prev) => prev.map((d) => (d.id === id ? updatedDrug : d)));
+          queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
+            if (!old) return old;
+            return old.map((d) => (d.id === id ? updatedDrug : d));
+          });
+
+          queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
+            if (!old) return old;
+            return old.map((b) =>
+              b.drugId === id
+                ? { ...b, quantity: updatedDrug.stock, expiryDate: updatedDrug.expiryDate, costPrice: updatedDrug.costPrice }
+                : b
+            );
+          });
         }
-        const updatedBatches = await batchService.getAllBatches(activeBranchId);
-        setBatches(updatedBatches);
 
         auditService.log('inventory.update', {
           userId: currentEmployeeId,
@@ -277,8 +294,6 @@ export function useInventoryHandlers({
           branchId: activeBranchId,
         });
 
-        queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
 
         success('Restock completed successfully!');
@@ -286,17 +301,7 @@ export function useInventoryHandlers({
         error(`Failed to restock product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [
-      setInventory,
-      setBatches,
-      inventory,
-      currentEmployeeId,
-      employees,
-      activeBranchId,
-      error,
-      success,
-      queryClient,
-    ]
+    [currentEmployeeId, employees, activeBranchId, error, success, queryClient]
   );
 
   return {
