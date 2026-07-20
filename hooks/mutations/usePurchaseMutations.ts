@@ -68,6 +68,8 @@ export function useMarkPurchaseReceived() {
     }) => purchaseService.markAsReceived(id, receiverId, receiverName, shiftId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
     },
   });
 }
