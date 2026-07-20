@@ -5,6 +5,7 @@ import { queryClient } from '../../lib/queryClient';
 import {
   patchListCache,
   patchDetailCache,
+  patchDashboardStats,
   invalidateBranchScope,
   invalidateDashboard,
 } from './patchers';
@@ -28,7 +29,7 @@ export interface PatcherEntry {
  *
  * Handlers are responsible for checking `branch_id` inside the payload.
  */
-export function createRegistry(branchId: string, _orgId: string): PatcherEntry[] {
+export function createRegistry(branchId: string, orgId: string): PatcherEntry[] {
   return [
     // ── Inventory / Drugs ──────────────────────────────────────────
     {
@@ -38,6 +39,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       handlers: [
         // Patch the inventory list cache (immediate upsertOrRemove)
         patchListCache((bid: string) => queryKeys.inventory.all(bid), branchId),
+        patchDetailCache((id: string) => queryKeys.inventory.detail(id)),
         // Also update the client-side search index
         (payload, currentBranchId) => {
           const recordBranchId = (payload.new as any)?.branch_id || (payload.old as any)?.branch_id;
@@ -60,6 +62,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         patchListCache((bid: string) => queryKeys.batches.all(bid), branchId),
+        patchDetailCache((id: string) => queryKeys.batches.detail(id)),
         invalidateDashboard(branchId),
       ],
     },
@@ -70,12 +73,11 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       events: ['*'],
       filter: () => `branch_id=eq.${branchId}`,
       handlers: [
-        // Invalidate all sales list queries for this branch
-        invalidateBranchScope('sales', branchId),
-        // Patch individual sale detail caches
+        patchListCache((bid: string) => queryKeys.sales.recent(bid), branchId),
+        patchListCache((bid: string) => queryKeys.sales.today(bid), branchId),
         patchDetailCache((id: string) => queryKeys.sales.detail(id)),
-        // Tentative dashboard invalidation — can be upgraded to delta later
         invalidateDashboard(branchId),
+        patchDashboardStats(branchId),
       ],
     },
 
@@ -85,7 +87,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       events: ['*'],
       filter: () => `branch_id=eq.${branchId}`,
       handlers: [
-        invalidateBranchScope('returns', branchId),
+        patchListCache((bid: string) => queryKeys.returns.sales(bid), branchId),
         invalidateDashboard(branchId),
       ],
     },
@@ -96,7 +98,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       events: ['*'],
       filter: () => `branch_id=eq.${branchId}`,
       handlers: [
-        invalidateBranchScope('purchases', branchId),
+        patchListCache((bid: string) => queryKeys.purchases.all(bid), branchId),
         patchDetailCache((id: string) => queryKeys.purchases.detail(id)),
         invalidateDashboard(branchId),
       ],
@@ -119,6 +121,27 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         patchListCache((bid: string) => queryKeys.suppliers.all(bid), branchId),
+      ],
+    },
+
+    // ── Employees ───────────────────────────────────────────────────
+    {
+      table: 'employees',
+      events: ['*'],
+      filter: () => `branch_id=eq.${branchId}`,
+      handlers: [
+        patchListCache((bid: string) => queryKeys.employees.all(bid), branchId),
+        patchListCache((oid: string) => queryKeys.employees.allByOrg(oid), orgId),
+      ],
+    },
+
+    // ── Branches ────────────────────────────────────────────────────
+    {
+      table: 'branches',
+      events: ['*'],
+      filter: () => `org_id=eq.${orgId}`,
+      handlers: [
+        patchListCache((oid: string) => queryKeys.branches.all(oid), orgId),
       ],
     },
 
@@ -160,6 +183,29 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
           const recordBranchId = (payload.new as any)?.branch_id || (payload.old as any)?.branch_id;
           if (recordBranchId !== currentBranchId) return;
           queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(currentBranchId) });
+        },
+        // Patch the cash-transactions list cache for the affected shift.
+        (payload, currentBranchId) => {
+          const recordBranchId = (payload.new as any)?.branch_id || (payload.old as any)?.branch_id;
+          if (recordBranchId !== currentBranchId) return;
+          const shiftId = (payload.new as any)?.shift_id || (payload.old as any)?.shift_id;
+          if (!shiftId) return;
+          const queryKey = queryKeys.cashTransactions.byShift(shiftId, currentBranchId);
+          queryClient.setQueryData(queryKey, (old: any[] | undefined) => {
+            if (!old) return old;
+            if (payload.eventType === 'DELETE') {
+              const oldId = (payload.old as any).id;
+              return old.filter((item: any) => item.id !== oldId);
+            }
+            const mapped = snakeToCamel(payload.new as unknown as Record<string, unknown>) as any;
+            const idx = old.findIndex((item: any) => item.id === mapped.id);
+            if (idx > -1) {
+              const copy = [...old];
+              copy[idx] = { ...copy[idx], ...mapped };
+              return copy;
+            }
+            return [...old, mapped];
+          });
         },
       ],
     },

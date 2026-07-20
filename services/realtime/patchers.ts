@@ -106,3 +106,93 @@ export function invalidateDashboard(
     queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', currentBranchId] });
   };
 }
+
+/**
+ * Patch a paged list cache (e.g. `['sales', 'recent', branchId]`) shaped as
+ * `{ rows: T[], count: number }` when a row matching the current branch is
+ * inserted, updated, or deleted.
+ *
+ * - INSERT: prepends the item to `rows` and increments `count`.
+ * - UPDATE: merges into the matching row in `rows` (count unchanged).
+ * - DELETE: removes the item from `rows` and decrements `count`.
+ *
+ * Guards by `branch_id` matching `currentBranchId`.
+ * Converts incoming snake_case keys to camelCase before merging.
+ */
+export function patchPagedListCache<T extends { id: string }>(
+  queryKeyFactory: (branchId: string) => readonly unknown[],
+  currentBranchId: string,
+): (payload: RealtimePostgresChangesPayload<T>) => void {
+  return (payload: RealtimePostgresChangesPayload<T>) => {
+    const recordBranchId = (payload.new as any)?.branch_id || (payload.old as any)?.branch_id;
+    if (recordBranchId !== currentBranchId) return;
+
+    const queryKey = queryKeyFactory(currentBranchId);
+    queryClient.setQueryData(queryKey, (old: { rows: T[]; count: number } | undefined) => {
+      if (!old) return old;
+
+      if (payload.eventType === 'DELETE') {
+        const oldId = (payload.old as { id: string }).id;
+        return {
+          rows: old.rows.filter((item) => item.id !== oldId),
+          count: old.count - 1,
+        };
+      }
+
+      const mapped = mapPayloadRecord<T>(payload.new as unknown as Record<string, unknown>);
+
+      const idx = old.rows.findIndex((item) => item.id === mapped.id);
+      if (idx > -1) {
+        const copy = [...old.rows];
+        copy[idx] = { ...copy[idx], ...mapped };
+        return { rows: copy, count: old.count };
+      }
+      return { rows: [mapped, ...old.rows], count: old.count + 1 };
+    });
+  };
+}
+
+/**
+ * Patch the dashboard aggregate stats cache (`['dashboard', 'stats', branchId]`)
+ * by cumulatively adding or subtracting `total`, `profit`, and `cost` from
+ * sales payloads.
+ *
+ * This is a lightweight delta — it accepts minor drift risk and works best
+ * when combined with periodic full invalidations.
+ */
+export function patchDashboardStats(
+  branchId: string,
+): (payload: RealtimePostgresChangesPayload<any>) => void {
+  return (payload: RealtimePostgresChangesPayload<any>) => {
+    const queryKey = ['dashboard', 'stats', branchId] as const;
+    queryClient.setQueryData(queryKey, (old: any) => {
+      if (!old) return old;
+
+      if (payload.eventType === 'INSERT') {
+        const mapped = mapPayloadRecord<{ total: number; profit: number; cost: number }>(
+          payload.new as unknown as Record<string, unknown>,
+        );
+        return {
+          ...old,
+          total: (old.total || 0) + (mapped.total || 0),
+          profit: (old.profit || 0) + (mapped.profit || 0),
+          cost: (old.cost || 0) + (mapped.cost || 0),
+        };
+      }
+
+      if (payload.eventType === 'DELETE') {
+        const mapped = mapPayloadRecord<{ total: number; profit: number; cost: number }>(
+          payload.old as unknown as Record<string, unknown>,
+        );
+        return {
+          ...old,
+          total: (old.total || 0) - (mapped.total || 0),
+          profit: (old.profit || 0) - (mapped.profit || 0),
+          cost: (old.cost || 0) - (mapped.cost || 0),
+        };
+      }
+
+      return old;
+    });
+  };
+}
