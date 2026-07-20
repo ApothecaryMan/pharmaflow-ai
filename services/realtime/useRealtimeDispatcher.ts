@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { queryClient } from '../../lib/queryClient';
 import { supabase } from '../../lib/supabase';
 import { createRegistry } from './registry';
 
@@ -18,8 +19,8 @@ const RECONNECT_MAX_MS = 30_000;
  * table declared in the registry.  When a change arrives it runs the
  * table's registered patchers, which surgically update React Query caches.
  *
- * This runs **alongside** the legacy `useRealtimeSync` hook until
- * Phase 5 removes the old system.
+ * Supersedes the legacy `useRealtimeSync` hook.  Also handles
+ * online recovery by re-fetching all domain caches.
  */
 export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: DispatcherProps) {
   // Keep a ref to the latest branch/org so the effect closure is fresh
@@ -36,6 +37,17 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
 
     const entries = createRegistry(activeBranchId, activeOrgId);
     if (entries.length === 0) return;
+
+    // — Online recovery: re-fetch all domain caches when the browser comes back online — ///
+    const handleOnline = () => {
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          ['shifts', 'cashTransactions', 'expenses', 'audit', 'sales', 'purchases', 'returns', 'inventory', 'batches'].includes(
+            query.queryKey[0] as string,
+          ),
+      });
+    };
+    window.addEventListener('online', handleOnline);
 
     const channel = supabase.channel(channelKey);
 
@@ -82,6 +94,7 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
     });
 
     return () => {
+      window.removeEventListener('online', handleOnline);
       if (reconnectTimer) clearTimeout(reconnectTimer);
       supabase.removeChannel(channel);
     };

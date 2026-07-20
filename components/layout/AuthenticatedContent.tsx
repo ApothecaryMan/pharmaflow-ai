@@ -7,7 +7,6 @@ import { useSessionHandlers } from '../../hooks/auth/useSessionHandlers';
 import { KeyboardProvider } from '../../hooks/keyboard';
 import type { AppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
-import { useRealtimeSync } from '../../hooks/realtime/useRealtimeSync';
 import { useRealtimeDispatcher } from '../../services/realtime/useRealtimeDispatcher';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { supabase } from '../../lib/supabase';
@@ -86,10 +85,10 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- Domain Data from React Query ---
   // Components fetch their own data internally.
 
-  // --- Realtime Sync — legacy (to be removed in Phase 5) ---
-  useRealtimeSync({ activeBranchId });
-
-  // --- Realtime Sync — new central dispatcher (additive, runs alongside) ---
+  // --- Central realtime dispatcher — single org-scoped Supabase channel ---
+  // Handles all registered tables (inventory, batches, sales, returns, purchases,
+  // shifts, cash_transactions, expenses) via per-table patchers that surgically
+  // update React Query caches. Also handles online recovery.
   useRealtimeDispatcher({ activeBranchId, activeOrgId });
 
   // --- Navigation Hook ---
