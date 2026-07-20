@@ -8,25 +8,25 @@ import {
   invalidateBranchScope,
   invalidateDashboard,
 } from './patchers';
+import { snakeToCamel } from '../core/mappers';
 
 export interface PatcherEntry {
   table: string;
   events: ('*' | 'INSERT' | 'UPDATE' | 'DELETE')[];
-  filter: (orgId: string) => string;
+  filter?: () => string;
   /** Each handler receives the raw Supabase realtime payload and the active branchId */
   handlers: ((payload: RealtimePostgresChangesPayload<any>, branchId: string) => void)[];
 }
-
 /**
+
  * Build the per-table registry.
  *
  * Each entry declares:
  *  - which DB table to watch
- *  - the Supabase Realtime filter expression (org-scoped)
+ *  - the Supabase Realtime filter expression (branch-scoped)
  *  - one or more handler functions that surgically update React Query caches
  *
- * Handlers are responsible for checking `branch_id` inside the payload
- * so that we can share a single org-scoped channel across all branches.
+ * Handlers are responsible for checking `branch_id` inside the payload.
  */
 export function createRegistry(branchId: string, _orgId: string): PatcherEntry[] {
   return [
@@ -34,20 +34,22 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'drugs',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         // Patch the inventory list cache (immediate upsertOrRemove)
         patchListCache((bid: string) => queryKeys.inventory.all(bid), branchId),
         // Also update the client-side search index
         (payload, currentBranchId) => {
-          const recordBranchId = payload.new?.branch_id || payload.old?.branch_id;
+          const recordBranchId = (payload.new as any)?.branch_id || (payload.old as any)?.branch_id;
           if (recordBranchId !== currentBranchId) return;
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            inventorySearchEngine.queueUpdate(payload.new);
+            const mapped = snakeToCamel(payload.new as any) as any;
+            inventorySearchEngine.queueUpdate(mapped);
           } else if (payload.eventType === 'DELETE') {
-            inventorySearchEngine.removeItem(payload.old.id);
+            inventorySearchEngine.removeItem((payload.old as any).id);
           }
         },
+        invalidateDashboard(branchId),
       ],
     },
 
@@ -55,9 +57,10 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'stock_batches',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         patchListCache((bid: string) => queryKeys.batches.all(bid), branchId),
+        invalidateDashboard(branchId),
       ],
     },
 
@@ -65,7 +68,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'sales',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         // Invalidate all sales list queries for this branch
         invalidateBranchScope('sales', branchId),
@@ -80,9 +83,10 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'returns',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         invalidateBranchScope('returns', branchId),
+        invalidateDashboard(branchId),
       ],
     },
 
@@ -90,10 +94,31 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'purchases',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         invalidateBranchScope('purchases', branchId),
         patchDetailCache((id: string) => queryKeys.purchases.detail(id)),
+        invalidateDashboard(branchId),
+      ],
+    },
+
+    // ── Customers ───────────────────────────────────────────────────
+    {
+      table: 'customers',
+      events: ['*'],
+      filter: () => `branch_id=eq.${branchId}`,
+      handlers: [
+        patchListCache((bid: string) => queryKeys.customers.all(bid), branchId),
+      ],
+    },
+
+    // ── Suppliers ───────────────────────────────────────────────────
+    {
+      table: 'suppliers',
+      events: ['*'],
+      filter: () => `branch_id=eq.${branchId}`,
+      handlers: [
+        patchListCache((bid: string) => queryKeys.suppliers.all(bid), branchId),
       ],
     },
 
@@ -101,7 +126,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'shifts',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         patchListCache((bid: string) => queryKeys.shifts.all(bid), branchId),
         patchDetailCache((id: string) => queryKeys.shifts.detail(id)),
@@ -112,7 +137,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'expenses',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         // Expenses are filter-based queries (date range, category, payment method),
         // so invalidate all expense queries for this branch.
@@ -124,7 +149,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
     {
       table: 'cash_transactions',
       events: ['*'],
-      filter: (oid: string) => `org_id=eq.${oid}`,
+      filter: () => `branch_id=eq.${branchId}`,
       handlers: [
         // Invalidate all cash-transaction queries for the current branch.
         // The query key includes branchId so invalidateBranchScope works.
@@ -132,7 +157,7 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
         // Also invalidate the parent shifts list so the open shift's
         // embedded transactions reflect the change.
         (payload, currentBranchId) => {
-          const recordBranchId = payload.new?.branch_id || payload.old?.branch_id;
+          const recordBranchId = (payload.new as any)?.branch_id || (payload.old as any)?.branch_id;
           if (recordBranchId !== currentBranchId) return;
           queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(currentBranchId) });
         },

@@ -29,8 +29,8 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
   branchRef.current = activeBranchId;
   orgRef.current = activeOrgId;
 
-  // Stable channel identity based on org — survives branch switches
-  const channelKey = useMemo(() => `tenant-${activeOrgId}`, [activeOrgId]);
+  // Stable channel identity based on org and branch
+  const channelKey = useMemo(() => `tenant-${activeOrgId}-branch-${activeBranchId}`, [activeOrgId, activeBranchId]);
 
   useEffect(() => {
     if (!activeOrgId || !activeBranchId) return;
@@ -42,7 +42,7 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
     const handleOnline = () => {
       queryClient.invalidateQueries({
         predicate: (query) =>
-          ['shifts', 'cashTransactions', 'expenses', 'audit', 'sales', 'purchases', 'returns', 'inventory', 'batches'].includes(
+          ['shifts', 'cashTransactions', 'expenses', 'audit', 'sales', 'purchases', 'returns', 'inventory', 'batches', 'customers', 'suppliers', 'dashboard'].includes(
             query.queryKey[0] as string,
           ),
       });
@@ -52,15 +52,19 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
     const channel = supabase.channel(channelKey);
 
     for (const entry of entries) {
-      const filterExpr = entry.filter(activeOrgId);
+      const filterExpr = entry.filter ? entry.filter() : undefined;
+      const config: any = {
+        event: '*',
+        schema: 'public',
+        table: entry.table,
+      };
+      if (filterExpr) {
+        config.filter = filterExpr;
+      }
+
       channel.on(
         'postgres_changes' as any,
-        {
-          event: '*',
-          schema: 'public',
-          table: entry.table,
-          filter: filterExpr,
-        },
+        config,
         (payload: RealtimePostgresChangesPayload<any>) => {
           const branchId = branchRef.current;
           for (const handler of entry.handlers) {
@@ -98,7 +102,7 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
       if (reconnectTimer) clearTimeout(reconnectTimer);
       supabase.removeChannel(channel);
     };
-    // channelKey is stable per org — we don't want to reconnect on every branch switch
+    // channelKey is stable per branch — reconnects safely on branch switch
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelKey]);
 }
