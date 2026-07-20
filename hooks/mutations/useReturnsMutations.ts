@@ -49,6 +49,7 @@ export function useProcessSalesReturn() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.returns.sales(branchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
     },
   });
 }
@@ -63,6 +64,7 @@ export function useCreatePurchaseReturn() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.returns.purchases(branchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
     },
   });
 }

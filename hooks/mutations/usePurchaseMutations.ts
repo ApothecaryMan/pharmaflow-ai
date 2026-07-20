@@ -24,6 +24,7 @@ export function useAddPurchase() {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(activeBranchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', activeBranchId] });
       if (vars.purchase.status === 'completed') {
         queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(activeBranchId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(activeBranchId) });
@@ -46,6 +47,7 @@ export function useApprovePurchase() {
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
     },
   });
 }
@@ -70,6 +72,7 @@ export function useMarkPurchaseReceived() {
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
     },
   });
 }
@@ -84,6 +87,7 @@ export function useRejectPurchase() {
       queryClient.invalidateQueries({ queryKey: queryKeys.purchases.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
     },
   });
 }

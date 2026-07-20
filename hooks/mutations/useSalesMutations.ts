@@ -31,6 +31,7 @@ export function useCompleteSale() {
       queryClient.invalidateQueries({ queryKey: queryKeys.batches.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(branchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
     },
   });
 }
@@ -44,6 +45,7 @@ export function useAddSale() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.recent(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.today(branchId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats', branchId] });
     },
   });
 }
