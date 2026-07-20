@@ -4,8 +4,9 @@ import { useUI } from '../../context/UIContext';
 import { useDebounce } from '../../hooks/common/useDebounce';
 
 export const ThemeStudio: React.FC = () => {
-  const { customCardCss, enableCustomCardCss } = useUI();
+  const { customCardCss, enableCustomCardCss, customBackgroundCss, enableCustomBackgroundCss } = useUI();
   const debouncedCss = useDebounce(customCardCss, 60);
+  const debouncedBgCss = useDebounce(customBackgroundCss, 60);
 
   useEffect(() => {
     let styleEl = document.getElementById('pharma-custom-card-css') as HTMLStyleElement | null;
@@ -66,10 +67,43 @@ export const ThemeStudio: React.FC = () => {
       styleEl.textContent = '';
     }
 
-    return () => {
-      document.getElementById('pharma-custom-card-css')?.remove();
-    };
+    // Do NOT remove the element on unmount.
+    // Removing it causes race conditions during page transitions
+    // where the old page unmounts AFTER the new page mounts, destroying the shared tag.
+    return () => {};
   }, [debouncedCss, enableCustomCardCss]);
+
+  useEffect(() => {
+    let styleEl = document.getElementById('pharma-custom-bg-css') as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'pharma-custom-bg-css';
+      document.head.appendChild(styleEl);
+    }
+
+    if (debouncedBgCss && enableCustomBackgroundCss) {
+      const processedBgCss = debouncedBgCss
+        .split(';')
+        .map((part) => {
+          const trimmed = part.trim();
+          if (!trimmed || !trimmed.includes(':')) return trimmed;
+          if (/!important/i.test(trimmed)) return trimmed;
+          return `${trimmed} !important`;
+        })
+        .join('; ');
+
+      styleEl.textContent = `
+        body, .main-layout-content {
+          ${processedBgCss}
+        }
+      `;
+    } else {
+      styleEl.textContent = '';
+    }
+
+    // Do NOT remove the element on unmount.
+    return () => {};
+  }, [debouncedBgCss, enableCustomBackgroundCss]);
 
   return null;
 };

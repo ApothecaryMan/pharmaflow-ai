@@ -9,6 +9,8 @@ export const StorageKeys = {
   ACTIVE_MODULE: 'pharma_activeModule',
   THEME: 'pharma_theme', // Note: SettingsContext might use different keys, need to check
   DARK_MODE: 'pharma_darkMode',
+  CUSTOM_CARD_CSS: 'pharma_customCardCss',
+  APP_BACKGROUND_PATTERN: 'pharma_customBackgroundCss',
   LANGUAGE: 'pharma_language',
   SIDEBAR_VISIBLE: 'pharma_sidebarVisible',
   NAV_STYLE: 'pharma_navStyle',

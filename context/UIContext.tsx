@@ -19,6 +19,8 @@ export interface UIState {
   borderRadius: 'default' | 'sharp' | 'full';
   customCardCss?: string;
   enableCustomCardCss: boolean;
+  customBackgroundCss?: string;
+  enableCustomBackgroundCss: boolean;
   hideInactiveModules: boolean;
   developerMode: boolean;
   switchVariant: SwitchVariant;
@@ -40,6 +42,8 @@ export interface UIContextType extends UIState {
   setBorderRadius: (radius: 'default' | 'sharp' | 'full') => void;
   setCustomCardCss: (css: string) => void;
   setEnableCustomCardCss: (enable: boolean) => void;
+  setCustomBackgroundCss: (css: string) => void;
+  setEnableCustomBackgroundCss: (enable: boolean) => void;
   setHideInactiveModules: (hide: boolean) => void;
   setDeveloperMode: (mode: boolean) => void;
   setSwitchVariant: (variant: SwitchVariant) => void;
@@ -61,6 +65,8 @@ const defaultUI: UIState = {
   borderRadius: 'default',
   customCardCss: '',
   enableCustomCardCss: true,
+  customBackgroundCss: '',
+  enableCustomBackgroundCss: true,
   hideInactiveModules: true,
   developerMode: false,
   switchVariant: 'default',
@@ -91,6 +97,8 @@ const loadUI = (): UIState => {
       | 'full',
     customCardCss: storage.get('pharma_customCardCss', defaultUI.customCardCss || ''),
     enableCustomCardCss: storage.get('pharma_enableCustomCardCss', defaultUI.enableCustomCardCss),
+    customBackgroundCss: storage.get('pharma_customBackgroundCss', defaultUI.customBackgroundCss || ''),
+    enableCustomBackgroundCss: storage.get('pharma_enableCustomBackgroundCss', defaultUI.enableCustomBackgroundCss),
     hideInactiveModules: storage.get('pharma_hideInactiveModules', defaultUI.hideInactiveModules),
     developerMode: storage.get('pharma_developerMode', defaultUI.developerMode),
     switchVariant: storage.get('pharma_switchVariant', defaultUI.switchVariant) as SwitchVariant,
@@ -130,6 +138,8 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     storage.set('pharma_borderRadius', ui.borderRadius);
     storage.set('pharma_customCardCss', ui.customCardCss);
     storage.set('pharma_enableCustomCardCss', ui.enableCustomCardCss);
+    storage.set('pharma_customBackgroundCss', ui.customBackgroundCss);
+    storage.set('pharma_enableCustomBackgroundCss', ui.enableCustomBackgroundCss);
     storage.set('pharma_hideInactiveModules', ui.hideInactiveModules);
     storage.set('pharma_developerMode', ui.developerMode);
     storage.set('pharma_switchVariant', ui.switchVariant);
@@ -237,6 +247,14 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     setUI((prev) => ({ ...prev, enableCustomCardCss }));
   }, []);
 
+  const setCustomBackgroundCss = useCallback((customBackgroundCss: string) => {
+    setUI((prev) => ({ ...prev, customBackgroundCss }));
+  }, []);
+
+  const setEnableCustomBackgroundCss = useCallback((enableCustomBackgroundCss: boolean) => {
+    setUI((prev) => ({ ...prev, enableCustomBackgroundCss }));
+  }, []);
+
   const setHideInactiveModules = useCallback((hideInactiveModules: boolean) => {
     setUI((prev) => ({ ...prev, hideInactiveModules }));
   }, []);
@@ -291,6 +309,8 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setBorderRadius,
       setCustomCardCss,
       setEnableCustomCardCss,
+      setCustomBackgroundCss,
+      setEnableCustomBackgroundCss,
       setHideInactiveModules,
       setDeveloperMode,
       setSwitchVariant,
@@ -312,6 +332,8 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setBorderRadius,
       setCustomCardCss,
       setEnableCustomCardCss,
+      setCustomBackgroundCss,
+      setEnableCustomBackgroundCss,
       setHideInactiveModules,
       setDeveloperMode,
       setSwitchVariant,

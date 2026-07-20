@@ -62,7 +62,10 @@ export const DesignMcpBridge: FC = () => {
     connect();
     return () => {
       clearTimeout(reconnectTimer.current);
-      wsRef.current?.close();
+      if (wsRef.current) {
+        wsRef.current.onclose = null; // Prevent onclose from firing and scheduling a reconnect
+        wsRef.current.close();
+      }
     };
   }, [connect]);
 
