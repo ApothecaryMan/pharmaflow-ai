@@ -373,6 +373,7 @@ export interface Database {
       purchase_returns: {
         Row: {
           id: string;
+          serial_id: string | null;
           branch_id: string;
           purchase_id: string;
           supplier_id: string;

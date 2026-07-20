@@ -162,6 +162,8 @@ export interface PurchaseReturnItem {
 export interface PurchaseReturn {
   /** Unique return ID */
   id: string;
+  /** Human-readable serial number (PR-YYYYMMDDNNN) */
+  serialId?: string;
   /** Branch making the return — required for RLS isolation */
   branchId: string;
   /** Organization this return belongs to */

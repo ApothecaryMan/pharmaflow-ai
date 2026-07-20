@@ -276,10 +276,19 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
   const columns = useMemo<ColumnDef<PurchaseReturn>[]>(
     () => [
       {
-        accessorKey: 'id',
+        accessorKey: 'serialId',
         header: t.purchaseReturns?.tableHeaders?.id || 'Return ID',
         size: 100,
         meta: { align: 'start' },
+        cell: (info) => {
+          const serial = info.getValue() as string | undefined;
+          const fallback = (info.row.original.id as string).substring(0, 8);
+          return (
+            <span className='font-mono font-bold text-sm'>
+              {serial || fallback}
+            </span>
+          );
+        },
       },
       {
         accessorKey: 'date',
@@ -915,7 +924,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                     {t.purchaseReturns?.tableHeaders?.id || 'Return ID'}
                   </span>
                   <p className='font-bold text-gray-900 dark:text-white font-mono text-sm'>
-                    {viewingReturn.id}
+                    {viewingReturn.serialId || viewingReturn.id.substring(0, 8)}
                   </p>
                 </div>
                 <div>

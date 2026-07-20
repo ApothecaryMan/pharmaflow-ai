@@ -1296,8 +1296,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                         // Display Price Calculation
                         const unitsPerPack = common.unitsPerPack || 1;
-                        const packPrice = common.publicPrice;
-                        const unitPrice = common.publicPrice / unitsPerPack;
+                        const packPrice = common.basePackPrice ?? common.publicPrice;
+                        const unitPrice = common.unitPrice ?? (packPrice / unitsPerPack);
                         const totalPrice = money.add(
                           money.multiply(packPrice, packQty, 0),
                           money.multiply(unitPrice, unitQty, 0)

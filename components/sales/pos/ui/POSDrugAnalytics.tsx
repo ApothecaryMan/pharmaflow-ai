@@ -5,6 +5,7 @@ import { salesService } from '../../../../services/sales/salesService';
 import type { Drug } from '../../../../types';
 import { money } from '../../../../utils/currency';
 import { resolveUnits } from '../../../../utils/stockUtils';
+import { pricingService } from '../../../../services/sales/pricingService';
 import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
 
@@ -140,7 +141,7 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
             totalQty += normalizedQty;
 
             // Revenue: item.publicPrice is already the correct price for the selection (unit or pack)
-            totalRev = money.add(totalRev, money.multiply(item.publicPrice, item.quantity, 0));
+            totalRev = money.add(totalRev, pricingService.calculateItemGrossTotal(item));
 
             // Cost: Calculate based on unit cost for precision
             const packCost = item.costPrice || viewingDrug.costPrice || 0;

@@ -87,7 +87,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
       header: t.code || 'ID',
       render: (c) => (
         <span className='text-xs font-mono font-bold text-gray-900 dark:text-gray-100'>
-          {c.code || `#${c.serialId}`}
+          {c.code}
         </span>
       ),
       width: 'w-20',
@@ -143,7 +143,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
               </h3>
               <div className='leading-none'>
                 <span className='text-xs font-bold font-mono text-gray-500 dark:text-gray-400'>
-                  {selectedCustomer.code || `#${selectedCustomer.serialId}`}
+                  {selectedCustomer.code}
                 </span>
               </div>
               <p className='text-sm text-gray-500 leading-tight mt-0.5'>
@@ -301,7 +301,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
                 >
                   <div className='h-9 min-w-9 px-1.5 rounded-lg bg-primary-100 dark:bg-primary-700 flex items-center justify-center text-primary-600 dark:text-primary-100 shrink-0'>
                     <span className='text-xl font-mono font-bold'>
-                      {customer.code || `#${customer.serialId}`}
+                      {customer.code}
                     </span>
                   </div>
                   <div className='flex-1 min-w-0'>

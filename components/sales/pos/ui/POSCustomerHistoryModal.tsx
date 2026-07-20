@@ -3,7 +3,8 @@ import { ar } from 'date-fns/locale/ar';
 import { enUS } from 'date-fns/locale/en-US';
 import React, { useMemo, useState } from 'react';
 import type { CartItem, Customer, Language, Sale } from '../../../../types';
-import { formatCurrency, pricing } from '../../../../utils/currency';
+import { formatCurrency } from '../../../../utils/currency';
+import { pricingService } from '../../../../services/sales/pricingService';
 import { getDisplayName } from '../../../../utils/drugDisplayName';
 import { MaterialTabs } from '../../../common/MaterialTabs';
 import { Modal } from '../../../common/Modal';
@@ -289,11 +290,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                                   </span>
                                   <span className='font-black text-zinc-900 dark:text-zinc-100 min-w-[70px] text-right tabular-nums'>
                                     {formatCurrency(
-                                      pricing.lineTotal(
-                                        item.publicPrice,
-                                        item.quantity,
-                                        item.discount
-                                      )
+                                      pricingService.calculateItemTotal(item)
                                     )}
                                   </span>
                                 </div>
