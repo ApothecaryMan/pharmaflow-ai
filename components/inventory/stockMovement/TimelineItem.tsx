@@ -23,6 +23,9 @@ interface TimelineItemProps {
   value?: number;
   unitsPerPack?: number;
   drugName?: string;
+  referenceId?: string;
+  referenceSerialId?: string;
+  onReferenceClick?: (id: string, type: StockMovementType) => void;
 }
 
 const typeConfig: Record<StockMovementType, { color: string; label: string; arLabel: string }> = {
@@ -53,6 +56,9 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   value,
   unitsPerPack = 1,
   drugName,
+  referenceId,
+  referenceSerialId,
+  onReferenceClick,
 }) => {
   const config = typeConfig[type] || typeConfig.adjustment;
   const dateObj = new Date(date);
@@ -200,23 +206,36 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
           </div>
 
           {/* Metadata */}
-          {(batchId || expiryDate || reason) && (
+          {(expiryDate || reason || (referenceId && referenceId !== 'N/A')) && (
             <div className='flex flex-wrap items-center gap-x-2 gap-y-1 mt-1'>
-              {batchId && (
-                <div className='flex items-center gap-1 text-[11px] font-medium text-(--text-tertiary) uppercase tracking-wider'>
+              {referenceId && referenceId !== 'N/A' && (
+                <div className='flex items-center gap-1 text-[11px] font-medium text-primary-600 dark:text-blue-400 uppercase tracking-wider'>
                   <span
-                    className='material-symbols-rounded opacity-70'
+                    className='material-symbols-rounded'
                     style={{ fontSize: 'var(--icon-sm)' }}
                   >
-                    tag
+                    receipt_long
                   </span>
-                  <span className='font-mono font-bold text-xs'>{batchId?.substring(0, 8)}</span>
+                  {onReferenceClick && ['sale', 'purchase', 'return_customer'].includes(type) ? (
+                    <button
+                      onClick={() => onReferenceClick(referenceId, type)}
+                      className='font-mono font-bold text-xs hover:underline cursor-pointer flex items-center gap-0.5'
+                      type='button'
+                      title={referenceId}
+                    >
+                      {referenceSerialId || referenceId}
+                    </button>
+                  ) : (
+                    <span className='font-mono font-bold text-xs text-gray-700 dark:text-gray-300' title={referenceId}>{referenceSerialId || referenceId}</span>
+                  )}
                 </div>
               )}
 
-              {batchId && (expiryDate || reason) && (
+              {referenceId && referenceId !== 'N/A' && (expiryDate || reason) && (
                 <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
               )}
+
+
 
               {expiryDate &&
                 (() => {

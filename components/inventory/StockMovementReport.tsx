@@ -144,27 +144,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
   // toggleRow moved to useStockMovementReport.ts
   // exportCSV moved to useStockMovementReport.ts
 
-  // --- Render Sections ---
-  const renderEmptyState = () => (
-    <div className='flex flex-col items-center justify-center py-20 px-4 text-center'>
-      <div className='w-20 h-20 bg-gray-100 dark:bg-(--bg-surface-neutral) rounded-full flex items-center justify-center mb-6'>
-        <span
-          className='material-symbols-rounded text-gray-400 dark:text-gray-500'
-          style={{ fontSize: 'var(--icon-2xl)' }}
-        >
-          package_2
-        </span>
-      </div>
-      <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 page-title'>
-        {isRTL ? 'اختر صنفاً للمتابعة' : 'Select a drug to begin monitoring'}
-      </h1>
-      <p className='text-gray-500 dark:text-gray-400 max-w-md'>
-        {isRTL
-          ? 'ابحث عن أي صنف في الصيدلية لعرض تاريخ حركته، ملخص المخزون والتحليلات.'
-          : 'Search for any drug in your inventory to view its chronological movement history, stock summaries, and analytics.'}
-      </p>
-    </div>
-  );
+
 
   React.useEffect(() => {
     setLeftContent(
@@ -370,35 +350,19 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
       className={`h-full flex flex-col gap-2 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      {!selectedDrug && !showAll ? (
-        renderEmptyState()
-      ) : (
         <div className='flex flex-col gap-0 items-start flex-1 overflow-hidden'>
           {/* Main Content Area - Scrollable Table */}
           <div className='flex-1 w-full min-w-0 h-full flex flex-col overflow-hidden'>
             <div className={`overflow-hidden rounded-3xl ${CARD_LG} flex flex-col h-full`}>
               <div className='p-6 grid grid-cols-3 items-center shrink-0'>
-                {/* Start: Title & Info */}
-                <div className='flex flex-col gap-1 justify-self-start'>
-                  <h3 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
-                    {showAll
-                      ? t.stockMovement.allProductsReport
-                      : getDisplayName(selectedDrug, textTransform)}
-                  </h3>
-                  <div className='flex items-center gap-2'>
-                    <span
-                      className='material-symbols-rounded text-gray-400'
-                      style={{ fontSize: 'var(--icon-sm)' }}
-                    >
-                      {showAll ? 'inventory' : 'qr_code_2'}
-                    </span>
-                    <span className='text-xs font-mono text-gray-500 font-medium'>
-                      {showAll
-                        ? t.stockMovement.allMovements
-                        : selectedDrug?.barcode || (isRTL ? 'لا يوجد باركود' : 'No Barcode')}
-                    </span>
-                  </div>
-                </div>
+                {/* Start: Title */}
+                <h3 className='text-xl font-bold text-gray-900 dark:text-gray-100 justify-self-start'>
+                  {showAll
+                    ? t.stockMovement.allProductsReport
+                    : selectedDrug
+                      ? getDisplayName(selectedDrug, textTransform)
+                      : (isRTL ? 'تقرير حركة الأصناف' : 'Stock Movement Report')}
+                </h3>
 
                 {/* Center: View Switcher */}
                 <div className='justify-self-center'>
@@ -552,12 +516,31 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                       {isRTL ? 'جاري التحميل...' : 'Syncing data...'}
                     </span>
                   </div>
+                ) : !selectedDrug && !showAll ? (
+                  <div className='h-full min-h-[400px] flex flex-col items-center justify-center px-4 text-center'>
+                    <div className='w-28 h-28 bg-gray-100 dark:bg-[var(--bg-surface-neutral)] rounded-full flex items-center justify-center mb-6'>
+                      <span
+                        className='material-symbols-rounded text-gray-400 dark:text-gray-500'
+                        style={{ fontSize: '4rem' }}
+                      >
+                        package_2
+                      </span>
+                    </div>
+                    <h1 className='text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 page-title'>
+                      {isRTL ? 'اختر صنفاً للمتابعة' : 'Select a drug to begin monitoring'}
+                    </h1>
+                    <p className='text-sm text-gray-500 dark:text-gray-400 max-w-md'>
+                      {isRTL
+                        ? 'ابحث عن أي صنف في الصيدلية لعرض تاريخ حركته، ملخص المخزون والتحليلات.'
+                        : 'Search for any drug in your inventory to view its chronological movement history, stock summaries, and analytics.'}
+                    </p>
+                  </div>
                 ) : filteredHistory.length === 0 ? (
-                  <div className='text-center py-20 text-gray-400'>
+                  <div className='h-full min-h-[400px] flex items-center justify-center text-center text-gray-400'>
                     {isRTL ? 'لا توجد حركات في هذه الفترة' : 'No movements recorded in this period'}
                   </div>
                 ) : viewType === 'timeline' ? (
-                  <div className='max-w-3xl mx-auto py-4'>
+                  <div className='max-w-3xl py-4 rtl:pr-4 ltr:pl-4'>
                     {filteredHistory.map((m, _idx) => {
                       const movementDrug = selectedDrug || inventoryMap.get(m.drugId);
                       return (
@@ -581,6 +564,17 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         drugName={
                           showAll ? getDisplayName({ name: m.drugName }, textTransform) : undefined
                         }
+                        referenceId={m.referenceId}
+                        referenceSerialId={m.referenceSerialId}
+                        onReferenceClick={(id, type) => {
+                          if (type === 'sale') {
+                            onViewChange('sales-history', { id });
+                          } else if (type === 'purchase') {
+                            onViewChange('purchases', { id });
+                          } else if (type === 'return_customer') {
+                            onViewChange('return-history', { id });
+                          }
+                        }}
                       />
                     )})}
                   </div>
@@ -853,21 +847,12 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                               : 'text-gray-700 dark:text-gray-200 cursor-default'
                                           }`}
                                           type='button'
+                                          title={m.referenceId}
                                         >
-                                          {m.referenceId}
-                                          {['sale', 'purchase', 'return_customer'].includes(
-                                            m.type
-                                          ) && (
-                                            <span
-                                              className='material-symbols-rounded align-middle ms-1'
-                                              style={{ fontSize: 'var(--icon-xs)' }}
-                                            >
-                                              open_in_new
-                                            </span>
-                                          )}
+                                          {m.referenceSerialId || m.referenceId}
                                         </button>
                                       ) : (
-                                        <span className='font-mono text-gray-700 dark:text-gray-200'>
+                                        <span className='font-mono text-gray-700 dark:text-gray-200' title={m.referenceId}>
                                           N/A
                                         </span>
                                       )}
@@ -907,7 +892,6 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
             </div>
           </div>
         </div>
-      )}
     </div>
   );
 };
