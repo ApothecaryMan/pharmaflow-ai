@@ -108,6 +108,18 @@ export function createRegistry(branchId: string, _orgId: string): PatcherEntry[]
       ],
     },
 
+    // ── Expenses ────────────────────────────────────────────────────
+    {
+      table: 'expenses',
+      events: ['*'],
+      filter: (oid: string) => `org_id=eq.${oid}`,
+      handlers: [
+        // Expenses are filter-based queries (date range, category, payment method),
+        // so invalidate all expense queries for this branch.
+        invalidateBranchScope('expenses', branchId),
+      ],
+    },
+
     // ── Cash Transactions ───────────────────────────────────────────
     {
       table: 'cash_transactions',

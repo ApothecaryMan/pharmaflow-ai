@@ -53,6 +53,12 @@ export const queryKeys = {
   cashTransactions: {
     byShift: (shiftId: string, branchId: string) => ['cashTransactions', shiftId, branchId] as const,
   },
+  expenses: {
+    list: (branchId: string, filters: { dateFrom: string; dateTo: string; category: string; paymentMethod: string }) =>
+      ['expenses', branchId, filters] as const,
+    summary: (branchId: string, dateRange: { from: string; to: string }) =>
+      ['expenses', 'summary', branchId, dateRange] as const,
+  },
   sessions: {
     active: (userId?: string) => ['sessions', 'active', userId] as const,
   },
@@ -70,6 +76,7 @@ export const queryKeys = {
     branches: ['branches'] as const,
     shifts: ['shifts'] as const,
     cashTransactions: ['cashTransactions'] as const,
+    expenses: ['expenses'] as const,
     org: ['org'] as const,
   },
 } as const;
