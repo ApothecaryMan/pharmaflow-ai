@@ -5,7 +5,7 @@ import { expenseService } from '../../services/financials/expenseService';
 import { useAuthStore } from '../../stores/authStore';
 import { useExpensesList, useExpensesSummary } from '../queries/useExpensesQuery';
 
-import type { Expense, ExpenseCategory, ExpensePaymentMethod } from '../../types';
+import type { CashTransaction, Expense, ExpenseCategory, ExpensePaymentMethod, Shift } from '../../types';
 
 export type ExpenseFilterType = 'today' | 'week' | 'month' | 'custom';
 
@@ -118,15 +118,36 @@ export const useExpenses = () => {
         shiftId: payload.shiftId,
       });
 
-      // Invalidate expenses caches
       await invalidateExpenses();
 
-      // Also refresh shift data since a cash expense affects the shift balance
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shifts.all(activeBranchId) });
+      queryClient.setQueryData(queryKeys.shifts.all(activeBranchId), (old: Shift[]) => {
+        if (!old) return old;
+        return old.map((s) =>
+          s.id === payload.shiftId
+            ? { ...s, cashOut: s.cashOut + payload.amount }
+            : s,
+        );
+      });
       if (payload.shiftId) {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.cashTransactions.byShift(payload.shiftId, activeBranchId),
-        });
+        queryClient.setQueryData(
+          queryKeys.cashTransactions.byShift(payload.shiftId, activeBranchId),
+          (old: CashTransaction[]) => {
+            if (!old) return old;
+            return [
+              ...old,
+              {
+                id: newExpense.id,
+                branchId: activeBranchId,
+                shiftId: payload.shiftId,
+                time: new Date().toISOString(),
+                type: 'expense' as const,
+                amount: payload.amount,
+                reason: payload.description,
+                userId: currentEmployee.id,
+              },
+            ];
+          }
+        );
       }
 
       return newExpense;

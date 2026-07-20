@@ -6,6 +6,7 @@ import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/t
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
 import { SmartInput, SmartTextarea } from '../common/SmartInputs';
+import { calculateShiftBalances } from '../../utils/shiftCalculations';
 
 interface RecordExpenseModalProps {
   isOpen: boolean;
@@ -60,25 +61,7 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
   // Compute shift balance details if active
   const shiftBalanceDetails = (() => {
     if (!currentShift) return null;
-
-    // Balance lock calculations: available cash above base (openingBalance)
-    const cashInTotal = Number(currentShift.cashIn || 0);
-    const cashSalesTotal = Number(currentShift.cashSales || 0);
-    const cashPurchaseReturnsTotal = Number(currentShift.cashPurchaseReturns || 0);
-    const cashOutTotal = Number(currentShift.cashOut || 0);
-    const returnsTotal = Number(currentShift.returns || 0);
-    const cashPurchasesTotal = Number(currentShift.cashPurchases || 0);
-
-    const availableCashAboveBase =
-      cashInTotal +
-      cashSalesTotal +
-      cashPurchaseReturnsTotal -
-      (cashOutTotal + returnsTotal + cashPurchasesTotal);
-
-    return {
-      availableCashAboveBase,
-      openingBalance: Number(currentShift.openingBalance || 0),
-    };
+    return calculateShiftBalances(currentShift);
   })();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,7 +84,7 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
 
     // Shift balance validation for cash payments
     if (paymentMethod === 'cash' && shiftBalanceDetails) {
-      if (parsedAmount > shiftBalanceDetails.availableCashAboveBase) {
+      if (parsedAmount > shiftBalanceDetails.availableAboveBase) {
         setValidationError(t.expenses.validation.insufficientBalance);
         return;
       }
@@ -264,7 +247,7 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
               <div className='flex justify-between items-center text-xs'>
                 <span className='text-(--text-secondary)'>{t.expenses.modal.shiftBalance}</span>
                 <span className='font-semibold text-emerald-600 dark:text-emerald-400'>
-                  {shiftBalanceDetails?.availableCashAboveBase.toFixed(2)} {t.global.currency}
+                  {shiftBalanceDetails?.availableAboveBase.toFixed(2)} {t.global.currency}
                 </span>
               </div>
             ) : (
