@@ -59,6 +59,9 @@ export const queryKeys = {
     summary: (branchId: string, dateRange: { from: string; to: string }) =>
       ['expenses', 'summary', branchId, dateRange] as const,
   },
+  audit: {
+    transactions: (branchId: string, limit: number) => ['audit', 'transactions', branchId, limit] as const,
+  },
   sessions: {
     active: (userId?: string) => ['sessions', 'active', userId] as const,
   },
@@ -77,6 +80,7 @@ export const queryKeys = {
     shifts: ['shifts'] as const,
     cashTransactions: ['cashTransactions'] as const,
     expenses: ['expenses'] as const,
+    audit: ['audit'] as const,
     org: ['org'] as const,
   },
 } as const;
