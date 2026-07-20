@@ -1,5 +1,4 @@
 import { financialRepository } from './repositories/financialRepository';
-import type { Sale } from '../../types';
 import type {
   CategoryFinancialReport,
   DailyFinancialData,
@@ -8,7 +7,6 @@ import type {
   FinancialReportSummary,
   ProductFinancialItem,
 } from '../../types/intelligence';
-import { money } from '../../utils/money';
 import { dateRangeService, type FinancialPeriod } from './dateRangeService';
 
 const EMPTY_SUMMARY: FinancialSummary = {
@@ -48,54 +46,6 @@ function calculateChange(
 }
 
 export const financialService = {
-  /**
-   * Calculates Total Revenue and Total Returns using precision math.
-   * Duplicated from DashboardService for localized/isolated computations.
-   */
-  calculateRevenueAndReturns(sales: Sale[]): { totalRevenue: number; totalReturns: number } {
-    let revenueCents = 0;
-    let returnsCents = 0;
-
-    sales.forEach((sale) => {
-      let saleItemRevenueCents = 0;
-
-      sale.items?.forEach((item) => {
-        const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
-        const returnedQty =
-          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-
-        const actualSoldQty = item.quantity - returnedQty;
-        const itemPrice = item.publicPrice || 0;
-        const itemDiscountPct = item.discount || 0;
-
-        const factorInt = 100 - itemDiscountPct;
-        const netItemPrice = money.multiply(itemPrice, factorInt, 2);
-
-        if (actualSoldQty > 0) {
-          const lineRevenue = money.multiply(netItemPrice, actualSoldQty, 0);
-          saleItemRevenueCents += money.toSmallestUnit(lineRevenue);
-        }
-
-        if (returnedQty > 0) {
-          const lineReturn = money.multiply(netItemPrice, returnedQty, 0);
-          returnsCents += money.toSmallestUnit(lineReturn);
-        }
-      });
-
-      if (sale.globalDiscount && sale.globalDiscount > 0) {
-        const globalDiscountCents = money.toSmallestUnit(sale.globalDiscount);
-        saleItemRevenueCents = Math.max(0, saleItemRevenueCents - globalDiscountCents);
-      }
-
-      revenueCents += saleItemRevenueCents;
-    });
-
-    return {
-      totalRevenue: money.fromSmallestUnit(revenueCents),
-      totalReturns: money.fromSmallestUnit(returnsCents),
-    };
-  },
-
   /**
    * Gets Financial Summary using snapshots + live hybrid engine.
    */

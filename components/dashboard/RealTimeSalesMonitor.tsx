@@ -18,7 +18,8 @@ import { useAlert, useSettings } from '../../context';
 import { usePageHelp } from '../../context/HelpContext';
 import { useCustomers } from '../../hooks/queries/useCustomersQuery';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
-import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useTodaySales } from '../../hooks/queries/useSalesQuery';
+import { useFinancialData } from '../../hooks/financials/useFinancialData';
 import { useShift } from '../../hooks/sales/useShift';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
 import { useAuthStore } from '../../stores/authStore';
@@ -155,13 +156,14 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const isLoading = useAuthStore((s) => s.isLoading);
   const branches = useAuthStore((s) => s.branches);
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
-  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: sales = [] } = useTodaySales(activeBranchId);
   const { data: customers = [] } = useCustomers(activeBranchId);
   const { data: products = [] } = useInventory(activeBranchId);
   const activeBranch = useMemo(
     () => branches.find((b) => b.id === activeBranchId),
     [branches, activeBranchId]
   );
+  const { summary: finSummary } = useFinancialData('today');
   const { shifts } = useShift();
   const [branchFilter, setBranchFilter] = useState<string>(activeBranchId || 'all');
 
@@ -208,6 +210,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     products,
     shifts,
     language,
+    finSummary,
   });
 
   const tooltips = useMemo(
@@ -335,12 +338,16 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         if (newSales.some((s) => highValueAnalysis.highValueIds.has(s.id) || isVIP(s)))
           playHighValue();
         newSales.forEach((s) => processedSalesRef.current.add(s.id));
-
-        // For new sales arriving after initial load, mark them as NEW to trigger animation
-        setDisplayedSales((prev) =>
-          [...newSales.map((s) => ({ ...s, isNew: true })), ...prev].slice(0, 20)
-        );
       }
+
+      // ALWAYS update displayedSales so we get status changes and updated totals
+      // from existing sales, not just new ones.
+      setDisplayedSales(
+        todaysSales.slice(0, 20).map((s) => ({
+          ...s,
+          isNew: newSales.some((ns) => ns.id === s.id),
+        }))
+      );
     } else {
       // For filtered views, we don't show "new" animations to avoid visual clutter
       const filtered = todaysSales.filter((s) =>

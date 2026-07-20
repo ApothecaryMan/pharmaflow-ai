@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { DashboardService } from '../../services/dashboard/dashboardService';
-import { financialService } from '../../services/financials/financialService';
 import type { Customer, Drug, Sale } from '../../types';
+import type { FinancialSummary } from '../../services/financials/financialService';
 import { money } from '../../utils/money';
 import { CurrencyValue } from '../common/InsightTooltip';
 
@@ -11,6 +11,7 @@ interface RealTimeSalesAnalyticsProps {
   products: Drug[];
   shifts: any[];
   language?: string;
+  finSummary: FinancialSummary | null;
 }
 
 /**
@@ -29,6 +30,7 @@ export const useRealTimeSalesAnalytics = ({
   products: _products,
   shifts,
   language,
+  finSummary,
 }: RealTimeSalesAnalyticsProps) => {
   // Filter to today's sales
   const todaysSales = useMemo(() => {
@@ -43,27 +45,13 @@ export const useRealTimeSalesAnalytics = ({
 
   // === CORE METRICS ===
   const coreMetrics = useMemo(() => {
-    const { totalRevenue, totalReturns } = financialService.calculateRevenueAndReturns(todaysSales);
-    const transactions = todaysSales.length;
-
-    // Items sold (net of returns) - Precise aggregation
-    let totalItemsNet = 0;
-    todaysSales.forEach((s) => {
-      s.items.forEach((item) => {
-        const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
-        const returnedQty =
-          s.itemReturnedQuantities?.[lineKey] || s.itemReturnedQuantities?.[item.id] || 0;
-        totalItemsNet += Math.max(0, item.quantity - returnedQty);
-      });
-    });
-
     return {
-      revenue: totalRevenue,
-      transactions,
-      itemsSold: totalItemsNet,
-      returns: totalReturns,
+      revenue: finSummary?.net_revenue ?? 0,
+      transactions: finSummary?.total_transactions ?? todaysSales.length,
+      itemsSold: finSummary?.total_units_sold ?? 0,
+      returns: finSummary?.return_revenue ?? 0,
     };
-  }, [todaysSales]);
+  }, [todaysSales, finSummary]);
 
   // === DYNAMICS ANALYSIS ===
   const dynamics = useMemo(() => {
@@ -72,8 +60,16 @@ export const useRealTimeSalesAnalytics = ({
 
   // === AVERAGES & RATES ===
   const averages = useMemo(() => {
-    return DashboardService.calculateAverages(todaysSales);
-  }, [todaysSales]);
+    const netRevenue = finSummary?.net_revenue ?? 0;
+    const grossRevenue = (finSummary?.net_revenue ?? 0) + (finSummary?.return_revenue ?? 0);
+    const returnRevenue = finSummary?.return_revenue ?? 0;
+    const totalTransactions = finSummary?.total_transactions ?? todaysSales.length;
+
+    const avgOrderValue = totalTransactions > 0 ? money.divide(netRevenue, totalTransactions) : 0;
+    const returnRate = grossRevenue > 0 ? money.multiply(money.divide(returnRevenue, grossRevenue), 100, 0) : 0;
+
+    return { avgOrderValue, returnRate };
+  }, [todaysSales, finSummary]);
 
   // === REVENUE CHANGE ===
   const revenueChange = useMemo(() => {
@@ -142,8 +138,8 @@ export const useRealTimeSalesAnalytics = ({
 
   const highValueAnalysis = useMemo(() => {
     const sortedToday = [...todaysSales].sort((a, b) => {
-      const revA = financialService.calculateRevenueAndReturns([a]).totalRevenue;
-      const revB = financialService.calculateRevenueAndReturns([b]).totalRevenue;
+      const revA = a.netTotal ?? a.total;
+      const revB = b.netTotal ?? b.total;
       return revB - revA;
     });
 
@@ -151,7 +147,7 @@ export const useRealTimeSalesAnalytics = ({
     const highValueIds = new Set(sortedToday.slice(0, topCount).map((s) => s.id));
     const thresholdSale = sortedToday[topCount - 1];
     const highValueThreshold = thresholdSale
-      ? financialService.calculateRevenueAndReturns([thresholdSale]).totalRevenue
+      ? (thresholdSale.netTotal ?? thresholdSale.total)
       : 0;
 
     return {

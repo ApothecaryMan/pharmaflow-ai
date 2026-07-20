@@ -37,61 +37,6 @@ export interface TopProduct {
 // biome-ignore lint/complexity/noStaticOnlyClass: legacy API, multiple callers
 export class DashboardService {
   /**
-   * @deprecated Use financialService.calculateRevenueAndReturns instead.
-   * Calculates Total Revenue and Total Returns using precision math.
-   * Net Revenue = Sum(Sale.netTotal ?? Sale.total)
-   */
-  static calculateRevenueAndReturns(sales: Sale[]): { totalRevenue: number; totalReturns: number } {
-    let revenueCents = 0;
-    let returnsCents = 0;
-
-    sales.forEach((sale) => {
-      let saleItemRevenueCents = 0;
-
-      (sale.items || []).forEach((item) => {
-        const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
-        const returnedQty =
-          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-
-        const actualSoldQty = item.quantity - returnedQty;
-        const itemPrice = item.publicPrice || 0;
-        const itemDiscountPct = item.discount || 0; // Item-level discount %
-
-        // 1. Calculate effective price after item discount
-        // Price per unit = price * (1 - discount/100)
-        const factorInt = 100 - itemDiscountPct;
-        const netItemPrice = money.multiply(itemPrice, factorInt, 2);
-
-        // 2. Revenue from items actually kept
-        if (actualSoldQty > 0) {
-          const lineRevenue = money.multiply(netItemPrice, actualSoldQty, 0);
-          saleItemRevenueCents += money.toSmallestUnit(lineRevenue);
-        }
-
-        // 3. Value of items returned (at the price they were actually sold)
-        if (returnedQty > 0) {
-          const lineReturn = money.multiply(netItemPrice, returnedQty, 0);
-          returnsCents += money.toSmallestUnit(lineReturn);
-        }
-      });
-
-      // 4. Apply Global Sale Discount (if any)
-      // Usually globalDiscount is a fixed amount subtracted from the total
-      if (sale.globalDiscount && sale.globalDiscount > 0) {
-        const globalDiscountCents = money.toSmallestUnit(sale.globalDiscount);
-        saleItemRevenueCents = Math.max(0, saleItemRevenueCents - globalDiscountCents);
-      }
-
-      revenueCents += saleItemRevenueCents;
-    });
-
-    return {
-      totalRevenue: money.fromSmallestUnit(revenueCents),
-      totalReturns: money.fromSmallestUnit(returnsCents),
-    };
-  }
-
-  /**
    * @deprecated Use financialService.getFinancialSummary or custom query instead.
    * Calculates Cost of Goods Sold (COGS) using precision math.
    * COGS = Sum(ActualSoldQty * UnitCost)
@@ -248,21 +193,6 @@ export class DashboardService {
   }
 
   /**
-   * Calculates averages and rates with precision.
-   */
-  static calculateAverages(sales: Sale[]): { avgOrderValue: number; returnRate: number } {
-    const { totalRevenue, totalReturns } = DashboardService.calculateRevenueAndReturns(sales);
-
-    const avgOrderValue = sales.length > 0 ? money.divide(totalRevenue, sales.length) : 0;
-
-    const grossRevenue = money.add(totalRevenue, totalReturns);
-    const returnRate =
-      grossRevenue > 0 ? money.multiply(money.divide(totalReturns, grossRevenue), 100, 0) : 0;
-
-    return { avgOrderValue, returnRate };
-  }
-
-  /**
    * Aggregates sales dynamics including hourly, customer, and payment distributions.
    */
   static getSalesDynamics(sales: Sale[], customers: Customer[]) {
@@ -281,7 +211,7 @@ export class DashboardService {
     let walkInCount = 0;
 
     sales.forEach((sale) => {
-      const { totalRevenue } = DashboardService.calculateRevenueAndReturns([sale]);
+      const totalRevenue = sale.netTotal ?? sale.total;
       const hour = new Date(sale.date).getHours();
 
       // Hourly

@@ -358,7 +358,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     grossProfit: _grossProfit,
     netProfit,
     profitMarginPercent: _profitMarginPercent,
-    averageOrderValue: _averageOrderValue,
+    totalTransactions,
+    averageOrderValue,
     returnRate: _returnRate,
     movingItemsAnalysis,
     profitGrade: _profitGrade,
@@ -560,13 +561,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 : [
                     {
                       label: t.expand?.metrics || 'Total Count',
-                      value: filteredData.sales.length,
+                      value: totalTransactions,
                     },
                     {
                       label: t.expand?.amount || 'Average',
-                      value: formatCurrency(
-                        filteredData.sales.length > 0 ? totalRevenue / filteredData.sales.length : 0
-                      ),
+                      value: formatCurrency(averageOrderValue),
                     },
                   ]
           }

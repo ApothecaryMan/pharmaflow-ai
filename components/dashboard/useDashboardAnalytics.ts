@@ -467,6 +467,7 @@ export const useDashboardAnalytics = ({
     totalRevenue,
     totalReturns,
     totalCogs,
+    totalTransactions,
     inventoryValuation,
     inventoryTurnoverRatio,
     daysOfInventory,
