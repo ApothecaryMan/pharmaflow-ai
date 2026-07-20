@@ -2,6 +2,7 @@ import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 import { getReceiptFontsCSS } from '../../utils/printing';
+import { pricing } from '../../utils/money';
 
 export function generateLayout4HTML(
   sale: Sale,
@@ -87,22 +88,22 @@ export function generateLayout4HTML(
       <table>
         <tbody>
           <tr>
-            <th style="width: 30%;" class="left">${lang === 'AR' ? 'رقم الفاتورة' : 'Inv No'}</th>
+            <th style="width: 30%;" class="left">${lang === 'AR' ? 'ÃƒËœÃ‚Â±Ãƒâ„¢Ã¢â‚¬Å¡Ãƒâ„¢Ã¢â‚¬Â¦ ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã‚ÂÃƒËœÃ‚Â§ÃƒËœÃ‚ÂªÃƒâ„¢Ã‹â€ ÃƒËœÃ‚Â±ÃƒËœÃ‚Â©' : 'Inv No'}</th>
             <td class="left">${sale.serialId || sale.id}</td>
           </tr>
           <tr>
-            <th class="left">${lang === 'AR' ? 'التاريخ' : 'Date'}</th>
+            <th class="left">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂªÃƒËœÃ‚Â§ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â®' : 'Date'}</th>
             <td class="left">${new Date(sale.date).toLocaleDateString('en-GB')} ${new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</td>
           </tr>
           <tr>
-            <th class="left">${lang === 'AR' ? 'العميل' : 'Customer'}</th>
+            <th class="left">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹Ãƒâ„¢Ã¢â‚¬Â¦Ãƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾' : 'Customer'}</th>
             <td class="left">${sale.customerName ? sale.customerName : 'GUEST'}</td>
           </tr>
           ${
             sale.saleType === 'delivery'
               ? `
           <tr>
-            <th class="left">${lang === 'AR' ? 'توصيل' : 'Delivery'}</th>
+            <th class="left">${lang === 'AR' ? 'ÃƒËœÃ‚ÂªÃƒâ„¢Ã‹â€ ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾' : 'Delivery'}</th>
             <td class="left" dir="auto">
               ${sale.customerPhone ? `<div dir="ltr"> ${sale.customerPhone}</div>` : ''}
               ${sale.customerAddress ? `<div dir="rtl"> ${sale.customerAddress.replace(/\n/g, ' - ')}</div>` : ''}
@@ -119,9 +120,9 @@ export function generateLayout4HTML(
       <table>
         <thead>
           <tr>
-            <th style="text-align: left;">${lang === 'AR' ? 'الصنف' : 'ITEM'}</th>
-            <th style="width: 15%;">${lang === 'AR' ? 'كمية' : 'QTY'}</th>
-            <th style="width: 25%;">${lang === 'AR' ? 'سعر' : 'PRICE'}</th>
+            <th style="text-align: left;">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒâ„¢Ã¢â‚¬Â Ãƒâ„¢Ã‚Â' : 'ITEM'}</th>
+            <th style="width: 15%;">${lang === 'AR' ? 'Ãƒâ„¢Ã†â€™Ãƒâ„¢Ã¢â‚¬Â¦Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©' : 'QTY'}</th>
+            <th style="width: 25%;">${lang === 'AR' ? 'ÃƒËœÃ‚Â³ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±' : 'PRICE'}</th>
           </tr>
         </thead>
         <tbody>
@@ -132,9 +133,7 @@ export function generateLayout4HTML(
             const rows = (sale.items || [])
               .map((item) => {
                 const effectivePrice =
-                  item.isUnit && item.unitsPerPack
-                    ? item.publicPrice / item.unitsPerPack
-                    : item.publicPrice;
+                  item.publicPrice;
                 const lineGross = effectivePrice * item.quantity;
                 const lineNet = lineGross * (1 - (item.discount || 0) / 100);
 
@@ -146,7 +145,7 @@ export function generateLayout4HTML(
               <td dir="ltr" style="text-align: left; font-weight: bold;">
                 ${getDisplayName(item)}
               </td>
-              <td class="center" dir="ltr">${item.quantity}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
+              <td class="center" dir="ltr">${item.quantity}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â­ÃƒËœÃ‚Â¯ÃƒËœÃ‚Â©</div>' : ''}</td>
               <td class="right" dir="ltr">${lineGross.toFixed(2)}</td>
             </tr>`;
               })
@@ -166,14 +165,14 @@ export function generateLayout4HTML(
       <!-- Totals Section (Div-based) -->
         <div class="totals-div">
           <div class="total-row">
-            <span>${lang === 'AR' ? 'الإجمالي' : 'Subtotal'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â ' : 'Subtotal'}</span>
             <span dir="ltr">${grossSubtotal.toFixed(2)}</span>
           </div>
           ${
             totalDiscount > 0
               ? `
           <div class="total-row">
-            <span>${lang === 'AR' ? 'إجمالي الخصم' : 'Total Discount'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â  ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â®ÃƒËœÃ‚ÂµÃƒâ„¢Ã¢â‚¬Â¦' : 'Total Discount'}</span>
             <span dir="ltr">-${totalDiscount.toFixed(2)}</span>
           </div>`
               : ''
@@ -182,7 +181,7 @@ export function generateLayout4HTML(
             sale.deliveryFee && sale.deliveryFee > 0
               ? `
           <div class="total-row">
-            <span>${lang === 'AR' ? 'خدمة التوصيل' : 'Delivery Fee'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â®ÃƒËœÃ‚Â¯Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂªÃƒâ„¢Ã‹â€ ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾' : 'Delivery Fee'}</span>
             <span dir="ltr">${sale.deliveryFee.toFixed(2)}</span>
           </div>`
               : ''
@@ -191,14 +190,14 @@ export function generateLayout4HTML(
             sale.tax && sale.tax > 0
               ? `
           <div class="total-row">
-            <span>${lang === 'AR' ? 'الضريبة' : 'Tax'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¶ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â©' : 'Tax'}</span>
             <span dir="ltr">${sale.tax.toFixed(2)}</span>
           </div>`
               : ''
           }
           
           <div class="total-row final-row">
-            <span>${lang === 'AR' ? 'الصافي' : 'Total'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒËœÃ‚Â§Ãƒâ„¢Ã‚ÂÃƒâ„¢Ã…Â ' : 'Total'}</span>
             <span dir="ltr">${sale.total.toFixed(2)} EGP</span>
           </div>
         
@@ -207,14 +206,14 @@ export function generateLayout4HTML(
             ? `
         <div class="returns-section">
           <div style="font-weight: bold; margin-bottom: 4px; text-align: center;">
-            ${lang === 'AR' ? 'المرتجعات' : 'RETURNS'}
+            ${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'RETURNS'}
           </div>
           <table>
             <thead>
               <tr>
-                <th style="text-align: left;">${lang === 'AR' ? 'الصنف' : 'ITEM'}</th>
-                <th style="width: 15%;">${lang === 'AR' ? 'كمية' : 'QTY'}</th>
-                <th style="width: 25%;">${lang === 'AR' ? 'سعر' : 'PRICE'}</th>
+                <th style="text-align: left;">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒâ„¢Ã¢â‚¬Â Ãƒâ„¢Ã‚Â' : 'ITEM'}</th>
+                <th style="width: 15%;">${lang === 'AR' ? 'Ãƒâ„¢Ã†â€™Ãƒâ„¢Ã¢â‚¬Â¦Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â©' : 'QTY'}</th>
+                <th style="width: 25%;">${lang === 'AR' ? 'ÃƒËœÃ‚Â³ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â±' : 'PRICE'}</th>
               </tr>
             </thead>
             <tbody>
@@ -235,15 +234,13 @@ export function generateLayout4HTML(
                   });
                   if (!item) return '';
                   const effectivePrice =
-                    item.isUnit && item.unitsPerPack
-                      ? item.publicPrice / item.unitsPerPack
-                      : item.publicPrice;
+                    item.publicPrice;
                   const returnedAmount =
                     effectivePrice * (qty as number) * (1 - (item.discount || 0) / 100);
                   return `
                 <tr class="${item.isUnit ? 'unit-row' : ''}">
                   <td dir="ltr" style="text-align: left; font-weight: bold;">${getDisplayName(item)}</td>
-                  <td class="center" dir="ltr">${qty}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
+                  <td class="center" dir="ltr">${qty}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â­ÃƒËœÃ‚Â¯ÃƒËœÃ‚Â©</div>' : ''}</td>
                   <td class="right" dir="ltr">${returnedAmount.toFixed(2)}</td>
                 </tr>`;
                 })
@@ -251,11 +248,11 @@ export function generateLayout4HTML(
             </tbody>
           </table>
           <div class="total-row">
-             <span>${lang === 'AR' ? 'إجمالي المرتجعات' : 'Total Returns'}</span>
+             <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â  ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'Total Returns'}</span>
              <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
           </div>
           <div class="total-row final-row" style="border-top: none;">
-            <span>${lang === 'AR' ? 'الإجمالي النهائي' : 'Net Total'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â  ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â Ãƒâ„¢Ã¢â‚¬Â¡ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¦Ãƒâ„¢Ã…Â ' : 'Net Total'}</span>
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>
@@ -264,11 +261,11 @@ export function generateLayout4HTML(
               ? `
         <div class="returns-section">
           <div class="total-row">
-            <span>${lang === 'AR' ? 'المرتجعات' : 'Returns'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'Returns'}</span>
             <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
           </div>
           <div class="total-row final-row" style="border-top: none;">
-            <span>${lang === 'AR' ? 'الإجمالي النهائي' : 'Net Total'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â  ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â Ãƒâ„¢Ã¢â‚¬Â¡ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¦Ãƒâ„¢Ã…Â ' : 'Net Total'}</span>
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>`

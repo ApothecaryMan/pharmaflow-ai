@@ -197,7 +197,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (money.isGt(calculateRefund, PHARMACIST_REFUND_LIMIT_PER_INVOICE)) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: لا يمكن استرجاع مبلغ أكبر من ${formatCurrency(PHARMACIST_REFUND_LIMIT_PER_INVOICE)} في العملية الواحدة للصيدلي. يرجى طلب موافقة المدير.`
+              ? `Ø®Ø·Ø£: Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ù…Ø¨Ù„Øº Ø£ÙƒØ¨Ø± Ù…Ù† ${formatCurrency(PHARMACIST_REFUND_LIMIT_PER_INVOICE)} ÙÙŠ Ø§Ù„Ø¹Ù…Ù„ÙŠØ© Ø§Ù„ÙˆØ§Ø­Ø¯Ø© Ù„Ù„ØµÙŠØ¯Ù„ÙŠ. ÙŠØ±Ø¬Ù‰ Ø·Ù„Ø¨ Ù…ÙˆØ§ÙÙ‚Ø© Ø§Ù„Ù…Ø¯ÙŠØ±.`
               : `Error: Pharmacists cannot refund more than ${formatCurrency(PHARMACIST_REFUND_LIMIT_PER_INVOICE)} per invoice. Please request manager approval.`;
           setValidationError(errorMsg);
           setIsProcessing(false);
@@ -209,7 +209,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (money.isGt(projectedDailyTotal, PHARMACIST_DAILY_REFUND_LIMIT)) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: تم تجاوز الحد اليومي للمرتجعات (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). الإجمالي الحالي: ${formatCurrency(currentDailyRefunds)}, المبلغ المطلوب: ${formatCurrency(calculateRefund)}. يرجى طلب موافقة المدير.`
+              ? `Ø®Ø·Ø£: ØªÙ… ØªØ¬Ø§ÙˆØ² Ø§Ù„Ø­Ø¯ Ø§Ù„ÙŠÙˆÙ…ÙŠ Ù„Ù„Ù…Ø±ØªØ¬Ø¹Ø§Øª (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø­Ø§Ù„ÙŠ: ${formatCurrency(currentDailyRefunds)}, Ø§Ù„Ù…Ø¨Ù„Øº Ø§Ù„Ù…Ø·Ù„ÙˆØ¨: ${formatCurrency(calculateRefund)}. ÙŠØ±Ø¬Ù‰ Ø·Ù„Ø¨ Ù…ÙˆØ§ÙÙ‚Ø© Ø§Ù„Ù…Ø¯ÙŠØ±.`
               : `Error: Daily refund limit exceeded (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). Current: ${formatCurrency(currentDailyRefunds)}, Requested: ${formatCurrency(calculateRefund)}. Please request manager approval.`;
           setValidationError(errorMsg);
           setIsProcessing(false);
@@ -225,7 +225,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (!isSameShift) {
           const errorMsg =
             language === 'AR'
-              ? 'خطأ: يمكن للكاشير استرجاع الفواتير التي تمت في نفس الوردية فقط.'
+              ? 'Ø®Ø·Ø£: ÙŠÙ…ÙƒÙ† Ù„Ù„ÙƒØ§Ø´ÙŠØ± Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ø§Ù„ÙÙˆØ§ØªÙŠØ± Ø§Ù„ØªÙŠ ØªÙ…Øª ÙÙŠ Ù†ÙØ³ Ø§Ù„ÙˆØ±Ø¯ÙŠØ© ÙÙ‚Ø·.'
               : 'Error: Cashiers can only refund invoices processed during the current shift.';
           setValidationError(errorMsg);
           setIsProcessing(false);
@@ -236,7 +236,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (money.isGt(calculateRefund, CASHIER_REFUND_LIMIT_PER_INVOICE)) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: لا يمكن للكاشير استرجاع مبلغ أكبر من ${formatCurrency(CASHIER_REFUND_LIMIT_PER_INVOICE)} في العملية الواحدة.`
+              ? `Ø®Ø·Ø£: Ù„Ø§ ÙŠÙ…ÙƒÙ† Ù„Ù„ÙƒØ§Ø´ÙŠØ± Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ù…Ø¨Ù„Øº Ø£ÙƒØ¨Ø± Ù…Ù† ${formatCurrency(CASHIER_REFUND_LIMIT_PER_INVOICE)} ÙÙŠ Ø§Ù„Ø¹Ù…Ù„ÙŠØ© Ø§Ù„ÙˆØ§Ø­Ø¯Ø©.`
               : `Error: Cashiers cannot refund more than ${formatCurrency(CASHIER_REFUND_LIMIT_PER_INVOICE)} per invoice.`;
           setValidationError(errorMsg);
           setIsProcessing(false);
@@ -534,7 +534,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                 <span className='material-symbols-rounded text-[10px]'>
                                   history
                                 </span>
-                                {item.returnedQty} {language === 'AR' ? 'مرتجع' : 'returned'}
+                                {item.returnedQty} {language === 'AR' ? 'Ù…Ø±ØªØ¬Ø¹' : 'returned'}
                               </div>
                             )}
                           </div>
@@ -544,9 +544,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                const price = item.isUnit
-                                  ? money.divide(item.publicPrice, item.unitsPerPack || 1)
-                                  : item.publicPrice;
+                                const price = item.publicPrice;
                                 const discounted = pricing.afterDiscount(price, item.discount || 0);
                                 return formatCurrency(discounted);
                               })()}
@@ -554,9 +552,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
                                 {formatCurrency(
-                                  item.isUnit
-                                    ? money.divide(item.publicPrice, item.unitsPerPack || 1)
-                                    : item.publicPrice
+                                  item.publicPrice
                                 )}
                               </p>
                             )}
@@ -795,9 +791,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
                                 const basePrice =
-                                  item.isUnit && item.unitsPerPack
-                                    ? money.divide(item.publicPrice, item.unitsPerPack)
-                                    : item.publicPrice;
+                                  item.publicPrice;
                                 const discounted = pricing.afterDiscount(
                                   basePrice,
                                   item.discount || 0
@@ -808,9 +802,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
                                 {formatCurrency(
-                                  item.isUnit && item.unitsPerPack
-                                    ? money.divide(item.publicPrice, item.unitsPerPack)
-                                    : item.publicPrice
+                                  item.publicPrice
                                 )}
                               </p>
                             )}

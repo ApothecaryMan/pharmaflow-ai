@@ -2,6 +2,7 @@ import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 import { getReceiptFontsCSS } from '../../utils/printing';
+import { pricing } from '../../utils/money';
 
 export function generateLayout6HTML(
   sale: Sale,
@@ -102,7 +103,7 @@ export function generateLayout6HTML(
         sale.saleType === 'delivery'
           ? `
       <div class="spacer"></div>
-      <div style="text-align: center; margin: 4px 0;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block; font-weight: bold;">${lang === 'AR' ? 'توصيل' : 'DELIVERY'}</span></div>
+      <div style="text-align: center; margin: 4px 0;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block; font-weight: bold;">${lang === 'AR' ? 'ÃƒËœÃ‚ÂªÃƒâ„¢Ã‹â€ ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾' : 'DELIVERY'}</span></div>
       ${sale.customerPhone ? `<div dir="ltr" style="text-align: center; font-weight: bold;">${sale.customerPhone}</div>` : ''}
       ${sale.customerAddress ? `<div dir="rtl" style="text-align: center; font-size: 9px;">${sale.customerAddress.replace(/\n/g, ' ')}</div>` : ''}
       ${sale.customerStreetAddress ? `<div dir="rtl" style="text-align: center; font-size: 9px;">${sale.customerStreetAddress.replace(/\n/g, ' ')}</div>` : ''}
@@ -118,10 +119,8 @@ export function generateLayout6HTML(
           ${(sale.items || [])
             .map((item) => {
               const effectivePrice =
-                item.isUnit && item.unitsPerPack
-                  ? item.publicPrice / item.unitsPerPack
-                  : item.publicPrice;
-              const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
+                item.publicPrice;
+              const lineTotal = pricing.afterDiscount(effectivePrice * item.quantity, item.discount || 0);
               return `
             <tr>
               <td>
@@ -141,7 +140,7 @@ export function generateLayout6HTML(
         ${sale.deliveryFee && sale.deliveryFee > 0 ? `<div class="total-row" style="color: #444;"><span>DEL</span><span>${sale.deliveryFee.toFixed(2)}</span></div>` : ''}
         ${
           sale.tax && sale.tax > 0
-            ? `<div class="total-row" style="color: #444;"><span>${lang === 'AR' ? 'الضريبة' : 'TAX'}</span><span>${sale.tax.toFixed(2)}</span></div>`
+            ? `<div class="total-row" style="color: #444;"><span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¶ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â©' : 'TAX'}</span><span>${sale.tax.toFixed(2)}</span></div>`
             : ''
         }
         <div class="total-row final"><span>TOTAL</span><span>${sale.total.toFixed(2)} EGP</span></div>
@@ -150,7 +149,7 @@ export function generateLayout6HTML(
           sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
             ? `
         <div class="spacer"></div>
-        <div style="text-align: center; margin-bottom: 8px;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block; font-weight: bold;">${lang === 'AR' ? 'المرتجعات' : 'RETURNS'}</span></div>
+        <div style="text-align: center; margin-bottom: 8px;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block; font-weight: bold;">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'RETURNS'}</span></div>
         ${
           sale.itemReturnedQuantities
             ? Object.entries(sale.itemReturnedQuantities)
@@ -170,10 +169,8 @@ export function generateLayout6HTML(
                   });
                   if (!item) return '';
                   const effectivePrice =
-                    item.isUnit && item.unitsPerPack
-                      ? item.publicPrice / item.unitsPerPack
-                      : item.publicPrice;
-                  const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
+                    item.publicPrice;
+                  const returnedAmount = pricing.afterDiscount(effectivePrice * qty, item.discount || 0);
                   return `
         <div style="display: flex; justify-content: space-between; font-size: 9px; margin: 2px 0;">
           <span>${item.name} x${qty}</span>

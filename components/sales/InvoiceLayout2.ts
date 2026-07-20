@@ -2,6 +2,7 @@ import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 import { getReceiptFontsCSS } from '../../utils/printing';
+import { pricing } from '../../utils/money';
 
 export function generateLayout2HTML(
   sale: Sale,
@@ -84,7 +85,7 @@ export function generateLayout2HTML(
             : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
-        <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
+        <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'Ãƒâ„¢Ã¢â‚¬Â ÃƒËœÃ‚Â¸ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Â¦ ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¯ÃƒËœÃ‚Â§ÃƒËœÃ‚Â±ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â ÃƒËœÃ‚Â¯Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'Pharmacy Management System')}</div>
         <div class="store-info ${opts.highlightedField === 'headerAddress' ? 'highlight' : ''}" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
         <div class="store-info ${opts.highlightedField === 'headerArea' ? 'highlight' : ''}" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
         <div class="store-info ${opts.highlightedField === 'headerHotline' ? 'highlight' : ''}" dir="ltr" style="font-weight: bold; font-size: 12px; margin-top: 4px;">${opts.headerHotline ?? currentDefaults.hotline}</div>
@@ -133,10 +134,8 @@ export function generateLayout2HTML(
           ${(sale.items || [])
             .map((item) => {
               const effectivePrice =
-                item.isUnit && item.unitsPerPack
-                  ? item.publicPrice / item.unitsPerPack
-                  : item.publicPrice;
-              const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
+                item.publicPrice;
+              const lineTotal = pricing.afterDiscount(effectivePrice * item.quantity, item.discount || 0);
 
               return `
             <tr>
@@ -213,10 +212,8 @@ export function generateLayout2HTML(
                     });
                     if (!item) return '';
                     const effectivePrice =
-                      item.isUnit && item.unitsPerPack
-                        ? item.publicPrice / item.unitsPerPack
-                        : item.publicPrice;
-                    const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
+                      item.publicPrice;
+                    const returnedAmount = pricing.afterDiscount(effectivePrice * qty, item.discount || 0);
                     return `
           <div style="display: flex; justify-content: space-between; font-size: 10px; margin: 2px 0;">
             <span>${item.name} x${qty}</span>

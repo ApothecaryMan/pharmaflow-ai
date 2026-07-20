@@ -415,7 +415,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                           if (isUnit) g.unitQty += item.quantity;
                           else g.packQty += item.quantity;
                           const realQty = item.quantity - ret;
-                          const price = isUnit ? publicPrice / (unitsPerPack || 1) : publicPrice;
+                          const price = publicPrice;
 
                           const lineTotal = money.multiply(price, realQty, 0);
                           const discountedTotal = pricing.afterDiscount(lineTotal, itemDiscount);

@@ -2,6 +2,7 @@ import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
 import { getReceiptFontsCSS } from '../../utils/printing';
+import { pricing } from '../../utils/money';
 
 export function generateLayout3HTML(
   sale: Sale,
@@ -99,10 +100,8 @@ export function generateLayout3HTML(
           ${(sale.items || [])
             .map((item) => {
               const effectivePrice =
-                item.isUnit && item.unitsPerPack
-                  ? item.publicPrice / item.unitsPerPack
-                  : item.publicPrice;
-              const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
+                item.publicPrice;
+              const lineTotal = pricing.afterDiscount(effectivePrice * item.quantity, item.discount || 0);
               return `
             <tr>
               <td>
@@ -122,7 +121,7 @@ export function generateLayout3HTML(
         ${sale.deliveryFee && sale.deliveryFee > 0 ? `<div class="total-row"><span>DEL</span><span>${sale.deliveryFee.toFixed(2)}</span></div>` : ''}
         ${
           sale.tax && sale.tax > 0
-            ? `<div class="total-row"><span>${lang === 'AR' ? 'الضريبة' : 'TAX'}</span><span>${sale.tax.toFixed(2)}</span></div>`
+            ? `<div class="total-row"><span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¶ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â©' : 'TAX'}</span><span>${sale.tax.toFixed(2)}</span></div>`
             : ''
         }
         <div class="total-row final"><span>TOT</span><span>${sale.total.toFixed(2)} EGP</span></div>
@@ -151,10 +150,8 @@ export function generateLayout3HTML(
                     });
                     if (!item) return '';
                     const effectivePrice =
-                      item.isUnit && item.unitsPerPack
-                        ? item.publicPrice / item.unitsPerPack
-                        : item.publicPrice;
-                    const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
+                      item.publicPrice;
+                    const returnedAmount = pricing.afterDiscount(effectivePrice * qty, item.discount || 0);
                     return `
           <div style="display: flex; justify-content: space-between;  margin: 1px 0;">
             <span>${item.name} x${qty}</span>

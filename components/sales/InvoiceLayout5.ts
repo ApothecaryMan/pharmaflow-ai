@@ -1,6 +1,7 @@
 import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
+import { pricing } from '../../utils/money';
 
 export function generateLayout5HTML(
   sale: Sale,
@@ -99,16 +100,16 @@ export function generateLayout5HTML(
       
       <div class="meta-section">
         <div class="meta-row">
-          <span class="meta-label">${lang === 'AR' ? 'رقم الفاتورة' : 'Invoice No'}</span>
+          <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â±Ãƒâ„¢Ã¢â‚¬Å¡Ãƒâ„¢Ã¢â‚¬Â¦ ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã‚ÂÃƒËœÃ‚Â§ÃƒËœÃ‚ÂªÃƒâ„¢Ã‹â€ ÃƒËœÃ‚Â±ÃƒËœÃ‚Â©' : 'Invoice No'}</span>
           <span class="meta-value">${sale.serialId || sale.id}</span>
         </div>
         <div class="meta-row">
-          <span class="meta-label">${lang === 'AR' ? 'التاريخ' : 'Date'}</span>
+          <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂªÃƒËœÃ‚Â§ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â®' : 'Date'}</span>
           <span class="meta-value">${new Date(sale.date).toLocaleDateString('en-GB')} ${new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
         </div>
         <div class="meta-row">
-          <span class="meta-label">${lang === 'AR' ? 'العميل' : 'Customer'}</span>
-          <span class="meta-value">${sale.customerName ? sale.customerName : lang === 'AR' ? 'عميل نقدي' : 'GUEST'}</span>
+          <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¹Ãƒâ„¢Ã¢â‚¬Â¦Ãƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾' : 'Customer'}</span>
+          <span class="meta-value">${sale.customerName ? sale.customerName : lang === 'AR' ? 'ÃƒËœÃ‚Â¹Ãƒâ„¢Ã¢â‚¬Â¦Ãƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾ Ãƒâ„¢Ã¢â‚¬Â Ãƒâ„¢Ã¢â‚¬Å¡ÃƒËœÃ‚Â¯Ãƒâ„¢Ã…Â ' : 'GUEST'}</span>
         </div>
         
         ${
@@ -116,7 +117,7 @@ export function generateLayout5HTML(
             ? `
         <div class="delivery-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-            <div class="meta-label" style="margin-bottom: 0;">${lang === 'AR' ? 'توصيل' : 'Delivery'}</div>
+            <div class="meta-label" style="margin-bottom: 0;">${lang === 'AR' ? 'ÃƒËœÃ‚ÂªÃƒâ„¢Ã‹â€ ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾' : 'Delivery'}</div>
             ${sale.customerPhone ? `<div class="delivery-text bold" dir="ltr" style="margin-bottom: 0; font-size: 11px;">${sale.customerPhone}</div>` : ''}
           </div>
           ${sale.customerAddress ? `<div class="delivery-text" dir="rtl">${sale.customerAddress.replace(/\n/g, ' - ')}</div>` : ''}
@@ -136,9 +137,7 @@ export function generateLayout5HTML(
             const rows = (sale.items || [])
               .map((item) => {
                 const effectivePrice =
-                  item.isUnit && item.unitsPerPack
-                    ? item.publicPrice / item.unitsPerPack
-                    : item.publicPrice;
+                  item.publicPrice;
                 const lineGross = effectivePrice * item.quantity;
                 const lineNet = lineGross * (1 - (item.discount || 0) / 100);
 
@@ -150,7 +149,7 @@ export function generateLayout5HTML(
               <td class="left" dir="ltr">
                 <span class="item-name">${getDisplayName(item)}</span>
               </td>
-              <td class="center bold" style="font-size: 12px; vertical-align: middle;">${item.quantity}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
+              <td class="center bold" style="font-size: 12px; vertical-align: middle;">${item.quantity}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â­ÃƒËœÃ‚Â¯ÃƒËœÃ‚Â©</div>' : ''}</td>
               <td class="left bold" style="vertical-align: middle;">${lineGross.toFixed(2)}</td>
             </tr>`;
               })
@@ -169,14 +168,14 @@ export function generateLayout5HTML(
       
       <div class="totals-section">
         <div class="total-row">
-          <span class="meta-label">${lang === 'AR' ? 'المجموع الفرعي' : 'Subtotal'}</span>
+          <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â¹ ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã‚ÂÃƒËœÃ‚Â±ÃƒËœÃ‚Â¹Ãƒâ„¢Ã…Â ' : 'Subtotal'}</span>
           <span class="meta-value">${grossSubtotal.toFixed(2)}</span>
         </div>
         ${
           totalDiscount > 0
             ? `
         <div class="total-row">
-          <span class="meta-label">${lang === 'AR' ? 'إجمالي الخصم' : 'Total Discount'}</span>
+          <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â  ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â®ÃƒËœÃ‚ÂµÃƒâ„¢Ã¢â‚¬Â¦' : 'Total Discount'}</span>
           <span class="meta-value">-${totalDiscount.toFixed(2)}</span>
         </div>`
             : ''
@@ -185,7 +184,7 @@ export function generateLayout5HTML(
           sale.deliveryFee && sale.deliveryFee > 0
             ? `
         <div class="total-row">
-          <span class="meta-label">${lang === 'AR' ? 'خدمة التوصيل' : 'Delivery Fee'}</span>
+          <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â®ÃƒËœÃ‚Â¯Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂªÃƒâ„¢Ã‹â€ ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾' : 'Delivery Fee'}</span>
           <span class="meta-value">${sale.deliveryFee.toFixed(2)}</span>
         </div>`
             : ''
@@ -194,14 +193,14 @@ export function generateLayout5HTML(
           sale.tax && sale.tax > 0
             ? `
         <div class="total-row">
-          <span class="meta-label">${lang === 'AR' ? 'الضريبة' : 'Tax'}</span>
+          <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¶ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â©' : 'Tax'}</span>
           <span class="meta-value">${sale.tax.toFixed(2)}</span>
         </div>`
             : ''
         }
         
         <div class="total-row final-row">
-          <span>${lang === 'AR' ? 'الإجمالي المطلوب' : 'TOTAL'}</span>
+          <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â  ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â·Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â¨' : 'TOTAL'}</span>
           <span>${sale.total.toFixed(2)} EGP</span>
         </div>
         
@@ -210,7 +209,7 @@ export function generateLayout5HTML(
             ? `
         <div style="margin-top: 4px;">
           <div style="font-weight: 700; margin-bottom: 4px; text-align: center; font-size: 11px;">
-            ${lang === 'AR' ? 'المرتجعات' : 'RETURNS'}
+            ${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'RETURNS'}
           </div>
           <table>
             <tbody>
@@ -231,15 +230,13 @@ export function generateLayout5HTML(
                   });
                   if (!item) return '';
                   const effectivePrice =
-                    item.isUnit && item.unitsPerPack
-                      ? item.publicPrice / item.unitsPerPack
-                      : item.publicPrice;
+                    item.publicPrice;
                   const returnedAmount =
                     effectivePrice * (qty as number) * (1 - (item.discount || 0) / 100);
                   return `
                 <tr class="${item.isUnit ? 'unit-row' : ''}">
                   <td class="left" dir="ltr"><span class="item-name">${getDisplayName(item)}</span></td>
-                  <td class="center bold" style="font-size: 12px; vertical-align: middle;">${qty}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">وحدة</div>' : ''}</td>
+                  <td class="center bold" style="font-size: 12px; vertical-align: middle;">${qty}${item.isUnit ? '<div style="font-size: 8px; line-height: 1; margin-top: -2px;">Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â­ÃƒËœÃ‚Â¯ÃƒËœÃ‚Â©</div>' : ''}</td>
                   <td class="left bold" style="vertical-align: middle;">${returnedAmount.toFixed(2)}</td>
                 </tr>`;
                 })
@@ -247,11 +244,11 @@ export function generateLayout5HTML(
             </tbody>
           </table>
           <div class="total-row">
-             <span class="meta-label">${lang === 'AR' ? 'إجمالي المرتجعات' : 'Total Returns'}</span>
+             <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â  ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'Total Returns'}</span>
              <span class="meta-value">-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
           </div>
           <div class="total-row final-row" style="margin-top: 2px;">
-            <span>${lang === 'AR' ? 'الصافي بعد المرتجع' : 'FINAL TOTAL'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒËœÃ‚Â§Ãƒâ„¢Ã‚ÂÃƒâ„¢Ã…Â  ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â¯ ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹' : 'FINAL TOTAL'}</span>
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>
@@ -260,11 +257,11 @@ export function generateLayout5HTML(
               ? `
         <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #000;">
           <div class="total-row">
-            <span class="meta-label">${lang === 'AR' ? 'المرتجعات' : 'Returns'}</span>
+            <span class="meta-label">${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'Returns'}</span>
             <span class="meta-value">-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
           </div>
           <div class="total-row final-row" style="margin-top: 2px;">
-            <span>${lang === 'AR' ? 'الصافي بعد المرتجع' : 'FINAL TOTAL'}</span>
+            <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒËœÃ‚Â§Ãƒâ„¢Ã‚ÂÃƒâ„¢Ã…Â  ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â¹ÃƒËœÃ‚Â¯ ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹' : 'FINAL TOTAL'}</span>
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>`
@@ -276,7 +273,7 @@ export function generateLayout5HTML(
       
       <div class="footer">
          ${opts.footerInquiry ? `<div class="${opts.highlightedField === 'footerInquiry' ? 'highlight' : ''}" style="margin-bottom: 4px;">${opts.footerInquiry}</div>` : ''}
-         <div class="footer-thanks ${opts.highlightedField === 'footerMessage' ? 'highlight' : ''}">${opts.footerMessage || (lang === 'AR' ? 'شكراً لزيارتكم' : 'THANK YOU FOR VISITING')}</div>
+         <div class="footer-thanks ${opts.highlightedField === 'footerMessage' ? 'highlight' : ''}">${opts.footerMessage || (lang === 'AR' ? 'ÃƒËœÃ‚Â´Ãƒâ„¢Ã†â€™ÃƒËœÃ‚Â±ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Â¹ Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â²Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â§ÃƒËœÃ‚Â±ÃƒËœÃ‚ÂªÃƒâ„¢Ã†â€™Ãƒâ„¢Ã¢â‚¬Â¦' : 'THANK YOU FOR VISITING')}</div>
          <div class="${opts.highlightedField === 'termsCondition' ? 'highlight' : ''}">${opts.termsCondition ?? currentDefaults.terms.replace(/<br>/g, ' - ')}</div>
       </div>
       
