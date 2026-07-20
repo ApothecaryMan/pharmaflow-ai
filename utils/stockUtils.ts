@@ -21,11 +21,37 @@ export const resolvePrice = (
   const perPack = unitsPerPack || 1;
   if (!isUnit) return price;
 
-  // Use manual unit price if available
-  if (manualUnitPrice !== undefined && manualUnitPrice > 0) return manualUnitPrice;
+  // Use manual unit price if available and if it's NOT exactly equal to the pack price 
+  // (which usually indicates a data entry error where unit price was copied from public price)
+  if (manualUnitPrice !== undefined && manualUnitPrice > 0 && manualUnitPrice !== price) {
+    return manualUnitPrice;
+  }
 
   // Fallback to safe division
   return money.divide(price, perPack);
+};
+
+/**
+ * Resolves unit cost price based on input type.
+ * Safeguards against manual entry errors where unitCostPrice equals costPrice.
+ */
+export const resolveCostPrice = (
+  costPrice: number,
+  isUnit: boolean,
+  unitsPerPack: number = 1,
+  manualUnitCostPrice?: number
+): number => {
+  const perPack = unitsPerPack || 1;
+  if (!isUnit) return costPrice || 0;
+
+  // Use manual unit cost price if available and if it's NOT exactly equal to the pack cost price 
+  // (which usually indicates a data entry error where unit cost was copied from pack cost)
+  if (manualUnitCostPrice !== undefined && manualUnitCostPrice > 0 && manualUnitCostPrice !== costPrice) {
+    return manualUnitCostPrice;
+  }
+
+  // Fallback to safe division
+  return money.divide(costPrice || 0, perPack);
 };
 
 /**

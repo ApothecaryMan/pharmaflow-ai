@@ -25,7 +25,7 @@ export const mapDbToBatch = (db: any): StockBatch => ({
   branchId: db.branch_id,
   drugId: db.drug_id,
   quantity: db.quantity,
-  expiryDate: db.expiry_date,
+  expiryDate: db.expiry_date || undefined,
   costPrice: db.cost_price,
   purchaseId: db.purchase_id || undefined,
   dateReceived: db.date_received,

@@ -84,7 +84,9 @@ export const salesRepository = {
       customerStreetAddress: db.customer_street_address,
       items: (db.sale_items || []).map((item: SaleItemRow) => ({
         ...item.drug,
-        id: item.id,
+        id: item.drug_id,
+        saleItemId: item.id,
+        drugId: item.drug_id,
         name: item.name,
         quantity: item.quantity,
         publicPrice: item.public_price,

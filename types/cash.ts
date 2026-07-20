@@ -77,6 +77,8 @@ export interface Shift {
   cashSales: number;
   /** Total card/visa sales amount */
   cardSales: number;
+  /** Total visa returns amount during shift */
+  cardReturns?: number;
   /** Total returns amount during shift */
   returns: number;
   /** All transactions in this shift */

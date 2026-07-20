@@ -128,7 +128,7 @@ export interface StockBatch {
   /** Available quantity in this batch (in units) */
   quantity: number;
   /** Expiry date for this batch (ISO string) */
-  expiryDate: string;
+  expiryDate?: string;
   /** Cost per unit at time of purchase */
   costPrice: number;
   /** Reference to the purchase order that created this batch */

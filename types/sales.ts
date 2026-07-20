@@ -60,6 +60,10 @@ export interface CartItem extends Drug {
    * If set, allocation will attempt to take from this batch first.
    */
   preferredBatchId?: string;
+  /** Original sale_item row ID (only present on completed sales) */
+  saleItemId?: string;
+  /** Explicit drug ID for clearer reference */
+  drugId?: string;
 }
 
 /**

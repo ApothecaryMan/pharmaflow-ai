@@ -4,7 +4,7 @@ import type { CashTransaction, Shift } from '../../../types';
 import type { CashTransactionType } from '../../../types/cash';
 
 const SHIFT_LIST_COLUMNS =
-  'id, branch_id, org_id, status, open_time, close_time, opened_by, opening_balance, closing_balance, expected_balance, cash_sales, card_sales, cash_in, cash_out, returns, cash_purchases, cash_purchase_returns';
+  'id, branch_id, org_id, status, open_time, close_time, opened_by, opening_balance, closing_balance, expected_balance, cash_sales, card_sales, cash_in, cash_out, returns, cash_purchases, cash_purchase_returns, card_returns';
 
 const SHIFT_FULL_COLUMNS = `${SHIFT_LIST_COLUMNS}, branch_name, closed_by, notes`;
 
@@ -33,6 +33,7 @@ interface ShiftDbRow {
   returns?: number | string | null;
   cash_purchases?: number | string | null;
   cash_purchase_returns?: number | string | null;
+  card_returns?: number | string | null;
   notes?: string;
 }
 
@@ -107,6 +108,7 @@ export const cashRepository = {
       cashSales: Number(db.cash_sales || 0),
       cardSales: Number(db.card_sales || 0),
       returns: Number(db.returns || 0),
+      cardReturns: Number(db.card_returns || 0),
       cashPurchases: Number(db.cash_purchases || 0),
       cashPurchaseReturns: Number(db.cash_purchase_returns || 0),
       notes: db.notes,
@@ -133,6 +135,7 @@ export const cashRepository = {
     if (s.cashSales !== undefined) db.cash_sales = s.cashSales;
     if (s.cardSales !== undefined) db.card_sales = s.cardSales;
     if (s.returns !== undefined) db.returns = s.returns;
+    if (s.cardReturns !== undefined) db.card_returns = s.cardReturns;
     if (s.cashPurchases !== undefined) db.cash_purchases = s.cashPurchases;
     if (s.cashPurchaseReturns !== undefined) db.cash_purchase_returns = s.cashPurchaseReturns;
     if (s.notes !== undefined) db.notes = s.notes;

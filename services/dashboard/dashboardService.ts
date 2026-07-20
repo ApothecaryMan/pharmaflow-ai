@@ -219,7 +219,7 @@ export class DashboardService {
       hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
 
       // Payments
-      if (sale.paymentMethod === 'visa') {
+      if (sale.paymentMethod === 'visa' || sale.paymentMethod === 'credit') {
         cardRevenue = money.add(cardRevenue, totalRevenue);
         cardCount++;
       } else {
