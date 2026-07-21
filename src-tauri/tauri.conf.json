@@ -45,6 +45,7 @@
     "windows": {
       "nsis": {
         "installerIcon": "icons/installer_icon.ico",
+        "installerHooks": "nsis/hooks.nsh",
         "compression": "lzma",
         "installMode": "currentUser",
         "displayLanguageSelector": true,
