@@ -1,6 +1,12 @@
 ; ============================================================================
 ; ZINC Pharmacy Management System - NSIS Installer Hooks
-; Features: Process Check, Pre-Update Database Snapshot, Uninstall Protection
+; Features:
+;   1. Process Check & Graceful Termination
+;   2. Pre-Update Data Snapshot & Rollback Safety
+;   3. Windows Print Spooler Service Provisioning
+;   4. Windows Firewall Rules for LAN & Thermal RAW Printing (Port 9100)
+;   5. URL Protocol Registration (zinc:// Deep Link)
+;   6. Interactive Data Preservation on Uninstall
 ; ============================================================================
 
 !include "LogicLib.nsh"
@@ -54,8 +60,24 @@
 
 
 !macro NSIS_HOOK_POSTINSTALL
-  DetailPrint "Logging installation metadata..."
-  
+  DetailPrint "Configuring Print Infrastructure & Services..."
+
+  ; --------------------------------------------------------------------------
+  ; 1. Ensure Windows Print Spooler Service is Active & Automatic
+  ; --------------------------------------------------------------------------
+  nsExec::ExecToLog 'sc config spoolsv start= auto'
+  nsExec::ExecToLog 'net start spoolsv'
+
+  ; --------------------------------------------------------------------------
+  ; 2. Provision Windows Firewall Rules for ZINC App & RAW Printing (Port 9100)
+  ; --------------------------------------------------------------------------
+  DetailPrint "Provisioning Windows Firewall rules for thermal printing..."
+  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="ZINC Pharmacy Application" dir=in action=allow program="$INSTDIR\zinc.exe" enable=yes'
+  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="ZINC Thermal Printer RAW Port 9100" dir=out action=allow protocol=TCP remoteport=9100 enable=yes'
+
+  ; --------------------------------------------------------------------------
+  ; 3. Logging installation metadata
+  ; --------------------------------------------------------------------------
   StrCpy $R1 "$LOCALAPPDATA\ZINC_Backups"
   CreateDirectory "$R1"
   
@@ -82,4 +104,11 @@
     RMDir /r "$LOCALAPPDATA\ZINC_Backups"
 
   done_uninstall_hook:
+!macroend
+
+
+!macro NSIS_HOOK_POSTUNINSTALL
+  DetailPrint "Cleaning up Windows Firewall rules..."
+  nsExec::ExecToLog 'netsh advfirewall firewall delete rule name="ZINC Pharmacy Application"'
+  nsExec::ExecToLog 'netsh advfirewall firewall delete rule name="ZINC Thermal Printer RAW Port 9100"'
 !macroend
