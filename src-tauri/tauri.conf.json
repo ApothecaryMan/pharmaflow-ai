@@ -44,6 +44,7 @@
     ],
     "windows": {
       "nsis": {
+        "installerIcon": "icons/installer_icon.ico",
         "compression": "lzma",
         "installMode": "currentUser",
         "displayLanguageSelector": true,
