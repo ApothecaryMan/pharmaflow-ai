@@ -1,5 +1,6 @@
 import type React from 'react';
-import { useSettings } from '../../../../context';
+import { useEffect, useMemo, useRef } from 'react';
+import { useAlert, useSettings } from '../../../../context';
 import { useUpdateCheck } from '../../../../hooks/infrastructure/useUpdateCheck';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import packageJson from '../../../../package.json';
@@ -16,22 +17,47 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
   version = `v${packageJson.version}`,
   onClick,
 }) => {
-  const { hasUpdate, updateInfo, performUpdate } = useUpdateCheck();
+  const { hasUpdate, updateInfo, isDownloading, isReadyToRestart, performUpdate } = useUpdateCheck();
   const { language } = useSettings();
-  const _t = TRANSLATIONS[language];
+  const t = TRANSLATIONS[language]?.updater;
+  const notes = updateInfo?.notes;
+  const langKey = language === 'AR' ? 'AR' : 'EN';
+  const { info: showInfoToast } = useAlert();
+  const prevReadyRef = useRef(isReadyToRestart);
 
-  const updateContent =
+  useEffect(() => {
+    if (isReadyToRestart && !prevReadyRef.current) {
+      showInfoToast(
+        t?.updateAvailableMsg?.replace('{{version}}', updateInfo?.version || '') ||
+          `Update v${updateInfo?.version} ready — restart to apply`,
+        t?.updateAvailableTitle || 'Update Ready'
+      );
+    }
+    prevReadyRef.current = isReadyToRestart;
+  }, [isReadyToRestart, updateInfo?.version, showInfoToast, t]);
+
+  const getButtonText = () => {
+    if (isDownloading) {
+      return t?.downloading || 'Downloading in background...';
+    }
+    if (isReadyToRestart) {
+      return t?.restartNow || 'Restart Now';
+    }
+    return t?.updateNow || 'Update Now';
+  };
+
+  const updateContent = useMemo(() =>
     hasUpdate && updateInfo ? (
       <div className='flex flex-col gap-2 p-1 min-w-[200px]'>
         <div className='flex items-center justify-between border-b border-(--border-divider) pb-1.5 mb-1'>
-          <span className='font-bold text-[11px] text-green-500'>
-            {language === 'AR' ? 'تحديث جديد متاح!' : 'New Update Available!'}
+          <span className='font-bold text-[11px] text-emerald-500'>
+            {t?.updateAvailableTitle || 'New Update Available!'}
           </span>
           <span className='text-[10px] opacity-60'>v{updateInfo.version}</span>
         </div>
 
         <p className='text-[10px] leading-relaxed opacity-90 whitespace-normal'>
-          {language === 'AR' ? updateInfo.notes.AR : updateInfo.notes.EN}
+          {notes?.[langKey] || t?.updateAvailableMsg?.replace('{{version}}', updateInfo.version) || `Version ${updateInfo.version}`}
         </p>
 
         <div className='flex gap-2 mt-1'>
@@ -40,18 +66,20 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
               e.stopPropagation();
               performUpdate();
             }}
-            className='flex-1 px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-[10px] font-medium transition-colors cursor-pointer'
+            disabled={isDownloading}
+            className='flex-1 px-2 py-1 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 rounded text-[10px] font-semibold transition-colors cursor-pointer'
             type='button'
           >
-            {language === 'AR' ? 'تحديث الآن' : 'Update Now'}
+            {getButtonText()}
           </button>
         </div>
       </div>
     ) : (
       <span>
-        {language === 'AR' ? 'نسخة النظام' : 'App Version'}: {version}
+        {t?.appVersion || 'App Version'}: {version}
       </span>
-    );
+    ),
+  [hasUpdate, updateInfo, isDownloading, isReadyToRestart, performUpdate, t, langKey, version]);
 
   return (
     <Tooltip

@@ -40,7 +40,7 @@ export function EmployeeDashboard({ view = 'profile', onViewChange, onLogout }: 
   const session = authService.getCurrentUserSync();
   const { profile, requests, workspaces, isLoading, loadData, updateProfile, actionRequest } =
     useEmployeeDashboardData();
-  const { hasUpdate, updateInfo, performUpdate } = useUpdateCheck();
+  const { hasUpdate, updateInfo, isDownloading, isReadyToRestart, performUpdate } = useUpdateCheck();
 
   // Clean fallback for view if it's not profile/requests (e.g. from appState 'landing')
   const activeView =
@@ -221,9 +221,20 @@ export function EmployeeDashboard({ view = 'profile', onViewChange, onLogout }: 
               <button
                 type='button'
                 onClick={performUpdate}
-                className='flex items-center justify-center w-10 h-10 text-primary-500 hover:text-primary-400 animate-pulse transition-colors'
+                disabled={isDownloading}
+                className={`flex items-center justify-center w-10 h-10 transition-colors ${
+                  isReadyToRestart
+                    ? 'text-emerald-500 hover:text-emerald-400 cursor-pointer'
+                    : 'text-primary-500 hover:text-primary-400 animate-pulse cursor-pointer'
+                } ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title={
-                  updateInfo?.version ? `Update to v${updateInfo.version}` : 'Update available'
+                  isDownloading
+                    ? 'Downloading update in background...'
+                    : isReadyToRestart
+                    ? `Restart to apply v${updateInfo?.version}`
+                    : updateInfo?.version
+                    ? `Update to v${updateInfo.version}`
+                    : 'Update available'
                 }
               >
                 <Download size='var(--icon-navbar-mobile)' />

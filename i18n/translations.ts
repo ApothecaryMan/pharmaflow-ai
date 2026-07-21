@@ -1,5 +1,5 @@
-// @protocol: .agent/workflows/enforce-translations.md
-// This file is governed by the Strict Translation Protocol.
+// @skill: translation-hunter
+// This file is governed by the Translation Hunter protocol.
 // 1. All keys must exist in both EN and AR.
 // 2. Types are inferred from EN. Do not break the structure.
 
@@ -3173,6 +3173,16 @@ export const TRANSLATIONS = {
       unauthorizedErrorMessage: 'You do not have permission to access this area',
       verificationFailedError: 'Identity verification failed. Please try again.',
       biometricFailedError: 'Biometric verification failed. Please try again.',
+    },
+    updater: {
+      updateAvailableTitle: 'New Update Available',
+      updateAvailableMsg: 'A new update (v{{version}}) is ready to install.',
+      restartNow: 'Restart Now',
+      updateNow: 'Update Now',
+      later: 'Later',
+      downloading: 'Downloading update in background...',
+      appVersion: 'App Version',
+      error: 'Failed to update application.',
     },
   },
   AR: {
@@ -6352,6 +6362,16 @@ export const TRANSLATIONS = {
       unauthorizedErrorMessage: 'ليس لديك صلاحية الوصول لهذه المنطقة',
       verificationFailedError: 'فشل التحقق من الهوية. يرجى المحاولة مرة أخرى.',
       biometricFailedError: 'فشل التحقق بالبصمة. يرجى المحاولة مرة أخرى.',
+    },
+    updater: {
+      updateAvailableTitle: 'تحديث جديد متوفر',
+      updateAvailableMsg: 'يوجد تحديث جديد (v{{version}}) جاهز للتثبيت.',
+      restartNow: 'إعادة التشغيل الآن',
+      updateNow: 'تحديث الآن',
+      later: 'لاحقاً',
+      downloading: 'جاري تنزيل التحديث في الخلفية...',
+      appVersion: 'نسخة النظام',
+      error: 'فشل تحديث التطبيق.',
     },
   },
 };
