@@ -128,7 +128,6 @@ export const useTheme = (
     if (!darkMode && hex) {
       const surfacePct = vividBg === 'muted' ? 0 : vividBg === 'vivid' ? 18 : 6;
       const statusPct = vividBg === 'muted' ? 0 : vividBg === 'vivid' ? 30 : 12;
-      const navPct = vividBg === 'muted' ? 0 : vividBg === 'vivid' ? 20 : 8;
       
       root.style.setProperty(
         '--bg-page-surface',
@@ -138,19 +137,9 @@ export const useTheme = (
         '--bg-statusbar',
         `color-mix(in srgb, ${hex} ${statusPct}%, var(--bg-secondary))`
       );
-      root.style.setProperty(
-        '--bg-navbar',
-        `color-mix(in srgb, ${hex} ${navPct}%, #ffffff)`
-      );
-      root.style.setProperty(
-        '--bg-menu',
-        `color-mix(in srgb, ${hex} ${navPct}%, #ffffff)`
-      );
     } else {
       root.style.setProperty('--bg-page-surface', '');
       root.style.setProperty('--bg-statusbar', '');
-      root.style.setProperty('--bg-navbar', '');
-      root.style.setProperty('--bg-menu', '');
     }
 
     if (darkMode || isLoginView) {

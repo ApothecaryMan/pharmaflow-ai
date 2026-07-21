@@ -5801,7 +5801,7 @@ dependencies = [
 
 [[package]]
 name = "zinc"
-version = "2.0.70"
+version = "2.0.71"
 dependencies = [
  "log",
  "serde",
