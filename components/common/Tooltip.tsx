@@ -4,10 +4,10 @@ import { createPortal } from 'react-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { Z_INDEX } from '../../src/styles/z-index';
 
+/*
 const R = 10,
   AW = 14,
-  AH = 6,
-  VG = 4;
+  AH = 6;
 
 const genPath = (w: number, h: number, s: string, ax: number, ay: number) => {
   const isT = s === 'top',
@@ -28,6 +28,9 @@ const genPath = (w: number, h: number, s: string, ax: number, ay: number) => {
     d += `L 0,${ay + AW / 2} C 0,${ay + AW / 4} ${-AH},${ay + AW / 8} ${-AH},${ay} C ${-AH},${ay - AW / 8} 0,${ay - AW / 4} 0,${ay - AW / 2} `;
   return `${d}L 0,${isB ? AH + R : R} Q 0,${isB ? AH : 0} ${R},${isB ? AH : 0} Z`;
 };
+*/
+
+const VG = 4;
 
 export const Tooltip: React.FC<{
   children: ReactNode;
@@ -66,8 +69,7 @@ export const Tooltip: React.FC<{
   const trigRef = useRef<HTMLDivElement>(null),
     toolRef = useRef<HTMLDivElement>(null),
     contentRef = useRef<HTMLDivElement>(null),
-    timeout = useRef<any>(null),
-    [path, setPath] = useState('');
+    timeout = useRef<any>(null);
 
   useLayoutEffect(() => {
     if (!show || !trigRef.current || !toolRef.current || !contentRef.current) return;
@@ -77,7 +79,7 @@ export const Tooltip: React.FC<{
         ch = contentRef.current?.offsetHeight,
         vw = window.innerWidth,
         vh = window.innerHeight,
-        gap = 4;
+        gap = 6; // slightly larger gap for a clean floating look
       let s = position;
 
       // Box style defaults to side placement instead of top
@@ -90,6 +92,7 @@ export const Tooltip: React.FC<{
       else if (s === 'left' && tr.left < cw + gap) s = 'right';
       else if (s === 'right' && vw - tr.right < cw + gap) s = 'left';
       setSide(s);
+      
       const x =
         s === 'top' || s === 'bottom'
           ? Math.max(VG, Math.min(tr.left + tr.width / 2 - cw / 2, vw - cw - VG))
@@ -102,13 +105,11 @@ export const Tooltip: React.FC<{
             ? tr.top - ch - gap
             : tr.bottom + gap
           : Math.max(VG, Math.min(tr.top + tr.height / 2 - ch / 2, vh - ch - VG));
-      const ax = Math.max(R + AW / 2, Math.min(tr.left + tr.width / 2 - x, cw - R - AW / 2)),
-        ay = Math.max(R + AW / 2, Math.min(tr.top + tr.height / 2 - y, ch - R - AW / 2));
+          
       const tl = toolRef.current!;
       tl.style.setProperty('--tx', `${x}px`);
       tl.style.setProperty('--ty', `${y}px`);
       tl.dataset.settled = 'true';
-      setPath(genPath(cw, ch, s, ax, ay));
     };
     upd();
     const obs = new ResizeObserver(upd);
@@ -163,44 +164,20 @@ export const Tooltip: React.FC<{
             style={{ top: 'var(--ty)', left: 'var(--tx)', zIndex: Z_INDEX.TOOLTIP }}
           >
             <div
-              className={`relative group ${tooltipStyle === 'box' ? (fillColor ? '' : 'bg-black/90 dark:bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xl') : ''}`}
+              className={`relative group rounded-[10px] shadow-xl ${
+                fillColor ? '' : 'bg-black/90 dark:bg-white/10 backdrop-blur-md glass-edge'
+              }`}
               style={{
-                borderRadius: tooltipStyle === 'box' ? 10 : R,
-                filter:
-                  tooltipStyle === 'box' ? 'none' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
-                ...(tooltipStyle === 'box' && fillColor ? { backgroundColor: fillColor } : {}),
+                backgroundColor: fillColor || undefined,
               }}
             >
-              {tooltipStyle !== 'box' && (
-                <svg
-                  className='absolute inset-0 w-full h-full pointer-events-none overflow-visible'
-                  style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
-                >
-                  <title>Tooltip background</title>
-                  <path
-                    d={path || ''}
-                    className={fillColor ? '' : 'fill-gray-800 dark:fill-stone-50'}
-                    style={fillColor ? { fill: fillColor } : undefined}
-                  />
-                </svg>
-              )}
               <div
                 ref={contentRef}
-                className={`relative z-10 font-medium tracking-tight whitespace-nowrap w-max ${
-                  tooltipStyle === 'box'
-                    ? 'text-[12px] px-3 py-1.5'
-                    : `text-[11px] font-semibold ${textColor ? '' : 'text-stone-50 dark:text-gray-800'}`
+                className={`relative z-10 font-medium tracking-tight whitespace-nowrap w-max text-[12px] px-3 py-1.5 ${
+                  textColor ? '' : 'text-stone-50 dark:text-white'
                 }`}
                 style={{
-                  ...(textColor ? { color: textColor } : {}),
-                  ...(tooltipStyle !== 'box'
-                    ? {
-                        paddingTop: side === 'bottom' ? AH + 8 : 8,
-                        paddingBottom: side === 'top' ? AH + 8 : 8,
-                        paddingLeft: side === 'right' ? AH + 12 : 12,
-                        paddingRight: side === 'left' ? AH + 12 : 12,
-                      }
-                    : {}),
+                  color: textColor || undefined,
                 }}
               >
                 {content}
@@ -212,3 +189,4 @@ export const Tooltip: React.FC<{
     </div>
   );
 };
+

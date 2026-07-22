@@ -52,6 +52,24 @@ input[type="number"] {
 
 @utility glass-surface  { @apply backdrop-blur-2xl bg-(--bg-menu)/80 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]; }
 
+/* --- Glass Edge Highlight (Opposite Corners) --- */
+.glass-edge {
+  position: relative;
+}
+.glass-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 35%, rgba(255, 255, 255, 0) 65%, rgba(255, 255, 255, 0.15) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 10;
+}
+
 /* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */
 @supports (padding: env(safe-area-inset-top))  { body  {
 
