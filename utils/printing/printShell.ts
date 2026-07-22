@@ -93,7 +93,7 @@ export const wrapPrintHTML = (options: PrintShellOptions): string => {
   // honors the orientation. We do NOT swap dimensions in CSS — that was the
   // old rotatePage hack that produced skewed output. The real orientation
   // fix lives in the QZ config (see qzPrinter.printLabelSilently).
-  const _pageSize = `${width}mm ${height}mm`;
+  const pageSize = `${width}mm ${height}mm`;
 
   // Shared font-ready + optional auto-print script. Replaces the duplicated
   // `document.fonts.ready` + setTimeout safety-delay logic.
@@ -120,7 +120,7 @@ export const wrapPrintHTML = (options: PrintShellOptions): string => {
 <style>
 ${fontsCSS}
 ${css}
-@page { margin: 0; }
+@page { size: ${pageSize}; margin: 0; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
   margin: 0;
