@@ -53,6 +53,8 @@ export interface PrintConfig {
   colorType?: 'color' | 'grayscale' | 'blackwhite';
   /** Print orientation */
   orientation?: PrinterOrientation;
+  /** Whether to scale the HTML content to fit the printable area (defaults to true) */
+  scaleContent?: boolean;
 }
 
 /**
@@ -294,7 +296,7 @@ export const printHTML = async (
     copies: config.copies || 1,
     colorType: config.colorType || 'blackwhite',
     orientation,
-    scaleContent: true,
+    scaleContent: config.scaleContent ?? true,
     interpolation: 'nearest-neighbor',
     rendering: 'pixelated',
   });
@@ -386,6 +388,7 @@ export const printLabelSilently = async (
       // By omitting size and orientation, we force Java to use the Windows Printer Default (38x25)
       // This bypasses Java Print API's bug that auto-rotates any document where Width > Height.
       orientation: 'portrait',
+      scaleContent: false, // Prevent HTML content from shrinking when rendered on a square/portrait @page
       margins: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return true;

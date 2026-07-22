@@ -87,13 +87,12 @@ export const wrapPrintHTML = (options: PrintShellOptions): string => {
     fontFamily = "'Roboto', Arial, sans-serif",
   } = options;
 
-  const _effectiveOrientation = deriveOrientation(width, height, orientation);
-
   // Thermal printers treat the roll feed as portrait. If Width > Height, the Java Print API
   // (used by QZ) auto-rotates the document by 90 degrees.
   // To bypass this while keeping exact dimensions (to prevent uneven gaps),
   // we force the @page height to be at least the width, making the document square or portrait.
   // The printer will just naturally stop feeding after the actual content height (25mm).
+  // scaleContent MUST be false in QZ Tray for this to work without shrinking.
   const safeHeight = Math.max(width, height);
   const pageSize = `${width}mm ${safeHeight}mm`;
 
