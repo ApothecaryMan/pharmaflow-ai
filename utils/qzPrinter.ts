@@ -368,7 +368,7 @@ export const savePrinterSettings = (settings: Partial<PrinterSettings>): Printer
  */
 export const printLabelSilently = async (
   html: string,
-  labelSize: { width: number; height: number; orientation?: PrinterOrientation }
+  _labelSize: { width: number; height: number; orientation?: PrinterOrientation }
 ): Promise<boolean> => {
   const settings = getPrinterSettings();
 
@@ -385,7 +385,10 @@ export const printLabelSilently = async (
 
   try {
     await printHTML(settings.labelPrinter, html, {
-      size: labelSize,
+      // By omitting size and orientation, we force Java to use the Windows Printer Default (38x25)
+      // This bypasses Java Print API's bug that auto-rotates any document where Width > Height.
+      orientation: 'portrait',
+      scaleContent: false, // Prevent HTML content from shrinking when rendered on a square/portrait @page
       margins: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return true;
