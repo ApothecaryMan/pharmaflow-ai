@@ -30,8 +30,7 @@ export function generateLayout6HTML(
         }
         body { 
           font-family: ${opts.receiptFont === 'receipt-basic' ? "'Receiptional Receipt', 'Raqami', Arial, sans-serif" : "'Fake Receipt', 'Raqami', Arial, sans-serif"}; 
-          font-size: 10px; /* Clean organized size */
-          line-height: 1.2; 
+          font-size: ${opts.receiptFont === 'receipt-basic' ? '10px' : '11px'};        line-height: 1.2; 
           padding: 4px; /* Clean padding */
           color: #000; width: 72mm; max-width: 72mm; margin: 0 auto; 
           -webkit-print-color-adjust: exact; print-color-adjust: exact;
