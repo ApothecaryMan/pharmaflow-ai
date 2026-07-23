@@ -1,15 +1,5 @@
-/**
- * DesktopSettings Component
- *
- * Dedicated interface for managing desktop-specific features in the Tauri environment.
- * Includes printer management, auto-updates, and system information.
- */
-
-import { relaunch } from '@tauri-apps/plugin-process';
-import { check } from '@tauri-apps/plugin-updater';
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { list_thermal_printers, test_thermal_printer } from 'tauri-plugin-thermal-printer';
+import { useDesktopSettings } from '../../hooks/infrastructure/useDesktopSettings';
 import { isTauri } from '../../utils/platform';
 import { FilterDropdown } from '../common/FilterDropdown';
 
@@ -20,106 +10,61 @@ interface DesktopSettingsProps {
   onViewChange?: (view: string) => void;
 }
 
+interface OsBannerInfo {
+  icon: string;
+  title: string;
+  description: string;
+  variant: 'warning' | 'info';
+}
+
+function getOsBanner(os: string, dt: Record<string, any>): OsBannerInfo | null {
+  const lower = os.toLowerCase();
+  if (lower.startsWith('linux')) {
+    return {
+      icon: 'warning',
+      title: 'Linux',
+      description: dt.linuxWarning,
+      variant: 'warning',
+    };
+  }
+  if (lower.startsWith('windows')) {
+    return {
+      icon: 'check_circle',
+      title: 'Windows',
+      description: dt.windowsInfo,
+      variant: 'info',
+    };
+  }
+  return null;
+}
+
 export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
   t,
   language,
-  color = 'primary',
+  color = 'emerald',
   onViewChange,
 }) => {
   const dt = t.desktop || {};
   const pt = t.printerSettings || {};
 
-  // Printer State
-  const [printers, setPrinters] = useState<string[]>([]);
-  const [selectedPrinter, setSelectedPrinter] = useState<string | null>(
-    localStorage.getItem('desktop_receipt_printer')
-  );
-  const [selectedLabelPrinter, setSelectedLabelPrinter] = useState<string | null>(
-    localStorage.getItem('desktop_label_printer')
-  );
-  const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
-  const [printerStatus, setPrinterStatus] = useState<'idle' | 'testing' | 'error'>('idle');
-
-  // Update State
-  const [updateStatus, setUpdateStatus] = useState<
-    'idle' | 'checking' | 'available' | 'downloading' | 'up_to_date' | 'error'
-  >('idle');
-  const [updateInfo, setUpdateInfo] = useState<any>(null);
-
-  // System Info (Mocked for now as we don't have tauri-plugin-os yet)
-  const systemInfo = {
-    version: '2.0.23',
-    os: navigator.platform,
-    arch: 'x64',
-    memory: '16GB',
-  };
-
-  const refreshPrinters = async () => {
-    if (!isTauri()) return;
-    setIsLoadingPrinters(true);
-    try {
-      const list = await list_thermal_printers();
-      setPrinters(list?.map((p) => p.name) || []);
-    } catch (error) {
-      console.error('Failed to list printers:', error);
-    } finally {
-      setIsLoadingPrinters(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isTauri()) {
-      refreshPrinters();
-    }
-  }, [refreshPrinters]);
-
-  const handleTestPrint = async () => {
-    if (!selectedPrinter || !isTauri()) return;
-    setPrinterStatus('testing');
-    try {
-      await test_thermal_printer({
-        printer_info: {
-          printer: selectedPrinter,
-          sections: [],
-          options: { code_page: 0 },
-          paper_size: 'Mm80',
-        },
-      });
-      setPrinterStatus('idle');
-    } catch (error) {
-      console.error('Test print failed:', error);
-      setPrinterStatus('error');
-    }
-  };
-
-  const checkUpdates = async () => {
-    if (!isTauri()) return;
-    setUpdateStatus('checking');
-    try {
-      const update = await check();
-      if (update) {
-        setUpdateStatus('available');
-        setUpdateInfo(update);
-      } else {
-        setUpdateStatus('up_to_date');
-      }
-    } catch (error) {
-      console.error('Update check failed:', error);
-      setUpdateStatus('error');
-    }
-  };
-
-  const installUpdate = async () => {
-    if (!updateInfo || !isTauri()) return;
-    setUpdateStatus('downloading');
-    try {
-      await updateInfo.downloadAndInstall();
-      await relaunch();
-    } catch (error) {
-      console.error('Update installation failed:', error);
-      setUpdateStatus('error');
-    }
-  };
+  const {
+    printers,
+    isLoadingPrinters,
+    refreshPrinters,
+    selectedReceiptPrinter,
+    selectedLabelPrinter,
+    setReceiptPrinter,
+    setLabelPrinter,
+    printerStatus,
+    testPrint,
+    preferredInterface,
+    setPreferredInterface,
+    systemInfo,
+    isLoadingSystemInfo,
+    updateStatus,
+    checkUpdates,
+    installUpdate,
+  } = useDesktopSettings();
 
   if (!isTauri()) {
     return (
@@ -140,9 +85,9 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
   }
 
   return (
-    <div className='space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 p-6 md:p-8 max-w-5xl mx-auto'>
+    <div className='min-h-screen p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500'>
       {/* Header Section */}
-      <div>
+      <div className='mb-6'>
         <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-3'>
           <span className={`material-symbols-rounded text-[28px] text-${color}-500`}>
             desktop_windows
@@ -152,9 +97,50 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
         <p className='text-gray-500 dark:text-gray-400 mt-1'>{dt.subtitle}</p>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        {/* Printer Management */}
-        <section className='bg-white dark:bg-zinc-900 border border-(--border-divider) rounded-2xl p-6 space-y-4 shadow-sm'>
+      {(() => {
+        const banner = systemInfo?.os ? getOsBanner(systemInfo.os, dt) : null;
+        if (!banner) return null;
+        const isWarning = banner.variant === 'warning';
+        return (
+          <div
+            className={`flex items-start gap-4 p-4 rounded-xl border mb-6 ${
+              isWarning
+                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30'
+                : 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800/30'
+            }`}
+          >
+            <span
+              className={`material-symbols-rounded text-[24px] flex-shrink-0 ${
+                isWarning ? 'text-amber-500' : 'text-sky-500'
+              }`}
+            >
+              {banner.icon}
+            </span>
+            <div>
+              <p
+                className={`text-sm font-bold ${
+                  isWarning ? 'text-amber-800 dark:text-amber-300' : 'text-sky-800 dark:text-sky-300'
+                }`}
+              >
+                {banner.title}
+              </p>
+              <p
+                className={`text-xs mt-1 ${
+                  isWarning
+                    ? 'text-amber-700 dark:text-amber-400'
+                    : 'text-sky-700 dark:text-sky-400'
+                }`}
+              >
+                {banner.description}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+        {/* Left Column — Printer Management */}
+        <section className='lg:col-span-2 bg-white dark:bg-zinc-900 border border-(--border-divider) rounded-xl p-5 md:p-6 space-y-5 shadow-sm'>
           <div className='flex items-center justify-between'>
             <h3 className='text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
               <span className='material-symbols-rounded text-[18px]'>print</span>
@@ -174,19 +160,19 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
             </button>
           </div>
 
-          <div className='space-y-4'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
             <div className='space-y-2'>
-              <span className='text-xs font-bold text-gray-500 uppercase'>
-                {language === 'AR' ? 'طابعة الفواتير (Receipts)' : 'Receipt Printer'}
+              <span className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-[16px] text-gray-400'>receipt_long</span>
+                {language === 'AR' ? 'طابعة الفواتير' : 'Receipt Printer'}
               </span>
               <FilterDropdown<string>
                 items={printers}
-                selectedItem={selectedPrinter || undefined}
-                onSelect={(p) => {
-                  setSelectedPrinter(p);
-                  localStorage.setItem('desktop_receipt_printer', p);
-                }}
+                selectedItem={selectedReceiptPrinter || undefined}
+                onSelect={(p) => setReceiptPrinter(p)}
                 keyExtractor={(p) => p}
+                minHeight={40}
+                className='w-full'
                 renderSelected={(p) => (
                   <span className='text-sm font-medium text-gray-800 dark:text-white truncate'>
                     {p ||
@@ -204,20 +190,23 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 )}
                 variant='input'
               />
+              <p className='text-xs text-gray-400 dark:text-gray-500 leading-relaxed'>
+                {dt.receiptPrinterHelper}
+              </p>
             </div>
 
             <div className='space-y-2'>
-              <span className='text-xs font-bold text-gray-500 uppercase'>
-                {language === 'AR' ? 'طابعة الملصقات (Labels)' : 'Label Printer'}
+              <span className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-[16px] text-gray-400'>label</span>
+                {language === 'AR' ? 'طابعة الملصقات' : 'Label Printer'}
               </span>
               <FilterDropdown<string>
                 items={printers}
                 selectedItem={selectedLabelPrinter || undefined}
-                onSelect={(p) => {
-                  setSelectedLabelPrinter(p);
-                  localStorage.setItem('desktop_label_printer', p);
-                }}
+                onSelect={(p) => setLabelPrinter(p)}
                 keyExtractor={(p) => p}
+                minHeight={40}
+                className='w-full'
                 renderSelected={(p) => (
                   <span className='text-sm font-medium text-gray-800 dark:text-white truncate'>
                     {p ||
@@ -227,51 +216,116 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 )}
                 renderItem={(p) => (
                   <div className='flex items-center gap-2 py-1'>
-                    <span className='material-symbols-rounded text-[16px] text-gray-400'>
-                      label
-                    </span>
+                    <span className='material-symbols-rounded text-[16px] text-gray-400'>label</span>
                     <span className='text-sm'>{p}</span>
                   </div>
                 )}
                 variant='input'
               />
+              <p className='text-xs text-gray-400 dark:text-gray-500 leading-relaxed'>
+                {dt.labelPrinterHelper}
+              </p>
             </div>
+          </div>
 
+          <div className='flex gap-2'>
             <button
-              onClick={handleTestPrint}
-              disabled={!selectedPrinter || printerStatus === 'testing'}
-              className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-                printerStatus === 'testing'
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-600 hover:bg-${color}-100`
+              onClick={testPrint}
+              disabled={!selectedReceiptPrinter || printerStatus === 'testing'}
+              className={`h-[40px] flex-1 px-4 text-xs font-bold rounded-xl transition-colors ${
+                selectedReceiptPrinter && printerStatus !== 'testing'
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
+                  : 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
               }`}
               type='button'
             >
-              <span
-                className={`material-symbols-rounded text-[18px] ${printerStatus === 'testing' ? 'animate-spin' : ''}`}
-              >
-                {printerStatus === 'testing' ? 'sync' : 'science'}
-              </span>
-              {pt.testPrintReceipt}
+              {printerStatus === 'testing' ? (
+                <span className='flex items-center justify-center gap-2'>
+                  <span className='material-symbols-rounded text-[16px] animate-spin'>sync</span>
+                  {language === 'AR' ? 'جاري...' : 'Testing...'}
+                </span>
+              ) : (
+                pt.testPrintReceipt || (language === 'AR' ? 'طباعة تجريبية' : 'Test Print')
+              )}
             </button>
+            {selectedLabelPrinter && (
+              <button
+                onClick={testPrint}
+                disabled={printerStatus === 'testing'}
+                className='h-[40px] px-4 text-xs font-bold rounded-xl transition-colors bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
+                type='button'
+              >
+                {language === 'AR' ? 'تجربة الملصق' : 'Test Label'}
+              </button>
+            )}
+          </div>
+
+          {/* Preferred Interface inside Printer Management */}
+          <div className='pt-4 border-t border-(--border-divider) space-y-3'>
+            <h4 className='text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
+              <span className='material-symbols-rounded text-[16px]'>settings_ethernet</span>
+              {dt.preferredInterface}
+            </h4>
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+              {([
+                { value: 'auto' as const, label: language === 'AR' ? 'تلقائي' : 'Auto', key: 'interfaceAuto' },
+                { value: 'tauri' as const, label: 'Tauri Native', key: 'interfaceTauri' },
+                { value: 'qz' as const, label: 'QZ Tray', key: 'interfaceQz' },
+              ] as const).map((opt) => {
+                const isSelected = preferredInterface === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setPreferredInterface(opt.value)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
+                      isSelected
+                        ? 'border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800'
+                        : 'border-transparent bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    }`}
+                    type='button'
+                  >
+                    <span
+                      className={`material-symbols-rounded text-[20px] ${
+                        isSelected ? 'text-zinc-700 dark:text-zinc-300' : 'text-gray-400'
+                      }`}
+                    >
+                      {isSelected ? 'radio_button_checked' : 'radio_button_unchecked'}
+                    </span>
+                    <span
+                      className={`text-sm font-bold ${
+                        isSelected
+                          ? 'text-zinc-800 dark:text-zinc-200'
+                          : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {opt.label}
+                    </span>
+                    <p className='text-[11px] text-gray-400 dark:text-gray-500 leading-relaxed'>
+                      {dt[opt.key]}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        {/* Updates Management */}
-        <section className='bg-white dark:bg-zinc-900 border border-(--border-divider) rounded-2xl p-6 space-y-4 shadow-sm'>
-          <h3 className='text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
-            <span className='material-symbols-rounded text-[18px]'>system_update</span>
-            {dt.autoUpdate}
-          </h3>
+        {/* Right Column — Updates + System Info */}
+        <div className='space-y-5'>
+          {/* Updates Management */}
+          <section className='bg-white dark:bg-zinc-900 border border-(--border-divider) rounded-xl p-5 md:p-6 space-y-4 shadow-sm'>
+            <h3 className='text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
+              <span className='material-symbols-rounded text-[18px]'>system_update</span>
+              {dt.autoUpdate}
+            </h3>
 
-          <div className='flex flex-col h-[calc(100%-2rem)] justify-between'>
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl'>
-                <span className='text-sm font-medium text-gray-600 dark:text-gray-300'>
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-transparent dark:border-(--border-divider)'>
+                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   {dt.version}
                 </span>
                 <span className='text-xs font-bold bg-white dark:bg-zinc-800 px-2 py-1 rounded-lg border border-(--border-divider)'>
-                  v{systemInfo.version}
+                  {isLoadingSystemInfo ? '...' : `v${systemInfo?.version || '—'}`}
                 </span>
               </div>
 
@@ -282,106 +336,124 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                   </p>
                 </div>
               )}
-            </div>
 
-            <div className='pt-4'>
-              {updateStatus === 'available' ? (
+              {updateStatus === 'available' && (
                 <button
                   onClick={installUpdate}
-                  disabled={updateStatus === 'downloading'}
                   className='w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20'
                   type='button'
                 >
                   <span className='material-symbols-rounded text-[18px]'>download</span>
-                  {updateStatus === 'downloading' ? dt.downloading : dt.installNow}
+                  {dt.installNow}
                 </button>
-              ) : (
+              )}
+              {updateStatus === 'downloading' && (
+                <button
+                  disabled
+                  className='w-full py-2.5 bg-emerald-400 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed'
+                  type='button'
+                >
+                  <span className='material-symbols-rounded text-[18px] animate-spin'>sync</span>
+                  {dt.downloading}
+                </button>
+              )}
+              {(updateStatus === 'idle' || updateStatus === 'up_to_date' || updateStatus === 'error') && (
                 <button
                   onClick={checkUpdates}
-                  disabled={updateStatus === 'checking'}
                   className='w-full py-2.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all'
                   type='button'
                 >
-                  <span
-                    className={`material-symbols-rounded text-[18px] ${updateStatus === 'checking' ? 'animate-spin' : ''}`}
-                  >
-                    {updateStatus === 'checking' ? 'sync' : 'update'}
-                  </span>
+                  <span className='material-symbols-rounded text-[18px]'>update</span>
+                  {dt.checkUpdates}
+                </button>
+              )}
+              {updateStatus === 'checking' && (
+                <button
+                  disabled
+                  className='w-full py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-400 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed'
+                  type='button'
+                >
+                  <span className='material-symbols-rounded text-[18px] animate-spin'>sync</span>
                   {dt.checkUpdates}
                 </button>
               )}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* System Info */}
-        <section className='bg-white dark:bg-zinc-900 border border-(--border-divider) rounded-2xl p-6 space-y-4 shadow-sm md:col-span-2'>
-          <h3 className='text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
-            <span className='material-symbols-rounded text-[18px]'>info</span>
-            {dt.systemInfo}
-          </h3>
+          {/* System Info */}
+          <section className='bg-white dark:bg-zinc-900 border border-(--border-divider) rounded-xl p-5 md:p-6 space-y-4 shadow-sm'>
+            <h3 className='text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2'>
+              <span className='material-symbols-rounded text-[18px]'>info</span>
+              {dt.systemInfo}
+            </h3>
 
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {[
-              { label: dt.os, value: systemInfo.os, icon: 'grid_view' },
-              { label: dt.arch, value: systemInfo.arch, icon: 'memory' },
-              { label: dt.memory, value: systemInfo.memory, icon: 'rebase_edit' },
-              { label: dt.version, value: `v${systemInfo.version}`, icon: 'new_releases' },
-            ].map((item, _i) => (
-              <div
-                key={item.label}
-                className='p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-transparent hover:border-(--border-divider) transition-all group'
-              >
-                <span
-                  className={`material-symbols-rounded text-[20px] text-gray-400 group-hover:text-${color}-500 transition-colors mb-2 block`}
-                >
-                  {item.icon}
-                </span>
-                <p className='text-[11px] font-bold text-gray-400 uppercase tracking-tighter'>
-                  {item.label}
-                </p>
-                <p className='text-sm font-bold text-gray-700 dark:text-gray-200 truncate'>
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Browser Version Banner */}
-        <div className='md:col-span-2 mt-4'>
-          <div
-            className={`p-5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4`}
-          >
-            <div className='flex items-center gap-4'>
-              <div
-                className={`w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 flex items-center justify-center flex-shrink-0`}
-              >
-                <span
-                  className={`material-symbols-rounded text-[24px] text-gray-500 dark:text-gray-400`}
-                >
-                  public
+            {isLoadingSystemInfo ? (
+              <div className='flex items-center justify-center py-6'>
+                <span className='material-symbols-rounded text-[28px] text-gray-300 animate-spin'>
+                  sync
                 </span>
               </div>
-              <div>
-                <p className='text-sm font-bold text-gray-800 dark:text-gray-200'>
-                  {language === 'AR' ? 'إعدادات الطباعة للمتصفح' : 'Browser Print Settings'}
-                </p>
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md leading-relaxed'>
-                  {language === 'AR'
-                    ? 'لإدارة طابعات QZ Tray والطباعة الصامتة عبر الشبكة.'
-                    : 'Manage QZ Tray printers and network silent printing.'}
-                </p>
+            ) : systemInfo ? (
+              <div className='grid grid-cols-2 gap-3'>
+                {[
+                  { label: dt.os, value: systemInfo.os, icon: 'grid_view' },
+                  { label: dt.osVersion, value: systemInfo.osVersion, icon: 'tag' },
+                  { label: dt.arch, value: systemInfo.arch, icon: 'memory' },
+                  { label: dt.memory, value: systemInfo.memory, icon: 'rebase_edit' },
+                  { label: dt.version, value: `v${systemInfo.version}`, icon: 'new_releases' },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className='p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-transparent hover:border-(--border-divider) transition-all group'
+                  >
+                    <span className={`material-symbols-rounded text-[18px] text-gray-400 group-hover:text-${color}-500 transition-colors mb-1 block`}>
+                      {item.icon}
+                    </span>
+                    <p className='text-[10px] font-bold text-gray-400 uppercase tracking-tighter'>
+                      {item.label}
+                    </p>
+                    <p className='text-xs font-bold text-gray-700 dark:text-gray-200 truncate'>
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <p className='text-sm text-gray-400 text-center py-4'>
+                {language === 'AR' ? 'تعذر تحميل معلومات النظام' : 'Failed to load system information'}
+              </p>
+            )}
+          </section>
+        </div>
+      </div>
+
+      {/* Browser Version Banner */}
+      <div className='mt-6'>
+        <div className='p-5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4'>
+          <div className='flex items-center gap-4'>
+            <div className='w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 flex items-center justify-center flex-shrink-0'>
+              <span className='material-symbols-rounded text-[24px] text-gray-500 dark:text-gray-400'>
+                public
+              </span>
             </div>
-            <button
-              onClick={() => onViewChange?.('browser-settings')}
-              className={`w-full md:w-auto px-6 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors shadow-sm`}
-              type='button'
-            >
-              {language === 'AR' ? 'الانتقال للإعدادات' : 'Go to Settings'}
-            </button>
+            <div>
+              <p className='text-sm font-bold text-gray-800 dark:text-gray-200'>
+                {language === 'AR' ? 'إعدادات الطباعة للمتصفح' : 'Browser Print Settings'}
+              </p>
+              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md leading-relaxed'>
+                {language === 'AR'
+                  ? 'لإدارة طابعات QZ Tray والطباعة الصامتة عبر الشبكة.'
+                  : 'Manage QZ Tray printers and network silent printing.'}
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => onViewChange?.('browser-settings')}
+            className='w-full md:w-auto px-6 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors shadow-sm'
+            type='button'
+          >
+            {language === 'AR' ? 'الانتقال للإعدادات' : 'Go to Settings'}
+          </button>
         </div>
       </div>
     </div>

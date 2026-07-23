@@ -43,6 +43,11 @@ class UniversalPrinterService {
     return this.settings;
   }
 
+  public setPreferredInterface(iface: 'auto' | 'tauri' | 'qz'): void {
+    localStorage.setItem('preferred_printer_interface', iface);
+    this.settings.preferredInterface = iface;
+  }
+
   public async getAvailablePrinters(): Promise<string[]> {
     if (isTauri()) {
       try {

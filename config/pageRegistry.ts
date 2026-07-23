@@ -897,7 +897,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'إعدادات سطح المكتب',
     icon: 'desktop_windows',
     category: 'settings',
-    requiredProps: ['color', 't', 'language'],
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['desktop-settings'],
     layout: 'standard',
   },

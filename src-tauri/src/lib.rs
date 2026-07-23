@@ -1,3 +1,4 @@
+use sysinfo::System;
 use tauri::Manager;
 use tauri::{
     menu::{Menu, MenuItem},
@@ -129,6 +130,18 @@ fn print_raw_data(_printer_name: String, _data: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn get_system_memory() -> u64 {
+    let mut sys = System::new();
+    sys.refresh_memory();
+    sys.total_memory()
+}
+
+#[tauri::command]
+fn get_app_version(app: tauri::AppHandle) -> String {
+    app.config().version.clone().unwrap_or_default()
+}
+
+#[tauri::command]
 async fn update_tray_language(app: tauri::AppHandle, lang: String) -> Result<(), String> {
     let show_text = if lang == "EN" { "Open ZINC" } else { "فتح ZINC" };
     let quit_text = if lang == "EN" { "Quit" } else { "إغلاق" };
@@ -156,7 +169,14 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_thermal_printer::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![set_titlebar_color, print_raw_data, update_tray_language])
+        .plugin(tauri_plugin_os::init())
+        .invoke_handler(tauri::generate_handler![
+            set_titlebar_color,
+            print_raw_data,
+            update_tray_language,
+            get_system_memory,
+            get_app_version,
+        ])
         .setup(|app| {
             // Debug-only logging
             if cfg!(debug_assertions) {
