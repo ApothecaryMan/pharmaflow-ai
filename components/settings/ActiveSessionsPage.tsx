@@ -76,7 +76,14 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       .channel(uniqueChannelName)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'user_active_sessions' },
+        { event: 'INSERT', schema: 'public', table: 'user_active_sessions' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'user_active_sessions' },
         () => {
           queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
         }

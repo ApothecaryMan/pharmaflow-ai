@@ -27,7 +27,7 @@ export function useNetworkStatus(): {
 
     checkStatus();
 
-    pollInterval = setInterval(checkStatus, 10000);
+    pollInterval = setInterval(checkStatus, 30000);
 
     const handleWindowEvents = () => {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {

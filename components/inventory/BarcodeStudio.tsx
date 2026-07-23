@@ -194,6 +194,13 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
   const debouncedUploadedLogo = useDebounce(uploadedLogo, 500);
 
   // --- Autosave Effect (Performance Optimized) ---
+  const printSettingsRef = useRef(activeBranch?.printSettings);
+  useEffect(() => {
+    printSettingsRef.current = activeBranch?.printSettings;
+  }, [activeBranch?.printSettings]);
+
+  const lastAutoSavedState = useRef<string>('');
+
   useEffect(() => {
     if (!isLoaded) return; // Guard: Don't save before initial load
 
@@ -209,10 +216,15 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
       printOffsetY: debouncedPrintOffsets.y,
       printerLanguage: printerLanguage,
     };
+
+    const newStateString = JSON.stringify(designState);
+    if (newStateString === lastAutoSavedState.current) return;
+    lastAutoSavedState.current = newStateString;
+
     if (activeBranchId) {
       updateBranch(activeBranchId, {
         printSettings: {
-          ...(activeBranch?.printSettings || {}),
+          ...(printSettingsRef.current || {}),
           [StorageKeys.LABEL_DESIGN]: designState,
         },
       });
@@ -227,7 +239,6 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     debouncedShowPrintBorders,
     debouncedPrintOffsets,
     isLoaded,
-    activeBranch?.printSettings,
     activeBranchId,
     printerLanguage,
     updateBranch,
