@@ -23,6 +23,17 @@ interface QuickLoginProps {
 
 type Step = 'idle' | 'username' | 'password' | 'new-password';
 
+// --- Helpers ---
+const getInitials = (name?: string) => {
+  if (!name) return '';
+  const cleaned = name.replace(/\b(Dr|Dr\.|Doctor|دكتور|د\.?)\b/gi, '').trim();
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '';
+  if (words.length === 1) return words[0].charAt(0).toUpperCase();
+  // Use a space to prevent Arabic letters from connecting
+  return `${words[0].charAt(0).toUpperCase()} ${words[1].charAt(0).toUpperCase()}`;
+};
+
 // --- Sub-components for flattening and modularity ---
 
 const PasskeyButton: React.FC<{
@@ -156,21 +167,21 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
     if (!currentEmployeeId) return t?.login || 'Login';
     return (
       <div className='flex items-center gap-3 py-0.5 pr-2 pl-0.5' dir={isAR ? 'rtl' : 'ltr'}>
-        <div className='w-10 h-10 rounded-full overflow-hidden bg-white/20 dark:bg-black/10 flex-shrink-0 border-2 border-white/30 dark:border-black/10 flex items-center justify-center shadow-inner'>
+        <div className='w-10 h-10 rounded-full overflow-hidden bg-white/20 flex-shrink-0 border-2 border-white/30 flex items-center justify-center shadow-inner'>
           {avatarUrl ? (
             <img src={avatarUrl} alt={userName} className='w-full h-full object-cover' />
           ) : (
-            <span className='material-symbols-rounded text-white dark:text-gray-700 text-2xl'>
-              person
+            <span className='text-white text-[13px] font-black uppercase tracking-wider'>
+              {getInitials(userName)}
             </span>
           )}
         </div>
         <div className='flex flex-col gap-0.5 justify-center min-w-20'>
-          <span className='text-[13px] font-bold text-white dark:text-gray-900 leading-none'>
+          <span className='text-[13px] font-bold text-white leading-none'>
             {userName}
           </span>
           {roleLabel && (
-            <span className='text-[10px] text-white/70 dark:text-gray-600 font-semibold tracking-wider uppercase'>
+            <span className='text-[10px] text-white/70 font-semibold tracking-wider uppercase'>
               {roleLabel}
             </span>
           )}

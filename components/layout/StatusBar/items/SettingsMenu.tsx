@@ -748,23 +748,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     </div>
                   </div>
                 )}
-                {!darkMode && (
-                  <SettingsRow icon='gradient' label={t.vividBg}>
-                    <SegmentedControl
-                      value={vividBg}
-                      onChange={(v) => setVividBg(v as 'muted' | 'subtle' | 'vivid')}
-                      size='xs'
-                      shape='pill'
-                      iconSize='--icon-settings'
-                      valueChangeEffect
-                      options={[
-                        { label: '', value: 'muted', icon: 'blur_off' },
-                        { label: '', value: 'subtle', icon: 'blur_on' },
-                        { label: '', value: 'vivid', icon: 'blur_circular' },
-                      ]}
-                    />
-                  </SettingsRow>
-                )}
+                <SettingsRow icon='gradient' label={t.vividBg}>
+                  <SegmentedControl
+                    value={vividBg}
+                    onChange={(v) => setVividBg(v as 'muted' | 'subtle' | 'vivid')}
+                    size='xs'
+                    shape='pill'
+                    iconSize='--icon-settings'
+                    valueChangeEffect
+                    options={[
+                      { label: '', value: 'muted', icon: 'blur_off' },
+                      { label: '', value: 'subtle', icon: 'blur_on' },
+                      { label: '', value: 'vivid', icon: 'blur_circular' },
+                    ]}
+                  />
+                </SettingsRow>
                 <SettingsRow
                   icon='chat_bubble'
                   label={language === 'AR' ? 'نمط التلميحات' : 'Tooltip Style'}

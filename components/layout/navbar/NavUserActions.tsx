@@ -120,7 +120,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
             className={`absolute ${language === 'AR' ? 'left-0' : 'right-0'} mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-[10000] `}
           >
             {/* User Info */}
-            <div className='p-4 border-b border-(--border-divider) bg-(--bg-page-surface)'>
+            <div className='p-4 border-b border-(--border-divider)'>
               <div className='flex items-center gap-3'>
                 <div className='relative group'>
                   <EmployeeAvatar
@@ -306,7 +306,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
             )}
 
             {/* Sign Out */}
-            <div className='p-2 border-t border-(--border-divider) bg-(--bg-page-surface)'>
+            <div className='p-2 border-t border-(--border-divider)'>
               <button
                 onClick={async () => {
                   if (isLoggingOut) return;
