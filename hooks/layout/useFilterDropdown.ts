@@ -1,7 +1,7 @@
 import type { FocusEvent, KeyboardEvent, MouseEvent } from 'react';
 
 export interface UseFilterDropdownProps<T> {
-  items: T[];
+  items: readonly T[] | T[];
   selectedItem: T | undefined;
   isOpen: boolean;
   onToggle: () => void;

@@ -5,6 +5,7 @@ import { ORG_ROLES } from '../../config/permissions';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { Branch, Employee } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { TanStackTable } from '../common/TanStackTable';
 
 interface MemberPermissionMatrixProps {
@@ -102,25 +103,22 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
 
           return (
             <div className='flex flex-col items-center gap-1'>
-              <select
-                value={role || 'member'}
+              <FilterDropdown
+                items={ORG_ROLES}
+                selectedItem={ORG_ROLES.find((r) => r.id === (role || 'member')) || ORG_ROLES[0]}
+                onSelect={(item) => onUpdate(employeeId, { orgRole: item.id as any })}
+                keyExtractor={(item) => item.id}
+                renderItem={(item) => <span className='text-xs font-medium'>{getRoleLabel(item.id, t)}</span>}
+                renderSelected={(item) => <span className='text-xs font-medium'>{item ? getRoleLabel(item.id, t) : ''}</span>}
+                variant='input'
+                dense={true}
+                floating={true}
+                portal={true}
+                minHeight="32px"
                 disabled={isLastOwner}
-                onMouseDown={(e) => e.stopPropagation()}
-                onChange={(e) => onUpdate(employeeId, { orgRole: e.target.value as any })}
-                className={`text-xs p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
-                  isLastOwner
-                    ? 'opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900'
-                    : 'hover:border-zinc-300 dark:hover:border-zinc-600'
-                }`}
-                style={{ minWidth: '100px' }}
-                title={isLastOwner ? t.lastOwnerWarning : ''}
-              >
-                {ORG_ROLES.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {getRoleLabel(r.id, t)}
-                  </option>
-                ))}
-              </select>
+                className={`w-full ${isLastOwner ? 'opacity-50' : ''}`}
+                style={{ minWidth: '130px', maxWidth: '200px' }}
+              />
               {isLastOwner && (
                 <span className='text-[9px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-bold uppercase tracking-wide'>
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>
@@ -134,7 +132,7 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
         },
       },
       {
-        accessorKey: 'branchId',
+        accessorKey: 'branch',
         header: t.primaryBranch,
         meta: { align: 'start' },
         cell: (info) => {
@@ -142,18 +140,21 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
           const employeeId = info.row.original.id;
 
           return (
-            <select
-              value={currentBranchId}
-              onMouseDown={(e) => e.stopPropagation()}
-              onChange={(e) => onUpdate(employeeId, { branchId: e.target.value })}
-              className='text-xs p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 outline-none w-full max-w-[200px] hover:border-zinc-300 dark:hover:border-zinc-600 transition-all font-medium py-1.5'
-            >
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
+            <FilterDropdown
+              items={branches}
+              selectedItem={branches.find((b) => b.id === currentBranchId) || branches[0]}
+              onSelect={(item) => onUpdate(employeeId, { branchId: item.id })}
+              keyExtractor={(item) => item.id}
+              renderItem={(item) => <span className='text-xs font-medium'>{item.name}</span>}
+              renderSelected={(item) => <span className='text-xs font-medium'>{item?.name}</span>}
+              variant='input'
+              dense={true}
+              floating={true}
+              portal={true}
+              minHeight="32px"
+              className='w-full'
+              style={{ minWidth: '130px', maxWidth: '200px' }}
+            />
           );
         },
       },
@@ -167,11 +168,10 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
 
           return (
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent ${
-                isActive
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent ${isActive
                   ? 'text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50'
                   : 'text-zinc-500 border-zinc-200 dark:border-zinc-800/50'
-              }`}
+                }`}
             >
               <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>
                 {isActive ? 'check_circle' : 'cancel'}

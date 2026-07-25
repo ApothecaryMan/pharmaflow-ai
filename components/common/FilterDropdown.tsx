@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 // FilterDropdown Component
 import { useFilterDropdown } from '../../hooks/layout/useFilterDropdown';
 
 export interface FilterDropdownProps<T> {
-  items: T[];
+  items: readonly T[] | T[];
   selectedItem: T | undefined;
   isOpen?: boolean;
   onToggle?: () => void;
@@ -39,6 +40,8 @@ export interface FilterDropdownProps<T> {
    * It swaps the colors: use "open" color for closed state and vice versa.
    */
   onBackground?: boolean;
+  /** NEW: If true, renders the dropdown in a React Portal to break out of all overflows */
+  portal?: boolean;
 }
 
 /**
@@ -68,6 +71,7 @@ export function FilterDropdown<T>({
   hideArrow = false,
   autoHideArrow = false,
   onBackground = false,
+  portal = false,
   dense = false,
 }: FilterDropdownProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -101,20 +105,44 @@ export function FilterDropdown<T>({
     }
   };
 
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  
   useEffect(() => {
     if (!effectiveIsOpen) return;
+    const updateRect = () => {
+      if (containerRef.current) {
+        setRect(containerRef.current.getBoundingClientRect());
+      }
+    };
+    updateRect();
+    
+    if (portal) {
+      window.addEventListener('scroll', updateRect, true);
+      window.addEventListener('resize', updateRect);
+    }
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        if (isControlled) {
-          onToggle();
-        } else {
-          setInternalIsOpen(false);
+        // If portalled, also check if the click is inside the portalled element
+        const isClickInPortal = portal && (event.target as HTMLElement).closest('.filter-dropdown-portal');
+        if (!isClickInPortal) {
+          if (isControlled) {
+            onToggle();
+          } else {
+            setInternalIsOpen(false);
+          }
         }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [effectiveIsOpen, isControlled, onToggle]);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (portal) {
+        window.removeEventListener('scroll', updateRect, true);
+        window.removeEventListener('resize', updateRect);
+      }
+    };
+  }, [effectiveIsOpen, isControlled, onToggle, portal]);
 
   const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useFilterDropdown({
     items,
@@ -151,21 +179,69 @@ export function FilterDropdown<T>({
   const outerClasses = `relative inline-block ${className}`;
   const outerStyle = floating && minHeight ? { ...style, height: minHeight, minHeight } : style;
 
-  const innerClasses = `relative w-full flex flex-col overflow-hidden border outline-hidden group
+  const innerClasses = `relative w-full flex flex-col overflow-hidden border outline-hidden group/dropdown filter-dropdown-portal
                     ${rounded === 'full' ? 'rounded-[20px]' : rounded === 'lg' ? 'rounded-lg' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
                     ${effectiveIsOpen || isAnimating ? zIndexHigh : 'z-0'}
                     ${onBackground ? 'shadow-xs' : ''}
                     transition-all duration-300
-                    ${floating ? 'absolute top-0 left-0' : ''}
+                    ${(floating || portal) && !portal ? 'absolute top-0 left-0' : ''}
                 `;
 
-  return (
-    <div ref={containerRef} className={outerClasses} style={outerStyle}>
-      <style>{`
-                .filter-dropdown-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
-                .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
-            `}</style>
+  const triggerContent = (
+    <div
+      className={`w-full flex items-center ${
+        isInput
+          ? `justify-between ${onBackground ? (dense ? 'px-2 py-1' : 'px-3 py-[9px]') : itemPaddingClasses}`
+          : `justify-center items-center ${itemPaddingClasses}`
+      }`}
+      style={
+        isInput
+          ? {
+              minHeight:
+                minHeight ||
+                (onBackground ? (dense ? '34px' : '42px') : dense ? '32px' : '40px'),
+            }
+          : {}
+      }
+    >
+      {isInput ? (
+        <>
+          <div
+            className={`flex-1 truncate ${dense ? 'text-xs' : 'text-sm'} font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover/dropdown:text-primary-600 dark:group-hover/dropdown:text-primary-400`}
+          >
+            {renderSelected(selectedItem)}
+          </div>
+          {!(
+            hideArrow ||
+            (autoHideArrow &&
+              (() => {
+                const findText = (node: any): string => {
+                  if (typeof node === 'string' || typeof node === 'number') return String(node);
+                  if (!node) return '';
+                  if (React.isValidElement(node)) {
+                    const children = (node.props as any).children;
+                    return Array.isArray(children)
+                      ? children.map(findText).join('')
+                      : findText(children);
+                  }
+                  return Array.isArray(node) ? node.map(findText).join('') : '';
+                };
+                return findText(renderSelected(selectedItem)).length > 3;
+              })())
+          ) && (
+            <span className='material-symbols-rounded text-gray-400 text-[20px] ml-1 shrink-0'>
+              expand_more
+            </span>
+          )}
+        </>
+      ) : (
+        renderSelected(selectedItem)
+      )}
+    </div>
+  );
+
+  const innerContent = (
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
@@ -178,60 +254,19 @@ export function FilterDropdown<T>({
           backgroundColor: currentBg,
           borderColor: effectiveIsOpen ? 'var(--border-divider-strong)' : currentBorder,
           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          ...(portal && effectiveIsOpen && rect
+            ? {
+                position: 'fixed',
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+              }
+            : {}),
         }}
         onClick={disabled ? undefined : handleClick}
       >
         {/* Trigger Area */}
-        <div
-          className={`w-full flex items-center ${
-            isInput
-              ? `justify-between ${onBackground ? (dense ? 'px-2 py-1' : 'px-3 py-[9px]') : itemPaddingClasses}`
-              : `justify-center items-center ${itemPaddingClasses}`
-          }`}
-          style={
-            isInput
-              ? {
-                  minHeight:
-                    minHeight ||
-                    (onBackground ? (dense ? '34px' : '42px') : dense ? '32px' : '40px'),
-                }
-              : {}
-          }
-        >
-          {isInput ? (
-            <>
-              <div
-                className={`flex-1 truncate ${dense ? 'text-xs' : 'text-sm'} font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400`}
-              >
-                {renderSelected(selectedItem)}
-              </div>
-              {!(
-                hideArrow ||
-                (autoHideArrow &&
-                  (() => {
-                    const findText = (node: any): string => {
-                      if (typeof node === 'string' || typeof node === 'number') return String(node);
-                      if (!node) return '';
-                      if (React.isValidElement(node)) {
-                        const children = (node.props as any).children;
-                        return Array.isArray(children)
-                          ? children.map(findText).join('')
-                          : findText(children);
-                      }
-                      return Array.isArray(node) ? node.map(findText).join('') : '';
-                    };
-                    return findText(renderSelected(selectedItem)).length > 3;
-                  })())
-              ) && (
-                <span className='material-symbols-rounded text-gray-400 text-[20px] ml-1 shrink-0'>
-                  expand_more
-                </span>
-              )}
-            </>
-          ) : (
-            renderSelected(selectedItem)
-          )}
-        </div>
+        {triggerContent}
 
         {/* Dropdown Menu Container */}
         <div
@@ -266,6 +301,27 @@ export function FilterDropdown<T>({
           </div>
         </div>
       </div>
+  );
+
+  return (
+    <div ref={containerRef} className={outerClasses} style={outerStyle}>
+      <style>{`
+                .filter-dropdown-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
+                .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
+            `}</style>
+      
+      {/* If using portal, render the trigger placeholder when open, and portal the actual content */}
+      {portal && effectiveIsOpen ? (
+        <>
+          {/* Placeholder so the UI doesn't jump */}
+          <div className={`w-full ${rounded === 'full' ? 'rounded-[20px]' : rounded === 'lg' ? 'rounded-lg' : 'rounded-xl'} border opacity-0 pointer-events-none`} aria-hidden="true">
+            {triggerContent}
+          </div>
+          {createPortal(innerContent, document.body)}
+        </>
+      ) : (
+        innerContent
+      )}
     </div>
   );
 }
