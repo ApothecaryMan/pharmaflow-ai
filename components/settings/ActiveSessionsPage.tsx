@@ -83,6 +83,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       )
       .on(
         'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'user_active_sessions' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
+        }
+      )
+      .on(
+        'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'user_active_sessions' },
         () => {
           queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });

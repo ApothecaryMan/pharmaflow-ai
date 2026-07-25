@@ -195,11 +195,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
   // --- Autosave Effect (Performance Optimized) ---
   const printSettingsRef = useRef(activeBranch?.printSettings);
-  useEffect(() => {
-    printSettingsRef.current = activeBranch?.printSettings;
-  }, [activeBranch?.printSettings]);
+  printSettingsRef.current = activeBranch?.printSettings;
 
   const lastAutoSavedState = useRef<string>('');
+  const isFirstSave = useRef(true);
 
   useEffect(() => {
     if (!isLoaded) return; // Guard: Don't save before initial load
@@ -220,6 +219,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     const newStateString = JSON.stringify(designState);
     if (newStateString === lastAutoSavedState.current) return;
     lastAutoSavedState.current = newStateString;
+
+    if (isFirstSave.current) {
+      isFirstSave.current = false;
+      return;
+    }
 
     if (activeBranchId) {
       updateBranch(activeBranchId, {

@@ -111,6 +111,19 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     ).on(
       'postgres_changes',
       {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'user_active_sessions',
+        filter: `user_id=eq.${profile.id}`,
+      },
+      () => {
+        sessionRepository.getActiveSessions().then((data) => {
+          if (isMounted) setSessions(data);
+        });
+      }
+    ).on(
+      'postgres_changes',
+      {
         event: 'DELETE',
         schema: 'public',
         table: 'user_active_sessions',
@@ -129,6 +142,19 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
         'postgres_changes',
         {
           event: 'INSERT',
+          schema: 'public',
+          table: 'user_active_sessions',
+          filter: `employee_id=in.(${employeeIds.join(',')})`,
+        },
+        () => {
+          sessionRepository.getActiveSessions().then((data) => {
+            if (isMounted) setSessions(data);
+          });
+        }
+      ).on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
           schema: 'public',
           table: 'user_active_sessions',
           filter: `employee_id=in.(${employeeIds.join(',')})`,
