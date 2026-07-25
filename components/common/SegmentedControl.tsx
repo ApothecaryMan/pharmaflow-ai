@@ -141,7 +141,7 @@ export function SegmentedControl<T extends string | number | boolean>({
     <div
       ref={ref}
       dir={dir}
-      className={`relative flex p-1 gap-1 bg-gray-100 dark:bg-gray-900 custom-card-css-target no-padding ${pill ? 'rounded-full' : 'rounded-xl'} shadow-[inset_0_1px_3px_0_rgb(0_0_0/0.12)] isolate ${className}`}
+      className={`relative flex p-1 gap-1 bg-black/5 dark:bg-black/20 custom-card-css-target no-padding ${pill ? 'rounded-full' : 'rounded-xl'} shadow-[inset_0_1px_3px_0_rgb(0_0_0/0.12)] isolate ${className}`}
     >
       {indicator && (
         <motion.div

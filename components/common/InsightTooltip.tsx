@@ -154,34 +154,34 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
   return (
     <div className='space-y-3 py-1.5 min-w-[240px] max-w-[320px]'>
       {/* TIER 1: PRIMARY RESULT (EXECUTIVE SUMMARY) */}
-      <div className='px-1 border-b border-black/10 dark:border-white/10 pb-2 flex justify-between items-end gap-3'>
+      <div className='px-1 border-b border-white/10 pb-2 flex justify-between items-end gap-3'>
         <div className='flex flex-col gap-0.5'>
-          <p className='text-[10.5px] text-white/60 dark:text-black/60 font-bold uppercase tracking-widest flex items-center gap-1.5'>
+          <p className='text-[10.5px] text-white/60 font-bold uppercase tracking-widest flex items-center gap-1.5'>
             <span className={`material-symbols-rounded text-[13px] ${iconColorClass}`}>{icon}</span>
             {title}
           </p>
           {valueLabel && (
-            <span className='text-[12px] text-white/60 dark:text-black/60 font-medium'>
+            <span className='text-[12px] text-white/60 font-medium'>
               {valueLabel}
             </span>
           )}
         </div>
-        <div className='text-2xl font-black text-white dark:text-black flex items-center gap-1.5 tracking-tight'>
+        <div className='text-2xl font-black text-white flex items-center gap-1.5 tracking-tight'>
           <CurrencyValue val={value} language={language} isHeader isCurrency={isCurrency} />
         </div>
       </div>
 
       {/* TIER 2: CALCULATION LOGIC (TRANSPARENCY) */}
-      <div className='bg-white/10 dark:bg-black/5 p-2 rounded-xl space-y-2 border border-white/10 dark:border-black/10 shadow-xs'>
+      <div className='bg-white/10 p-2 rounded-xl space-y-2 border border-white/10 shadow-xs'>
         {calculations.map((calc, idx) => (
           <div
             key={`${calc.label}-${idx}`}
-            className={`space-y-1 ${idx > 0 ? 'border-t border-white/10 dark:border-black/10 pt-2' : ''}`}
+            className={`space-y-1 ${idx > 0 ? 'border-t border-white/10 pt-2' : ''}`}
           >
-            <div className='flex justify-between text-[9px] text-white/60 dark:text-black/60 font-bold uppercase tracking-tighter opacity-80'>
+            <div className='flex justify-between text-[9px] text-white/60 font-bold uppercase tracking-tighter opacity-80'>
               <span>{calc.label}</span>
             </div>
-            <div className='text-[12.5px] font-mono font-bold text-white dark:text-black flex justify-between items-center gap-2 whitespace-nowrap tabular-nums'>
+            <div className='text-[12.5px] font-mono font-bold text-white flex justify-between items-center gap-2 whitespace-nowrap tabular-nums'>
               {typeof calc.math === 'number' ? (
                 <CurrencyValue val={calc.math} language={language} isCurrency={calc.isCurrency} />
               ) : (
@@ -197,14 +197,14 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
         {details.map((detail, idx) => (
           <div key={`${detail.label}-${idx}`} className='group'>
             <div className='flex justify-between items-center text-[12.5px]'>
-              <span className='text-white/80 dark:text-black/80 flex items-center gap-2 font-medium'>
+              <span className='text-white/80 flex items-center gap-2 font-medium'>
                 <span className='material-symbols-rounded text-[16px] opacity-70 group-hover:opacity-100 transition-opacity'>
                   {detail.icon}
                 </span>
                 {detail.label}
               </span>
               <span
-                className={`font-black tracking-tight ${detail.colorClass || 'text-white dark:text-black'}`}
+                className={`font-black tracking-tight ${detail.colorClass || 'text-white'}`}
               >
                 <CurrencyValue
                   val={detail.value}
@@ -214,7 +214,7 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
               </span>
             </div>
             {detail.subLabel && (
-              <div className='text-[9px] text-white/50 dark:text-black/50 px-2 mt-0.5 font-medium'>
+              <div className='text-[9px] text-white/50 px-2 mt-0.5 font-medium'>
                 {detail.subLabel}
               </div>
             )}
@@ -223,7 +223,7 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
       </div>
 
       {footer && (
-        <div className='px-1.5 text-[11px] text-white/60 dark:text-black/60 leading-relaxed border-t border-white/10 dark:border-black/10 pt-3 italic font-medium opacity-80'>
+        <div className='px-1.5 text-[11px] text-white/60 leading-relaxed border-t border-white/10 pt-3 italic font-medium opacity-80'>
           "{footer}"
         </div>
       )}

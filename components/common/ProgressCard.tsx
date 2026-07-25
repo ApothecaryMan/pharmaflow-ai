@@ -75,7 +75,7 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
         {/* First Bar */}
         <div>
           <div
-            className={`relative w-full ${value2 ? 'h-2' : 'h-2.5'} bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden`}
+            className={`relative w-full ${value2 ? 'h-2' : 'h-2.5'} bg-(--border-divider) rounded-full overflow-hidden`}
           >
             <div
               className={`absolute left-0 top-0 h-full rounded-full bg-${progressColor}-500`}
@@ -93,7 +93,7 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
         {/* Second Bar (Optional) */}
         {value2 && (
           <div>
-            <div className='relative w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden'>
+            <div className='relative w-full h-2 bg-(--border-divider) rounded-full overflow-hidden'>
               <div
                 className={`absolute left-0 top-0 h-full rounded-full bg-${progressColor2 || 'gray'}-500`}
                 style={{ width: `${percentage2}%` }}
@@ -180,7 +180,7 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({
             </div>
 
             {/* Progress Bar */}
-            <div className='relative w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden'>
+            <div className='relative w-full h-2.5 bg-(--border-divider) rounded-full overflow-hidden'>
               {!isLoading && (
                 <div
                   className={`absolute ltr:left-0 rtl:right-0 top-0 h-full rounded-full bg-${item.color}-500`}
@@ -276,7 +276,7 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
 
         {/* Progress Bar */}
         <div
-          className={`flex gap-1 ${compact ? 'h-3' : 'h-3'} rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 w-full`}
+          className={`flex gap-1 ${compact ? 'h-3' : 'h-3'} rounded-full overflow-hidden bg-(--border-divider) w-full`}
         >
           {isLoading ? (
             <div className='w-full h-full bg-zinc-50 dark:bg-zinc-800/30' />

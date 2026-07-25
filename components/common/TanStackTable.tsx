@@ -902,7 +902,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         {/* Table Scroll Area */}
         <div
           ref={tableContainerRef}
-          className='flex-1 overflow-y-scroll  custom-scrollbar relative'
+          className={`flex-1 ${
+            enableVirtualization ? 'overflow-y-auto' : 'overflow-auto'
+          } bg-(--bg-card) relative min-h-0 w-full`}
+          style={{
+            direction: isRtl ? 'rtl' : 'ltr',
+          }}
         >
           {visibleColumnsCount === 0 ? (
             <ContextMenuTrigger
