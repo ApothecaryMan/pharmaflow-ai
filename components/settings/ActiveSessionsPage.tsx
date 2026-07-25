@@ -64,6 +64,14 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [isEndingAll, setIsEndingAll] = useState(false);
   const [endingSessions, setEndingSessions] = useState<Set<string>>(new Set());
+  const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
+  const [isManualRefresh, setIsManualRefresh] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsManualRefresh(true);
+    await refetch();
+    setIsManualRefresh(false);
+  };
 
   // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
   const [, setTick] = useState(0);
@@ -71,7 +79,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const refreshing = isRefetching;
 
   useRealtimeChannel('active_sessions_admin', (ch) => {
-    const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
+    const invalidate = (payload: any) => {
+      if (payload && payload.new && payload.new.id) {
+        setHighlightedRowId(payload.new.id);
+        setTimeout(() => setHighlightedRowId(null), 1500);
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
+    };
     const tableConfig = { schema: 'public' as const, table: 'user_active_sessions' as const };
 
     ch
@@ -507,13 +521,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     position='bottom'
                   >
                     <button
-                      onClick={() => refetch()}
-                      disabled={refreshing}
+                      onClick={handleManualRefresh}
+                      disabled={refreshing || isManualRefresh}
                       className='w-[36px] h-pageheader flex items-center justify-center border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
                       type='button'
                     >
                       <svg
-                        className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`}
+                        className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${refreshing || isManualRefresh ? 'animate-spin' : ''}`}
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -557,7 +571,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
               </div>
 
               <div className='flex-1 overflow-y-auto md:bg-(--bg-card) md:border border-(--border-divider)'>
-                {isLoading || refreshing ? (
+                {isLoading || isManualRefresh ? (
                   <div className='flex items-center justify-center min-h-[400px]'>
                     <div className='animate-spin rounded-full h-10 w-10 border-4 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
                   </div>
@@ -670,11 +684,12 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                           );
 
                           const isCurrentDevice = session.user_agent === currentUserAgent;
+                          const isHighlighted = highlightedRowId === session.id;
 
                           return (
                             <tr
                               key={session.id}
-                              className={`block md:table-row rounded-xl md:rounded-none md:h-[72px] border border-(--border-divider) md:border-none bg-(--bg-card) md:bg-transparent ${isCurrentDevice ? 'md:bg-gray-50 md:dark:bg-gray-800/60' : ''}`}
+                              className={`block md:table-row rounded-xl md:rounded-none md:h-[72px] border border-(--border-divider) md:border-none bg-(--bg-card) md:bg-transparent ${isCurrentDevice ? 'md:bg-gray-50 md:dark:bg-gray-800/60' : ''} ${isHighlighted ? 'bg-blue-50/60 dark:bg-blue-900/30' : 'transition-colors duration-1000'}`}
                             >
                               <td className='block md:table-cell px-4 pt-4 pb-2 md:px-6 md:h-[72px] md:align-middle'>
                                 <div className='group relative'>
@@ -706,7 +721,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                       >
                                         {sessionUserName}
                                       </span>
-                                      <div className='md:hidden mt-0.5 text-xs'>
+                                      <div className='md:hidden mt-0.5 text-xs flex items-center gap-2'>
                                         {status === 'online' ? (
                                           <span className='text-green-600 dark:text-green-400 font-medium'>
                                             {t.activeSessions.onlineNow}
@@ -720,6 +735,9 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                           <span className='text-gray-500'>
                                             {relativeTime ? relativeTime : lastSeenInfo.label}
                                           </span>
+                                        )}
+                                        {isHighlighted && (
+                                          <span className='w-3.5 h-3.5 rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400 animate-spin shrink-0' title="Updating..."></span>
                                         )}
                                       </div>
                                     </div>
@@ -894,7 +912,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                   <span className='md:hidden text-xs font-semibold uppercase opacity-70'>
                                     {t.activeSessions.seenLabel}
                                   </span>
-                                  <div className='flex items-center gap-2 md:block'>
+                                  <div className='flex items-center gap-2 md:block relative'>
                                     {status === 'online' ? (
                                       <div className='text-green-600 dark:text-green-400 font-medium'>
                                         {t.activeSessions.onlineNow}
@@ -924,6 +942,11 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                           {lastSeenInfo.time}
                                         </div>
                                       </>
+                                    )}
+                                    {isHighlighted && (
+                                      <div className='hidden md:block absolute -right-5 rtl:-left-5 top-1/2 -translate-y-1/2'>
+                                        <span className='inline-block w-3.5 h-3.5 rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400 animate-spin' title="Updating..."></span>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
