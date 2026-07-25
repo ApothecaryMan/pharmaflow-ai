@@ -281,7 +281,12 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const getPrevSession = useCallback(
     (session: UserActiveSession): UserActiveSession | undefined => {
       return sessions
-        .filter((s) => s.created_at < session.created_at)
+        .filter(
+          (s) =>
+            s.created_at < session.created_at &&
+            s.user_agent === session.user_agent &&
+            s.device_info === session.device_info
+        )
         .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
     },
     [sessions]
@@ -757,18 +762,24 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                           <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
                                             {t.activeSessions.sessionInfo}
                                           </div>
-                                          <div className='text-xs text-gray-600 dark:text-gray-400'>
-                                            {t.activeSessions.loggedIn}{' '}
-                                            {getRelativeTime(session.created_at, language) ||
-                                              startedLabel.label}{' '}
-                                            · {startedLabel.time}
+                                          <div className='text-xs text-gray-600 dark:text-gray-400 flex flex-wrap items-center gap-1'>
+                                            <span>{t.activeSessions.loggedIn}</span>
+                                            <bdi>
+                                              {getRelativeTime(session.created_at, language) ||
+                                                startedLabel.label}
+                                            </bdi>
+                                            <span>·</span>
+                                            <bdi>{startedLabel.time}</bdi>
                                           </div>
-                                          <div className='text-xs text-gray-500 dark:text-gray-400'>
-                                            {getDeviceName(
-                                              session.user_agent || '',
-                                              session.device_info || ''
-                                            )}{' '}
-                                            · {getBrowserName(session.user_agent || '')}
+                                          <div className='text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-1'>
+                                            <bdi>
+                                              {getDeviceName(
+                                                session.user_agent || '',
+                                                session.device_info || ''
+                                              )}
+                                            </bdi>
+                                            <span>·</span>
+                                            <bdi>{getBrowserName(session.user_agent || '')}</bdi>
                                           </div>
 
                                           {prevSession &&
@@ -810,17 +821,21 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                                       <span className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate'>
                                                         {prevName}
                                                       </span>
-                                                      <span className='text-[11px] text-gray-500 dark:text-gray-400'>
-                                                        {getDeviceName(
-                                                          prevSession.user_agent || '',
-                                                          prevSession.device_info || ''
-                                                        )}{' '}
-                                                        ·{' '}
-                                                        {getRelativeTime(
-                                                          prevSession.created_at,
-                                                          language
-                                                        ) || prevStartedLabel.label}
-                                                      </span>
+                                                      <div className='text-[11px] text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-1'>
+                                                        <bdi>
+                                                          {getDeviceName(
+                                                            prevSession.user_agent || '',
+                                                            prevSession.device_info || ''
+                                                          )}
+                                                        </bdi>
+                                                        <span>·</span>
+                                                        <bdi>
+                                                          {getRelativeTime(
+                                                            prevSession.created_at,
+                                                            language
+                                                          ) || prevStartedLabel.label}
+                                                        </bdi>
+                                                      </div>
                                                     </div>
                                                   </div>
                                                 </div>
