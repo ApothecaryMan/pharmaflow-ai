@@ -124,22 +124,68 @@ export const useTheme = (
       root.style.setProperty(`--primary-${shade}`, value);
     });
 
-    // In light mode, tint the page background with the accent color
-    if (!darkMode && hex) {
-      const surfacePct = vividBg === 'muted' ? 0 : vividBg === 'vivid' ? 18 : 6;
-      const statusPct = vividBg === 'muted' ? 0 : vividBg === 'vivid' ? 30 : 12;
-      
-      root.style.setProperty(
-        '--bg-page-surface',
-        `color-mix(in srgb, ${hex} ${surfacePct}%, #f1f3f5)`
-      );
-      root.style.setProperty(
-        '--bg-statusbar',
-        `color-mix(in srgb, ${hex} ${statusPct}%, var(--bg-secondary))`
-      );
+    // Tint page backgrounds and cards with the accent color
+    if (hex && vividBg !== 'muted') {
+      if (!darkMode) {
+        // Light mode tinting
+        // Increased percentages because we use deeper 600-level colors which mix lighter into white
+        const surfacePct = vividBg === 'vivid' ? 12 : 4;
+        const statusPct = vividBg === 'vivid' ? 16 : 6;
+        const cardPct = vividBg === 'vivid' ? 5 : 2; // Cards need less tint to stay bright but visible
+        const menuPct = vividBg === 'vivid' ? 8 : 3; // Menus need slightly more tint to pop out
+        const navbarPct = vividBg === 'vivid' ? 6 : 2.5; // Navbar tint
+        const borderPct = vividBg === 'vivid' ? 15 : 6; // Borders need a strong tint to be visible
+        
+        root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} ${surfacePct}%, #f8fafc)`);
+        root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} ${statusPct}%, var(--color-gray-200))`); // Hardcode base to avoid double tint
+        root.style.setProperty('--bg-secondary', `color-mix(in srgb, ${hex} ${surfacePct + 3}%, var(--color-gray-200))`);
+        root.style.setProperty('--bg-card-base', `color-mix(in srgb, ${hex} ${cardPct}%, #ffffff)`);
+        root.style.setProperty('--bg-internal-card', `color-mix(in srgb, ${hex} ${cardPct}%, #ffffff)`);
+        root.style.setProperty('--bg-input', `#ffffff`); // Keep inputs pure white for maximum contrast against tinted cards
+        root.style.setProperty('--bg-menu', `color-mix(in srgb, ${hex} ${menuPct}%, #ffffff)`);
+        root.style.setProperty('--bg-menu-hover', `color-mix(in srgb, ${hex} ${menuPct + 5}%, var(--color-gray-100))`);
+        root.style.setProperty('--bg-navbar', `color-mix(in srgb, ${hex} ${navbarPct}%, #ffffff)`);
+        root.style.setProperty('--bg-navbar-hover', `color-mix(in srgb, ${hex} ${navbarPct + 5}%, var(--color-gray-100))`);
+        
+        // Tint Borders so they don't disappear into the tinted background
+        root.style.setProperty('--border-divider', `color-mix(in srgb, ${hex} ${borderPct}%, var(--color-gray-200))`);
+        root.style.setProperty('--border-primary', `color-mix(in srgb, ${hex} ${borderPct + 5}%, var(--color-gray-300))`);
+      } else {
+        // Dark mode tinting (subtle elegant mix with dark grays)
+        const surfacePct = vividBg === 'vivid' ? 4 : 2;
+        const cardPct = vividBg === 'vivid' ? 3 : 1.5;
+        const menuPct = vividBg === 'vivid' ? 5 : 2;
+        const navbarPct = vividBg === 'vivid' ? 4 : 1.5;
+        const borderPct = vividBg === 'vivid' ? 10 : 5;
+        
+        root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} ${surfacePct}%, #18181b)`); // zinc-900
+        root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} ${surfacePct}%, #1f1f1f)`);
+        root.style.setProperty('--bg-secondary', `color-mix(in srgb, ${hex} ${surfacePct + 2}%, #1a1a1a)`);
+        root.style.setProperty('--bg-card-base', `color-mix(in srgb, ${hex} ${cardPct}%, #27272a)`); // zinc-800
+        root.style.setProperty('--bg-internal-card', `color-mix(in srgb, ${hex} ${cardPct}%, #27272a)`);
+        root.style.setProperty('--bg-input', `color-mix(in srgb, ${hex} ${cardPct - 1}%, #18181b)`); // Slightly darker than card for contrast
+        root.style.setProperty('--bg-menu', `color-mix(in srgb, ${hex} ${menuPct}%, #262626)`); // neutral menu gray
+        root.style.setProperty('--bg-menu-hover', `color-mix(in srgb, ${hex} ${menuPct + 4}%, #323232)`);
+        root.style.setProperty('--bg-navbar', `color-mix(in srgb, ${hex} ${navbarPct}%, #1f1f1f)`);
+        root.style.setProperty('--bg-navbar-hover', `color-mix(in srgb, ${hex} ${navbarPct + 4}%, #323232)`);
+        
+        // Tint Borders
+        root.style.setProperty('--border-divider', `color-mix(in srgb, ${hex} ${borderPct}%, #3f3f46)`); // gray-700
+        root.style.setProperty('--border-primary', `color-mix(in srgb, ${hex} ${borderPct + 5}%, #52525b)`); // gray-600
+      }
     } else {
       root.style.setProperty('--bg-page-surface', '');
       root.style.setProperty('--bg-statusbar', '');
+      root.style.setProperty('--bg-secondary', '');
+      root.style.setProperty('--bg-card-base', '');
+      root.style.setProperty('--bg-internal-card', '');
+      root.style.setProperty('--bg-input', '');
+      root.style.setProperty('--bg-menu', '');
+      root.style.setProperty('--bg-menu-hover', '');
+      root.style.setProperty('--bg-navbar', '');
+      root.style.setProperty('--bg-navbar-hover', '');
+      root.style.setProperty('--border-divider', '');
+      root.style.setProperty('--border-primary', '');
     }
 
     if (darkMode || isLoginView) {
