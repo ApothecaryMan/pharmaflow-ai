@@ -426,7 +426,7 @@ export const Modal: React.FC<ModalProps> = ({
                   <div
                     role="button"
                     tabIndex={0}
-                    className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative select-none custom-card-css-target no-padding'
+                    className='shrink-0 bg-(--bg-card) px-4 h-11 flex items-center relative select-none custom-card-css-target no-padding'
                     onContextMenu={handleHeaderContextMenu}
                   >
                     {/* Title Section: Icon + Title */}
