@@ -325,6 +325,17 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               </div>
             )}
 
+          {onExpand && (
+            <button
+              onClick={onExpand}
+              className='text-xs px-3 py-1 rounded-full font-bold bg-(--bg-page-surface) text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-menu-hover) border border-(--border-divider) transition-all active:scale-95 opacity-0 group-hover:opacity-100'
+              title={language === 'AR' ? 'التفاصيل' : 'Details'}
+              type='button'
+            >
+              {language === 'AR' ? 'التفاصيل' : 'Details'}
+            </button>
+          )}
+
           {/* Chart Type Toggle */}
           {allowChartTypeSelection && (
             <SegmentedControl
@@ -334,23 +345,10 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               ]}
               value={activeChartType}
               onChange={(val) => handleChartTypeChange(val as 'area' | 'bar')}
-              size='xs'
+              size='sm'
               fullWidth={false}
               shape='rounded-sm'
             />
-          )}
-
-          {onExpand && (
-            <button
-              onClick={onExpand}
-              className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
-              title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
-              type='button'
-            >
-              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-                open_in_full
-              </span>
-            </button>
           )}
         </div>
       </div>

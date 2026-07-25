@@ -83,13 +83,11 @@ const getRelativeTime = (d: Date, t: any, language: string) => {
 const ExpandButton: React.FC<{ onClick: () => void; title?: string }> = ({ onClick, title }) => (
   <button
     onClick={onClick}
-    className='w-10 h-10 flex items-center justify-center text-(--text-tertiary) hover:text-(--text-primary) transition-all rounded-xl hover:bg-(--bg-menu-hover) active:scale-95 opacity-0 group-hover:opacity-100'
-    title={title || 'Expand'}
+    className='text-xs px-3 py-1 rounded-full font-bold bg-(--bg-page-surface) text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-menu-hover) border border-(--border-divider) transition-all active:scale-95 opacity-0 group-hover:opacity-100'
+    title={title || 'Show details'}
     type='button'
   >
-    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-      open_in_full
-    </span>
+    {title || 'Details'}
   </button>
 );
 
@@ -98,12 +96,13 @@ const SectionHeader: React.FC<{
   title: string;
   onExpand?: () => void;
   iconColor?: string;
-}> = ({ title, onExpand }) => (
+  expandLabel?: string;
+}> = ({ title, onExpand, expandLabel }) => (
   <div className='flex justify-between items-center mb-3'>
     <h3 className='text-base font-semibold text-(--text-primary) flex items-center gap-2'>
       {title}
     </h3>
-    {onExpand && <ExpandButton onClick={onExpand} />}
+    {onExpand && <ExpandButton onClick={onExpand} title={expandLabel} />}
   </div>
 );
 
@@ -1051,6 +1050,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </span>
             </h3>
             <div className='flex items-center gap-2 shrink-0'>
+              <ExpandButton onClick={() => setExpandedView('topSelling')} title={t.expand?.details} />
               <SegmentedControl
                 options={[
                   {
@@ -1070,7 +1070,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onChange={(val) => setTopSellingMode(String(val) as 'revenue' | 'qty')}
                 size='sm'
               />
-              <ExpandButton onClick={() => setExpandedView('topSelling')} />
             </div>
           </div>
           <div className='flex-1 overflow-y-auto space-y-1 pe-1' dir='ltr'>
@@ -1210,6 +1209,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span className='truncate'>{activeCard.title}</span>
                   </h3>
                   <div className='flex items-center gap-2 shrink-0'>
+                    <ExpandButton onClick={activeCard.onExpand} title={t.expand?.details} />
                     <SegmentedControl
                       options={[
                         {
@@ -1225,7 +1225,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       onChange={(val) => setAlertsMode(String(val) as 'lowStock' | 'expiring')}
                       size='sm'
                     />
-                    <ExpandButton onClick={activeCard.onExpand} />
                   </div>
                 </div>
                 <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
@@ -1265,6 +1264,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             icon='receipt_long'
             title={t.recentSales}
             onExpand={() => setExpandedView('recentSales')}
+            expandLabel={t.expand?.details}
           />
           <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
             {isLoading ? (

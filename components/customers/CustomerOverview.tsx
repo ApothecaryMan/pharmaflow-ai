@@ -258,11 +258,11 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
   }) => (
     <button
       onClick={onClick}
-      className='opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800'
-      title={title || t?.expand || 'Expand'}
+      className='text-xs px-3 py-1 rounded-full font-bold bg-(--bg-page-surface) text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-menu-hover) border border-(--border-divider) transition-all active:scale-95 opacity-0 group-hover:opacity-100'
+      title={title || t?.expand?.details || 'Details'}
       type='button'
     >
-      <span className='material-symbols-rounded text-[18px]'>open_in_full</span>
+      {title || t?.expand?.details || 'Details'}
     </button>
   );
 
@@ -311,8 +311,8 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('total'); } }}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
           >
-            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-              open_in_full
+            <span className='text-[10px] px-2.5 py-1 rounded-full font-bold bg-(--bg-page-surface) text-(--text-tertiary) border border-(--border-divider) absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rtl:right-auto rtl:left-2 z-10'>
+              {t?.expand?.details || 'Details'}
             </span>
             <SmallCard
               icon='group'
@@ -324,16 +324,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           {/* Customer Lifetime Value */}
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setExpandedView('lifetimeValue')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('lifetimeValue'); } }}
-            className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
-          >
-            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-              open_in_full
-            </span>
+          <div>
             <SmallCard
               icon='attach_money'
               title={t?.lifetimeValue || 'Avg. Lifetime Value'}
@@ -346,16 +337,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           {/* New Customers */}
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setExpandedView('newCustomers')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('newCustomers'); } }}
-            className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
-          >
-            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-              open_in_full
-            </span>
+          <div>
             <SmallCard
               icon='person_add'
               title={t?.newCustomers || 'New Customers'}
@@ -368,16 +350,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           {/* Loyalty Points */}
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setExpandedView('loyaltyPoints')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedView('loyaltyPoints'); } }}
-            className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
-          >
-            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-              open_in_full
-            </span>
+          <div>
             <SmallCard
               icon='loyalty'
               title={t?.loyaltyPoints || 'Loyalty Points'}
@@ -399,7 +372,6 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 </span>
                 {t?.locationDistribution || 'Location Distribution'}
               </h3>
-              <ExpandButton onClick={() => setExpandedView('location')} />
             </div>
             {locationDistribution.length > 0 ? (
               <ResponsiveContainer
@@ -569,7 +541,6 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 </span>
                 {t?.engagement || 'Customer Engagement'}
               </h3>
-              <ExpandButton onClick={() => setExpandedView('engagement')} />
             </div>
 
             <div className='grid grid-cols-3 gap-3'>
@@ -688,7 +659,6 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 </span>
                 {t?.contactPrefs || 'Contact Preferences'}
               </h3>
-              <ExpandButton onClick={() => setExpandedView('contactPreferences')} />
             </div>
 
             <div className='space-y-3'>
@@ -740,7 +710,6 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 </span>
                 {t?.recentActivity || 'Recent Customer Activity'}
               </h3>
-              <ExpandButton onClick={() => setExpandedView('recentActivity')} />
             </div>
             <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
               {recentCustomers.slice(0, 5).map((customer) => (
@@ -780,7 +749,6 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 </span>
                 {t?.satisfaction || 'Satisfaction Metrics'}
               </h3>
-              <ExpandButton onClick={() => setExpandedView('satisfaction')} />
             </div>
 
             <div className='grid grid-cols-3 gap-4'>

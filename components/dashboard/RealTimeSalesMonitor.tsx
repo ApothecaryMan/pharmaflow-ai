@@ -58,6 +58,7 @@ const StatCard = ({
   overlay,
   isLoading,
   type,
+  detailsLabel,
 }: any) => (
   <div
     role="button"
@@ -66,8 +67,8 @@ const StatCard = ({
     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(e); } }}
     className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
   >
-    <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-      open_in_full
+    <span className='text-[10px] px-2.5 py-1 rounded-full font-bold bg-(--bg-page-surface) text-(--text-tertiary) border border-(--border-divider) absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rtl:right-auto rtl:left-2 z-10'>
+      {detailsLabel || 'Details'}
     </span>
     <SmallCard
       title={title}
@@ -677,6 +678,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           onClick={() => setExpandedView('revenue')}
           isLoading={isLoading}
           type='currency'
+          detailsLabel={t.expand?.details}
         />
         <StatCard
           title={t.realTimeSales?.totalTransactions}
@@ -687,6 +689,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           tooltip={tooltips.transactions}
           onClick={() => setExpandedView('transactions')}
           isLoading={isLoading}
+          detailsLabel={t.expand?.details}
         />
         <StatCard
           title={t.realTimeSales?.itemsSold}
@@ -697,6 +700,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           tooltip={tooltips.items}
           onClick={() => setExpandedView('items')}
           isLoading={isLoading}
+          detailsLabel={t.expand?.details}
         />
         <StatCard
           title={t.realTimeSales?.activeCounters}
@@ -708,6 +712,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           tooltip={tooltips.counters}
           onClick={() => setExpandedView('counters')}
           isLoading={isLoading}
+          detailsLabel={t.expand?.details}
           overlay={
             <span className='absolute -top-1 -right-1 flex h-3 w-3'>
               <span className='animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75'></span>

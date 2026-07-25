@@ -95,8 +95,8 @@ Deno.serve(async (req: Request) => {
         .select('date, total, net_total')
         .eq('branch_id', branch.id)
         .eq('status', 'completed')
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('date', `${startDate}T00:00:00.000Z`)
+        .lte('date', `${endDate}T23:59:59.999Z`);
 
       if (salesError) {
         console.error(
@@ -164,8 +164,9 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error('[Compute Achievements] Error:', error.message);
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Compute Achievements] Error:', errorMessage);
+    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
