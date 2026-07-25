@@ -217,13 +217,11 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // Handle Sidebar/Modal Active Classes - removed immediately on isOpen change
+  // Handle Sidebar Active Class - sync with open state
   useEffect(() => {
     if (isOpen) {
       if (isSidebar) {
         document.body.classList.add('sidebar-modal-active');
-      } else {
-        document.body.classList.add('modal-blur-active');
       }
     }
 
@@ -234,13 +232,6 @@ export const Modal: React.FC<ModalProps> = ({
         );
         if (remainingSidebars.length === 0) {
           document.body.classList.remove('sidebar-modal-active');
-        }
-      } else {
-        const remainingModals = document.querySelectorAll(
-          '[data-modal-type="modal"][data-modal-open="true"]'
-        );
-        if (remainingModals.length === 0) {
-          document.body.classList.remove('modal-blur-active');
         }
       }
     };
@@ -361,18 +352,16 @@ export const Modal: React.FC<ModalProps> = ({
 
   const maxWidthClass = width || LAYOUT_CONFIG.MODAL_SIZES[size] || LAYOUT_CONFIG.MODAL_SIZES.lg;
 
-  const exitTransition = { duration: 0 };
-
   const cardVariants = {
     modal: {
       initial: { opacity: 0, scale: 0.95, y: 20 },
       animate: { opacity: 1, scale: 1, y: 0 },
-      exit: { opacity: 0, scale: 0.95, y: 20, transition: exitTransition },
+      exit: { opacity: 0, scale: 0.95, y: 20 },
     },
     sidebar: {
       initial: { opacity: 0, x: '100%' },
       animate: { opacity: 1, x: 0 },
-      exit: { opacity: 0, x: '100%', transition: exitTransition },
+      exit: { opacity: 0, x: '100%' },
     },
   };
 
@@ -404,7 +393,7 @@ export const Modal: React.FC<ModalProps> = ({
             {/* Backdrop */}
             <motion.div
               key='backdrop'
-              className={`absolute inset-0 bg-black/10 dark:bg-black/60 pointer-events-auto ${isSidebar ? 'sidebar-modal-backdrop' : 'modal-backdrop'}`}
+              className={`absolute inset-0 bg-black/10 dark:bg-black/60 pointer-events-auto ${isSidebar ? 'sidebar-modal-backdrop' : 'modal-backdrop backdrop-blur-md'}`}
               style={backdropStyle}
               onClick={closeOnBackdropClick ? onClose : undefined}
               variants={backdropVariants}
