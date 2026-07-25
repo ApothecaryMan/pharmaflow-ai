@@ -437,6 +437,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           switchBranch={switchBranch}
           onNavigate={onNavigate}
           onLogout={onLogout}
+          onClearEmployee={() => _setCurrentEmployeeId?.(null)}
           isDataLoading={isDataLoading}
           isLoggingOut={isLoggingOut}
           setIsLoggingOut={setIsLoggingOut}

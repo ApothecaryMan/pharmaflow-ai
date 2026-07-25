@@ -1,4 +1,4 @@
-import type React from 'react';
+import React, { useState } from 'react';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import { authService } from '../../../services/auth/authService';
 import type { Language, Organization, ViewState } from '../../../types';
@@ -22,6 +22,7 @@ interface NavUserActionsProps {
   switchBranch: (id: string) => Promise<void>;
   onNavigate?: (view: ViewState) => void;
   onLogout?: () => void;
+  onClearEmployee?: () => void;
   isDataLoading: boolean;
   isLoggingOut: boolean;
   setIsLoggingOut: (val: boolean) => void;
@@ -43,12 +44,14 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
   switchBranch,
   onNavigate,
   onLogout,
+  onClearEmployee,
   isDataLoading,
   isLoggingOut,
   setIsLoggingOut,
   isCompact = false,
 }) => {
   const t = TRANSLATIONS[language];
+  const [isClearingEmployee, setIsClearingEmployee] = useState(false);
 
   return (
     <div className={`flex items-center ${isCompact ? 'gap-1' : 'gap-2'}`}>
@@ -169,22 +172,23 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                 {currentEmployeeId && (
                   <button
                     onClick={async () => {
-                      if (isLoggingOut) return;
-                      setIsLoggingOut(true);
+                      if (isClearingEmployee) return;
+                      setIsClearingEmployee(true);
                       try {
-                        if (onLogout) await onLogout();
+                        if (onClearEmployee) await onClearEmployee();
+                        else if (onLogout) await onLogout();
                         setShowProfileMenu(false);
                       } catch (error) {
                         console.error('Logout failed', error);
                       } finally {
-                        setIsLoggingOut(false);
+                        setIsClearingEmployee(false);
                       }
                     }}
-                    disabled={isLoggingOut}
+                    disabled={isClearingEmployee}
                     className='md:hidden flex items-center justify-center w-9 h-9 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors'
                     type='button'
                   >
-                    {isLoggingOut ? <Icons.Loading className='animate-spin' /> : <Icons.Logout />}
+                    {isClearingEmployee ? <Icons.Loading className='animate-spin' /> : <Icons.Logout />}
                   </button>
                 )}
               </div>
