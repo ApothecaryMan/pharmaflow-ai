@@ -82,3 +82,20 @@ html:not(.dark).none-border-mode .card-shadow {
   transition-duration: 0s;
   transition-delay: 0s;
 }
+
+/* Theme Toggle Circular Reveal (View Transitions API) */
+.theme-transition::view-transition-group(root) {
+  animation: none;
+}
+.theme-transition::view-transition-old(root),
+.theme-transition::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  display: block;
+}
+.theme-transition::view-transition-old(root) {
+  z-index: 1;
+}
+.theme-transition::view-transition-new(root) {
+  z-index: 2;
+}

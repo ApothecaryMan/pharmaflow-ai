@@ -14,6 +14,13 @@ import { storage } from '../utils/storage';
 
 export { THEMES } from '../config/themeColors';
 
+let lastClick = { x: 0, y: 0, time: 0 };
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    lastClick = { x: e.clientX, y: e.clientY, time: Date.now() };
+  }, true); // capture phase
+}
+
 export type BackgroundPattern =
   | 'none'
   | 'dots'
@@ -181,21 +188,94 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [state.darkMode]);
 
-  const setTheme = useCallback((theme: ThemeColor) => {
-    setState((prev) => ({ ...prev, theme }));
+  const applyViewTransition = useCallback((updateFn: () => void) => {
+    if (
+      !('startViewTransition' in document) ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      updateFn();
+      return;
+    }
+
+    const isRecentClick = Date.now() - lastClick.time < 500;
+    const x = isRecentClick ? lastClick.x : window.innerWidth / 2;
+    const y = isRecentClick ? lastClick.y : window.innerHeight / 2;
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    document.documentElement.classList.add('theme-transition');
+
+    const transition = (document as any).startViewTransition(async () => {
+      updateFn();
+      // Wait a tick to allow React's useEffects to run and update CSS variables/classes
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+          opacity: [0, 1],
+          filter: [
+            'blur(12px) contrast(1.5) saturate(0)',
+            'blur(0px) contrast(1) saturate(1)',
+          ],
+        },
+        {
+          duration: 1200,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+    });
+
+    transition.finished.then(() => {
+      document.documentElement.classList.remove('theme-transition');
+    });
   }, []);
 
-  const setDarkMode = useCallback((darkMode: boolean) => {
-    setState((prev) => ({ ...prev, darkMode }));
-  }, []);
+  const setTheme = useCallback(
+    (theme: ThemeColor) => {
+      applyViewTransition(() => {
+        setState((prev) => ({ ...prev, theme }));
+      });
+    },
+    [applyViewTransition]
+  );
 
-  const setVividBg = useCallback((vividBg: 'muted' | 'subtle' | 'vivid') => {
-    setState((prev) => ({ ...prev, vividBg }));
-  }, []);
+  const setDarkMode = useCallback(
+    (darkMode: boolean) => {
+      applyViewTransition(() => {
+        setState((prev) => ({ ...prev, darkMode }));
+      });
+    },
+    [applyViewTransition]
+  );
 
-  const setBackgroundPattern = useCallback((backgroundPattern: BackgroundPattern) => {
-    setState((prev) => ({ ...prev, backgroundPattern }));
-  }, []);
+  const setVividBg = useCallback(
+    (vividBg: 'muted' | 'subtle' | 'vivid') => {
+      applyViewTransition(() => {
+        setState((prev) => ({ ...prev, vividBg }));
+      });
+    },
+    [applyViewTransition]
+  );
+
+  const setBackgroundPattern = useCallback(
+    (backgroundPattern: BackgroundPattern) => {
+      applyViewTransition(() => {
+        setState((prev) => ({ ...prev, backgroundPattern }));
+      });
+    },
+    [applyViewTransition]
+  );
 
   const setBackgroundPatternOpacity = useCallback((backgroundPatternOpacity: number) => {
     setState((prev) => ({ ...prev, backgroundPatternOpacity }));
@@ -211,9 +291,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const setBackgroundPatternUseThemeColor = useCallback(
     (backgroundPatternUseThemeColor: boolean) => {
-      setState((prev) => ({ ...prev, backgroundPatternUseThemeColor }));
+      applyViewTransition(() => {
+        setState((prev) => ({ ...prev, backgroundPatternUseThemeColor }));
+      });
     },
-    []
+    [applyViewTransition]
   );
 
   const setTooltipStyle = useCallback((tooltipStyle: 'default' | 'box') => {
