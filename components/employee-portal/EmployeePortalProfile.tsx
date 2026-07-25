@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
-import { supabase } from '../../lib/supabase';
+import { useRealtimeChannel } from '../../hooks/infrastructure/useRealtimeChannel';
 import {
   sessionRepository,
   type UserActiveSession,
@@ -83,115 +83,64 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     [isRTL]
   );
 
+  // --- Session real-time subscription with delta updates ---
+  const channelName = profile?.id
+    ? `emp_sessions_profile_${profile.id}_${workspaceIdsString}`
+    : null;
+
+  useRealtimeChannel(channelName, (ch) => {
+    const userId = profile?.id;
+    if (!userId) return;
+
+    const empIds = workspaceIdsString ? workspaceIdsString.split(',') : [];
+
+    const onInsert = (payload: any) => {
+      setSessions((prev) =>
+        prev.some((s) => s.id === payload.new.id) ? prev : [...prev, payload.new],
+      );
+    };
+
+    const onUpdate = (payload: any) => {
+      setSessions((prev) =>
+        prev.map((s) => (s.id === payload.new.id ? { ...s, ...payload.new } : s)),
+      );
+    };
+
+    const onDelete = (payload: any) => {
+      setSessions((prev) => prev.filter((s) => s.id !== payload.old.id));
+    };
+
+    const tableConfig = { schema: 'public' as const, table: 'user_active_sessions' as const };
+
+    ch
+      .on('postgres_changes', { ...tableConfig, event: 'INSERT', filter: `user_id=eq.${userId}` }, onInsert)
+      .on('postgres_changes', { ...tableConfig, event: 'UPDATE', filter: `user_id=eq.${userId}` }, onUpdate)
+      .on('postgres_changes', { ...tableConfig, event: 'DELETE', filter: `user_id=eq.${userId}` }, onDelete);
+
+    if (empIds.length > 0) {
+      const filter = `employee_id=in.(${empIds.join(',')})`;
+      ch
+        .on('postgres_changes', { ...tableConfig, event: 'INSERT', filter }, onInsert)
+        .on('postgres_changes', { ...tableConfig, event: 'UPDATE', filter }, onUpdate)
+        .on('postgres_changes', { ...tableConfig, event: 'DELETE', filter }, onDelete);
+    }
+  }, {
+    onReconnected: () => { reloadSessions(); },
+  });
+
+  // Initial fetch on mount + tick interval for status recalculation
   useEffect(() => {
-    let isMounted = true;
     reloadSessions();
 
-    if (!profile?.id) return;
-
-    const employeeIds = workspaceIdsString ? workspaceIdsString.split(',') : [];
-    const uniqueChannelName = `employee_sessions_changes_profile_${Math.random().toString(36).substring(7)}`;
-
-    let dbChannel = supabase.channel(uniqueChannelName);
-
-    // Listen to their own portal sessions
-    dbChannel = dbChannel.on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'user_active_sessions',
-        filter: `user_id=eq.${profile.id}`,
-      },
-      () => {
-        sessionRepository.getActiveSessions().then((data) => {
-          if (isMounted) setSessions(data);
-        });
-      }
-    ).on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'user_active_sessions',
-        filter: `user_id=eq.${profile.id}`,
-      },
-      () => {
-        sessionRepository.getActiveSessions().then((data) => {
-          if (isMounted) setSessions(data);
-        });
-      }
-    ).on(
-      'postgres_changes',
-      {
-        event: 'DELETE',
-        schema: 'public',
-        table: 'user_active_sessions',
-        filter: `user_id=eq.${profile.id}`,
-      },
-      () => {
-        sessionRepository.getActiveSessions().then((data) => {
-          if (isMounted) setSessions(data);
-        });
-      }
-    );
-
-    // Listen to their POS sessions
-    if (employeeIds.length > 0) {
-      dbChannel = dbChannel.on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_active_sessions',
-          filter: `employee_id=in.(${employeeIds.join(',')})`,
-        },
-        () => {
-          sessionRepository.getActiveSessions().then((data) => {
-            if (isMounted) setSessions(data);
-          });
-        }
-      ).on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_active_sessions',
-          filter: `employee_id=in.(${employeeIds.join(',')})`,
-        },
-        () => {
-          sessionRepository.getActiveSessions().then((data) => {
-            if (isMounted) setSessions(data);
-          });
-        }
-      ).on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'user_active_sessions',
-          filter: `employee_id=in.(${employeeIds.join(',')})`,
-        },
-        () => {
-          sessionRepository.getActiveSessions().then((data) => {
-            if (isMounted) setSessions(data);
-          });
-        }
-      );
-    }
-
-    dbChannel.subscribe();
-
     const tickInterval = setInterval(() => {
-      if (isMounted) setTick((t) => t + 1);
+      setTick((t) => t + 1);
     }, 60_000);
 
     return () => {
-      isMounted = false;
-      supabase.removeChannel(dbChannel);
       clearInterval(tickInterval);
     };
-  }, [profile?.id, workspaceIdsString, reloadSessions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reloadSessions]);
 
   // Refresh sessions when the sessions tab is opened
   useEffect(() => {

@@ -7,9 +7,10 @@ import { useSessionHandlers } from '../../hooks/auth/useSessionHandlers';
 import { KeyboardProvider } from '../../hooks/keyboard';
 import type { AppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
+import { useRealtimeChannel } from '../../hooks/infrastructure/useRealtimeChannel';
 import { useRealtimeDispatcher } from '../../services/realtime/useRealtimeDispatcher';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import type { ViewState } from '../../types';
 import { storage } from '../../utils/storage';
@@ -56,6 +57,21 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     viewId: string;
     params?: any;
   } | null>(null);
+
+  // --- Session ID from storage ---
+  const getSessionId = () => storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(getSessionId);
+
+  // Sync session ID on cross-tab storage changes
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === storage.getScopedKey(StorageKeys.ACTIVE_SESSION_ID)) {
+        setCurrentSessionId(getSessionId());
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
 
   // --- Settings from Context ---
   const {
@@ -128,31 +144,61 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     branches,
   });
 
-  useEffect(() => {
-    // We listen directly to the session broadcast to lock the POS instantly
-    const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+  // --- Session Channel (POS lock: broadcast + postgres_changes + reconnect DB check) ---
+  const channelName = isSupabaseConfigured && currentSessionId ? `session-${currentSessionId}` : null;
+
+  useRealtimeChannel(channelName, (ch) => {
     if (!currentSessionId) return;
 
-    const channelName = `session-${currentSessionId}`;
-
-    // Clean up any existing channel with same name to avoid strict-mode duplication
-    const existing = supabase.getChannels().find((c) => c.topic === `realtime:${channelName}`);
-    if (existing) supabase.removeChannel(existing);
-
-    const channel = supabase
-      .channel(channelName)
+    ch
       .on('broadcast', { event: 'remote-employee-logout' }, (payload) => {
         if (payload.payload?.sessionId === currentSessionId) {
           console.log('[AuthenticatedContent] Locking POS due to remote employee logout');
           setCurrentEmployeeId(null);
         }
       })
-      .subscribe();
+      .on('broadcast', { event: 'remote-logout-named' }, (payload) => {
+        if (payload.payload?.sessionId === currentSessionId) {
+          console.warn('[AuthenticatedContent] Session terminated remotely by:', payload.payload.terminatorName);
+          handleLogout('remote');
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'user_active_sessions',
+        filter: `id=eq.${currentSessionId}`,
+      }, (payload) => {
+        if (payload.new.employee_id === null) {
+          console.log('[AuthenticatedContent] Locking POS — employee removed from session');
+          setCurrentEmployeeId(null);
+        }
+        if (payload.new.is_active === false) {
+          console.warn('[AuthenticatedContent] Session terminated remotely via DB update.');
+          handleLogout('remote');
+        }
+      });
+  }, {
+    onReconnected: async () => {
+      if (!currentSessionId) return;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [setCurrentEmployeeId]);
+      const { data } = await supabase
+        .from('user_active_sessions')
+        .select('employee_id, is_active')
+        .eq('id', currentSessionId)
+        .single();
+
+      if (!data || data.employee_id === null) {
+        console.log('[AuthenticatedContent] Locking POS — session ended while offline');
+        setCurrentEmployeeId(null);
+        return;
+      }
+      if (data.is_active === false) {
+        console.warn('[AuthenticatedContent] Session terminated (detected on reconnect).');
+        handleLogout('remote');
+      }
+    },
+  });
 
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();

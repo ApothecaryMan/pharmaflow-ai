@@ -3,9 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSessionStatus, isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
 import { useAllEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useActiveSessions } from '../../hooks/queries/useSessionsQuery';
+import { useRealtimeChannel } from '../../hooks/infrastructure/useRealtimeChannel';
 import { queryClient } from '../../lib/queryClient';
 import { queryKeys } from '../../lib/queryKeys';
-import { supabase } from '../../lib/supabase';
 import { authService } from '../../services/auth/authService';
 import {
   sessionRepository,
@@ -70,41 +70,22 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const refreshing = isRefetching;
 
+  useRealtimeChannel('active_sessions_admin', (ch) => {
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
+    const tableConfig = { schema: 'public' as const, table: 'user_active_sessions' as const };
+
+    ch
+      .on('postgres_changes', { ...tableConfig, event: 'INSERT' }, invalidate)
+      .on('postgres_changes', { ...tableConfig, event: 'UPDATE' }, invalidate)
+      .on('postgres_changes', { ...tableConfig, event: 'DELETE' }, invalidate);
+  }, {
+    onReconnected: () => queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions }),
+  });
+
+  // Local tick every 60s — recalculates online/offline without DB calls.
   useEffect(() => {
-    const uniqueChannelName = `active_sessions_changes_${Math.random().toString(36).substring(7)}`;
-    const dbChannel = supabase
-      .channel(uniqueChannelName)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'user_active_sessions' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'user_active_sessions' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'user_active_sessions' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
-        }
-      )
-      .subscribe();
-
-    // Local tick every 60s — recalculates online/offline without DB calls.
-    // Actual data updates come from the postgres_changes subscription above.
     const tickInterval = setInterval(() => setTick((t) => t + 1), 60_000);
-
-    return () => {
-      supabase.removeChannel(dbChannel);
-      clearInterval(tickInterval);
-    };
+    return () => clearInterval(tickInterval);
   }, []);
 
   const handleLogout = async (sessionId: string) => {
