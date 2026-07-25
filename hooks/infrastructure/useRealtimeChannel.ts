@@ -7,12 +7,13 @@ const RECONNECT_MAX_MS = 30_000;
 
 interface UseRealtimeChannelOptions {
   onReconnected?: () => void;
+  minReconnectIntervalMs?: number;
 }
 
 export function useRealtimeChannel(
   channelName: string | null,
   setupChannel: (channel: RealtimeChannel) => void,
-  { onReconnected }: UseRealtimeChannelOptions = {},
+  { onReconnected, minReconnectIntervalMs }: UseRealtimeChannelOptions = {},
 ) {
   const setupChannelRef = useRef(setupChannel);
   setupChannelRef.current = setupChannel;
@@ -20,10 +21,14 @@ export function useRealtimeChannel(
   const onReconnectedRef = useRef(onReconnected);
   onReconnectedRef.current = onReconnected;
 
+  const minReconnectIntervalRef = useRef(minReconnectIntervalMs);
+  minReconnectIntervalRef.current = minReconnectIntervalMs;
+
   const mountedRef = useRef(false);
   const retryCountRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wasDisconnectedRef = useRef(false);
+  const lastOnReconnectedRef = useRef(0);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const subscribeWithRetry = useCallback(() => {
@@ -42,7 +47,11 @@ export function useRealtimeChannel(
       if (status === 'SUBSCRIBED') {
         if (wasDisconnectedRef.current && mountedRef.current) {
           wasDisconnectedRef.current = false;
-          onReconnectedRef.current?.();
+          const interval = minReconnectIntervalRef.current;
+          if (!interval || Date.now() - lastOnReconnectedRef.current >= interval) {
+            lastOnReconnectedRef.current = Date.now();
+            onReconnectedRef.current?.();
+          }
         }
         retryCountRef.current = 0;
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {

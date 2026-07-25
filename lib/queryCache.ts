@@ -15,6 +15,7 @@ interface PersistDB extends DBSchema {
 
 const DB_NAME = 'pharmaflow_query_cache';
 const DB_VERSION = 1;
+const PERSIST_DEBOUNCE_MS = 2000;
 
 let dbInstance: IDBPDatabase<PersistDB> | null = null;
 
@@ -30,20 +31,39 @@ async function getDB(): Promise<IDBPDatabase<PersistDB>> {
   return dbInstance;
 }
 
-let persistQueue: Promise<void> = Promise.resolve();
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let latestClient: PersistedClient | null = null;
+let debouncePromise: Promise<void> | null = null;
+let resolveDebounce: (() => void) | null = null;
 
 export const queryPersister = {
-  async persistClient(client: PersistedClient) {
-    const prev = persistQueue;
-    persistQueue = (async () => {
-      await prev.catch(() => {});
-      const db = await getDB();
-      const tx = db.transaction('cache', 'readwrite');
-      const store = tx.objectStore('cache');
-      await store.put({ key: 'react-query-cache', client });
-      await tx.done;
-    })();
-    return persistQueue;
+  persistClient(client: PersistedClient) {
+    latestClient = client;
+
+    if (debounceTimer) return debouncePromise!;
+
+    debouncePromise = new Promise<void>((resolve) => {
+      resolveDebounce = resolve;
+      debounceTimer = setTimeout(async () => {
+        debounceTimer = null;
+        const clientToPersist = latestClient;
+        latestClient = null;
+
+        try {
+          const db = await getDB();
+          const tx = db.transaction('cache', 'readwrite');
+          const store = tx.objectStore('cache');
+          await store.put({ key: 'react-query-cache', client: clientToPersist });
+          await tx.done;
+        } finally {
+          resolveDebounce?.();
+          resolveDebounce = null;
+          debouncePromise = null;
+        }
+      }, PERSIST_DEBOUNCE_MS);
+    });
+
+    return debouncePromise;
   },
 
   async restoreClient(): Promise<PersistedClient | undefined> {

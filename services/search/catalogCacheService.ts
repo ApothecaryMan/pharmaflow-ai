@@ -48,6 +48,11 @@ export async function openCatalogDB(): Promise<IDBPDatabase<CatalogDB>> {
 
         db.createObjectStore('meta', { keyPath: 'key' });
       }
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains('meta')) {
+          db.createObjectStore('meta', { keyPath: 'key' });
+        }
+      }
     },
   });
 }

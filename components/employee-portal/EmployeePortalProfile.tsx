@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
 import { useRealtimeChannel } from '../../hooks/infrastructure/useRealtimeChannel';
 import {
@@ -83,6 +83,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     [isRTL]
   );
 
+  // Throttle onReconnected to avoid cascade of reloads from flapping channels
+  const lastReconnectRef = useRef(0);
+  const MIN_RECONNECT_INTERVAL = 15_000;
+
   // --- Session real-time subscription with delta updates ---
   const channelName = profile?.id
     ? `emp_sessions_profile_${profile.id}_${workspaceIdsString}`
@@ -125,7 +129,12 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
         .on('postgres_changes', { ...tableConfig, event: 'DELETE', filter }, onDelete);
     }
   }, {
-    onReconnected: () => { reloadSessions(); },
+    onReconnected: () => {
+      const now = Date.now();
+      if (now - lastReconnectRef.current < MIN_RECONNECT_INTERVAL) return;
+      lastReconnectRef.current = now;
+      reloadSessions();
+    },
   });
 
   // Initial fetch on mount + tick interval for status recalculation

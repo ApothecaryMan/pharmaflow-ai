@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getSessionStatus, isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
 import { useAllEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useActiveSessions } from '../../hooks/queries/useSessionsQuery';
@@ -78,6 +78,10 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const refreshing = isRefetching;
 
+  // Throttle onReconnected to avoid cascade of invalidations from flapping channels
+  const lastReconnectRef = useRef(0);
+  const MIN_RECONNECT_INTERVAL = 15_000;
+
   useRealtimeChannel('active_sessions_admin', (ch) => {
     const invalidate = (payload: any) => {
       if (payload && payload.new && payload.new.id) {
@@ -93,7 +97,12 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       .on('postgres_changes', { ...tableConfig, event: 'UPDATE' }, invalidate)
       .on('postgres_changes', { ...tableConfig, event: 'DELETE' }, invalidate);
   }, {
-    onReconnected: () => queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions }),
+    onReconnected: () => {
+      const now = Date.now();
+      if (now - lastReconnectRef.current < MIN_RECONNECT_INTERVAL) return;
+      lastReconnectRef.current = now;
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sessions });
+    },
   });
 
   // Local tick every 60s — recalculates online/offline without DB calls.
