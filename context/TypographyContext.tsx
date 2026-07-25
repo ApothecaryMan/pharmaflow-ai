@@ -204,8 +204,60 @@ export const TypographyProvider: React.FC<{ children: ReactNode }> = ({ children
     }
   }, [numeralLocale, textLocale]);
 
-  const setLanguage = useCallback((language: Language) => {
-    setState((prev) => ({ ...prev, language }));
+  const setLanguage = useCallback((newLanguage: Language) => {
+    if (
+      !('startViewTransition' in document) ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setState((prev) => ({ ...prev, language: newLanguage }));
+      return;
+    }
+
+    const isRTL = newLanguage === 'AR';
+    document.documentElement.classList.add('lang-transition');
+
+    const transition = (document as any).startViewTransition(async () => {
+      // Synchronously set direction so the snapshot gets the correct layout
+      document.documentElement.lang = newLanguage.toLowerCase();
+      document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+      document.body.dir = document.documentElement.dir;
+
+      setState((prev) => ({ ...prev, language: newLanguage }));
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+
+    transition.ready.then(() => {
+      // If switching to RTL, old rotates to -180 (left), new rotates from 180 (right)
+      document.documentElement.animate(
+        [
+          { transform: `perspective(2000px) rotateY(0deg)` },
+          { transform: `perspective(2000px) rotateY(${isRTL ? -180 : 180}deg)` },
+        ],
+        {
+          duration: 800,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          pseudoElement: '::view-transition-old(root)',
+          fill: 'both',
+        }
+      );
+
+      document.documentElement.animate(
+        [
+          { transform: `perspective(2000px) rotateY(${isRTL ? 180 : -180}deg)` },
+          { transform: `perspective(2000px) rotateY(0deg)` },
+        ],
+        {
+          duration: 800,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          pseudoElement: '::view-transition-new(root)',
+          fill: 'both',
+        }
+      );
+    });
+
+    transition.finished.then(() => {
+      document.documentElement.classList.remove('lang-transition');
+    });
   }, []);
 
   const setFontFamilyEN = useCallback((fontFamilyEN: string) => {

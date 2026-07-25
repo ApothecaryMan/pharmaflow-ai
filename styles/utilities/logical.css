@@ -99,3 +99,16 @@ html:not(.dark).none-border-mode .card-shadow {
 .theme-transition::view-transition-new(root) {
   z-index: 2;
 }
+
+/* Language Toggle 3D Flip */
+.lang-transition::view-transition-group(root) {
+  animation: none;
+  background: var(--bg-base, #000); /* dark backdrop behind the flip */
+}
+.lang-transition::view-transition-old(root),
+.lang-transition::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  display: block;
+  backface-visibility: hidden;
+}
