@@ -99,7 +99,7 @@ export function EmployeeDashboard({ view = 'profile', onViewChange, onLogout }: 
         const { hashPassword } = await import('../../services/auth/hashUtils');
         const passwordHash = await hashPassword(newPassword);
         await employeeRepository.update(employeeId, { password: passwordHash });
-        loadData(true);
+        loadData();
       } catch (err) {
         console.error('Failed to update workspace password', err);
         throw err;
@@ -163,7 +163,7 @@ export function EmployeeDashboard({ view = 'profile', onViewChange, onLogout }: 
             biometricCredentialId: attResp.id,
             biometricPublicKey: 'MOCKED_PASSKEY_PILOT',
           });
-          loadData(true);
+          loadData();
 
           // Success feedback
           if (typeof window !== 'undefined') {
