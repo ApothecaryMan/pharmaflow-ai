@@ -158,12 +158,6 @@ export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({
     <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group h-full`}>
       <div className='flex justify-between items-center mb-4 shrink-0'>
         <h3 className='text-base font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2'>
-          <span
-            className='material-symbols-rounded text-primary-500'
-            style={{ fontSize: 'var(--icon-lg)' }}
-          >
-            monitoring
-          </span>
           {language === 'ar' ? 'مراقبة الفروع' : 'Branch Monitor'}
         </h3>
         <span className='text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-lg'>

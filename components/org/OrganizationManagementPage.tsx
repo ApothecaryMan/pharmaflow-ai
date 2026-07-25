@@ -161,11 +161,6 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
         <div className='space-y-4'>
           <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2'>
             <div className='flex items-center gap-3'>
-              <div className='w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500'>
-                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
-                  {activeMatrixTab === 'managers' ? 'admin_panel_settings' : 'badge'}
-                </span>
-              </div>
               <div>
                 <h3 className='text-lg font-bold text-zinc-900 dark:text-zinc-100'>
                   {activeMatrixTab === 'managers' ? t.permissionsTitle : t.allStaff}

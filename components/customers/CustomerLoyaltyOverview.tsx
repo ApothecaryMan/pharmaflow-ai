@@ -390,7 +390,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                         • #{sale.serialId}
                       </p>
                     </div>
-                    <span className='px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'>
+                    <span className='px-2.5 py-1 rounded-full text-xs font-bold bg-(--bg-page-surface) text-amber-600 dark:text-amber-400 border border-(--border-divider)'>
                       +{sale.pointsEarned} {t.loyalty?.pts || 'pts'}
                     </span>
                   </div>

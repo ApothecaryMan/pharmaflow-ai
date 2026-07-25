@@ -58,7 +58,7 @@ const ProgressBar: React.FC<{
           )}
         </div>
       </div>
-      <div className='h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden p-0.5'>
+      <div className='h-2 w-full bg-(--border-divider) rounded-full overflow-hidden p-0.5'>
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out shadow-sm ${isLoading ? 'bg-zinc-200 dark:bg-zinc-700 animate-pulse' : isNearLimit ? 'bg-red-500' : colorClass}`}
           style={{ width: isLoading ? '100%' : `${percentage}%` }}
@@ -86,12 +86,6 @@ export const QuotaMonitor: React.FC<QuotaMonitorProps> = ({
   return (
     <div className={`p-6 rounded-3xl ${CARD_BASE} flex flex-col group h-full`}>
       <div className='flex items-center gap-2 mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-4'>
-        <span
-          className='material-symbols-rounded text-amber-500'
-          style={{ fontSize: 'var(--icon-lg)' }}
-        >
-          bolt
-        </span>
         <h3 className='text-base font-semibold text-zinc-900 dark:text-white'>
           {language === 'ar' ? 'استهلاك الباقة والحصص' : 'Subscription & Quota'}
         </h3>
