@@ -162,6 +162,9 @@ const A5InvoiceDesigner = createLazyPage(() =>
 const AnimatedCounterLab = createLazyPage(() =>
   import('../components/test/AnimatedCounterLab').then((m) => ({ default: m.AnimatedCounterLab }))
 );
+const AnimationLab = createLazyPage(() =>
+  import('../components/test/AnimationLab').then((m) => ({ default: m.AnimationLab }))
+);
 const FilterDropdownTest = createLazyPage(() =>
   import('../components/test/FilterDropdownTest').then((m) => ({ default: m.FilterDropdownTest }))
 );
@@ -662,6 +665,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: [],
     permission: PERMISSIONS_MAPPING['animated-counter-lab'],
+  },
+  'animation-lab': {
+    id: 'animation-lab',
+    component: AnimationLab.component,
+    preload: AnimationLab.preload,
+    menuLabel: 'Animation Lab',
+    menuLabelAr: 'مختبر الأنميشن',
+    icon: 'animation',
+    category: 'test',
+    requiredProps: [],
+    permission: 'system.debug' as any,
   },
   'scrollbar-lab': {
     id: 'scrollbar-lab',

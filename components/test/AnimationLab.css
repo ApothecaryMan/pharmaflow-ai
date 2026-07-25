@@ -1,0 +1,93 @@
+/* Slide Transition */
+.slide-transition::view-transition-group(root) {
+  animation: none;
+}
+.slide-transition::view-transition-old(root) {
+  animation: slide-out 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.slide-transition::view-transition-new(root) {
+  animation: slide-in 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes slide-out {
+  0% { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  100% { transform: translateX(-30%); opacity: 0; filter: blur(10px); }
+}
+@keyframes slide-in {
+  0% { transform: translateX(30%); opacity: 0; filter: blur(10px); }
+  100% { transform: translateX(0); opacity: 1; filter: blur(0px); }
+}
+
+/* Color Swipe Transition */
+.swipe-transition::view-transition-group(root) {
+  animation: none;
+}
+.swipe-transition::view-transition-old(root) {
+  animation: hold-old 0.5s forwards;
+  z-index: 1;
+}
+.swipe-transition::view-transition-new(root) {
+  animation: none;
+  z-index: 0;
+}
+.swipe-transition::view-transition-image-pair(root)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--primary-600, #3b82f6);
+  z-index: 100;
+  animation: swipe-cover 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes hold-old {
+  0% { opacity: 1; }
+  99.9% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes swipe-cover {
+  0% { transform: translateX(100%); }
+  45% { transform: translateX(0%); }
+  55% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Typography Scramble (Matrix) */
+.matrix-transition::view-transition-old(root) {
+  animation: matrix-fade-out 0.8s forwards;
+  filter: contrast(1.5) sepia(1) hue-rotate(90deg); /* green tint */
+}
+.matrix-transition::view-transition-new(root) {
+  animation: matrix-fade-in 0.8s forwards;
+  filter: contrast(1.5) sepia(1) hue-rotate(90deg);
+}
+@keyframes matrix-fade-out {
+  0% { opacity: 1; transform: scale(1); filter: blur(0px); }
+  100% { opacity: 0; transform: scale(1.05); filter: blur(20px); }
+}
+@keyframes matrix-fade-in {
+  0% { opacity: 0; transform: scale(0.95); filter: blur(20px); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0px); }
+}
+
+/* Dust Storm / Sandstorm Transition */
+.storm-transition::view-transition-group(root) {
+  animation: none;
+}
+.storm-transition::view-transition-old(root) {
+  animation: storm-out 1.2s forwards;
+  filter: url(#dust-storm-out);
+  z-index: 2;
+}
+.storm-transition::view-transition-new(root) {
+  animation: storm-in 1.2s forwards;
+  filter: url(#dust-storm-in);
+  z-index: 1;
+}
+
+@keyframes storm-out {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(50px, -20px) scale(1.05); }
+}
+@keyframes storm-in {
+  0% { opacity: 0; transform: translate(-50px, 20px) scale(0.95); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}

@@ -75,6 +75,7 @@ export type ViewState =
   | 'drug-interactions'
   | 'shortages'
   | 'scrollbar-lab'
+  | 'animation-lab'
   | 'a5-invoice-designer'
   | 'filter-dropdown-test'
   | 'expenses'
