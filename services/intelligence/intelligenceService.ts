@@ -302,6 +302,7 @@ export const intelligenceService = {
       total_value_at_risk: 0,
       total_batches_at_risk: riskItems.length,
       by_urgency: {
+        expired: { count: 0, value: 0 },
         critical: { count: 0, value: 0 },
         high: { count: 0, value: 0 },
         medium: { count: 0, value: 0 },
@@ -316,7 +317,13 @@ export const intelligenceService = {
         item.expected_recovery_value || 0
       );
 
-      if (item.risk_category === 'CRITICAL') {
+      if (item.risk_category === 'EXPIRED') {
+        summary.by_urgency.expired.count++;
+        summary.by_urgency.expired.value = money.add(
+          summary.by_urgency.expired.value,
+          item.value_at_risk
+        );
+      } else if (item.risk_category === 'CRITICAL') {
         summary.by_urgency.critical.count++;
         summary.by_urgency.critical.value = money.add(
           summary.by_urgency.critical.value,
@@ -350,12 +357,36 @@ export const intelligenceService = {
     const { drugs: _drugs, drugMap, allBatches } = await _loadCoreData(branchId, options);
 
     const now = new Date();
-    const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+    const SELLABLE_BUFFER_DAYS = 30;
+    const RISK_LOOKAHEAD_DAYS = 90;
+    const VELOCITY_LOOKBACK_DAYS = 30;
+    const ninetyDaysFromNow = new Date(now.getTime() + RISK_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
+    const velocityLookback = new Date(now.getTime() - VELOCITY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
 
-    // Filter batches expiring within 90 days with stock > 0
+    // Fetch sales for velocity calculation
+    const recentSales = await salesService.getByDateRange(
+      velocityLookback.toISOString(),
+      now.toISOString(),
+      branchId
+    );
+    const completedSales = recentSales.filter((s) => s.status === 'completed');
+
+    // Build velocity map per drug (normalized units)
+    const velocityMap = new Map<string, number>();
+    for (const sale of completedSales) {
+      for (const item of (sale.items || [])) {
+        const drug = drugMap.get(item.id);
+        if (!drug) continue;
+        const unitsPerPack = drug.unitsPerPack || 1;
+        const normalizedQty = item.isUnit ? item.quantity : item.quantity * unitsPerPack;
+        velocityMap.set(item.id, (velocityMap.get(item.id) || 0) + normalizedQty);
+      }
+    }
+
+    // Include expired + batches expiring within 90 days with stock > 0
     const expiringBatches = allBatches.filter((batch) => {
       const expiryDate = parseExpiryEndOfMonth(batch.expiryDate);
-      return batch.quantity > 0 && expiryDate <= ninetyDaysFromNow && expiryDate > now;
+      return batch.quantity > 0 && expiryDate <= ninetyDaysFromNow;
     });
 
     const riskItems: ExpiryRiskItem[] = expiringBatches.map((batch) => {
@@ -365,12 +396,31 @@ export const intelligenceService = {
         (expiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
       );
 
+      const isExpired = daysUntilExpiry <= 0;
+      const sellableDaysRemaining = isExpired
+        ? 0
+        : Math.max(0, daysUntilExpiry - SELLABLE_BUFFER_DAYS);
+
       // Value at risk = quantity × cost price
       const valueAtRisk = money.multiply(batch.quantity, batch.costPrice, 0);
 
-      // Risk category based on days
-      let riskCategory: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-      if (daysUntilExpiry < 30) {
+      // Real sales velocity (units/day)
+      const rawTotalUnits = velocityMap.get(batch.drugId) || 0;
+      const currentVelocity = Math.round((rawTotalUnits / VELOCITY_LOOKBACK_DAYS) * 10) / 10;
+
+      // Clearance projections
+      const projectedUnitsSold = Math.round(currentVelocity * sellableDaysRemaining);
+      const projectedRemaining = Math.max(0, batch.quantity - projectedUnitsSold);
+      const willClearInTime = !isExpired && projectedUnitsSold >= batch.quantity;
+      const requiredVelocityToClear = sellableDaysRemaining > 0
+        ? Math.round((batch.quantity / sellableDaysRemaining) * 10) / 10
+        : 0;
+
+      // Risk category + score
+      let riskCategory: ExpiryRiskItem['risk_category'];
+      if (isExpired) {
+        riskCategory = 'EXPIRED';
+      } else if (daysUntilExpiry < SELLABLE_BUFFER_DAYS) {
         riskCategory = 'CRITICAL';
       } else if (daysUntilExpiry < 60) {
         riskCategory = 'HIGH';
@@ -378,24 +428,25 @@ export const intelligenceService = {
         riskCategory = 'MEDIUM';
       }
 
-      // Risk score (0-100)
-      const urgencyScore = Math.max(0, 100 - daysUntilExpiry);
-      const valueScore = Math.min(100, (valueAtRisk / 1000) * 10);
-      const riskScore = Math.round(urgencyScore * 0.6 + valueScore * 0.4);
+      const urgencyScore = isExpired ? 100 : Math.max(0, 100 - daysUntilExpiry);
+      const velocityScore = !isExpired && requiredVelocityToClear > 0
+        ? Math.min(100, Math.round((currentVelocity / requiredVelocityToClear) * 100))
+        : isExpired
+          ? 0
+          : 100;
+      const valueScore = Math.min(100, Math.round((valueAtRisk / 1000) * 10));
+      const riskScore = Math.round(urgencyScore * 0.4 + velocityScore * 0.3 + valueScore * 0.3);
 
-      // Recommended action based on risk
-      let recommendedAction:
-        | 'DISCOUNT_AGGRESSIVE'
-        | 'DISCOUNT_MODERATE'
-        | 'MONITOR'
-        | 'RETURN'
-        | 'WRITE_OFF';
+      // Recommended action
+      let recommendedAction: ExpiryRiskItem['recommended_action'];
       let recommendedDiscount: number | null = null;
 
-      if (daysUntilExpiry < 15) {
+      if (isExpired) {
+        recommendedAction = 'WRITE_OFF';
+      } else if (daysUntilExpiry < 15) {
         recommendedAction = 'DISCOUNT_AGGRESSIVE';
         recommendedDiscount = 50;
-      } else if (daysUntilExpiry < 30) {
+      } else if (daysUntilExpiry < SELLABLE_BUFFER_DAYS) {
         recommendedAction = 'DISCOUNT_MODERATE';
         recommendedDiscount = 30;
       } else if (daysUntilExpiry < 45) {
@@ -405,10 +456,11 @@ export const intelligenceService = {
         recommendedAction = 'MONITOR';
       }
 
-      // Expected recovery (based on discount)
-      const expectedRecovery = recommendedDiscount
-        ? pricing.afterDiscount(valueAtRisk, recommendedDiscount)
-        : money.multiply(valueAtRisk, 80, 2); // 80% recovery if no specific discount
+      const expectedRecovery = isExpired
+        ? 0
+        : recommendedDiscount
+          ? pricing.afterDiscount(valueAtRisk, recommendedDiscount)
+          : money.multiply(valueAtRisk, 80, 2);
 
       return {
         id: batch.id,
@@ -421,22 +473,22 @@ export const intelligenceService = {
         current_quantity: batch.quantity,
         expiry_date: batch.expiryDate,
         days_until_expiry: daysUntilExpiry,
-        sellable_days_remaining: Math.max(0, daysUntilExpiry - 30), // Assume 30 days buffer
+        sellable_days_remaining: sellableDaysRemaining,
         value_at_risk: Math.round(valueAtRisk),
         risk_score: riskScore,
         risk_category: riskCategory,
         risk_score_breakdown: {
           urgency_score: urgencyScore,
-          velocity_score: 0, // Would need sales velocity per batch — placeholder
+          velocity_score: velocityScore,
           value_score: valueScore,
-          calculation_explanation: `${daysUntilExpiry} days until expiry, ${batch.quantity} units remaining`,
+          calculation_explanation: `${daysUntilExpiry} days until expiry, ${batch.quantity} units remaining at ${currentVelocity} units/day`,
         },
         clearance_analysis: {
-          current_velocity: 1.0,
-          projected_units_sold: batch.quantity,
-          projected_remaining: 0,
-          will_clear_in_time: daysUntilExpiry > 30,
-          required_velocity_to_clear: batch.quantity / daysUntilExpiry,
+          current_velocity: currentVelocity,
+          projected_units_sold: projectedUnitsSold,
+          projected_remaining: projectedRemaining,
+          will_clear_in_time: willClearInTime,
+          required_velocity_to_clear: requiredVelocityToClear,
         },
         recommended_action: recommendedAction,
         recommended_discount_percent: recommendedDiscount,
@@ -444,7 +496,6 @@ export const intelligenceService = {
       };
     });
 
-    // Sort by risk score descending
     return riskItems.sort((a, b) => b.risk_score - a.risk_score);
   },
 

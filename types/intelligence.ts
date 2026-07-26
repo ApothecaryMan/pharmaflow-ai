@@ -86,7 +86,7 @@ export interface ExpiryRiskItem {
 
   value_at_risk: number;
   risk_score: number;
-  risk_category: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  risk_category: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'EXPIRED';
 
   risk_score_breakdown: {
     urgency_score: number;
@@ -117,6 +117,7 @@ export interface RiskSummary {
   total_value_at_risk: number;
   total_batches_at_risk: number;
   by_urgency: {
+    expired: { count: number; value: number }; // Already expired
     critical: { count: number; value: number }; // < 30 days
     high: { count: number; value: number }; // 30-60 days
     medium: { count: number; value: number }; // 60-90 days
