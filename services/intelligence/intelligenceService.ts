@@ -15,6 +15,7 @@ import type {
   ProductFinancialItem,
   RiskSummary,
 } from '../../types/intelligence';
+import { daysAgo, daysFromNow } from '../../utils/dateFormatter';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { money, pricing } from '../../utils/money';
@@ -25,6 +26,7 @@ import { batchService } from '../inventory/batchService';
 import { inventoryService } from '../inventory/inventoryService';
 import { returnService } from '../returns/returnService';
 import { salesService } from '../sales/salesService';
+import { supplierService } from '../suppliers/supplierService';
 
 // === Period Helpers ===
 
@@ -73,8 +75,14 @@ async function _loadCoreData(branchId?: string, _options?: { signal?: AbortSigna
   const [drugs, allBatches] = await Promise.all([fetchDrugs, fetchBatches]);
 
   const drugMap = new Map(drugs.map((d) => [d.id, d]));
+
+  const now = new Date();
   const stockMap = new Map<string, number>();
   for (const b of allBatches) {
+    if (b.expiryDate) {
+      const batchExpiry = parseExpiryEndOfMonth(b.expiryDate);
+      if (batchExpiry <= now) continue;
+    }
     stockMap.set(b.drugId, (stockMap.get(b.drugId) || 0) + b.quantity);
   }
 
@@ -88,38 +96,24 @@ export const intelligenceService = {
 
   /**
    * Get Procurement Summary from real inventory data
+   * Delegates to getProcurementData for single-pass computation.
    */
   getProcurementSummary: async (
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<ProcurementSummary> => {
-    const items = await intelligenceService.getProcurementItems(branchId, options);
-
-    const needingOrder = items.filter((i) => i.suggested_order_qty > 0);
-    const outOfStock = items.filter((i) => i.stock_status === 'OUT_OF_STOCK');
-    const avgConfidence =
-      items.length > 0 ? items.reduce((sum, i) => sum + i.confidence_score, 0) / items.length : 0;
-
-    return {
-      items_needing_order: needingOrder.length,
-      items_out_of_stock: outOfStock.length,
-      avg_confidence_score: Math.round(avgConfidence),
-      pending_po_count: 0, // Would need PO tracking
-      pending_po_value: 0,
-      estimated_lost_sales: outOfStock.reduce(
-        (sum, i) => money.add(sum, money.multiply(i.avg_daily_sales, 7 * 5000, 0)),
-        0
-      ), // Use 50.00 EGP (5000 Piastres) as avg price
-    };
+    const { summary } = await intelligenceService.getProcurementData(branchId, options);
+    return summary;
   },
 
   /**
-   * Get Procurement Items from real inventory and sales data
+   * Single procurement computation — returns items and summary from one pass
+   * to avoid re-computing the full dataset for both views.
    */
-  getProcurementItems: async (
+  getProcurementData: async (
     branchId?: string,
     options?: { signal?: AbortSignal }
-  ): Promise<ProcurementItem[]> => {
+  ): Promise<{ items: ProcurementItem[]; summary: ProcurementSummary }> => {
     const {
       drugs,
       drugMap,
@@ -128,9 +122,9 @@ export const intelligenceService = {
     } = await _loadCoreData(branchId, options);
 
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = daysAgo(30, now);
+    const fourteenDaysAgo = daysAgo(14, now);
+    const sevenDaysAgo = daysAgo(7, now);
 
     const recentSales = await salesService.getByDateRange(
       thirtyDaysAgo.toISOString(),
@@ -138,6 +132,13 @@ export const intelligenceService = {
       branchId
     );
     const completedSales = recentSales.filter((s) => s.status === 'completed');
+
+    // Build supplier name map (non-critical — fallback keeps empty map)
+    let supplierMap = new Map<string, string>();
+    try {
+      const suppliers = await supplierService.getAll(branchId);
+      supplierMap = new Map(suppliers.map((s) => [s.id, s.name]));
+    } catch { /* non-critical */ }
 
     // Build velocity map per drug (normalized to units)
     const velocityMap = new Map<string, { last7: number; last14: number; last30: number }>();
@@ -174,13 +175,10 @@ export const intelligenceService = {
       const velocity = velocityMap.get(drug.id) || { last7: 0, last14: 0, last30: 0 };
       const avgDailySales = velocity.last30 / 30;
 
-      // GET REAL STOCK FROM PRE-CALCULATED MAP
       const currentStock = stockMap.get(drug.id) || 0;
 
-      // Stock days (how many days of stock left)
       const stockDays = avgDailySales > 0 ? currentStock / avgDailySales : null;
 
-      // Stock status
       let stockStatus: 'OUT_OF_STOCK' | 'CRITICAL' | 'LOW' | 'NORMAL' | 'OVERSTOCK';
       if (currentStock <= 0) {
         stockStatus = 'OUT_OF_STOCK';
@@ -190,19 +188,16 @@ export const intelligenceService = {
         else if (stockDays > 60) stockStatus = 'OVERSTOCK';
         else stockStatus = 'NORMAL';
       } else {
-        // No sales velocity
         stockStatus = currentStock > 100 ? 'OVERSTOCK' : 'NORMAL';
       }
 
-      // Trend detection
       const weeklyAvg = velocity.last7 / 7;
       const prevWeekAvg = (velocity.last14 - velocity.last7) / 7;
       let trend: 'INCREASING' | 'STABLE' | 'DECREASING' = 'STABLE';
       if (weeklyAvg > prevWeekAvg * 1.2) trend = 'INCREASING';
       else if (weeklyAvg < prevWeekAvg * 0.8) trend = 'DECREASING';
 
-      // Suggested order quantity
-      const targetStock = REORDER_POINT_DAYS * avgDailySales * 1.5; // 1.5x buffer
+      const targetStock = REORDER_POINT_DAYS * avgDailySales * 1.5;
       const minStock = drug.minStock ?? 0;
       const unitsPerPack = drug.unitsPerPack || 1;
       const safetyStockPacks =
@@ -213,11 +208,22 @@ export const intelligenceService = {
           : 0;
       const suggestedQty = Math.max(safetyStockPacks, minStockReplenishPacks);
 
-      // Confidence score based on data quality
       const hasRecentSales = velocity.last7 > 0;
       const hasConsistentSales = velocity.last30 >= 5;
       const confidenceScore =
         hasRecentSales && hasConsistentSales ? 85 : hasConsistentSales ? 70 : 50;
+
+      const unitPrice = drug.unitPrice
+        ?? (drug.publicPrice ? drug.publicPrice / (drug.unitsPerPack || 1) : 0);
+
+      // Estimate 7-day lost sales at unit price (only meaningful when out of stock)
+      const estimatedLostSales7day = stockStatus === 'OUT_OF_STOCK' && avgDailySales > 0
+        ? money.multiply(avgDailySales, 7 * unitPrice, 0)
+        : 0;
+
+      const supplierName = drug.supplierId
+        ? (supplierMap.get(drug.supplierId) || drug.supplierId)
+        : 'UNKNOWN';
 
       return {
         id: drug.id,
@@ -225,7 +231,7 @@ export const intelligenceService = {
         product_name: getDisplayName({ name: drug.name, dosageForm: drug.dosageForm }),
         sku: drug.barcode || drug.internalCode || drug.id.slice(-8),
         supplier_id: drug.supplierId || 'UNKNOWN',
-        supplier_name: drug.supplierId ? `Supplier ${drug.supplierId}` : 'UNKNOWN', // Placeholder until supplierService is integrated
+        supplier_name: supplierName,
         category_id: drug.category || 'GENERAL',
         category_name: drug.category || 'GENERAL',
         current_stock: currentStock,
@@ -239,7 +245,7 @@ export const intelligenceService = {
           last_30_days: velocity.last30,
           trend: trend,
         },
-        velocity_cv: 0.2, // Would need more complex calculation
+        velocity_cv: 0.2,
         seasonal_trajectory: 'STABLE' as const,
         seasonal_index_current: 1.0,
         seasonal_index_next: 1.0,
@@ -258,19 +264,20 @@ export const intelligenceService = {
           seasonality_certainty: 70,
           lead_time_reliability: 75,
         },
+        estimated_lost_sales_7day: estimatedLostSales7day,
       };
     });
 
-    // Final Pareto Classify
-    const itemsWithABC = calculateParetoABC(
+    // Pareto ABC classification — build index Map for O(1) lookup
+    const abcItems = calculateParetoABC(
       rawItems.map((i) => ({ ...i, revenue: i.avg_daily_sales * 30 }))
     );
+    const abcMap = new Map(abcItems.map((i) => [i.product_id, i.abc_class]));
 
-    return rawItems
+    const items = rawItems
       .map((item) => {
-        const abc = itemsWithABC.find((i) => i.product_id === item.product_id)?.abc_class || 'C';
+        const abc = abcMap.get(item.product_id) || 'C';
 
-        // Determine data quality
         let dataQuality: 'GOOD' | 'SPARSE' | 'NEW_PRODUCT' | 'IRREGULAR' = 'GOOD';
         if (item.velocity_breakdown.last_30_days < 5) dataQuality = 'SPARSE';
         if (item.velocity_breakdown.last_30_days === 0) dataQuality = 'NEW_PRODUCT';
@@ -285,6 +292,37 @@ export const intelligenceService = {
         const statusOrder = { OUT_OF_STOCK: 0, CRITICAL: 1, LOW: 2, NORMAL: 3, OVERSTOCK: 4 };
         return statusOrder[a.stock_status] - statusOrder[b.stock_status];
       });
+
+    const needingOrder = items.filter((i) => i.suggested_order_qty > 0);
+    const avgConfidence =
+      items.length > 0 ? items.reduce((sum, i) => sum + i.confidence_score, 0) / items.length : 0;
+
+    return {
+      items,
+      summary: {
+        items_needing_order: needingOrder.length,
+        items_out_of_stock: items.filter((i) => i.stock_status === 'OUT_OF_STOCK').length,
+        avg_confidence_score: Math.round(avgConfidence),
+        pending_po_count: 0,
+        pending_po_value: 0,
+        estimated_lost_sales: items.reduce(
+          (sum, i) => money.add(sum, i.estimated_lost_sales_7day),
+          0
+        ),
+      },
+    };
+  },
+
+  /**
+   * Get Procurement Items from real inventory and sales data
+   * Delegates to getProcurementData for single-pass computation.
+   */
+  getProcurementItems: async (
+    branchId?: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ProcurementItem[]> => {
+    const { items } = await intelligenceService.getProcurementData(branchId, options);
+    return items;
   },
 
   // === Risk (REAL DATA) ===
@@ -360,8 +398,8 @@ export const intelligenceService = {
     const SELLABLE_BUFFER_DAYS = 30;
     const RISK_LOOKAHEAD_DAYS = 90;
     const VELOCITY_LOOKBACK_DAYS = 30;
-    const ninetyDaysFromNow = new Date(now.getTime() + RISK_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
-    const velocityLookback = new Date(now.getTime() - VELOCITY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+    const ninetyDaysFromNow = daysFromNow(RISK_LOOKAHEAD_DAYS, now);
+    const velocityLookback = daysAgo(VELOCITY_LOOKBACK_DAYS, now);
 
     // Fetch sales for velocity calculation
     const recentSales = await salesService.getByDateRange(

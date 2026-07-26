@@ -58,6 +58,9 @@ export interface ProcurementItem {
 
   abc_class: 'A' | 'B' | 'C';
   data_quality_flag: 'GOOD' | 'SPARSE' | 'NEW_PRODUCT' | 'IRREGULAR';
+
+  /** Per-item 7-day lost sales estimate at unit selling price (0 if not out-of-stock) */
+  estimated_lost_sales_7day: number;
 }
 
 export interface ProcurementSummary {

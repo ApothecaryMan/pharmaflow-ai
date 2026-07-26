@@ -58,10 +58,8 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
       setError(null);
 
       try {
-        const [summaryData, itemsData] = await Promise.all([
-          intelligenceService.getProcurementSummary(activeBranchId, { signal: controller.signal }),
-          intelligenceService.getProcurementItems(activeBranchId, { signal: controller.signal }),
-        ]);
+        const { items: itemsData, summary: summaryData } =
+          await intelligenceService.getProcurementData(activeBranchId, { signal: controller.signal });
 
         if (!controller.signal.aborted) {
           setSummary(summaryData);

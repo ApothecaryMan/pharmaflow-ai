@@ -139,6 +139,20 @@ export function formatDateWithRelativeLabel(
 }
 
 /**
+ * Returns a Date `days` before `from` (defaults to now).
+ */
+export function daysAgo(days: number, from: Date = new Date()): Date {
+  return new Date(from.getTime() - days * 86400000);
+}
+
+/**
+ * Returns a Date `days` after `from` (defaults to now).
+ */
+export function daysFromNow(days: number, from: Date = new Date()): Date {
+  return new Date(from.getTime() + days * 86400000);
+}
+
+/**
  * Returns the duration between two ISO dates in milliseconds.
  */
 export function getDurationMs(startIso: string, endIso: string): number {
