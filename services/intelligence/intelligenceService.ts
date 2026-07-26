@@ -266,7 +266,7 @@ export const intelligenceService = {
 
       // Estimate 7-day lost sales at unit price (only meaningful when out of stock)
       const estimatedLostSales7day = stockStatus === 'OUT_OF_STOCK' && avgDailySales > 0
-        ? money.multiply(avgDailySales, 7 * unitPrice, 0)
+        ? money.multiply(7 * unitPrice, Math.round(avgDailySales * 10000), 4)
         : 0;
 
       const supplierName = drug.supplierId
@@ -617,26 +617,45 @@ export const intelligenceService = {
     branchId?: string,
     _options?: { signal?: AbortSignal }
   ): Promise<CategoryFinancialItem[]> => {
-    const rawCategories = await financialService.getCategoryBreakdown(period, branchId);
-    const topProducts = await financialService.getTopProducts(period, branchId, 1000);
+    const [rawCategories, topProducts, drugs] = await Promise.all([
+      financialService.getCategoryBreakdown(period, branchId),
+      financialService.getTopProducts(period, branchId, 1000),
+      inventoryService.getAll(branchId),
+    ]);
+
+    const drugCategoryMap = new Map(drugs.map((d) => [d.id, d.category]));
+
+    const categoryProducts = new Map<string, ProductFinancialItem[]>();
+    for (const p of topProducts) {
+      const cat = drugCategoryMap.get(p.product_id) || 'GENERAL';
+      const list = categoryProducts.get(cat);
+      if (list) {
+        list.push(p);
+      } else {
+        categoryProducts.set(cat, [p]);
+      }
+    }
+
     return rawCategories.map((c) => {
-      const aCount = topProducts.filter((p) => p.abc_class === 'A').length;
-      const bCount = topProducts.filter((p) => p.abc_class === 'B').length;
-      const cCount = topProducts.filter((p) => p.abc_class === 'C').length;
+      const productsInCategory = categoryProducts.get(c.category) || [];
+      const count = productsInCategory.length;
+      const aCount = productsInCategory.filter((p) => p.abc_class === 'A').length;
+      const bCount = productsInCategory.filter((p) => p.abc_class === 'B').length;
+      const cCount = productsInCategory.filter((p) => p.abc_class === 'C').length;
 
       return {
         id: c.category,
         category_id: c.category,
         category_name: c.category,
-        products_count: Math.round(topProducts.length / (rawCategories.length || 1)),
+        products_count: count,
         revenue: c.revenue,
         cogs: c.cogs,
         gross_profit: c.profit,
         margin_percent: c.revenue > 0 ? Math.round((c.profit / c.revenue) * 100) : 0,
         abc_distribution: {
-          a: Math.round(aCount / (rawCategories.length || 1)),
-          b: Math.round(bCount / (rawCategories.length || 1)),
-          c: Math.round(cCount / (rawCategories.length || 1)),
+          a: aCount,
+          b: bCount,
+          c: cCount,
         },
       };
     });
@@ -652,20 +671,19 @@ export const intelligenceService = {
     branchId?: string,
     _options?: { signal?: AbortSignal }
   ): Promise<AuditTransaction[]> => {
-    // Optimized: Use filter/limit if possible, or at least only fetch recent
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [sales, returns, employees] = await Promise.all([
       salesService.filter({ dateFrom: thirtyDaysAgo.toISOString() }, branchId),
-      returnService.getAllSalesReturns(branchId), // returns are usually fewer, but could be filtered too
+      returnService.getAllSalesReturns(branchId),
       employeeService.getAll(branchId),
     ]);
 
+    const thirtyDaysAgoDate = thirtyDaysAgo.getTime();
     const employeeMap = new Map(employees.map((e) => [e.id, e.name]));
     const transactions: AuditTransaction[] = [];
 
-    // Convert sales to audit transactions (flatten items)
     for (const sale of sales) {
       if (sale.status !== 'completed') continue;
 
@@ -688,17 +706,20 @@ export const intelligenceService = {
             0
           ),
           has_anomaly: false,
+          anomaly_reason: 'NOT_CHECKED',
         });
       }
     }
 
-    // Convert returns to audit transactions
     for (const ret of returns) {
+      if (new Date(ret.date).getTime() < thirtyDaysAgoDate) continue;
+
       const cashierName = ret.processedBy || 'UNKNOWN';
 
-      for (const item of ret.items) {
+      for (let i = 0; i < ret.items.length; i++) {
+        const item = ret.items[i];
         transactions.push({
-          id: `${ret.id}-${item.drugId}`,
+          id: `${ret.id}-${i}-${item.drugId}`,
           timestamp: ret.date,
           invoice_number: `RET-${ret.id.slice(-6)}`,
           type: 'RETURN',
@@ -707,14 +728,13 @@ export const intelligenceService = {
           quantity: item.quantityReturned,
           amount: money.subtract(0, item.refundAmount),
           has_anomaly: false,
+          anomaly_reason: 'NOT_CHECKED',
         });
       }
     }
 
-    // Sort by timestamp descending (newest first)
     transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-    // Return limited results
     return transactions.slice(0, limit);
   },
 
