@@ -13,7 +13,7 @@ export const dateRangeService = {
   getDateRange(period: FinancialPeriod): { start: string; end: string } {
     const now = timeService.getVerifiedDate();
     let start: Date;
-    let end: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    let end: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
 
     switch (period) {
       case 'today':
@@ -21,16 +21,18 @@ export const dateRangeService = {
         break;
       case 'last_7_days':
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         break;
       case 'last_30_days':
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         break;
       case 'this_month':
         start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
         break;
       case 'last_month':
         start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
         break;
       case 'last_3_months':
         start = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
@@ -56,35 +58,35 @@ export const dateRangeService = {
     switch (period) {
       case 'today':
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         break;
       case 'last_7_days':
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 14, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7, 0, 0, 0, 0);
         break;
       case 'last_30_days':
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 60, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 0, 0, 0, 0);
         break;
       case 'this_month':
         start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
         break;
       case 'last_month':
         start = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
         break;
       case 'last_3_months':
         start = new Date(now.getFullYear(), now.getMonth() - 5, 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth() - 2, 0, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
         break;
       case 'this_year':
         start = new Date(now.getFullYear() - 1, 0, 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+        end = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
         break;
       default:
         start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        end = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     }
 
     return {
@@ -107,25 +109,14 @@ export const dateRangeService = {
     const tempDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
     while (tempDate <= endDate) {
-      const monthEnd = new Date(
-        tempDate.getFullYear(),
-        tempDate.getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-        999
-      );
+      const monthEnd = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 1, 0, 0, 0, 0);
 
-      // The month must be fully contained within [start, end]
-      // And the end of this month must be in the past (before the start of the current month)
-      if (tempDate >= startDate && monthEnd <= endDate && monthEnd < currentMonthStart) {
+      if (tempDate >= startDate && monthEnd <= endDate && monthEnd <= currentMonthStart) {
         const year = tempDate.getFullYear();
         const month = String(tempDate.getMonth() + 1).padStart(2, '0');
         closedMonths.push(`${year}-${month}`);
       }
 
-      // Move to next month
       tempDate.setMonth(tempDate.getMonth() + 1);
     }
 
@@ -138,7 +129,7 @@ export const dateRangeService = {
     const days: string[] = [];
     const tempDate = new Date(startDate.getTime());
 
-    while (tempDate <= endDate) {
+    while (tempDate < endDate) {
       const yyyy = tempDate.getFullYear();
       const mm = String(tempDate.getMonth() + 1).padStart(2, '0');
       const dd = String(tempDate.getDate()).padStart(2, '0');

@@ -1,4 +1,3 @@
-import { financialRepository } from './repositories/financialRepository';
 import type {
   CategoryFinancialReport,
   DailyFinancialData,
@@ -8,21 +7,7 @@ import type {
   ProductFinancialItem,
 } from '../../types/intelligence';
 import { dateRangeService, type FinancialPeriod } from './dateRangeService';
-
-const EMPTY_SUMMARY: FinancialSummary = {
-  gross_revenue: 0,
-  return_revenue: 0,
-  net_revenue: 0,
-  gross_cogs: 0,
-  return_cogs: 0,
-  net_cogs: 0,
-  gross_profit: 0,
-  expenses_total: 0,
-  net_profit: 0,
-  total_transactions: 0,
-  total_units_sold: 0,
-  total_returns_count: 0,
-};
+import { financialRepository } from './repositories/financialRepository';
 
 export interface FinancialSummary extends FinancialReportSummary {
   expenses_total: number;
@@ -62,28 +47,21 @@ export const financialService = {
     end: string,
     branchId?: string
   ): Promise<FinancialSummary> {
-    try {
-      const s = await financialRepository.computeFinancialSummary(
-        branchId || null, start, end
-      );
-      return {
-        gross_revenue: Number(s?.gross_revenue ?? 0),
-        return_revenue: Number(s?.total_refunds ?? 0),
-        net_revenue: Number(s?.net_revenue ?? 0),
-        gross_cogs: Number(s?.gross_cogs ?? 0),
-        return_cogs: Number(s?.return_cogs ?? 0),
-        net_cogs: Number(s?.net_cogs ?? 0),
-        gross_profit: Number(s?.gross_profit ?? 0),
-        expenses_total: Number(s?.expenses_total ?? 0),
-        net_profit: Number(s?.net_profit ?? 0),
-        total_transactions: Number(s?.total_transactions ?? 0),
-        total_units_sold: Number(s?.total_units_sold ?? 0),
-        total_returns_count: Number(s?.total_returns_count ?? 0),
-      } as FinancialSummary;
-    } catch (err) {
-      console.error('RPC compute_financial_summary_with_snapshots error:', err);
-      return EMPTY_SUMMARY;
-    }
+    const s = await financialRepository.computeFinancialSummary(branchId || null, start, end);
+    return {
+      gross_revenue: Number(s?.gross_revenue ?? 0),
+      return_revenue: Number(s?.total_refunds ?? 0),
+      net_revenue: Number(s?.net_revenue ?? 0),
+      gross_cogs: Number(s?.gross_cogs ?? 0),
+      return_cogs: Number(s?.return_cogs ?? 0),
+      net_cogs: Number(s?.net_cogs ?? 0),
+      gross_profit: Number(s?.gross_profit ?? 0),
+      expenses_total: Number(s?.expenses_total ?? 0),
+      net_profit: Number(s?.net_profit ?? 0),
+      total_transactions: Number(s?.total_transactions ?? 0),
+      total_units_sold: Number(s?.total_units_sold ?? 0),
+      total_returns_count: Number(s?.total_returns_count ?? 0),
+    } as FinancialSummary;
   },
 
   // Keep backward-compatible export for callers using supabase directly
@@ -148,13 +126,8 @@ export const financialService = {
     dateTo: string,
     branchId?: string
   ): Promise<DailyFinancialData[]> {
-    try {
-      const data = await financialRepository.getDailyBreakdown(branchId || null, dateFrom, dateTo);
-      return (data || []) as DailyFinancialData[];
-    } catch (err) {
-      console.error('RPC get_daily_financial_breakdown error:', err);
-      return [];
-    }
+    const data = await financialRepository.getDailyBreakdown(branchId || null, dateFrom, dateTo);
+    return (data || []) as DailyFinancialData[];
   },
 
   /**
@@ -166,15 +139,13 @@ export const financialService = {
     limit: number = 10
   ): Promise<ProductFinancialItem[]> {
     const range = dateRangeService.getDateRange(period);
-    try {
-      const data = await financialRepository.getTopProducts(
-        branchId || null, range.start, range.end, limit
-      );
-      return (data || []) as ProductFinancialItem[];
-    } catch (err) {
-      console.error('RPC get_top_products_financial error:', err);
-      return [];
-    }
+    const data = await financialRepository.getTopProducts(
+      branchId || null,
+      range.start,
+      range.end,
+      limit
+    );
+    return (data || []) as ProductFinancialItem[];
   },
 
   /**
@@ -196,15 +167,8 @@ export const financialService = {
     end: string,
     branchId?: string
   ): Promise<CategoryFinancialReport[]> {
-    try {
-      const data = await financialRepository.getCategoryBreakdown(
-        branchId || null, start, end
-      );
-      return (data || []) as CategoryFinancialReport[];
-    } catch (err) {
-      console.error('RPC get_category_financial_breakdown error:', err);
-      return [];
-    }
+    const data = await financialRepository.getCategoryBreakdown(branchId || null, start, end);
+    return (data || []) as CategoryFinancialReport[];
   },
 
   /**
@@ -228,5 +192,4 @@ export const financialService = {
       generated_at: new Date().toISOString(),
     };
   },
-
 };

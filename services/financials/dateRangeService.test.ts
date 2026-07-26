@@ -41,8 +41,8 @@ describe('dateRangeService', () => {
     expect(start.getDate()).toBe(1);
 
     expect(end.getFullYear()).toBe(2026);
-    expect(end.getMonth()).toBe(3); // April
-    expect(end.getDate()).toBe(30);
+    expect(end.getMonth()).toBe(4); // May (exclusive end)
+    expect(end.getDate()).toBe(1);
   });
 
   it('should identify closed months', () => {

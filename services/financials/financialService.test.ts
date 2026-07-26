@@ -76,24 +76,23 @@ describe('financialService', () => {
       expect(summary).toEqual(expectedSummary);
     });
 
-    it('returns EMPTY_SUMMARY when RPC fails with error', async () => {
+    it('propagates error when RPC fails with error', async () => {
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: null,
         error: new Error('RPC function not found'),
       });
 
-      const summary = await financialService.getFinancialSummary('this_month', 'BR1');
-      expect(summary.gross_revenue).toBe(0);
-      expect(summary.net_revenue).toBe(0);
-      expect(summary.total_transactions).toBe(0);
+      await expect(financialService.getFinancialSummary('this_month', 'BR1')).rejects.toThrow(
+        'RPC function not found'
+      );
     });
 
-    it('returns EMPTY_SUMMARY when RPC throws', async () => {
+    it('propagates error when RPC throws', async () => {
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('Database Connection Error'));
 
-      const summary = await financialService.getFinancialSummary('this_month', 'BR1');
-      expect(summary.gross_revenue).toBe(0);
-      expect(summary.net_revenue).toBe(0);
+      await expect(financialService.getFinancialSummary('this_month', 'BR1')).rejects.toThrow(
+        'Database Connection Error'
+      );
     });
   });
 
@@ -113,21 +112,23 @@ describe('financialService', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('returns empty array when RPC fails with error', async () => {
+    it('propagates error when RPC fails with error', async () => {
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: null,
         error: new Error('RPC failed'),
       });
 
-      const result = await financialService.getDailyBreakdown('2026-06-01', '2026-06-02', 'BR1');
-      expect(result).toEqual([]);
+      await expect(
+        financialService.getDailyBreakdown('2026-06-01', '2026-06-02', 'BR1')
+      ).rejects.toThrow('RPC failed');
     });
 
-    it('returns empty array when RPC throws', async () => {
+    it('propagates error when RPC throws', async () => {
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('Database Connection Error'));
 
-      const result = await financialService.getDailyBreakdown('2026-06-01', '2026-06-02', 'BR1');
-      expect(result).toEqual([]);
+      await expect(
+        financialService.getDailyBreakdown('2026-06-01', '2026-06-02', 'BR1')
+      ).rejects.toThrow('Database Connection Error');
     });
   });
 
@@ -158,21 +159,23 @@ describe('financialService', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('returns empty array when RPC fails with error', async () => {
+    it('propagates error when RPC fails with error', async () => {
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: null,
         error: new Error('RPC failed'),
       });
 
-      const result = await financialService.getTopProducts('this_month', 'BR1', 5);
-      expect(result).toEqual([]);
+      await expect(financialService.getTopProducts('this_month', 'BR1', 5)).rejects.toThrow(
+        'RPC failed'
+      );
     });
 
-    it('returns empty array when RPC throws', async () => {
+    it('propagates error when RPC throws', async () => {
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('Database Connection Error'));
 
-      const result = await financialService.getTopProducts('this_month', 'BR1', 5);
-      expect(result).toEqual([]);
+      await expect(financialService.getTopProducts('this_month', 'BR1', 5)).rejects.toThrow(
+        'Database Connection Error'
+      );
     });
   });
 
@@ -194,29 +197,23 @@ describe('financialService', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('returns empty array when RPC fails with error', async () => {
+    it('propagates error when RPC fails with error', async () => {
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: null,
         error: new Error('RPC failed'),
       });
 
-      const result = await financialService.getCategoryBreakdownByDates(
-        '2026-06-01',
-        '2026-06-02',
-        'BR1'
-      );
-      expect(result).toEqual([]);
+      await expect(
+        financialService.getCategoryBreakdownByDates('2026-06-01', '2026-06-02', 'BR1')
+      ).rejects.toThrow('RPC failed');
     });
 
-    it('returns empty array when RPC throws', async () => {
+    it('propagates error when RPC throws', async () => {
       vi.mocked(supabase.rpc).mockRejectedValueOnce(new Error('Database Connection Error'));
 
-      const result = await financialService.getCategoryBreakdownByDates(
-        '2026-06-01',
-        '2026-06-02',
-        'BR1'
-      );
-      expect(result).toEqual([]);
+      await expect(
+        financialService.getCategoryBreakdownByDates('2026-06-01', '2026-06-02', 'BR1')
+      ).rejects.toThrow('Database Connection Error');
     });
   });
 });
