@@ -135,7 +135,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   e.stopPropagation();
                   onToggleBottom?.();
                 }}
-                className='flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer'
+                className='flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-black/20 hover:backdrop-blur-md hover:shadow-[inset_0_1px_3px_0_rgb(0_0_0/0.12)] transition-all cursor-pointer isolate'
                 aria-label={showBottom ? 'Hide Summary' : 'Show Summary'}
                 type='button'
               >

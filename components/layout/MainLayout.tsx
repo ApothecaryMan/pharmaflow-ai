@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import type React from 'react';
 import { useState } from 'react';
-import { getContentContainerClasses } from '../../config/layoutConfig';
+import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
@@ -312,14 +312,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                   {isStandalone || PAGE_REGISTRY[view]?.layout === 'full-screen' ? (
                     children
                   ) : (
-                    <>
-                      <div className='flex flex-row h-full w-full'>
-                        <div className='w-4 shrink-0' />
-                        <div className='flex-1 min-w-0'>{children}</div>
-                        <div className='w-4 shrink-0' />
-                      </div>
-                      <div className='h-4 shrink-0 hidden md:block' />
-                    </>
+                    <div className={`flex-1 min-w-0 h-full flex flex-col ${LAYOUT_CONFIG.HORIZONTAL_PADDING} pb-0 md:pb-4`}>
+                      {children}
+                    </div>
                   )}
                 </div>
               </main>

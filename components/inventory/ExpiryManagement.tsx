@@ -22,6 +22,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { Tooltip } from '../common/Tooltip';
 import { useStatusBar } from '../layout/StatusBar';
 
 interface ExpiryManagementProps {
@@ -53,6 +54,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
 
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [showStats, setShowStats] = useState(true);
 
   // Modals & Action State
   const [selectedActionBatch, setSelectedActionBatch] = useState<BatchWithDrug | null>(null);
@@ -359,54 +361,23 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   }, [t, getVerifiedDate, textTransform]);
 
   return (
-    <div className='h-full flex flex-col gap-6 '>
+    <div className='h-full flex flex-col gap-4 pt-4'>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
+      <div className='flex flex-col gap-4 shrink-0'>
+        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3'>
+          <h1
+            className='text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-gray-900 dark:text-white page-title shrink-0'
+            style={{
+              fontFeatureSettings:
+                '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+            }}
+          >
             {t.expiryManagement?.title || 'Expiry Management'}
           </h1>
-        </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0'>
-        <SmallCard
-          title={t.expiryManagement?.expiredItems || 'Expired Items'}
-          value={stats.expiredValue}
-          type='currency'
-          currencyLabel={formatCurrencyParts(0).symbol}
-          icon='event_busy'
-          iconColor='rose'
-          subValue={stats.expiredCount.toString()}
-        />
-
-        <SmallCard
-          title={t.expiryManagement?.nearExpiry30 || 'Expiring < 30 Days'}
-          value={stats.near30Value}
-          type='currency'
-          currencyLabel={formatCurrencyParts(0).symbol}
-          icon='warning'
-          iconColor='orange'
-          subValue={stats.near30Count.toString()}
-        />
-
-        <SmallCard
-          title={t.expiryManagement?.nearExpiry90 || 'Expiring < 90 Days'}
-          value={stats.near90Value}
-          type='currency'
-          currencyLabel={formatCurrencyParts(0).symbol}
-          icon='calendar_month'
-          iconColor='amber'
-          subValue={stats.near90Count.toString()}
-        />
-      </div>
-
-      {/* Filters & Table Wrapper */}
-      <div className='flex-1 flex flex-col min-h-0 gap-4'>
-        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0'>
-          <div className='w-full max-w-xl'>
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
             <SearchInput
+              compact
               value={searchQuery}
               onSearchChange={setSearchQuery}
               onClear={() => setSearchQuery('')}
@@ -415,23 +386,73 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
               filterConfigs={[expiryFilterConfig]}
               activeFilters={activeFilters}
               onUpdateFilter={(gid, vals) => setActiveFilters((prev) => ({ ...prev, [gid]: vals }))}
+              wrapperClassName='w-full sm:w-[250px] lg:w-[350px]'
             />
+            <SegmentedControl
+              size='xs'
+              options={[
+                { label: t.expiryManagement?.all || 'All', value: 'all' },
+                { label: t.expiryManagement?.expired || 'Expired', value: 'expired' },
+                { label: t.expiryManagement?.nearExpiry30 || '< 30 Days', value: 'near30' },
+                { label: t.expiryManagement?.nearExpiry90 || '< 90 Days', value: 'near90' },
+              ]}
+              value={activeFilters.expiryDate?.[0] || 'all'}
+              onChange={(val) =>
+                setActiveFilters((prev) => ({ ...prev, expiryDate: val === 'all' ? [] : [val] }))
+              }
+            />
+            <Tooltip content={showStats ? (t.common?.hide || 'Hide') : (t.common?.show || 'Show')}>
+              <button
+                onClick={() => setShowStats(!showStats)}
+                type='button'
+                className='flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-black/20 hover:backdrop-blur-md hover:shadow-[inset_0_1px_3px_0_rgb(0_0_0/0.12)] transition-all cursor-pointer isolate'
+              >
+                <span className={`material-symbols-rounded ${showStats ? 'rotate-180 transition-transform' : 'transition-transform'}`}>
+                  expand_more
+                </span>
+              </button>
+            </Tooltip>
           </div>
-
-          <SegmentedControl
-            options={[
-              { label: t.expiryManagement?.all || 'All', value: 'all' },
-              { label: t.expiryManagement?.expired || 'Expired', value: 'expired' },
-              { label: t.expiryManagement?.nearExpiry30 || '< 30 Days', value: 'near30' },
-              { label: t.expiryManagement?.nearExpiry90 || '< 90 Days', value: 'near90' },
-            ]}
-            value={activeFilters.expiryDate?.[0] || 'all'}
-            onChange={(val) =>
-              setActiveFilters((prev) => ({ ...prev, expiryDate: val === 'all' ? [] : [val] }))
-            }
-          />
         </div>
 
+        {/* Stats Cards */}
+        {showStats && (
+          <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+          <SmallCard
+            title={t.expiryManagement?.expiredItems || 'Expired Items'}
+            value={stats.expiredValue}
+            type='currency'
+            currencyLabel={formatCurrencyParts(0).symbol}
+            icon='event_busy'
+            iconColor='rose'
+            subValue={stats.expiredCount.toString()}
+          />
+
+          <SmallCard
+            title={t.expiryManagement?.nearExpiry30 || 'Expiring < 30 Days'}
+            value={stats.near30Value}
+            type='currency'
+            currencyLabel={formatCurrencyParts(0).symbol}
+            icon='warning'
+            iconColor='orange'
+            subValue={stats.near30Count.toString()}
+          />
+
+          <SmallCard
+            title={t.expiryManagement?.nearExpiry90 || 'Expiring < 90 Days'}
+            value={stats.near90Value}
+            type='currency'
+            currencyLabel={formatCurrencyParts(0).symbol}
+            icon='calendar_month'
+            iconColor='amber'
+            subValue={stats.near90Count.toString()}
+          />
+        </div>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className='flex-1 flex flex-col min-h-0 gap-4'>
         <div className='flex-1 min-h-0 overflow-hidden'>
           <TanStackTable
             data={filteredData}
@@ -454,6 +475,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             onRowContextMenu={(e, row) =>
               showMenu(e.clientX, e.clientY, getRowActions(row as BatchWithDrug))
             }
+
           />
         </div>
       </div>
