@@ -87,6 +87,8 @@ export interface SaleItem {
   discount?: number;
   /** Whether quantity is in units */
   isUnit?: boolean;
+  /** Units per pack snapshotted at sale time (preserves historical unit conversion) */
+  unitsPerPack?: number;
 }
 
 /**

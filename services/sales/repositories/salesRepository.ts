@@ -15,6 +15,7 @@ interface SaleItemRow {
   cost_price: number;
   discount: number | null;
   is_unit: boolean | null;
+  units_per_pack: number | null;
   drug: Record<string, unknown> | null;
   batch_allocations: BatchAllocationRow[] | null;
 }
@@ -61,7 +62,7 @@ const SALE_LIST_COLUMNS = [
   'net_total',
   'item_returned_quantities',
   'daily_order_number',
-  'sale_items:sale_items(id, drug_id, name, quantity, public_price, is_unit, discount)',
+  'sale_items:sale_items(id, drug_id, name, quantity, public_price, is_unit, discount, units_per_pack)',
 ].join(',');
 
 const SALE_FULL_COLUMNS = `${SALE_LIST_COLUMNS}, notes, modification_history`;
@@ -93,6 +94,7 @@ export const salesRepository = {
         costPrice: item.cost_price,
         discount: item.discount ?? undefined,
         isUnit: item.is_unit ?? undefined,
+        unitsPerPack: item.units_per_pack ?? undefined,
         batchAllocations: item.batch_allocations?.map((b: BatchAllocationRow) => ({
           batchId: b.batch_id,
           quantity: b.quantity,

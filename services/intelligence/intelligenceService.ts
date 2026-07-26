@@ -27,6 +27,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { returnService } from '../returns/returnService';
 import { salesService } from '../sales/salesService';
 import { supplierService } from '../suppliers/supplierService';
+import { purchaseService } from '../purchases/purchaseService';
 
 // === Period Helpers ===
 
@@ -150,7 +151,7 @@ export const intelligenceService = {
         const drug = drugMap.get(item.id);
         if (!drug) continue;
 
-        const unitsPerPack = drug.unitsPerPack || 1;
+        const unitsPerPack = item.unitsPerPack ?? drug.unitsPerPack ?? 1;
         const normalizedQty = item.isUnit ? item.quantity : item.quantity * unitsPerPack;
 
         const existing = velocityMap.get(item.id) || { last7: 0, last14: 0, last30: 0 };
@@ -167,6 +168,50 @@ export const intelligenceService = {
 
         velocityMap.set(item.id, existing);
       }
+    }
+
+    // Apply net-demand adjustment: subtract demand-reducing returns from velocity
+    const DEMAND_REDUCING_REASONS = new Set(['customer_request', 'expired', 'other']);
+    try {
+      const allReturns = await returnService.getAllSalesReturns(branchId);
+      for (const ret of allReturns) {
+        const retDate = new Date(ret.date);
+        if (retDate < thirtyDaysAgo) continue;
+        for (const rItem of ret.items) {
+          if (!rItem.reason || !DEMAND_REDUCING_REASONS.has(rItem.reason)) continue;
+          const drug = drugMap.get(rItem.drugId);
+          if (!drug) continue;
+          const unitsPerPack = drug.unitsPerPack ?? 1;
+          const normalizedQty = rItem.isUnit ? rItem.quantityReturned : rItem.quantityReturned * unitsPerPack;
+          const existing = velocityMap.get(rItem.drugId) || { last7: 0, last14: 0, last30: 0 };
+          existing.last30 = Math.max(0, existing.last30 - normalizedQty);
+          if (retDate >= fourteenDaysAgo) {
+            existing.last14 = Math.max(0, existing.last14 - normalizedQty);
+            if (retDate >= sevenDaysAgo) {
+              existing.last7 = Math.max(0, existing.last7 - normalizedQty);
+            }
+          }
+          velocityMap.set(rItem.drugId, existing);
+        }
+      }
+    } catch {
+      // Return fetch is non-critical for procurement; velocity stays at gross
+    }
+
+    // Build on-order quantity map from pending purchases
+    const onOrderMap = new Map<string, number>();
+    try {
+      const pendingPurchases = await purchaseService.getPending(branchId);
+      for (const po of pendingPurchases) {
+        for (const poItem of po.items) {
+          const unitsPerPackPO = poItem.unitsPerPack ?? 1;
+          const normalizedQty = poItem.isUnit ? poItem.quantity : poItem.quantity * unitsPerPackPO;
+          const current = onOrderMap.get(poItem.drugId) || 0;
+          onOrderMap.set(poItem.drugId, current + normalizedQty);
+        }
+      }
+    } catch {
+      // On-order fetch is non-critical; suggested qty stays at gross need
     }
 
     const REORDER_POINT_DAYS = 14; // Default reorder point
@@ -207,6 +252,9 @@ export const intelligenceService = {
           ? Math.max(0, minStock - Math.floor(currentStock / unitsPerPack))
           : 0;
       const suggestedQty = Math.max(safetyStockPacks, minStockReplenishPacks);
+      const onOrderUnits = onOrderMap.get(drug.id) || 0;
+      const onOrderPacks = Math.ceil(onOrderUnits / unitsPerPack);
+      const netSuggestedQty = Math.max(0, suggestedQty - onOrderPacks);
 
       const hasRecentSales = velocity.last7 > 0;
       const hasConsistentSales = velocity.last30 >= 5;
@@ -250,7 +298,7 @@ export const intelligenceService = {
         seasonal_index_current: 1.0,
         seasonal_index_next: 1.0,
         seasonal_confidence: 'MEDIUM' as const,
-        suggested_order_qty: suggestedQty,
+        suggested_order_qty: netSuggestedQty,
         skip_reason:
           stockStatus === 'OVERSTOCK'
             ? 'OVERSTOCK'
@@ -415,7 +463,7 @@ export const intelligenceService = {
       for (const item of (sale.items || [])) {
         const drug = drugMap.get(item.id);
         if (!drug) continue;
-        const unitsPerPack = drug.unitsPerPack || 1;
+        const unitsPerPack = item.unitsPerPack ?? drug.unitsPerPack ?? 1;
         const normalizedQty = item.isUnit ? item.quantity : item.quantity * unitsPerPack;
         velocityMap.set(item.id, (velocityMap.get(item.id) || 0) + normalizedQty);
       }
