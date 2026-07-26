@@ -20,13 +20,15 @@ use windows::Win32::Graphics::Printing::{
 use windows::core::{PCWSTR, PWSTR};
 
 #[tauri::command]
-fn set_titlebar_color(_window: tauri::Window, _color: String) {
+#[allow(unused_variables)]
+fn set_titlebar_color(_window: tauri::Window, color: String) {
+    println!("[TAURI] set_titlebar_color received: {}", color);
     #[cfg(target_os = "windows")]
     {
-        if _color.len() == 7 && _color.starts_with('#') {
-            let r = u8::from_str_radix(&_color[1..3], 16).unwrap_or(0);
-            let g = u8::from_str_radix(&_color[3..5], 16).unwrap_or(0);
-            let b = u8::from_str_radix(&_color[5..7], 16).unwrap_or(0);
+        if color.len() == 7 && color.starts_with('#') {
+            let r = u8::from_str_radix(&color[1..3], 16).unwrap_or(0);
+            let g = u8::from_str_radix(&color[3..5], 16).unwrap_or(0);
+            let b = u8::from_str_radix(&color[5..7], 16).unwrap_or(0);
             
             let color_ref = COLORREF((b as u32) << 16 | (g as u32) << 8 | (r as u32));
             

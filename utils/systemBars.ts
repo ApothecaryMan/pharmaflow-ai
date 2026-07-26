@@ -37,6 +37,20 @@ const normalizeSystemBarColor = (color: string): string => {
     return `#${r}${r}${g}${g}${b}${b}`;
   }
 
+  // Use canvas to convert ANY valid CSS color (including oklch, hsl, color-mix) to Hex
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (ctx) {
+      ctx.fillStyle = normalized;
+      ctx.fillRect(0, 0, 1, 1);
+      const data = ctx.getImageData(0, 0, 1, 1).data;
+      return `#${toHexChannel(data[0])}${toHexChannel(data[1])}${toHexChannel(data[2])}`;
+    }
+  }
+
   const rgbParts = normalized.match(/[\d.]+/g);
   if ((normalized.startsWith('rgb(') || normalized.startsWith('rgba(')) && rgbParts?.length >= 3) {
     return `#${toHexChannel(Number(rgbParts[0]))}${toHexChannel(Number(rgbParts[1]))}${toHexChannel(Number(rgbParts[2]))}`;
@@ -112,6 +126,8 @@ export const setSystemBarColor = (color: string): void => {
   const normalizedColor = normalizeSystemBarColor(color);
   if (normalizedColor === lastAppliedSystemBarColor) return;
 
+  console.log('[SystemBar] Changing title bar color to:', normalizedColor, '(original:', color, ')');
+
   lastAppliedSystemBarColor = normalizedColor;
   setAndroidStatusBarColor(normalizedColor);
   void setNativeTitleBarColor(normalizedColor);
@@ -148,12 +164,44 @@ export const useAutoSystemBarColor = (
   useEffect(() => {
     void refreshKey;
 
-    const frameId = window.requestAnimationFrame(() => {
-      setSystemBarColor(getAutoSystemBarColor(fallbackCssVar));
-    });
+    const checkColor = () => {
+      const sampleX = Math.max(1, Math.floor(window.innerWidth / 2));
+      const sampledElement = document.elementFromPoint(sampleX, 2);
+      
+      let current: Element | null = sampledElement;
+      let foundColor: string | null = null;
+      
+      while (current) {
+        const color = window.getComputedStyle(current).backgroundColor;
+        if (!isTransparentColor(color)) {
+          foundColor = color;
+          break;
+        }
+        current = current.parentElement;
+      }
+
+      if (!foundColor) {
+        // Fallback if no solid color found
+        const isDark = document.documentElement.classList.contains('dark');
+        const defaultFallback = isDark ? '#1f1f1f' : '#ffffff';
+        foundColor = evaluateCssColor(fallbackCssVar, defaultFallback);
+        console.log('[SystemBar] elementFromPoint failed or transparent, using fallback:', foundColor);
+      } else {
+        console.log('[SystemBar] Found color from element:', sampledElement?.tagName, sampledElement?.className, 'color:', foundColor);
+      }
+
+      setSystemBarColor(foundColor);
+    };
+
+    // 1. Check immediately
+    checkColor();
+
+    // 2. Poll every 250ms to catch transitions, scroll events, overlays, and modal pops.
+    // This is cheap because setSystemBarColor short-circuits if the color hasn't changed.
+    const intervalId = window.setInterval(checkColor, 250);
 
     return () => {
-      window.cancelAnimationFrame(frameId);
+      window.clearInterval(intervalId);
     };
   }, [fallbackCssVar, refreshKey]);
 };
