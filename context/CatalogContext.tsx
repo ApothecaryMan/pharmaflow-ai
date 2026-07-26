@@ -1,5 +1,5 @@
 import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   type DrugCatalogItem,
@@ -25,6 +25,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isLoading, setIsLoading] = useState(true);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [totalItems, setTotalItems] = useState(0);
+  const hasInitialized = useRef(false);
 
   const syncWithSource = useCallback(async () => {
     try {
@@ -109,6 +110,9 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Initialize Engine and Load Cache
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     const init = async () => {
       try {
         setIsLoading(true);

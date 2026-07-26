@@ -81,7 +81,6 @@ class TimeService {
         storage.set(StorageKeys.TIME_OFFSET, this.offset.toString());
         storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
 
-        console.log(`Time synced via Supabase RPC. Offset: ${this.offset}ms`);
         this.isSyncing = false;
         this.dispatchSyncEvent();
         return true;
@@ -147,7 +146,6 @@ class TimeService {
         storage.set(StorageKeys.TIME_OFFSET, this.offset.toString());
         storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
 
-        console.log(`Time synced via ${provider}. Offset: ${this.offset}ms`);
         this.isSyncing = false;
         this.dispatchSyncEvent();
         return true;
