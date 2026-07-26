@@ -7,8 +7,7 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
-import { idGenerator } from '../../utils/idGenerator';
-import type { Drug, Employee, StockBatch } from '../../types';
+import type { Drug, Employee } from '../../types';
 import { getFullDisplayName } from '../../utils/drugDisplayName';
 import { resolveUnits } from '../../utils/stockUtils';
 import { validateDrug } from '../../utils/validation';
@@ -51,6 +50,12 @@ export function useInventoryHandlers({
 
         queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
           if (!old) return old;
+          const idx = old.findIndex((d) => d.id === result.id);
+          if (idx > -1) {
+            const copy = [...old];
+            copy[idx] = result;
+            return copy;
+          }
           return [...old, result];
         });
 
@@ -71,24 +76,7 @@ export function useInventoryHandlers({
           });
         }
 
-        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
-          if (!old) return old;
-          return [
-            ...old,
-            {
-              id: idGenerator.uuid(),
-              branchId: activeBranchId,
-              orgId: result.orgId,
-              drugId: result.id,
-              quantity: result.stock,
-              expiryDate: result.expiryDate,
-              costPrice: result.costPrice,
-              dateReceived: new Date().toISOString(),
-              batchNumber: 'INITIAL',
-              version: 1,
-            },
-          ];
-        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
 
         auditService.log('inventory.add', {
           userId: currentEmployeeId,
@@ -145,14 +133,7 @@ export function useInventoryHandlers({
             ],
           });
 
-          queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
-            if (!old) return old;
-            return old.map((b) =>
-              b.drugId === drug.id
-                ? { ...b, quantity: result.stock, expiryDate: result.expiryDate, costPrice: result.costPrice }
-                : b
-            );
-          });
+          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
         }
 
         queryClient.setQueryData<Drug>(queryKeys.inventory.detail(drug.id), result);
@@ -213,10 +194,7 @@ export function useInventoryHandlers({
           return old.filter((d) => d.id !== id);
         });
 
-        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
-          if (!old) return old;
-          return old.filter((b) => b.drugId !== id);
-        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
 
         auditService.log('inventory.delete', {
           userId: currentEmployeeId,
@@ -277,14 +255,7 @@ export function useInventoryHandlers({
             return old.map((d) => (d.id === id ? updatedDrug : d));
           });
 
-          queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
-            if (!old) return old;
-            return old.map((b) =>
-              b.drugId === id
-                ? { ...b, quantity: updatedDrug.stock, expiryDate: updatedDrug.expiryDate, costPrice: updatedDrug.costPrice }
-                : b
-            );
-          });
+          queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
         }
 
         auditService.log('inventory.update', {

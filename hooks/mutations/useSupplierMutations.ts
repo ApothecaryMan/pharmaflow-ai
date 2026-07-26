@@ -12,6 +12,12 @@ export function useAddSupplier() {
     onSuccess: (data) => {
       queryClient.setQueryData<any[]>(queryKeys.suppliers.all(branchId), (old) => {
         if (!old) return old;
+        const idx = old.findIndex((s) => s.id === data.id);
+        if (idx > -1) {
+          const copy = [...old];
+          copy[idx] = data;
+          return copy;
+        }
         return [data, ...old];
       });
     },

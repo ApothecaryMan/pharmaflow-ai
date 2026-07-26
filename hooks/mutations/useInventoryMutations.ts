@@ -12,22 +12,15 @@ export function useAddProduct() {
     onSuccess: (data) => {
       queryClient.setQueryData<any[]>(queryKeys.inventory.all(branchId), (old) => {
         if (!old) return old;
+        const idx = old.findIndex((d) => d.id === data.id);
+        if (idx > -1) {
+          const copy = [...old];
+          copy[idx] = data;
+          return copy;
+        }
         return [...old, data];
       });
-      queryClient.setQueryData<any[]>(queryKeys.batches.all(branchId), (old) => {
-        if (!old) return old;
-        return [...old, {
-          drugId: data.id,
-          quantity: data.stock,
-          expiryDate: data.expiryDate,
-          costPrice: data.costPrice,
-          batchNumber: 'INITIAL',
-          dateReceived: new Date().toISOString(),
-          branchId,
-          orgId: data.orgId,
-          version: 1,
-        }];
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
     },
   });
 }
@@ -44,14 +37,7 @@ export function useUpdateProduct() {
         if (!old) return old;
         return old.map((d) => (d.id === data.id ? data : d));
       });
-      queryClient.setQueryData<any[]>(queryKeys.batches.all(branchId), (old) => {
-        if (!old) return old;
-        return old.map((b) =>
-          b.drugId === data.id
-            ? { ...b, quantity: data.stock, expiryDate: data.expiryDate, costPrice: data.costPrice }
-            : b
-        );
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
     },
   });
 }
@@ -67,10 +53,7 @@ export function useDeleteProduct() {
         if (!old) return old;
         return old.filter((d) => d.id !== id);
       });
-      queryClient.setQueryData<any[]>(queryKeys.batches.all(branchId), (old) => {
-        if (!old) return old;
-        return old.filter((b) => b.drugId !== id);
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
       queryClient.removeQueries({ queryKey: queryKeys.inventory.detail(id), exact: true });
     },
     onError: (err) => {

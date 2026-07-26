@@ -3,8 +3,7 @@ import { queryKeys } from '../../lib/queryKeys';
 import { purchaseService } from '../../services/purchases';
 import { transactionService } from '../../services/transactions/transactionService';
 import { useAuthStore } from '../../stores/authStore';
-import { idGenerator } from '../../utils/idGenerator';
-import type { ActionContext, Drug, StockBatch, Purchase } from '../../types';
+import type { ActionContext, Purchase } from '../../types';
 
 export function useAddPurchase() {
   const queryClient = useQueryClient();
@@ -25,41 +24,10 @@ export function useAddPurchase() {
     },
     onSuccess: (data, vars) => {
       if (vars.purchase.status === 'completed') {
-        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(activeBranchId), (old) => {
-          if (!old) return old;
-          const newInv = [...old];
-          (data?.items || []).forEach((item) => {
-            const idx = newInv.findIndex((d) => d.id === item.drugId);
-            if (idx !== -1) {
-              const qty = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
-              newInv[idx] = { ...newInv[idx], stock: newInv[idx].stock + qty };
-            }
-          });
-          return newInv;
-        });
-        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(activeBranchId), (old) => {
-          if (!old) return old;
-          const newBatches = [...old];
-          (data?.items || []).forEach((item) => {
-            newBatches.push({
-              id: idGenerator.uuid(),
-              branchId: activeBranchId,
-              drugId: item.drugId,
-              quantity: item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1),
-              expiryDate: item.expiryDate,
-              costPrice: item.costPrice,
-              purchaseId: data.id,
-              dateReceived: new Date().toISOString(),
-              version: 1,
-            });
-          });
-          return newBatches;
-        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
       }
-      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(activeBranchId), (old) => {
-        if (!old) return old;
-        return [data, ...old];
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
     },
   });
 }
@@ -80,46 +48,15 @@ export function useApprovePurchase() {
       const items = data?.items || [];
 
       if (items.length > 0) {
-        queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(branchId), (old) => {
-          if (!old) return old;
-          const newInv = [...old];
-          items.forEach((item) => {
-            const idx = newInv.findIndex((d) => d.id === item.drugId);
-            if (idx !== -1) {
-              const qty = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
-              newInv[idx] = { ...newInv[idx], stock: newInv[idx].stock + qty };
-            }
-          });
-          return newInv;
-        });
-        queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(branchId), (old) => {
-          if (!old) return old;
-          const newBatches = [...old];
-          items.forEach((item) => {
-            newBatches.push({
-              id: idGenerator.uuid(),
-              branchId,
-              drugId: item.drugId,
-              quantity: item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1),
-              expiryDate: item.expiryDate,
-              costPrice: item.costPrice,
-              purchaseId,
-              dateReceived: new Date().toISOString(),
-              version: 1,
-            });
-          });
-          return newBatches;
-        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
       }
 
       queryClient.setQueryData<Purchase>(queryKeys.purchases.detail(purchaseId), (old) => {
         if (!old) return old;
         return { ...data, items: old.items };
       });
-      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(branchId), (old) => {
-        if (!old) return old;
-        return old.map((p) => (p.id === purchaseId ? { ...p, ...data } : p));
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
     },
   });
 }
@@ -143,44 +80,16 @@ export function useMarkPurchaseReceived() {
     onSuccess: (data, vars) => {
       const purchaseId = data?.id || vars.id;
 
-      queryClient.setQueryData<Drug[]>(queryKeys.inventory.all(branchId), (old) => {
-        if (!old) return old;
-        const newInv = [...old];
-        (data?.items || []).forEach((item) => {
-          const idx = newInv.findIndex((d) => d.id === item.drugId);
-          if (idx !== -1) {
-            const qty = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
-            newInv[idx] = { ...newInv[idx], stock: newInv[idx].stock + qty };
-          }
-        });
-        return newInv;
-      });
-      queryClient.setQueryData<StockBatch[]>(queryKeys.batches.all(branchId), (old) => {
-        if (!old) return old;
-        const newBatches = [...old];
-        (data?.items || []).forEach((item) => {
-          newBatches.push({
-            id: crypto.randomUUID(),
-            branchId,
-            drugId: item.drugId,
-            quantity: item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1),
-            expiryDate: item.expiryDate,
-            costPrice: item.costPrice,
-            purchaseId,
-            dateReceived: new Date().toISOString(),
-            version: 1,
-          });
-        });
-        return newBatches;
-      });
+      if (data?.items?.length > 0) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
+      }
+
       queryClient.setQueryData<Purchase>(queryKeys.purchases.detail(purchaseId), (old) => {
         if (!old) return old;
         return { ...old, ...data };
       });
-      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(branchId), (old) => {
-        if (!old) return old;
-        return old.map((p) => (p.id === purchaseId ? { ...p, ...data } : p));
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
     },
   });
 }
@@ -196,10 +105,7 @@ export function useRejectPurchase() {
         if (!old) return old;
         return { ...data, items: old.items };
       });
-      queryClient.setQueryData<Purchase[]>(queryKeys.purchases.all(branchId), (old) => {
-        if (!old) return old;
-        return old.map((p) => (p.id === id ? { ...p, ...data } : p));
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
     },
   });
 }
