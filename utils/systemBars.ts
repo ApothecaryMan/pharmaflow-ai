@@ -7,6 +7,8 @@ const DEFAULT_DARK_BAR_COLOR = '#1f1f1f';
 const TOP_SAMPLE_Y = 2;
 
 let lastAppliedSystemBarColor = '';
+let lastRawCssColor = '';
+let cachedCanvasCtx: CanvasRenderingContext2D | null = null;
 
 const isTransparentColor = (color: string): boolean => {
   const normalized = color.trim().toLowerCase();
@@ -37,18 +39,21 @@ const normalizeSystemBarColor = (color: string): string => {
     return `#${r}${r}${g}${g}${b}${b}`;
   }
 
-  // Use canvas to convert ANY valid CSS color (including oklch, hsl, color-mix) to Hex
-  if (typeof document !== 'undefined') {
+  // Pre-allocate a single canvas instance to avoid GC churn every 250ms
+  if (typeof document !== 'undefined' && !cachedCanvasCtx) {
     const canvas = document.createElement('canvas');
     canvas.width = 1;
     canvas.height = 1;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (ctx) {
-      ctx.fillStyle = normalized;
-      ctx.fillRect(0, 0, 1, 1);
-      const data = ctx.getImageData(0, 0, 1, 1).data;
-      return `#${toHexChannel(data[0])}${toHexChannel(data[1])}${toHexChannel(data[2])}`;
-    }
+    cachedCanvasCtx = canvas.getContext('2d', { willReadFrequently: true });
+  }
+
+  // Use canvas to convert ANY valid CSS color (including oklch, hsl, color-mix) to Hex
+  if (cachedCanvasCtx) {
+    cachedCanvasCtx.clearRect(0, 0, 1, 1);
+    cachedCanvasCtx.fillStyle = normalized;
+    cachedCanvasCtx.fillRect(0, 0, 1, 1);
+    const data = cachedCanvasCtx.getImageData(0, 0, 1, 1).data;
+    return `#${toHexChannel(data[0])}${toHexChannel(data[1])}${toHexChannel(data[2])}`;
   }
 
   const rgbParts = normalized.match(/[\d.]+/g);
@@ -123,10 +128,11 @@ export const getDefaultSystemBarColor = (): string => {
 };
 
 export const setSystemBarColor = (color: string): void => {
+  if (color === lastRawCssColor) return;
+  lastRawCssColor = color;
+
   const normalizedColor = normalizeSystemBarColor(color);
   if (normalizedColor === lastAppliedSystemBarColor) return;
-
-  console.log('[SystemBar] Changing title bar color to:', normalizedColor, '(original:', color, ')');
 
   lastAppliedSystemBarColor = normalizedColor;
   setAndroidStatusBarColor(normalizedColor);
@@ -185,9 +191,6 @@ export const useAutoSystemBarColor = (
         const isDark = document.documentElement.classList.contains('dark');
         const defaultFallback = isDark ? '#1f1f1f' : '#ffffff';
         foundColor = evaluateCssColor(fallbackCssVar, defaultFallback);
-        console.log('[SystemBar] elementFromPoint failed or transparent, using fallback:', foundColor);
-      } else {
-        console.log('[SystemBar] Found color from element:', sampledElement?.tagName, sampledElement?.className, 'color:', foundColor);
       }
 
       setSystemBarColor(foundColor);
