@@ -28,7 +28,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       const ownerId = user?.userId || devOwnerId;
       const isDevPlaceholder = ownerId === devOwnerId;
 
-      // 0.1 Check bypass logic using fresh user data
+      // 0.1 Check bypass logic using fresh server data (not cached session)
       const isOwnerOrAdmin = user?.orgRole === 'owner' || user?.orgRole === 'admin';
 
       // Bypass entirely for global employee accounts.

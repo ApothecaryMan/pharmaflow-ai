@@ -42,10 +42,6 @@ export const SecureGate: React.FC<SecureGateProps> = ({
   // Determine authorization based on role
   const userRole = currentEmployee?.role;
   const isAuthorized =
-    userRole === 'admin' ||
-    userRole === 'pharmacist_owner' ||
-    userRole === 'pharmacist_manager' ||
-    userRole === 'manager' ||
     permissionsService.isOrgAdmin() ||
     permissionsService.isManager();
 

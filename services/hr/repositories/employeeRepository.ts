@@ -1,3 +1,4 @@
+import { MANAGER_ROLES } from '../../../config/permissions';
 import { supabase } from '../../../lib/supabase';
 import type { Employee } from '../../../types';
 
@@ -119,7 +120,10 @@ export const employeeRepository = {
     let query = supabase.from(this.tableName).select(this.BASE_COLUMNS).eq('org_id', orgId);
 
     if (branchId) {
-      const ADMIN_ROLES = ['admin', 'pharmacist_owner', 'manager'];
+      const ADMIN_ROLES = MANAGER_ROLES;
+      // MANAGER_ROLES also includes 'pharmacist_manager' (broader than original
+      // ['admin','pharmacist_owner','manager']) so pharmacist-managers
+      // see employees across all branches — correct since they're managers.
       query = query.or(`branch_id.eq.${branchId},role.in.(${ADMIN_ROLES.join(',')})`);
     }
 

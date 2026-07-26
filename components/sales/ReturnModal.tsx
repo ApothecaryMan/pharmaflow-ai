@@ -46,8 +46,6 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   currentShift,
   currentEmployeeId,
 }) => {
-  // Resolve role internally
-  const userRole = permissionsService.getEffectiveRole();
   const { getVerifiedDate } = useStatusBar();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: inventoryData } = useInventory(activeBranchId);
@@ -192,7 +190,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       const openShift = currentShift;
 
       // --- Pharmacist Threshold Validation ---
-      if (userRole === 'pharmacist') {
+      if (permissionsService.hasRole('pharmacist')) {
         // Limit 1: Per Invoice
         if (money.isGt(calculateRefund, PHARMACIST_REFUND_LIMIT_PER_INVOICE)) {
           const errorMsg =
@@ -218,7 +216,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       }
 
       // --- Cashier Validation ---
-      if (userRole === 'cashier') {
+      if (permissionsService.hasRole('cashier')) {
         // Limit 1: Same Shift Only
         const isSameShift =
           !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);

@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { MANAGER_ROLES } from '../../config/permissions';
 import { getRoleLabel, SYSTEM_ROLES } from '../../config/employeeRoles';
 import { useSettings } from '../../context';
 import { usePersistedState } from '../../hooks/common/usePersistedState';
@@ -51,7 +52,7 @@ const CountdownTimer = ({ expiresAt, language }: { expiresAt: string; language: 
 
 // Roles allowed during initial setup
 const ONBOARDING_ROLES = SYSTEM_ROLES.filter((r) =>
-  ['pharmacist_owner', 'admin', 'pharmacist_manager'].includes(r.id)
+  MANAGER_ROLES.includes(r.id)
 );
 
 interface EmployeeSetupScreenProps {

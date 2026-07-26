@@ -11,6 +11,18 @@ export type { PermissionAction };
 import type { OrgRole } from '../../types';
 
 /**
+ * Strategy Maps — role-based business limits (centralized, no if/else chains)
+ */
+const REFUND_LIMITS: Partial<Record<UserRole, number>> = {
+  pharmacist: 100_000,
+  cashier: 50_000,
+};
+
+const CANCEL_LIMITS: Partial<Record<UserRole, number>> = {
+  senior_cashier: 500,
+};
+
+/**
  * Permissions Service - Enhanced with Organization-level awareness.
  * Integrates OrgRole (Owner/Admin/Member) with UserRole (Pharmacist/Cashier/etc).
  */
@@ -24,6 +36,12 @@ export interface PermissionsService {
   isOrgAdmin(): boolean;
   isManager(): boolean;
   getAllPermissions(): PermissionAction[];
+  /** Check if the current role can refund up to a given amount */
+  canRefundAmount(amount: number): boolean;
+  /** Check if the current role can cancel up to a given amount */
+  canCancelAmount(amount: number): boolean;
+  /** Check if current user has a specific role */
+  hasRole(role: UserRole): boolean;
 }
 
 class PermissionsServiceImpl implements PermissionsService {
@@ -130,6 +148,22 @@ class PermissionsServiceImpl implements PermissionsService {
     }
 
     return (ROLE_PERMISSIONS[session.role as UserRole] || []) as PermissionAction[];
+  }
+
+  canRefundAmount(amount: number): boolean {
+    const role = this.getEffectiveRole();
+    const limit = role ? REFUND_LIMITS[role] : undefined;
+    return limit === undefined ? true : amount <= limit;
+  }
+
+  canCancelAmount(amount: number): boolean {
+    const role = this.getEffectiveRole();
+    const limit = role ? CANCEL_LIMITS[role] : undefined;
+    return limit === undefined ? true : amount <= limit;
+  }
+
+  hasRole(role: UserRole): boolean {
+    return this.getEffectiveRole() === role;
   }
 }
 

@@ -62,8 +62,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
   const currentDailyRefunds = React.useMemo(() => {
-    const userRole = permissionsService.getEffectiveRole();
-    if (!currentEmployeeId || userRole !== 'pharmacist') return 0;
+    if (!currentEmployeeId || !permissionsService.hasRole('pharmacist')) return 0;
 
     const today = new Date().toISOString().split('T')[0];
     return (returns || [])

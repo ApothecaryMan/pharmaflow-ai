@@ -672,7 +672,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   onProcessReturn &&
                   permissionsService.can('sale.refund') &&
                   !(sale.saleType === 'delivery' && sale.status !== 'completed') &&
-                  (permissionsService.getEffectiveRole() !== 'cashier' || inShift);
+                  (!permissionsService.hasRole('cashier') || inShift);
                 return (
                   <>
                     {hasRemaining && canRef && (

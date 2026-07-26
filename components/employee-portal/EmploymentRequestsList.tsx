@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { MANAGER_ROLES } from '../../config/permissions';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
 import type { EmploymentRequest } from '../../types';
 
@@ -168,7 +169,7 @@ export function EmploymentRequestsList({
   return (
     <div className='grid gap-4'>
       {requests.map((request) => {
-        const isPremiumRole = ['pharmacist_owner', 'admin', 'pharmacist_manager'].includes(
+        const isPremiumRole = MANAGER_ROLES.includes(
           request.role
         );
 

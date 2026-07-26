@@ -429,6 +429,21 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
   officeboy: [],
 };
 
+/**
+ * Shared Constants — centralize role lists used across the codebase
+ */
+export const MANAGER_ROLES: readonly UserRole[] = [
+  'admin',
+  'pharmacist_owner',
+  'pharmacist_manager',
+  'manager',
+] as const;
+
+export const ADMIN_AND_OWNER_ROLES: readonly UserRole[] = [
+  'admin',
+  'pharmacist_owner',
+] as const;
+
 export const canPerformAction = (
   role: UserRole | undefined | string,
   action: PermissionAction

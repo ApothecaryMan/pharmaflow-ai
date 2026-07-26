@@ -65,7 +65,6 @@ export interface UseSalesHandlersParams {
   processSalesReturn: (returnData: Return, sale: Sale, context: ActionContext) => Promise<void>;
 }
 
-const SENIOR_CASHIER_CANCEL_LIMIT = 500; // 500.00 EGP
 
 export function useSalesHandlers({
   currentEmployeeId,
@@ -190,9 +189,9 @@ export function useSalesHandlers({
           return;
         }
 
-        if (employee?.role === 'senior_cashier' && sale.total > SENIOR_CASHIER_CANCEL_LIMIT) {
+        if (!permissionsService.canCancelAmount(sale.total)) {
           error(
-            `Permission denied: Senior Cashiers cannot cancel sales exceeding EGP ${SENIOR_CASHIER_CANCEL_LIMIT}. Manager approval required.`
+            'Permission denied: Your role does not allow canceling sales above your limit. Manager approval required.'
           );
           return;
         }
@@ -507,15 +506,10 @@ export function useSalesHandlers({
           return false;
         }
 
-        const userRole = permissionsService.getEffectiveRole();
-        if (userRole === 'pharmacist' && returnData.totalRefund > 100000) {
+        if (!permissionsService.canRefundAmount(returnData.totalRefund)) {
           error(
-            'Permission denied: Pharmacists cannot refund more than 1000.00 EGP per transaction. Please request manager approval.'
+            'Permission denied: Your role does not allow refunding this amount per transaction. Manager approval required.'
           );
-          return false;
-        }
-        if (userRole === 'cashier' && returnData.totalRefund > 50000) {
-          error('Permission denied: Cashiers cannot refund more than 500.00 EGP per transaction.');
           return false;
         }
 
