@@ -28,7 +28,6 @@ interface UsePOSCheckoutProps {
   globalDiscount: number;
   activeBranchId: string;
   sales: Sale[];
-  refreshShifts?: () => Promise<void>;
 }
 
 export const usePOSCheckout = ({
@@ -52,7 +51,6 @@ export const usePOSCheckout = ({
   globalDiscount,
   activeBranchId,
   sales,
-  refreshShifts,
 }: UsePOSCheckoutProps) => {
   const branches = useAuthStore((s) => s.branches);
   const activeBranchIdStore = useAuthStore((s) => s.activeBranchId);
@@ -165,13 +163,6 @@ export const usePOSCheckout = ({
           return;
         }
 
-        // Refresh shifts immediately to update balance and transaction list
-        if (refreshShifts) {
-          refreshShifts().catch((e) =>
-            console.error('Failed to refresh shifts after checkout:', e)
-          );
-        }
-
         setIsCheckoutMode(false);
         setIsDeliveryMode(false);
         setAmountPaid('');
@@ -235,7 +226,6 @@ export const usePOSCheckout = ({
       playSuccess,
       isProcessing,
       deliveryFee,
-      refreshShifts,
       activeBranch,
       activeBranchId,
     ]

@@ -26,6 +26,7 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
   // Keep a ref to the latest branch/org so the effect closure is fresh
   const branchRef = useRef(activeBranchId);
   const orgRef = useRef(activeOrgId);
+  const wasDisconnectedRef = useRef(false);
   branchRef.current = activeBranchId;
   orgRef.current = activeOrgId;
 
@@ -83,8 +84,13 @@ export function useRealtimeDispatcher({ activeBranchId, activeOrgId }: Dispatche
 
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
+        if (wasDisconnectedRef.current) {
+          wasDisconnectedRef.current = false;
+          handleOnline();
+        }
         retryCount = 0;
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        wasDisconnectedRef.current = true;
         const backoff = Math.min(
           RECONNECT_BASE_MS * 2 ** retryCount,
           RECONNECT_MAX_MS,

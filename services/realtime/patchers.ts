@@ -47,13 +47,13 @@ export function patchListCache<T extends { id: string }>(
         copy[idx] = { ...copy[idx], ...mapped };
         return copy;
       }
-      return [...old, mapped];
+      return [mapped, ...old];
     });
   };
 }
 
 /**
- * Patch a detail/singleton cache (e.g. `['sale', saleId]`) when the
+ * Patch a detail/singleton cache (e.g. `['sales', 'detail', saleId]`) when the
  * corresponding row is inserted, updated, or deleted.
  * On DELETE the detail cache entry is removed entirely.
  *

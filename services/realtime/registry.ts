@@ -5,7 +5,6 @@ import { queryClient } from '../../lib/queryClient';
 import {
   patchListCache,
   patchDetailCache,
-  patchDashboardStats,
   invalidateBranchScope,
   invalidateDashboard,
 } from './patchers';
@@ -76,8 +75,8 @@ export function createRegistry(branchId: string, orgId: string): PatcherEntry[] 
         patchListCache((bid: string) => queryKeys.sales.recent(bid), branchId),
         patchListCache((bid: string) => queryKeys.sales.today(bid), branchId),
         patchDetailCache((id: string) => queryKeys.sales.detail(id)),
+        invalidateBranchScope('sales', branchId),
         invalidateDashboard(branchId),
-        patchDashboardStats(branchId),
       ],
     },
 

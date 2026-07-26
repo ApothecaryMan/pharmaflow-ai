@@ -7,20 +7,20 @@ export const queryKeys = {
     all: (branchId: string) => ['inventory', branchId] as const,
     lowStock: (branchId: string, threshold: number) =>
       ['inventory', 'low-stock', branchId, threshold] as const,
-    detail: (drugId: string) => ['drug', drugId] as const,
+    detail: (drugId: string) => ['inventory', 'detail', drugId] as const,
   },
   batches: {
     all: (branchId: string) => ['batches', branchId] as const,
-    detail: (batchId: string) => ['batch', batchId] as const,
+    detail: (batchId: string) => ['batches', 'detail', batchId] as const,
   },
   sales: {
     recent: (branchId: string, limit = 100) => ['sales', 'recent', branchId, limit] as const,
     today: (branchId: string) => ['sales', 'today', branchId] as const,
-    detail: (saleId: string) => ['sale', saleId] as const,
+    detail: (saleId: string) => ['sales', 'detail', saleId] as const,
   },
   purchases: {
     all: (branchId: string, limit = 100) => ['purchases', branchId, limit] as const,
-    detail: (purchaseId: string) => ['purchase', purchaseId] as const,
+    detail: (purchaseId: string) => ['purchases', 'detail', purchaseId] as const,
   },
   returns: {
     sales: (branchId: string, limit = 100) => ['returns', 'sales', branchId, limit] as const,
@@ -48,7 +48,7 @@ export const queryKeys = {
   },
   shifts: {
     all: (branchId: string) => ['shifts', branchId] as const,
-    detail: (shiftId: string) => ['shift', shiftId] as const,
+    detail: (shiftId: string) => ['shifts', 'detail', shiftId] as const,
   },
   cashTransactions: {
     byShift: (shiftId: string, branchId: string) => ['cashTransactions', shiftId, branchId] as const,

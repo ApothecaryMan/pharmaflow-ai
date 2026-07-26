@@ -87,7 +87,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     restoreTab,
   } = usePOSTabs(activeBranchId);
 
-  const { currentShift, refreshShifts } = useShift();
+  const { currentShift } = useShift();
   const hasOpenShift = !!currentShift;
 
   const { playBeep, playError, playSuccess, playClick } = usePosSounds();
@@ -276,7 +276,6 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     playSuccess,
     activeBranchId,
     sales: sales || [],
-    refreshShifts,
   });
 
   const {
