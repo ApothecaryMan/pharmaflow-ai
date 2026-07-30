@@ -87,8 +87,7 @@ export const pricingService = {
    */
   calculateRefundAmount: (
     sale: any,
-    selectedItems: Map<string, number>,
-    inventoryMap?: Map<string, any>
+    selectedItems: Map<string, number>
   ): number => {
     if (selectedItems.size === 0) return 0;
 
@@ -99,20 +98,15 @@ export const pricingService = {
     });
 
     // 2. Allocate the original netTotal across all items based on their weights
-    const allocatedAmounts = money.allocate(sale.netTotal, itemWeights);
+    const allocatedAmounts = money.allocate(sale.netTotal || sale.total, itemWeights);
 
     // 3. Sum up the allocated shares for the selected items and their quantities
     let totalRefund = 0;
     (sale.items || []).forEach((item: any, index: number) => {
-      // Improved drugId resolution using the optimized Map
-      const rawId = item.drugId ?? item.drug_id ?? item.id;
-      const drug = inventoryMap?.get(rawId);
-      const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
+      const saleItemId = item.saleItemId ?? item.id;
 
-      const lineKey = item.isUnit ? `${drugId}_unit` : `${drugId}_pack`;
-
-      if (selectedItems.has(lineKey)) {
-        const returnedQty = selectedItems.get(lineKey) || 0;
+      if (selectedItems.has(saleItemId)) {
+        const returnedQty = selectedItems.get(saleItemId) || 0;
         // Share per single unit/pack in this line
         const sharePerFullQty = allocatedAmounts[index];
         const sharePerIndividualItem = money.divide(sharePerFullQty, item.quantity);

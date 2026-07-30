@@ -551,8 +551,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   }, [pagedSales, locale]);
 
   // Wrap onProcessReturn to track pending state for the "real" duration
-  const handleProcessReturn = async (returnData: Return) => {
-    if (!returnData.saleId || !selectedSale) return;
+  const handleProcessReturn = async (returnData: any): Promise<boolean> => {
+    if (!returnData.saleId || !selectedSale) return false;
 
     try {
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
@@ -576,8 +576,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           prevSales.map((sale) => (sale.id === updatedSale.id ? updatedSale : sale))
         );
       }
+      return true;
     } catch (error) {
       console.error('[SalesHistory] Return failed:', error);
+      return false;
     }
   };
 

@@ -1651,6 +1651,11 @@ export const TRANSLATIONS = {
         packs: 'packs',
         unit: 'unit',
         units: 'units',
+        returnByPack: 'Return by Pack',
+        returnByUnit: 'Return by Unit',
+        switchToUnit: 'Switch to Unit',
+        switchToPack: 'Switch to Pack',
+        perUnit: 'per unit',
       },
     },
     dashboard: {
@@ -5098,6 +5103,11 @@ export const TRANSLATIONS = {
         packs: 'عبوات',
         unit: 'وحدة',
         units: 'وحدات',
+        returnByPack: 'إرجاع بالعبوة',
+        returnByUnit: 'إرجاع بالوحدة',
+        switchToUnit: 'تحويل إلى وحدات',
+        switchToPack: 'تحويل إلى عبوات',
+        perUnit: 'للوحدة',
       },
     },
     customers: {

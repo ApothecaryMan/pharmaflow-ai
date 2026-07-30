@@ -95,3 +95,20 @@ export interface ReturnPolicy {
   /** Threshold above which manager approval is required (default: 1000) */
   managerApprovalThreshold: number;
 }
+
+/**
+ * Payload constructed by the UI to process a return
+ */
+export interface ProcessReturnPayload {
+  saleId: string;
+  returnType: ReturnType;
+  items: {
+    drugId: string;
+    saleItemId: string;
+    quantityReturned: number;
+    isUnit: boolean;
+    condition: ItemCondition | string;
+  }[];
+  reason: ReturnReason | string;
+  notes?: string;
+}

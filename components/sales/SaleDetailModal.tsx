@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
-import type { Return, Sale, Shift } from '../../types';
+import type { Return, Sale, Shift, ProcessReturnPayload } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { money, pricing } from '../../utils/money';
@@ -24,7 +24,7 @@ interface SaleDetailModalProps {
   currentShift?: Shift | null;
   currentEmployeeId?: string;
   currentDailyRefunds?: number;
-  onProcessReturn?: (returnData: Return) => void;
+  onProcessReturn?: (returnData: ProcessReturnPayload) => Promise<boolean> | void;
   isLoadingDetails?: boolean;
 }
 
@@ -711,9 +711,12 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
           sale={sale}
           onClose={() => setReturnModalOpen(false)}
           onConfirm={async (d) => {
-            await onProcessReturn(d);
-            setReturnModalOpen(false);
-            onClose();
+            const success = await onProcessReturn(d);
+            if (success) {
+              setReturnModalOpen(false);
+              onClose();
+            }
+            return success !== false; // If undefined (void), assume success
           }}
           color={color}
           t={t}

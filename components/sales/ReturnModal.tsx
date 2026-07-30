@@ -1,38 +1,27 @@
 import type React from 'react';
-import { useMemo, useState } from 'react';
-import { useStatusBar } from '../../components/layout/StatusBar';
-import { useInventory } from '../../hooks/queries/useInventoryQuery';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { pricingService } from '../../services/sales/pricingService';
-import { useAuthStore } from '../../stores/authStore';
-import type { Return, ReturnItem, ReturnReason, Sale, Shift } from '../../types';
+import { useState } from 'react';
+import type { Sale, Shift, ProcessReturnPayload } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { idGenerator } from '../../utils/idGenerator';
-import { money, pricing } from '../../utils/money';
+import { pricing } from '../../utils/money';
 import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
+import { useReturnModalLogic } from '../../hooks/sales/useReturnModalLogic';
 
 interface ReturnModalProps {
   isOpen: boolean;
   sale: Sale;
   onClose: () => void;
-  onConfirm: (returnData: Return) => void;
+  onConfirm: (returnData: ProcessReturnPayload) => Promise<boolean> | void;
   color: string;
   t: Translations;
   language?: string;
   currentDailyRefunds?: number;
   currentShift: Shift | null;
-  currentEmployeeId?: string;
 }
-
-// --- Constants ---
-const PHARMACIST_REFUND_LIMIT_PER_INVOICE = 1000; // 1000.00 EGP
-const PHARMACIST_DAILY_REFUND_LIMIT = 2000; // 2000.00 EGP
-const CASHIER_REFUND_LIMIT_PER_INVOICE = 500; // 500.00 EGP
 
 export const ReturnModal: React.FC<ReturnModalProps> = ({
   isOpen,
@@ -44,64 +33,40 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   language = 'EN',
   currentDailyRefunds = 0,
   currentShift,
-  currentEmployeeId,
 }) => {
-  const { getVerifiedDate } = useStatusBar();
-  const activeBranchId = useAuthStore((s) => s.activeBranchId);
-  const { data: inventoryData } = useInventory(activeBranchId);
-  const inventory = inventoryData ?? [];
+  const {
+    step,
+    setStep,
+    isProcessing,
+    setIsProcessing,
+    selectedItems,
+    returnReason,
+    setReturnReason,
+    returnNotes,
+    setReturnNotes,
+    validationError,
+    setValidationError,
+    availableItems,
+    toggleItemSelection,
+    updateItemQuantity,
+    toggleUnitMode,
+    selectAll,
+    deselectAll,
+    isAllSelected,
+    calculateRefund,
+    validateReturn,
+    buildReturnPayload,
+    reset,
+  } = useReturnModalLogic({
+    sale,
+    currentShift,
+    currentDailyRefunds,
+    language,
+    t,
+  });
 
-  const inventoryMap = useMemo(() => {
-    const map = new Map();
-    inventory.forEach((d) => {
-      map.set(d.id, d);
-      d.batches?.forEach((b: any) => map.set(b.id, d));
-    });
-    return map;
-  }, [inventory]);
-
-  const [step, setStep] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
-  const [returnReason, setReturnReason] = useState<ReturnReason>('customer_request');
-  const [returnNotes, setReturnNotes] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isReasonDropdownOpen, setIsReasonDropdownOpen] = useState(false);
   const returnNotesDir = useSmartDirection(returnNotes, t.returns.notes);
-
-  // Get available items for return (items that haven't been fully returned yet)
-  const availableItems = useMemo(() => {
-    return sale.items
-      .map((item: any) => {
-        const rawId = item.drugId ?? item.drug_id ?? item.id;
-        const drug = inventoryMap.get(rawId);
-        const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
-
-        // Normalize essential fields
-        const isUnit = item.isUnit ?? item.is_unit ?? false;
-        const publicPrice = item.publicPrice ?? item.public_price ?? 0;
-        const unitsPerPack = item.unitsPerPack ?? drug?.unitsPerPack ?? 1;
-
-        const lineKey = isUnit ? `${drugId}_unit` : `${drugId}_pack`;
-        const returnedQty =
-          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[drugId] || 0;
-        const availableQty = (item.quantity ?? item.quantity_sold ?? 0) - returnedQty;
-
-        return {
-          ...item,
-          drugId,
-          isUnit,
-          publicPrice,
-          unitsPerPack,
-          dosageForm: item.dosageForm ?? item.dosage_form ?? drug?.dosageForm,
-          expiryDate: item.expiryDate ?? drug?.expiryDate,
-          lineKey,
-          returnedQty,
-          availableQty,
-        } as any;
-      })
-      .filter((item) => item.availableQty > 0);
-  }, [sale, inventoryMap]);
+  const [isReasonDropdownOpen, setIsReasonDropdownOpen] = useState(false);
 
   const reasonOptions = [
     { id: 'customer_request', label: t.returns.reasons.customer_request, icon: 'person' },
@@ -115,11 +80,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setStep(1);
-    setSelectedItems(new Map());
-    setReturnReason('customer_request');
-    setReturnNotes('');
-    setValidationError(null);
+    reset();
     onClose();
   };
 
@@ -132,217 +93,22 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     setStep(step - 1);
   };
 
-  const toggleItemSelection = (lineKey: string, maxQty: number) => {
-    const newSelected = new Map(selectedItems);
-    if (newSelected.has(lineKey)) {
-      newSelected.delete(lineKey);
-    } else {
-      newSelected.set(lineKey, maxQty);
-    }
-    setSelectedItems(newSelected);
-  };
-
-  const updateItemQuantity = (lineKey: string, quantity: number) => {
-    const newSelected = new Map(selectedItems);
-    if (quantity > 0) {
-      newSelected.set(lineKey, quantity);
-    } else {
-      newSelected.delete(lineKey);
-    }
-    setSelectedItems(newSelected);
-  };
-
-  const selectAll = () => {
-    const newSelected = new Map<string, number>();
-    availableItems.forEach((item) => {
-      newSelected.set(item.lineKey, item.availableQty);
-    });
-    setSelectedItems(newSelected);
-  };
-
-  const deselectAll = () => {
-    setSelectedItems(new Map());
-  };
-
-  const isAllSelected =
-    availableItems.length > 0 && availableItems.every((item) => selectedItems.has(item.lineKey));
-
-  // biome-ignore lint/correctness/useHookAtTopLevel: at top level, not conditional
-  const calculateRefund = useMemo(() => {
-    return pricingService.calculateRefundAmount(sale, selectedItems, inventoryMap);
-  }, [selectedItems, sale, inventoryMap]);
-
   const handleConfirm = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
-    setValidationError(null);
 
-    // VALIDATION: Check shift status and balance
-    try {
-      if (!currentShift) {
-        setValidationError(
-          t.returns.validation?.noOpenShift || 'Cannot process return - no open shift'
-        );
-        setIsProcessing(false);
-        return;
-      }
-
-      const openShift = currentShift;
-
-      // --- Pharmacist Threshold Validation ---
-      if (permissionsService.hasRole('pharmacist')) {
-        // Limit 1: Per Invoice
-        if (money.isGt(calculateRefund, PHARMACIST_REFUND_LIMIT_PER_INVOICE)) {
-          const errorMsg =
-            language === 'AR'
-              ? `Ø®Ø·Ø£: Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ù…Ø¨Ù„Øº Ø£ÙƒØ¨Ø± Ù…Ù† ${formatCurrency(PHARMACIST_REFUND_LIMIT_PER_INVOICE)} ÙÙŠ Ø§Ù„Ø¹Ù…Ù„ÙŠØ© Ø§Ù„ÙˆØ§Ø­Ø¯Ø© Ù„Ù„ØµÙŠØ¯Ù„ÙŠ. ÙŠØ±Ø¬Ù‰ Ø·Ù„Ø¨ Ù…ÙˆØ§ÙÙ‚Ø© Ø§Ù„Ù…Ø¯ÙŠØ±.`
-              : `Error: Pharmacists cannot refund more than ${formatCurrency(PHARMACIST_REFUND_LIMIT_PER_INVOICE)} per invoice. Please request manager approval.`;
-          setValidationError(errorMsg);
-          setIsProcessing(false);
-          return;
-        }
-
-        // Limit 2: Daily Total
-        const projectedDailyTotal = (currentDailyRefunds || 0) + calculateRefund;
-        if (money.isGt(projectedDailyTotal, PHARMACIST_DAILY_REFUND_LIMIT)) {
-          const errorMsg =
-            language === 'AR'
-              ? `Ø®Ø·Ø£: ØªÙ… ØªØ¬Ø§ÙˆØ² Ø§Ù„Ø­Ø¯ Ø§Ù„ÙŠÙˆÙ…ÙŠ Ù„Ù„Ù…Ø±ØªØ¬Ø¹Ø§Øª (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø­Ø§Ù„ÙŠ: ${formatCurrency(currentDailyRefunds)}, Ø§Ù„Ù…Ø¨Ù„Øº Ø§Ù„Ù…Ø·Ù„ÙˆØ¨: ${formatCurrency(calculateRefund)}. ÙŠØ±Ø¬Ù‰ Ø·Ù„Ø¨ Ù…ÙˆØ§ÙÙ‚Ø© Ø§Ù„Ù…Ø¯ÙŠØ±.`
-              : `Error: Daily refund limit exceeded (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). Current: ${formatCurrency(currentDailyRefunds)}, Requested: ${formatCurrency(calculateRefund)}. Please request manager approval.`;
-          setValidationError(errorMsg);
-          setIsProcessing(false);
-          return;
-        }
-      }
-
-      // --- Cashier Validation ---
-      if (permissionsService.hasRole('cashier')) {
-        // Limit 1: Same Shift Only
-        const isSameShift =
-          !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);
-        if (!isSameShift) {
-          const errorMsg =
-            language === 'AR'
-              ? 'Ø®Ø·Ø£: ÙŠÙ…ÙƒÙ† Ù„Ù„ÙƒØ§Ø´ÙŠØ± Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ø§Ù„ÙÙˆØ§ØªÙŠØ± Ø§Ù„ØªÙŠ ØªÙ…Øª ÙÙŠ Ù†ÙØ³ Ø§Ù„ÙˆØ±Ø¯ÙŠØ© ÙÙ‚Ø·.'
-              : 'Error: Cashiers can only refund invoices processed during the current shift.';
-          setValidationError(errorMsg);
-          setIsProcessing(false);
-          return;
-        }
-
-        // Limit 2: Per Invoice
-        if (money.isGt(calculateRefund, CASHIER_REFUND_LIMIT_PER_INVOICE)) {
-          const errorMsg =
-            language === 'AR'
-              ? `Ø®Ø·Ø£: Ù„Ø§ ÙŠÙ…ÙƒÙ† Ù„Ù„ÙƒØ§Ø´ÙŠØ± Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ù…Ø¨Ù„Øº Ø£ÙƒØ¨Ø± Ù…Ù† ${formatCurrency(CASHIER_REFUND_LIMIT_PER_INVOICE)} ÙÙŠ Ø§Ù„Ø¹Ù…Ù„ÙŠØ© Ø§Ù„ÙˆØ§Ø­Ø¯Ø©.`
-              : `Error: Cashiers cannot refund more than ${formatCurrency(CASHIER_REFUND_LIMIT_PER_INVOICE)} per invoice.`;
-          setValidationError(errorMsg);
-          setIsProcessing(false);
-          return;
-        }
-      }
-
-      // BUG-010: Split balance check by payment method
-      const isCashSale = sale.paymentMethod === 'cash';
-      if (isCashSale) {
-        // Calculate total cash available in drawer
-        const cashBalance = money.subtract(
-          money.add(
-            money.add(openShift.openingBalance || 0, openShift.cashSales || 0),
-            openShift.cashIn || 0
-          ),
-          money.add(openShift.returns || 0, openShift.cashOut || 0)
-        );
-
-        if (money.isGt(calculateRefund, cashBalance)) {
-          setValidationError(
-            t.returns.validation?.insufficientBalance ||
-              'Cash refund amount exceeds available cash balance in the current shift'
-          );
-          setIsProcessing(false);
-          return;
-        }
-      } else {
-        // For non-cash sales (Visa/Insurance), we check total shift sales volume or just allow it if needed,
-        // but typically card returns don't depend on cash drawer.
-        // However, we follow the existing logic but fix it to include opening balance.
-        const totalBalance = money.subtract(
-          money.add(
-            money.add(
-              money.add(openShift.openingBalance || 0, openShift.cashSales || 0),
-              openShift.cardSales || 0
-            ),
-            openShift.cashIn || 0
-          ),
-          money.add(openShift.returns || 0, openShift.cashOut || 0)
-        );
-        if (money.isGt(calculateRefund, totalBalance)) {
-          setValidationError(
-            t.returns.validation?.insufficientBalance ||
-              'Return amount exceeds available sales balance'
-          );
-          setIsProcessing(false);
-          return;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to validate shift:', e);
+    if (!validateReturn()) {
+      setIsProcessing(false);
+      return;
     }
 
-    const returnItems: ReturnItem[] = [];
-    sale.items.forEach((item) => {
-      const rawId = item.drugId ?? item.drug_id ?? item.id;
-      const drug = inventoryMap.get(rawId);
-      const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
-
-      const lineKey = item.isUnit ? `${drugId}_unit` : `${drugId}_pack`;
-      if (selectedItems.has(lineKey)) {
-        const quantity = selectedItems.get(lineKey) || 0;
-
-        const batchAllocations = item.batchAllocations
-          ?.map((b: any) => ({
-            batchId: b.batchId,
-            quantity: Math.min(b.quantity, quantity),
-            expiryDate: b.expiryDate,
-            batchNumber: b.batchNumber,
-          }))
-          .filter((b: any) => b.quantity > 0);
-
-        returnItems.push({
-          drugId: drugId,
-          saleItemId: item.saleItemId || item.id,
-          name: item.name,
-          quantityReturned: quantity,
-          isUnit: item.isUnit || false,
-          reason: returnReason,
-          condition: 'sellable',
-          publicPrice: 0,
-          refundAmount: 0,
-          expiryDate: batchAllocations?.[0]?.expiryDate,
-          batchAllocations,
-        });
-      }
-    });
     try {
-      const serialId = await idGenerator.generate('returns', activeBranchId);
-      const returnId = idGenerator.uuid();
-
-      const returnData: Return = {
-        id: returnId,
-        serialId: serialId,
-        branchId: activeBranchId,
-        saleId: sale.id,
-        date: getVerifiedDate().toISOString(),
-        returnType: isAllSelected ? 'full' : 'partial',
-        items: returnItems,
-        totalRefund: calculateRefund,
-        reason: returnReason,
-        notes: returnNotes,
-        processedBy: currentEmployeeId,
-      };
-
-      await onConfirm(returnData);
-      handleClose();
+      const payload = buildReturnPayload();
+      const success = await onConfirm(payload);
+      
+      if (success !== false) {
+        handleClose();
+      }
     } catch (err) {
       console.error('Return processing error:', err);
       setValidationError(t.errors?.unexpected || 'An unexpected error occurred. Please try again.');
@@ -440,7 +206,6 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
       {/* Content */}
       <div className='flex-1'>
-        {/* Step 1: Select Items */}
         {step === 1 && (
           <div className='space-y-3'>
             <div className='flex items-center justify-between mb-4'>
@@ -475,16 +240,42 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             ) : (
               <div className='flex flex-col gap-[2px]'>
                 {availableItems.map((item, index) => {
-                  const isSelected = selectedItems.has(item.lineKey);
-                  const selectedQty = selectedItems.get(item.lineKey) || item.availableQty;
+                  const isSelected = selectedItems.has(item.saleItemId);
+                  const selectedQty = selectedItems.get(item.saleItemId) || item.effectiveMaxQty;
+                  const expiryDate = item.batchAllocations?.[0]?.expiryDate || item.expiryDate;
+                  const expiryDisplay = expiryDate
+                    ? `${(new Date(expiryDate).getMonth() + 1).toString().padStart(2, '0')}/${new Date(expiryDate).getFullYear().toString().slice(-2)}`
+                    : '--/--';
+                  const discountedPrice = pricing.afterDiscount(item.publicPrice, item.discount || 0);
+                  const displayPrice = item.effectiveUnitMode && item.unitsPerPack > 1
+                    ? discountedPrice / item.unitsPerPack
+                    : discountedPrice;
+                  const toggleBtn = item.unitsPerPack > 1 ? (
+                    <button
+                      onClick={() => toggleUnitMode(item.saleItemId, item.effectiveMaxQty, item.unitsPerPack)}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold uppercase transition-all border ${
+                        isSelected
+                          ? item.effectiveUnitMode
+                            ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 border-sky-200 dark:border-sky-800'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                          : item.effectiveUnitMode
+                            ? 'bg-sky-50 text-sky-500 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800'
+                            : 'bg-amber-50 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                      }`}
+                      type='button'
+                      title={item.effectiveUnitMode ? t.returns.switchToPack : t.returns.switchToUnit}
+                    >
+                      {item.effectiveUnitMode ? 'U' : 'P'}
+                    </button>
+                  ) : null;
                   return (
                     <MaterialTabs
-                      key={item.lineKey}
+                      key={item.saleItemId}
                       index={index}
                       total={availableItems.length}
                       color={color}
                       isSelected={isSelected}
-                      onClick={() => toggleItemSelection(item.lineKey, item.availableQty)}
+                      onClick={() => toggleItemSelection(item.saleItemId, item.effectiveMaxQty)}
                       className='h-auto py-2'
                     >
                       <div className='w-full flex items-center justify-between gap-4' dir='ltr'>
@@ -493,46 +284,22 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             className='font-bold text-gray-900 dark:text-gray-100 truncate text-base leading-tight'
                             style={{ textTransform: 'var(--text-transform)' }}
                           >
-                            {getDisplayName({
-                              name: item.name,
-                              dosageForm: item.dosageForm,
-                            })}
-                            {item.isUnit && (
+                            {getDisplayName({ name: item.name, dosageForm: item.dosageForm })}
+                            {item.effectiveUnitMode && (
                               <span className='ml-1 text-base bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider'>
-                                U
+                                {language === 'AR' ? 'وحدة' : 'U'}
                               </span>
                             )}
                           </h4>
                           <div className='flex items-center gap-2 mt-0 leading-none h-4'>
-                            <span
-                              className={`text-[10px] font-bold uppercase ${isSelected ? `text-primary-600 dark:text-primary-400` : 'text-gray-400'}`}
-                            >
-                              {t.modal?.qty || 'Qty'}: {item.availableQty}
+                            <span className={`text-[10px] font-bold uppercase ${isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`}>
+                              {t.modal?.qty || 'Qty'}: {item.effectiveMaxQty}
                             </span>
-                            {/* BUG-R10: Show expiry date to help user distinguish identical products from different batches */}
-                            <span className='text-[10px] font-mono font-bold text-gray-400 select-none'>
-                              {item.batchAllocations?.[0]?.expiryDate
-                                ? (() => {
-                                    const d = new Date(item.batchAllocations[0].expiryDate);
-                                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                                    const year = d.getFullYear().toString().slice(-2);
-                                    return `${month}/${year}`;
-                                  })()
-                                : item.expiryDate
-                                  ? (() => {
-                                      const d = new Date(item.expiryDate);
-                                      const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                                      const year = d.getFullYear().toString().slice(-2);
-                                      return `${month}/${year}`;
-                                    })()
-                                  : '--/--'}
-                            </span>
+                            <span className='text-[10px] font-mono font-bold text-gray-400 select-none'>{expiryDisplay}</span>
                             {item.returnedQty > 0 && (
                               <div className='inline-flex items-center gap-1 text-[9px] bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-1.5 py-0 rounded-md font-bold border border-orange-100 dark:border-orange-900/30 leading-none h-3.5'>
-                                <span className='material-symbols-rounded text-[10px]'>
-                                  history
-                                </span>
-                                {item.returnedQty} {language === 'AR' ? 'Ù…Ø±ØªØ¬Ø¹' : 'returned'}
+                                <span className='material-symbols-rounded text-[10px]'>history</span>
+                                {item.returnedQty} {language === 'AR' ? 'مُرجع' : 'returned'}
                               </div>
                             )}
                           </div>
@@ -541,83 +308,35 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         <div className='flex items-center gap-4 shrink-0'>
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
-                              {(() => {
-                                const price = item.publicPrice;
-                                const discounted = pricing.afterDiscount(price, item.discount || 0);
-                                return formatCurrency(discounted);
-                              })()}
+                              {formatCurrency(displayPrice)}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
-                                {formatCurrency(
-                                  item.publicPrice
-                                )}
+                                {formatCurrency(item.publicPrice)}
                               </p>
                             )}
                           </div>
                         </div>
 
-                        {/* Right Side: Selection Indicator OR Counter */}
                         <div role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
-                          {isSelected ? (
-                            <div className='flex items-center gap-3 '>
+                          <div className='flex items-center gap-1'>
+                            {toggleBtn}
+                            {isSelected ? (
                               <div className='flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 border border-gray-200 dark:border-gray-700 shadow-xs'>
-                                <button
-                                  onClick={() =>
-                                    updateItemQuantity(item.lineKey, Math.max(1, selectedQty - 1))
-                                  }
-                                  disabled={selectedQty <= 1}
-                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
-                                  type='button'
-                                >
+                                <button onClick={() => updateItemQuantity(item.saleItemId, Math.max(1, selectedQty - 1))} disabled={selectedQty <= 1} className='w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none' type='button'>
                                   <span className='material-symbols-rounded text-lg'>remove</span>
                                 </button>
-                                <input
-                                  type='number'
-                                  min='1'
-                                  max={item.availableQty}
-                                  value={selectedQty}
-                                  onChange={(e) =>
-                                    updateItemQuantity(
-                                      item.lineKey,
-                                      Math.min(
-                                        item.availableQty,
-                                        Math.max(1, parseInt(e.target.value, 10) || 1)
-                                      )
-                                    )
-                                  }
-                                  className='w-10 text-center bg-transparent font-bold text-sm text-gray-900 dark:text-white border-none p-0 focus:ring-0 appearance-none'
-                                />
-                                <button
-                                  onClick={() =>
-                                    updateItemQuantity(
-                                      item.lineKey,
-                                      Math.min(item.availableQty, selectedQty + 1)
-                                    )
-                                  }
-                                  disabled={selectedQty >= item.availableQty}
-                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
-                                  type='button'
-                                >
+                                <input type='number' min='1' max={item.effectiveMaxQty} value={selectedQty} onChange={(e) => updateItemQuantity(item.saleItemId, Math.min(item.effectiveMaxQty, Math.max(1, parseInt(e.target.value, 10) || 1)))} className='w-10 text-center bg-transparent font-bold text-sm text-gray-900 dark:text-white border-none p-0 focus:ring-0 appearance-none' />
+                                <button onClick={() => updateItemQuantity(item.saleItemId, Math.min(item.effectiveMaxQty, selectedQty + 1))} disabled={selectedQty >= item.effectiveMaxQty} className='w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none' type='button'>
                                   <span className='material-symbols-rounded text-lg'>add</span>
                                 </button>
                               </div>
-                            </div>
-                          ) : (
-                            <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${
-                                isSelected
-                                  ? `bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/20`
-                                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-transparent'
-                              }`}
-                            >
-                              <span
-                                className={`material-symbols-rounded text-lg ${isSelected ? 'opacity-100' : 'opacity-0'}`}
-                              >
-                                check
-                              </span>
-                            </div>
-                          )}
+                            ) : (
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${isSelected ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-transparent'}`}>
+                                <span className={`material-symbols-rounded text-lg ${isSelected ? 'opacity-100' : 'opacity-0'}`}>check</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </MaterialTabs>
@@ -628,7 +347,6 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           </div>
         )}
 
-        {/* Step 2: Reason & Notes */}
         {step === 2 && (
           <div className='space-y-6'>
             <div>
@@ -641,7 +359,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 isOpen={isReasonDropdownOpen}
                 onToggle={() => setIsReasonDropdownOpen(!isReasonDropdownOpen)}
                 onSelect={(item) => {
-                  setReturnReason(item.id as ReturnReason);
+                  setReturnReason(item.id as any);
                   setIsReasonDropdownOpen(false);
                 }}
                 keyExtractor={(item) => item.id}
@@ -691,7 +409,6 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           </div>
         )}
 
-        {/* Step 3: Review & Confirm */}
         {step === 3 && (
           <div className='space-y-4'>
             <div
@@ -741,7 +458,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
               <div className='max-h-60 overflow-y-auto pr-1 flex flex-col gap-[2px] custom-scrollbar'>
                 {Array.from(selectedItems.entries()).map(([lineKey, qty], index) => {
-                  const item = availableItems.find((i) => i.lineKey === lineKey);
+                  const item = availableItems.find((i) => i.saleItemId === lineKey);
                   if (!item) return null;
 
                   return (
@@ -764,21 +481,16 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                               name: item.name,
                               dosageForm: item.dosageForm,
                             })}
-                            {item.isUnit && (
+                            {item.effectiveUnitMode && (
                               <span className='ml-1 text-base bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider'>
-                                U
+                                {language === 'AR' ? 'وحدة' : 'U'}
                               </span>
                             )}
                           </h4>
                           <div className='flex items-center gap-2 mt-0 leading-none h-4'>
                             <span className='text-[10px] font-mono font-bold text-gray-400 select-none'>
                               {item.expiryDate
-                                ? (() => {
-                                    const d = new Date(item.expiryDate);
-                                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                                    const year = d.getFullYear().toString().slice(-2);
-                                    return `${month}/${year}`;
-                                  })()
+                                ? `${(new Date(item.expiryDate).getMonth() + 1).toString().padStart(2, '0')}/${new Date(item.expiryDate).getFullYear().toString().slice(-2)}`
                                 : '--/--'}
                             </span>
                           </div>
@@ -787,34 +499,19 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         <div className='flex items-center gap-6 shrink-0'>
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
-                              {(() => {
-                                const basePrice =
-                                  item.publicPrice;
-                                const discounted = pricing.afterDiscount(
-                                  basePrice,
-                                  item.discount || 0
-                                );
-                                return formatCurrency(discounted);
-                              })()}
+                              {formatCurrency(pricing.afterDiscount(item.publicPrice, item.discount || 0))}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
-                                {formatCurrency(
-                                  item.publicPrice
-                                )}
+                                {formatCurrency(item.publicPrice)}
                               </p>
                             )}
                           </div>
                           <div className='flex flex-col items-end'>
                             <span className='font-bold text-gray-900 dark:text-gray-100 text-base'>
-                              {qty}{' '}
-                              {item.isUnit
-                                ? qty === 1
-                                  ? t.returns.unit
-                                  : t.returns.units
-                                : qty === 1
-                                  ? t.returns.pack
-                                  : t.returns.packs}
+                              {qty} {item.effectiveUnitMode
+                                ? (qty === 1 ? t.returns.unit : t.returns.units)
+                                : (qty === 1 ? t.returns.pack : t.returns.packs)}
                             </span>
                             <span className='text-[10px] uppercase font-bold text-gray-500'>
                               {t.returns.quantity}
