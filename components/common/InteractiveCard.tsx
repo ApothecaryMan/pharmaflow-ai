@@ -3,9 +3,18 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
 
+export type InteractiveCardColor = 'primary' | 'green' | 'cyan' | 'indigo' | 'violet' | 'amber' | 'emerald' | 'red' | 'gray';
+
 export interface InteractiveCardPage {
-  content: React.ReactNode;
+  // Option A: Raw content
+  content?: React.ReactNode;
   theme?: string;
+
+  // Option B: Data-driven design
+  title?: string;
+  value?: React.ReactNode;
+  color?: InteractiveCardColor;
+  valueClassName?: string;
 }
 
 export interface InteractiveCardProps {
@@ -15,6 +24,53 @@ export interface InteractiveCardProps {
   onPageChange?: (index: number) => void;
   isLoading?: boolean;
 }
+
+const renderPageContent = (p: InteractiveCardPage) => {
+  if (p.content) return p.content;
+
+  const colorClasses: Record<InteractiveCardColor, { textTitle: string; textValue: string }> = {
+    primary: { textTitle: 'text-primary-600 dark:text-primary-400', textValue: 'text-primary-900 dark:text-primary-100' },
+    green: { textTitle: 'text-green-600 dark:text-green-400', textValue: 'text-green-900 dark:text-green-100' },
+    cyan: { textTitle: 'text-cyan-600 dark:text-cyan-400', textValue: 'text-cyan-900 dark:text-cyan-100' },
+    indigo: { textTitle: 'text-indigo-600 dark:text-indigo-400', textValue: 'text-indigo-900 dark:text-indigo-100' },
+    violet: { textTitle: 'text-violet-600 dark:text-violet-400', textValue: 'text-violet-900 dark:text-violet-100' },
+    amber: { textTitle: 'text-amber-600 dark:text-amber-400', textValue: 'text-amber-900 dark:text-amber-100' },
+    emerald: { textTitle: 'text-emerald-600 dark:text-emerald-400', textValue: 'text-emerald-900 dark:text-emerald-100' },
+    red: { textTitle: 'text-red-600 dark:text-red-400', textValue: 'text-red-900 dark:text-red-100' },
+    gray: { textTitle: 'text-gray-500 dark:text-gray-400', textValue: 'text-gray-700 dark:text-gray-200' },
+  };
+
+  const colors = colorClasses[p.color || 'primary'];
+
+  return (
+    <div className='flex flex-col w-full items-start text-start'>
+      <span className={`text-[10px] font-bold uppercase mb-1 ${colors.textTitle}`}>
+        {p.title}
+      </span>
+      <span className={`text-2xl font-bold ${colors.textValue} ${p.valueClassName || ''}`}>
+        {p.value}
+      </span>
+    </div>
+  );
+};
+
+const getThemeClass = (p: InteractiveCardPage) => {
+  if (p.theme) return p.theme;
+  
+  const themeClasses: Record<InteractiveCardColor, string> = {
+    primary: 'bg-primary-50 dark:bg-primary-900/20',
+    green: 'bg-green-50 dark:bg-green-900/20',
+    cyan: 'bg-cyan-50 dark:bg-cyan-900/20',
+    indigo: 'bg-indigo-50 dark:bg-indigo-900/20',
+    violet: 'bg-violet-50 dark:bg-violet-900/20',
+    amber: 'bg-amber-50 dark:bg-amber-900/20',
+    emerald: 'bg-emerald-50 dark:bg-emerald-900/20',
+    red: 'bg-red-50 dark:bg-red-900/20',
+    gray: 'bg-gray-100 dark:bg-gray-800/30',
+  };
+  
+  return themeClasses[p.color || 'primary'];
+};
 
 export const InteractiveCard: React.FC<InteractiveCardProps> = ({
   pages,
@@ -43,10 +99,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       const nextIdx = (activePage + delta + pages.length) % pages.length;
       if (nextIdx === activePage) return;
 
-      // Detect RTL mode
-      const isRTL =
-        document.documentElement.dir === 'rtl' || containerRef.current?.closest('[dir="rtl"]');
-      const xMulti = isRTL ? -1 : 1;
+      const xMulti = document.documentElement.dir === 'rtl' || containerRef.current?.closest('[dir="rtl"]') ? -1 : 1;
 
       setAnim({
         x: axis === 'x' ? delta * 30 * xMulti : 0,
@@ -71,7 +124,15 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
     const vel = isHoriz ? velocity.x : velocity.y;
 
     if (Math.abs(val) > 20 || Math.abs(vel) > 300) {
-      navigate(val > 0 || vel > 300 ? -1 : 1, isHoriz ? 'x' : 'y');
+      let delta = val > 0 || vel > 300 ? -1 : 1;
+      
+      const isRTL =
+        document.documentElement.dir === 'rtl' || containerRef.current?.closest('[dir="rtl"]');
+      if (isRTL && isHoriz) {
+        delta = -delta;
+      }
+      
+      navigate(delta, isHoriz ? 'x' : 'y');
     }
   };
 
@@ -81,7 +142,15 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
     const delta = isHoriz ? e.deltaX : e.deltaY;
 
     if (Math.abs(delta) > 15) {
-      navigate(delta > 0 ? 1 : -1, isHoriz ? 'x' : 'y');
+      let navDelta = delta > 0 ? 1 : -1;
+      
+      const isRTL =
+        document.documentElement.dir === 'rtl' || containerRef.current?.closest('[dir="rtl"]');
+      if (isRTL && isHoriz) {
+        navDelta = -navDelta;
+      }
+
+      navigate(navDelta, isHoriz ? 'x' : 'y');
       // biome-ignore lint/suspicious/noAssignInExpressions: intentional ref reset
       wheelLock.current = setTimeout(() => (wheelLock.current = null), 600);
     }
@@ -100,7 +169,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       onWheel={!isLoading ? onWheel : undefined}
       role='region'
       aria-roledescription='pages'
-      className={`relative group overflow-hidden ${CARD_BASE} ${current.theme || ''} ${className} ${isLoading ? 'animate-pulse' : ''}`}
+      className={`relative group overflow-hidden ${CARD_BASE} dark:backdrop-blur-xl ${getThemeClass(current)} ${className}`}
       style={{ touchAction: 'none' }}
     >
       <div className='grid grid-cols-1 grid-rows-1 w-full h-full'>
@@ -110,16 +179,16 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
             className='invisible pointer-events-none row-start-1 col-start-1 h-full w-full'
             aria-hidden='true'
           >
-            {p.content}
+            {renderPageContent(p)}
           </div>
         ))}
         <div className='row-start-1 col-start-1 h-full w-full'>
           {isLoading ? (
             <div className='relative h-full w-full'>
               <div className='invisible' aria-hidden='true'>
-                {current.content}
+                {renderPageContent(current)}
               </div>
-              <div className='absolute inset-0 flex flex-col justify-center space-y-2.5 [direction:ltr] items-start text-left'>
+              <div className='absolute inset-0 flex flex-col justify-center space-y-2.5 items-start text-start animate-pulse'>
                 <div className='h-3 w-16 bg-zinc-400/20 dark:bg-zinc-100/10 rounded' />
                 <div className='h-8 w-24 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-lg' />
               </div>
@@ -134,7 +203,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
                 transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 1 }}
                 className='h-full w-full'
               >
-                {current.content}
+                {renderPageContent(current)}
               </motion.div>
             </AnimatePresence>
           )}
@@ -142,7 +211,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       </div>
 
       {pages.length > 1 && (
-        <div className='absolute top-2.5 right-2.5 z-20 flex items-center justify-center'>
+        <div className='absolute top-2.5 ltr:right-2.5 rtl:left-2.5 z-20 flex items-center justify-center'>
           <motion.div
             layout
             initial='collapsed'

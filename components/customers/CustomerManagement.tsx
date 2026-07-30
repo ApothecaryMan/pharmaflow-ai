@@ -832,144 +832,74 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 '>
               <InteractiveCard
                 isLoading={isLoading}
-                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                className='flex flex-col px-5 py-3.5 rounded-3xl items-start'
                 pages={[
                   {
-                    theme: 'bg-primary-50 dark:bg-primary-900/20',
-                    content: (
-                      <div
-                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400 mb-1'>
-                          {t.summary?.total || 'Total Customers'}
-                        </span>
-                        <span className='text-2xl font-bold text-primary-900 dark:text-primary-100'>
-                          {summaryStats.total}
-                        </span>
-                      </div>
-                    ),
+                    color: 'primary',
+                    title: t.summary?.total || 'Total Customers',
+                    value: summaryStats.total,
                   },
                   {
-                    theme: 'bg-green-50 dark:bg-green-900/20',
-                    content: (
-                      <div
-                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className='text-[10px] font-bold uppercase text-green-600 dark:text-green-400 mb-1'>
-                          {t.summary?.newThisMonth || 'New This Month'}
-                        </span>
-                        <span className='text-2xl font-bold text-green-900 dark:text-green-100'>
-                          {summaryStats.newThisMonth}
-                        </span>
-                      </div>
-                    ),
+                    color: 'green',
+                    title: t.summary?.newThisMonth || 'New This Month',
+                    value: summaryStats.newThisMonth,
                   },
                   {
-                    theme: 'bg-cyan-50 dark:bg-cyan-900/20',
-                    content: (
-                      <div
-                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className='text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400 mb-1'>
-                          {t.summary?.newToday || 'New Today'}
-                        </span>
-                        <span className='text-2xl font-bold text-cyan-900 dark:text-cyan-100'>
-                          {summaryStats.newToday}
-                        </span>
-                      </div>
-                    ),
+                    color: 'cyan',
+                    title: t.summary?.newToday || 'New Today',
+                    value: summaryStats.newToday,
                   },
                 ]}
               />
 
               <InteractiveCard
                 isLoading={isLoading}
-                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                className='flex flex-col px-5 py-3.5 rounded-3xl items-start'
                 pages={[
                   {
-                    theme: 'bg-indigo-50 dark:bg-indigo-900/20',
-                    content: (
-                      <div
-                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className='text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 mb-1'>
-                          {t.summary?.activeTotal || 'Active (Yearly)'}
-                        </span>
-                        <span className='text-2xl font-bold text-indigo-900 dark:text-indigo-100'>
-                          {summaryStats.activeTotal}
-                        </span>
-                      </div>
-                    ),
+                    color: 'indigo',
+                    title: t.summary?.activeTotal || 'Active (Yearly)',
+                    value: summaryStats.activeTotal,
                   },
                   {
-                    theme: 'bg-violet-50 dark:bg-violet-900/20',
-                    content: (
-                      <div
-                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className='text-[10px] font-bold uppercase text-violet-600 dark:text-violet-400 mb-1'>
-                          {t.summary?.activeRecently || 'Active (30 Days)'}
-                        </span>
-                        <span className='text-2xl font-bold text-violet-900 dark:text-violet-100'>
-                          {summaryStats.activeRecently}
-                        </span>
-                      </div>
-                    ),
+                    color: 'violet',
+                    title: t.summary?.activeRecently || 'Active (30 Days)',
+                    value: summaryStats.activeRecently,
                   },
                 ]}
               />
 
               <InteractiveCard
                 isLoading={isLoading}
-                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                className='flex flex-col px-5 py-3.5 rounded-3xl items-start'
                 pages={[
                   {
-                    theme: 'bg-amber-50 dark:bg-amber-900/20',
-                    content: (
-                      <div
-                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className='text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 mb-1'>
-                          {language === 'AR' ? 'متوسط النقاط' : 'Avg. Points'}
-                        </span>
-                        <span className='text-2xl font-bold text-amber-900 dark:text-amber-100'>
-                          {(summaryStats.total > 0
+                    color: 'amber',
+                    title: language === 'AR' ? 'متوسط النقاط' : 'Avg. Points',
+                    value: (summaryStats.total > 0
                             ? customers.reduce((acc, c) => acc + (c.points || 0), 0) /
                               summaryStats.total
                             : 0
-                          ).toFixed(0)}
-                        </span>
-                      </div>
-                    ),
+                          ).toFixed(0),
                   },
                 ]}
               />
 
               <InteractiveCard
                 isLoading={isLoading}
-                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                className='flex flex-col px-5 py-3.5 rounded-3xl items-start'
                 pages={[
                   {
-                    theme: 'bg-emerald-50 dark:bg-emerald-900/20',
-                    content: (
-                      <div
-                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className='text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 mb-1'>
-                          {language === 'AR' ? 'متوسط المشتريات' : 'Avg. Purchases'}
-                        </span>
-                        <span className='text-2xl font-bold text-emerald-900 dark:text-emerald-100'>
-                          <PriceDisplay
+                    color: 'emerald',
+                    title: language === 'AR' ? 'متوسط المشتريات' : 'Avg. Purchases',
+                    value: <PriceDisplay
                             value={
                               summaryStats.total > 0
                                 ? customers.reduce((acc, c) => acc + (c.totalPurchases || 0), 0) /
                                   summaryStats.total
                                 : 0
                             }
-                          />
-                        </span>
-                      </div>
-                    ),
+                          />,
                   },
                 ]}
               />

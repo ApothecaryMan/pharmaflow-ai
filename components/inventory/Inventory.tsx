@@ -841,111 +841,59 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 '>
         <InteractiveCard
           isLoading={isLoading || !isDataSettled}
-          className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+          className='flex flex-col px-5 py-3.5 rounded-3xl items-start'
           pages={[
             {
-              theme: 'bg-primary-50 dark:bg-primary-200',
-              content: (
-                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-700'>
-                    {t.summary?.totalItems || 'Total Items'}
-                  </span>
-                  <span className='text-xl font-bold text-primary-900 dark:text-primary-900'>
-                    {summaryStats.totalItems >= 1000
+              color: 'primary',
+              title: t.summary?.totalItems || 'Total Items',
+              value: summaryStats.totalItems >= 1000
                       ? new Intl.NumberFormat('en-US', {
                           notation: 'compact',
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(summaryStats.totalItems)
-                      : summaryStats.totalItems}
-                  </span>
-                </div>
-              ),
+                      : summaryStats.totalItems,
             },
           ]}
         />
         {canViewFinancials && (
           <InteractiveCard
             isLoading={isLoading || !isDataSettled}
-            className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+            className='flex flex-col px-5 py-3.5 rounded-3xl items-start'
             pages={[
               {
-                theme: 'bg-green-50 dark:bg-green-200',
-                content: (
-                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className='text-[10px] font-bold uppercase text-green-600 dark:text-green-700'>
-                      {t.summary?.totalCost || 'Inventory Cost'}
-                    </span>
-                    <span className='text-xl font-bold text-green-900 dark:text-green-900 tabular-nums'>
-                      <PriceDisplay
-                        value={summaryStats.totalCost}
-                        compact={summaryStats.totalCost >= 1000}
-                      />
-                    </span>
-                  </div>
-                ),
+                color: 'green',
+                title: t.summary?.totalCost || 'Inventory Cost',
+                value: <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />,
+                valueClassName: 'tabular-nums',
               },
               {
-                theme: 'bg-indigo-50 dark:bg-indigo-200',
-                content: (
-                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className='text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-700'>
-                      {t.summary?.totalSaleValue || 'Sale Value'}
-                    </span>
-                    <span className='text-xl font-bold text-indigo-900 dark:text-indigo-900 tabular-nums'>
-                      <PriceDisplay
-                        value={summaryStats.totalSaleValue}
-                        compact={summaryStats.totalSaleValue >= 1000}
-                      />
-                    </span>
-                  </div>
-                ),
+                color: 'indigo',
+                title: t.summary?.totalSaleValue || 'Sale Value',
+                value: <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />,
+                valueClassName: 'tabular-nums',
               },
             ]}
           />
         )}
         <InteractiveCard
           isLoading={isLoading || !isDataSettled}
-          className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+          className='flex flex-col px-5 py-3.5 rounded-3xl items-start'
           pages={[
             {
-              theme: 'bg-red-50 dark:bg-red-200',
-              content: (
-                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-red-600 dark:text-red-700'>
-                    {t.summary?.restock || 'Critical Restock'}
-                  </span>
-                  <span className='text-xl font-bold text-red-900 dark:text-red-900'>
-                    {summaryStats.criticalRestock}
-                  </span>
-                </div>
-              ),
+              color: 'red',
+              title: t.summary?.restock || 'Critical Restock',
+              value: summaryStats.criticalRestock,
             },
             {
-              theme: 'bg-amber-50 dark:bg-amber-200',
-              content: (
-                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-amber-600 dark:text-amber-700'>
-                    {t.summary?.nearReorder || 'Near Reorder'}
-                  </span>
-                  <span className='text-xl font-bold text-amber-900 dark:text-amber-900'>
-                    {summaryStats.nearReorder}
-                  </span>
-                </div>
-              ),
+              color: 'amber',
+              title: t.summary?.nearReorder || 'Near Reorder',
+              value: summaryStats.nearReorder,
             },
             {
-              theme: 'bg-gray-100 dark:bg-gray-200',
-              content: (
-                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-gray-500 dark:text-gray-600'>
-                    {t.summary?.discontinued || 'Discontinued'}
-                  </span>
-                  <span className='text-xl font-bold text-gray-700 dark:text-gray-800'>
-                    {summaryStats.discontinuedCount}
-                  </span>
-                </div>
-              ),
+              color: 'gray',
+              title: t.summary?.discontinued || 'Discontinued',
+              value: summaryStats.discontinuedCount,
             },
           ]}
         />
