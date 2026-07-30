@@ -101,9 +101,86 @@
     </script>
   </head>
   <body
-    class="bg-[var(--bg-page-surface)] text-[var(--text-primary)]"
+    class="bg-[var(--bg-page-surface)] text-[var(--text-primary)] overflow-hidden"
   >
     <div id="root"></div>
+    <div id="boot-splash">
+      <style>
+        :root {
+          --boot-bg: #fafafa;
+          --boot-brand: #18181b;
+          --boot-dot: #d4d4d8;
+        }
+        html.dark {
+          --boot-bg: #000000;
+          --boot-brand: #fafafa;
+          --boot-dot: #27272a;
+        }
+        #boot-splash {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--boot-bg);
+          z-index: 9999;
+          transition: opacity 0.25s ease-out;
+        }
+        #boot-splash[aria-hidden='true'] {
+          opacity: 0;
+          pointer-events: none;
+        }
+        .boot-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.25rem;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-variation-settings: normal;
+          font-optical-sizing: none;
+          -webkit-font-smoothing: antialiased;
+          text-rendering: optimizeLegibility;
+        }
+        .boot-brand {
+          font-size: 2rem;
+          font-weight: 600;
+          letter-spacing: -0.02em;
+          color: var(--boot-brand);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-variation-settings: normal;
+          font-optical-sizing: none;
+        }
+        .boot-dots {
+          display: flex;
+          gap: 6px;
+        }
+        .boot-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: var(--boot-dot);
+          animation: boot-bounce 1.2s ease-in-out infinite;
+        }
+        .boot-dot:nth-child(2) { animation-delay: 0.2s; }
+        .boot-dot:nth-child(3) { animation-delay: 0.4s; }
+        .boot-dot:nth-child(4) { animation-delay: 0.6s; }
+        .boot-dot:nth-child(5) { animation-delay: 0.8s; }
+        @keyframes boot-bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+      </style>
+      <div class="boot-content" aria-label="Loading">
+        <span class="boot-brand">ZINC</span>
+        <div class="boot-dots" aria-hidden="true">
+          <span class="boot-dot"></span>
+          <span class="boot-dot"></span>
+          <span class="boot-dot"></span>
+          <span class="boot-dot"></span>
+          <span class="boot-dot"></span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/index.tsx"></script>
 
     <!-- Service Worker Registration -->

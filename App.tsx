@@ -16,7 +16,7 @@ const AuthPage = lazy(() =>
 
 import { AppLoadingScreen } from './components/common/AppLoadingScreen';
 import { AuthenticatedContent } from './components/layout/AuthenticatedContent';
-import { preloadPage } from './hooks/layout/usePreloadPage';
+import { preloadAllPages, preloadPage } from './hooks/layout/usePreloadPage';
 
 // Preload the first page chunk synchronously at module init
 // to overlap chunk fetch with React's initial render.
@@ -58,8 +58,8 @@ import { ROOT_STRINGS } from './i18n/rootStrings';
 import { authService } from './services/auth/authService';
 import { useAuthStore } from './stores/authStore';
 import type { ViewState } from './types';
-import { useAutoSystemBarColor } from './utils/systemBars';
-
+import { evaluateCssColor, setSystemBarColor, useAutoSystemBarColor } from './utils/systemBars';
+import { useTauriNative } from './hooks/infrastructure/useTauriNative';
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
 /**
  * App.tsx now serves as a high-level orchestrator.
@@ -101,16 +101,6 @@ const App: React.FC = () => {
   const { theme, darkMode, language, showNotificationOverlay, vividBg } = useSettings();
   const t = ROOT_STRINGS[language];
 
-  // 3.01 Sync System Tray Language
-  React.useEffect(() => {
-    import('./utils/platform').then(({ isTauri }) => {
-      if (isTauri()) {
-        import('@tauri-apps/api/core').then(({ invoke }) => {
-          invoke('update_tray_language', { lang: language }).catch(console.warn);
-        });
-      }
-    });
-  }, [language]);
 
   // 3.1 Storage Quota Monitoring & Events
   const alert = useAlert();
@@ -214,6 +204,12 @@ const App: React.FC = () => {
     error: _onboardingError,
   } = useOnboardingStatus(authState.isAuthenticated);
 
+  // 4.1 Sync System Tray Language & Native Behaviors
+  useTauriNative({
+    isAppReady: !authState.isAuthenticated || !isCheckingOnboarding,
+    language
+  });
+
   // 5. Dynamic Theme Hook - Handles CSS variables & Global Dark Mode
   // System bars are handled separately by the automatic top-surface sampler.
   useTheme(theme.primary, darkMode, !authState.isAuthenticated, theme.hex, vividBg);
@@ -284,12 +280,37 @@ const App: React.FC = () => {
     isEmployeePortalUser
   );
 
-  // 10. Eagerly preload the first page component on mount
+  // 10. Eagerly preload the first page component, and then background preload all others
   useEffect(() => {
-    if (authState.isAuthenticated && appState.view) {
-      preloadPage(appState.view);
+    if (authState.isAuthenticated) {
+      if (appState.view) preloadPage(appState.view);
+      preloadAllPages();
     }
-  }, [authState.isAuthenticated, appState.view]);
+  }, [authState.isAuthenticated]); // Intentionally omitting appState.view to run only once per login
+
+  // 11. Boot Splash Lifecycle — show the static HTML splash until the app has content
+  const isBootReady = !authState.isAuthenticated || !isCheckingOnboarding;
+  useEffect(() => {
+    if (!isBootReady) return;
+
+    const splash = document.getElementById('boot-splash');
+    if (!splash) return;
+
+    splash.setAttribute('aria-hidden', 'true');
+    const remove = () => splash.remove();
+    splash.addEventListener('transitionend', remove, { once: true });
+    // Safety: remove after transition even if event doesn't fire
+    setTimeout(remove, 300);
+
+    // Immediately sync the Windows title bar to the navbar color instead of waiting
+    // for the next 250ms poll tick which would still see the boot-splash background.
+    setSystemBarColor(
+      evaluateCssColor(
+        authState.isAuthenticated ? '--bg-navbar' : '--bg-page-surface',
+        darkMode ? '#1f1f1f' : '#ffffff'
+      )
+    );
+  }, [isBootReady]);
 
   const isOnboardingReady = !isCheckingOnboarding;
 
@@ -313,7 +334,7 @@ const App: React.FC = () => {
   let finalContent: React.ReactNode;
 
   if (authState.isAuthenticated && !isOnboardingReady) {
-    finalContent = <AppLoadingScreen message={t.global?.loading} />;
+    finalContent = null; // boot splash stays visible
   } else {
     // Once onboarding is ready, render the appropriate content
     finalContent = content;
