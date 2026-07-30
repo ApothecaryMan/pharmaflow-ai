@@ -198,6 +198,8 @@ export const useAutoSystemBarColor = (
 
     // 1. Check immediately
     checkColor();
+    // Also check after first paint to catch any late style resolution
+    requestAnimationFrame(checkColor);
 
     // 2. Poll every 250ms to catch transitions, scroll events, overlays, and modal pops.
     // This is cheap because setSystemBarColor short-circuits if the color hasn't changed.
