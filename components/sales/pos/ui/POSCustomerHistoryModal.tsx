@@ -3,11 +3,12 @@ import { ar } from 'date-fns/locale/ar';
 import { enUS } from 'date-fns/locale/en-US';
 import React, { useMemo, useState } from 'react';
 import type { CartItem, Customer, Language, Sale } from '../../../../types';
-import { formatCurrency } from '../../../../utils/currency';
+import { formatCurrency, formatCurrencyParts } from '../../../../utils/currency';
 import { pricingService } from '../../../../services/sales/pricingService';
 import { getDisplayName } from '../../../../utils/drugDisplayName';
 import { MaterialTabs } from '../../../common/MaterialTabs';
 import { Modal } from '../../../common/Modal';
+import { Tooltip } from '../../../common/Tooltip';
 
 interface POSCustomerHistoryModalProps {
   isOpen: boolean;
@@ -19,6 +20,30 @@ interface POSCustomerHistoryModalProps {
   language: Language | string;
   onAddToCart?: (drugCode: string) => void;
 }
+
+const CopyableSerial: React.FC<{ serial: string }> = ({ serial }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(serial);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-mono text-[11px] font-bold">{serial}</span>
+      <button 
+        onClick={handleCopy}
+        className={`p-1 rounded cursor-pointer active:scale-95 transition-all flex items-center justify-center ${copied ? 'bg-emerald-500/20 text-emerald-400' : 'hover:bg-white/20 text-white'}`}
+        title="Copy"
+      >
+        <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>
+          {copied ? 'check' : 'content_copy'}
+        </span>
+      </button>
+    </div>
+  );
+};
 
 export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = ({
   isOpen,
@@ -171,9 +196,9 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                     <MaterialTabs
                       index={idx}
                       total={customerSales.length}
-                      isSelected={expandedSaleId === sale.id}
+                      isSelected={false}
                       onClick={() => setExpandedSaleId(expandedSaleId === sale.id ? null : sale.id)}
-                      className='!h-auto py-1.5 !px-3'
+                      className={`!h-auto py-1.5 !px-3 ${expandedSaleId === sale.id ? '!rounded-b-none' : ''}`}
                     >
                       <div className='flex items-center justify-between w-full gap-2.5'>
                         {/* Right Section (Start in RTL): Invoice Details & Status */}
@@ -191,25 +216,27 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                             </span>
                           </div>
 
-                          <div className='flex flex-col min-w-0'>
-                            <div className='flex items-center gap-1.5'>
-                              <div
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  sale.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'
-                                }`}
-                              />
-                              <span className='font-black text-zinc-900 dark:text-zinc-100 truncate text-[13px] uppercase tracking-tight'>
-                                {t.invoice || 'Invoice'}{' '}
-                                {sale.dailyOrderNumber ? `#${sale.dailyOrderNumber}` : ''}
-                                <span className='ml-1.5 opacity-40 font-medium text-[11px]'>
-                                  {sale.serialId || sale.id.substring(0, 8)}
+                          <div className='flex items-center gap-2 min-w-0'>
+                            <div className='flex items-center gap-1.5 shrink-0'>
+                              <Tooltip content={sale.status === 'completed' ? (t.completed || 'Completed') : (t.pending || 'Pending')} position="top">
+                                <div
+                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                    sale.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'
+                                  }`}
+                                />
+                              </Tooltip>
+                              <Tooltip content={<CopyableSerial serial={sale.serialId || sale.id} />} position="top">
+                                <span className='font-black text-zinc-900 dark:text-zinc-100 truncate text-[13px] uppercase tracking-tight hover:underline cursor-pointer underline-offset-4 decoration-zinc-400 dark:decoration-zinc-600'>
+                                  {t.invoice || 'Invoice'}{' '}
+                                  {sale.dailyOrderNumber ? `#${sale.dailyOrderNumber}` : ''}
                                 </span>
-                              </span>
+                              </Tooltip>
                             </div>
-                            <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-tighter'>
+                            <span className='w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700 shrink-0' />
+                            <span className='font-black text-zinc-900 dark:text-zinc-100 truncate text-[13px] uppercase tracking-tight'>
                               {format(
                                 new Date(sale.date),
-                                language === 'AR' ? 'PPPP - hh:mm a' : 'MMM d, yyyy - hh:mm a',
+                                language === 'AR' ? 'd MMM - hh:mm a' : 'MMM d - hh:mm a',
                                 { locale: dateLocale }
                               )}
                             </span>
@@ -219,13 +246,18 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                         {/* Left Section (End in RTL): Price & Collapse */}
                         <div className='flex items-center gap-2.5'>
                           <div className='text-left md:text-right flex flex-col items-end'>
-                            <span className='block font-black text-base text-zinc-900 dark:text-white leading-none tabular-nums'>
-                              {formatCurrency(sale.total)}
+                            <span className='flex items-baseline gap-1 font-black text-zinc-900 dark:text-white tabular-nums'>
+                              <span className='text-base leading-none'>
+                                {formatCurrencyParts(sale.total, undefined, language).amount}
+                              </span>
+                              <span className='text-[10px] font-bold text-zinc-400 dark:text-zinc-500 leading-none'>
+                                {formatCurrencyParts(sale.total, undefined, language).symbol}
+                              </span>
                             </span>
                           </div>
 
                           <div className='flex items-center gap-1.5'>
-                            <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 bg-zinc-100/50 dark:bg-zinc-800/30 px-1.5 py-0.5 rounded tabular-nums min-w-[20px] text-center'>
+                            <span className='text-[10px] font-black text-white dark:text-primary-950 bg-primary-700 dark:bg-primary-200 px-1.5 py-0.5 rounded tabular-nums min-w-[20px] text-center'>
                               {sale.items.length}
                             </span>
                             <div
@@ -245,38 +277,21 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                     {/* Expandable Item Details */}
                     {expandedSaleId === sale.id && (
                       <div
-                        className='px-2.5 pb-2.5 bg-zinc-50 dark:bg-zinc-900/30 border-x border-b border-zinc-100 dark:border-zinc-800/50 rounded-b-lg -mt-1 pt-3 transition-all animate-slide-down'
+                        className='px-3 pb-3 bg-gray-100/80 dark:bg-white/5 rounded-b-lg pt-2 transition-all animate-slide-down'
                         dir='ltr'
                       >
-                        <div className='space-y-2'>
-                          <h4 className='text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-1'>
-                            {t.invoiceDetails || 'Invoice Items'}
-                          </h4>
-                          <div className='bg-white dark:bg-zinc-950/40 rounded-lg border border-zinc-100 dark:border-zinc-800/50 p-1 space-y-0.5'>
+                        <div className='space-y-3'>
+                          <div className='flex flex-col gap-1'>
                             {sale.items.map((item, idx) => (
                               <div
                                 key={`${item.id || idx}`}
-                                className='flex items-center justify-between text-[11px] py-1.5 px-2 border-b border-zinc-50 dark:border-zinc-900/50 last:border-0'
+                                className='flex items-center justify-between text-[11px] py-2 px-1 border-b border-zinc-200/50 dark:border-zinc-800/50 last:border-0'
                               >
-                                <div className='flex flex-col'>
-                                  <span className='font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-tight'>
+                                <div className='flex items-center gap-2.5 flex-1 min-w-0'>
+                                  <span className='font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-tight truncate'>
                                     {getDisplayName(item)}
                                   </span>
-                                  <div className='flex items-center gap-1.5 mt-1'>
-                                    <div className='px-1.5 py-0.5 rounded-sm bg-zinc-50 dark:bg-zinc-900/40 text-[9px] font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 border border-zinc-200/50 dark:border-zinc-700/50 tabular-nums font-mono shadow-sm'>
-                                      <span>
-                                        {item.batchAllocations?.[0]?.batchNumber || '---'}
-                                      </span>
-                                      <span className='w-px h-2 bg-zinc-200 dark:bg-zinc-700' />
-                                      <span className='text-zinc-400 dark:text-zinc-500'>
-                                        {item.batchAllocations?.[0]?.expiryDate
-                                          ? format(
-                                              new Date(item.batchAllocations[0].expiryDate),
-                                              'MM/yy'
-                                            )
-                                          : '--/--'}
-                                      </span>
-                                    </div>
+                                  <div className='flex items-center gap-1.5 shrink-0'>
                                     {item.discount > 0 && (
                                       <span className='text-[8px] text-emerald-600 dark:text-emerald-400 font-black uppercase bg-emerald-50 dark:bg-emerald-900/20 px-1 rounded'>
                                         {t.discount || 'Discount'}: {item.discount}%
@@ -284,14 +299,31 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                                     )}
                                   </div>
                                 </div>
-                                <div className='flex items-center gap-3 text-right'>
-                                  <span className='text-[10px] text-zinc-400 dark:text-zinc-300 font-black tabular-nums bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded uppercase tracking-widest border border-zinc-200/50 dark:border-zinc-700/50'>
+                                <div className='flex items-center gap-3 text-right shrink-0 ml-2'>
+                                  <div className='px-1.5 py-0.5 rounded-sm bg-white dark:bg-zinc-900/60 text-[9px] font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 border border-zinc-200/50 dark:border-zinc-700/50 tabular-nums font-mono shadow-sm'>
+                                    <span>
+                                      {item.batchAllocations?.[0]?.batchNumber || '---'}
+                                    </span>
+                                    <span className='w-px h-2 bg-zinc-200 dark:bg-zinc-700' />
+                                    <span className='text-zinc-400 dark:text-zinc-500'>
+                                      {item.batchAllocations?.[0]?.expiryDate
+                                        ? format(
+                                            new Date(item.batchAllocations[0].expiryDate),
+                                            'MM/yy'
+                                          )
+                                        : '--/--'}
+                                    </span>
+                                  </div>
+                                  <span className='text-[10px] text-zinc-500 dark:text-zinc-400 font-black tabular-nums uppercase tracking-widest'>
                                     x{item.quantity}
                                   </span>
-                                  <span className='font-black text-zinc-900 dark:text-zinc-100 min-w-[70px] text-right tabular-nums'>
-                                    {formatCurrency(
-                                      pricingService.calculateItemTotal(item)
-                                    )}
+                                  <span className='flex items-baseline gap-1 font-black tabular-nums'>
+                                    <span className='text-zinc-900 dark:text-zinc-100 min-w-[50px] text-right'>
+                                      {formatCurrencyParts(pricingService.calculateItemTotal(item), undefined, language).amount}
+                                    </span>
+                                    <span className='text-[9px] font-bold text-zinc-400 dark:text-zinc-500'>
+                                      {formatCurrencyParts(pricingService.calculateItemTotal(item), undefined, language).symbol}
+                                    </span>
                                   </span>
                                 </div>
                               </div>
@@ -299,21 +331,26 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                           </div>
 
                           {/* Invoice Summary Footer */}
-                          <div className='bg-zinc-900 dark:bg-zinc-100 rounded-lg p-2.5 flex flex-col gap-1 shadow-sm'>
+                          <div className='pt-3 flex flex-col gap-1.5'>
                             {sale.globalDiscount > 0 && (
-                              <div className='flex justify-between text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                              <div className='flex justify-between text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-1'>
                                 <span>{t.globalDiscount || 'Global Discount'}</span>
                                 <span className='tabular-nums'>
                                   -{formatCurrency(sale.globalDiscount)}
                                 </span>
                               </div>
                             )}
-                            <div className='flex justify-between items-center'>
-                              <span className='text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none'>
+                            <div dir={language === 'AR' ? 'rtl' : 'ltr'} className='flex justify-between items-center px-4 py-2 mt-1 bg-primary-700 dark:bg-primary-200 rounded-full shadow-md'>
+                              <span className='text-xs font-black text-primary-100 dark:text-primary-800 uppercase tracking-widest leading-none'>
                                 {t.total || 'Total'}
                               </span>
-                              <span className='text-lg font-black text-white dark:text-zinc-950 leading-none tabular-nums'>
-                                {formatCurrency(sale.total)}
+                              <span className='flex items-baseline gap-1.5 font-black text-white dark:text-primary-950 tabular-nums'>
+                                <span className='text-xl leading-none'>
+                                  {formatCurrencyParts(sale.total, undefined, language).amount}
+                                </span>
+                                <span className='text-[10px] font-bold text-primary-200 dark:text-primary-800 leading-none opacity-80'>
+                                  {formatCurrencyParts(sale.total, undefined, language).symbol}
+                                </span>
                               </span>
                             </div>
                           </div>
