@@ -22,3 +22,22 @@ export function preloadPages(viewIds: string[]): void {
     preloadPage(id);
   }
 }
+
+export function preloadAllPages(): void {
+  const start = () => {
+    const allViews = Object.keys(PAGE_REGISTRY);
+    let i = 0;
+    const next = () => {
+      if (i >= allViews.length) return;
+      preloadPage(allViews[i++]);
+      setTimeout(next, 0);
+    };
+    next();
+  };
+
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(start, { timeout: 3000 });
+  } else {
+    setTimeout(start, 1000);
+  }
+}
