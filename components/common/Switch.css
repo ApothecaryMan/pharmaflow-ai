@@ -20,9 +20,11 @@
   transition: background 0.25s ease;
   flex-shrink: 0;
 }
+
 .s1-track.on {
   background: #34c759;
 }
+
 .s1-thumb {
   width: 20px;
   height: 20px;
@@ -34,6 +36,7 @@
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
 }
+
 .s1-track.on .s1-thumb {
   transform: translateX(20px);
 }
@@ -49,9 +52,11 @@
   transition: background 0.3s ease;
   flex-shrink: 0;
 }
+
 .s2-track.on {
-  background: #3478f6;
+  background: var(--primary-500, #3478f6);
 }
+
 .s2-thumb {
   width: 20px;
   height: 20px;
@@ -66,16 +71,19 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
 .s2-track.on .s2-thumb {
   transform: translateX(20px);
 }
+
 .s2-check {
   width: 12px;
   height: 12px;
   opacity: 0;
   transition: opacity 0.2s;
-  color: #3478f6;
+  color: var(--primary-500, #3478f6);
 }
+
 .s2-track.on .s2-check {
   opacity: 1;
 }
@@ -94,10 +102,12 @@
     border-color 0.2s;
   flex-shrink: 0;
 }
+
 .s3-track.on {
   background: #111;
   border-color: #111;
 }
+
 .s3-thumb {
   width: 18px;
   height: 18px;
@@ -110,6 +120,7 @@
     transform 0.2s ease,
     background 0.2s;
 }
+
 .s3-track.on .s3-thumb {
   transform: translateX(20px);
   background: #fff;
@@ -133,26 +144,32 @@
   justify-content: space-between;
   flex-shrink: 0;
 }
+
 .s4-track.on {
   background: #6c47ff;
   border-color: #6c47ff;
 }
+
 .s4-moon {
   font-size: 11px;
   color: var(--sw-text-secondary);
   transition: opacity 0.2s;
 }
+
 .s4-sun {
   font-size: 11px;
   color: #facc15;
   transition: opacity 0.2s;
 }
+
 .s4-track.on .s4-moon {
   opacity: 0;
 }
+
 .s4-track:not(.on) .s4-sun {
   opacity: 0;
 }
+
 .s4-thumb {
   width: 20px;
   height: 20px;
@@ -164,6 +181,7 @@
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   flex-shrink: 0;
 }
+
 .s4-track.on .s4-thumb {
   transform: translateX(26px);
 }
@@ -180,10 +198,12 @@
   transition: background 0.25s;
   flex-shrink: 0;
 }
+
 .s5-track.on {
   background: #0ea5e9;
   border-color: #0ea5e9;
 }
+
 .s5-thumb {
   width: 18px;
   height: 18px;
@@ -194,6 +214,7 @@
   left: 3px;
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .s5-track.on .s5-thumb {
   transform: translateY(-20px);
 }
@@ -210,10 +231,12 @@
   transition: all 0.2s;
   flex-shrink: 0;
 }
+
 .s6-track.on {
   background: #16a34a;
   border-color: #16a34a;
 }
+
 .s6-thumb {
   width: 18px;
   height: 18px;
@@ -226,6 +249,7 @@
     transform 0.22s ease,
     background 0.2s;
 }
+
 .s6-track.on .s6-thumb {
   transform: translateX(20px);
   background: #fff;
@@ -239,6 +263,7 @@
   flex-shrink: 0;
   cursor: pointer;
 }
+
 .s7-track {
   width: 44px;
   height: 4px;
@@ -249,9 +274,11 @@
   left: 0;
   transition: background 0.2s;
 }
+
 .s7-wrap.on .s7-track {
   background: var(--sw-active-color);
 }
+
 .s7-thumb {
   width: 18px;
   height: 18px;
@@ -265,6 +292,7 @@
     transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
     border-color 0.2s;
 }
+
 .s7-wrap.on .s7-thumb {
   transform: translateX(26px);
   border-color: var(--sw-active-color);
@@ -282,9 +310,11 @@
   transition: border-color 0.25s;
   flex-shrink: 0;
 }
+
 .s8-track.on {
   border-color: #e11d48;
 }
+
 .s8-thumb {
   width: 16px;
   height: 16px;
@@ -297,6 +327,7 @@
     transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
     background 0.2s;
 }
+
 .s8-track.on .s8-thumb {
   transform: translateX(20px);
   background: #e11d48;
@@ -317,6 +348,7 @@
   transition: background 0.2s;
   flex-shrink: 0;
 }
+
 .s9-seg {
   flex: 1;
   height: 100%;
@@ -332,10 +364,12 @@
     background 0.2s,
     color 0.2s;
 }
+
 .s9-track.on .s9-seg:last-child {
   background: #8b5cf6;
   color: #fff;
 }
+
 .s9-track:not(.on) .s9-seg:first-child {
   background: var(--sw-bg-primary);
   color: var(--sw-text-primary);
@@ -353,10 +387,12 @@
   transition: background 0.2s;
   flex-shrink: 0;
 }
+
 .s10-track.on {
   background: #18181b;
   border-color: #fbbf24;
 }
+
 .s10-glow {
   position: absolute;
   inset: 0;
@@ -365,9 +401,11 @@
   background: #fbbf2422;
   transition: opacity 0.2s;
 }
+
 .s10-track.on .s10-glow {
   opacity: 1;
 }
+
 .s10-thumb {
   width: 18px;
   height: 18px;
@@ -380,6 +418,7 @@
     transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
     background 0.2s;
 }
+
 .s10-track.on .s10-thumb {
   transform: translateX(24px);
   background: #fbbf24;

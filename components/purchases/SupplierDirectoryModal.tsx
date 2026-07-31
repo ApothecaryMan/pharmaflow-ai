@@ -88,7 +88,7 @@ export const SupplierDirectoryModal: React.FC<SupplierDirectoryModalProps> = ({
                   onClose();
                   setSearch('');
                 }}
-                className='w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-start border-b border-gray-100 dark:border-gray-800 last:border-0'
+                className='w-full flex items-center gap-3 px-4 py-2.5 hover:bg-(--bg-menu-hover) transition-colors text-start'
                 type='button'
               >
                 <div className='h-9 min-w-9 px-1.5 rounded-lg bg-primary-100 dark:bg-primary-700 flex items-center justify-center text-primary-600 dark:text-primary-100 shrink-0'>

@@ -5,6 +5,7 @@ import { SearchInput } from './SearchInput';
 import { SegmentedControl, type SegmentedControlOption } from './SegmentedControl';
 
 export const BUTTON_CLOSE_BASE = 'border border-transparent hover:border-(--border-divider)';
+export const MODAL_ROW_HOVER = 'hover:bg-(--bg-menu-hover)';
 
 /**
  * Modal Component Props
@@ -324,11 +325,10 @@ export const Modal: React.FC<ModalProps> = ({
             key={item.key}
             onClick={() => setSidebarModalWidth?.(item.key)}
             disabled={!isSidebar}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-              !isSidebar
-                ? 'opacity-30 cursor-not-allowed'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-            }`}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${!isSidebar
+              ? 'opacity-30 cursor-not-allowed'
+              : `${MODAL_ROW_HOVER} text-gray-700 dark:text-gray-300`
+              }`}
             type='button'
           >
             <span className='material-symbols-rounded text-lg'>
