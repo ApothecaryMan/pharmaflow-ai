@@ -136,6 +136,16 @@ const GenericListItem = ({
   </div>
 );
 
+const EmptyStateWidget = ({ icon, message, subMessage, minHeight = 'min-h-[200px]' }: { icon: string, message: string, subMessage?: string, minHeight?: string }) => (
+  <div className={`flex flex-col items-center justify-center text-center p-6 ${minHeight} opacity-80 w-full h-full`}>
+    <div className='w-16 h-16 mb-4 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center text-[var(--primary-500)] dark:text-[var(--primary-400)]'>
+      <span className='material-symbols-rounded text-3xl'>{icon}</span>
+    </div>
+    <p className='text-sm font-bold text-gray-600 dark:text-gray-400'>{message}</p>
+    {subMessage && <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>{subMessage}</p>}
+  </div>
+);
+
 interface RealTimeSalesMonitorProps {
   color: ThemeColor;
   t: Translations;
@@ -788,6 +798,18 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                           </td>
                         </tr>
                       ))
+                    : displayedSales.length === 0 ? (
+                        <tr>
+                          <td colSpan={6}>
+                            <EmptyStateWidget
+                              icon="receipt_long"
+                              message={language === 'AR' ? 'لا توجد معاملات حتى الآن' : 'No transactions yet'}
+                              subMessage={language === 'AR' ? 'ستظهر المعاملات هنا فور تسجيلها' : 'Transactions will appear here once recorded'}
+                              minHeight="min-h-[250px]"
+                            />
+                          </td>
+                        </tr>
+                      )
                     : displayedSales.map((sale) => {
                         const vip = isVIP(sale);
                         const high = highValueAnalysis.highValueIds.has(sale.id);
@@ -969,22 +991,36 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           </div>
         </div>
         <div className='lg:col-span-2 flex flex-col gap-4'>
-          <ChartWidget
-            title={t.realTimeSales?.hourlyTrend}
-            icon=''
-            data={hourlyAnalysis.hourlyData}
-            dataKeys={{ primary: 'sales' }}
-            color='#3b82f6'
-            language={language}
-            unit=''
-            allowChartTypeSelection={false}
-            className='card-shadow rounded-3xl! border-0 p-0!'
-            headerClassName='px-6 pt-5'
-            chartClassName='h-[200px] min-h-[200px] w-full px-2'
-            xAxisInterval={2}
-            chartMargin={{ top: 15, right: 10, left: -10, bottom: 0 }}
-            isLoading={isLoading}
-          />
+          {revenue === 0 && !isLoading ? (
+            <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col h-[280px]`}>
+               <h3 className='text-lg font-bold flex items-center gap-2 mb-2'>
+                 {t.realTimeSales?.hourlyTrend || 'Hourly Trend'}
+               </h3>
+               <EmptyStateWidget
+                 icon="insights"
+                 message={language === 'AR' ? 'في انتظار أول عملية بيع اليوم' : 'Waiting for first sale'}
+                 subMessage={language === 'AR' ? 'سيظهر مؤشر المبيعات هنا' : 'Sales trend will appear here'}
+                 minHeight="flex-1"
+               />
+            </div>
+          ) : (
+            <ChartWidget
+              title={t.realTimeSales?.hourlyTrend}
+              icon=''
+              data={hourlyAnalysis.hourlyData}
+              dataKeys={{ primary: 'sales' }}
+              color='#3b82f6'
+              language={language}
+              unit=''
+              allowChartTypeSelection={false}
+              className='card-shadow rounded-3xl! border-0 p-0!'
+              headerClassName='px-6 pt-5'
+              chartClassName='h-[200px] min-h-[200px] w-full px-2'
+              xAxisInterval={2}
+              chartMargin={{ top: 15, right: 10, left: -10, bottom: 0 }}
+              isLoading={isLoading}
+            />
+          )}
           <div className={`p-5 rounded-3xl ${CARD_BASE} flex-1 flex flex-col`}>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-bold flex items-center gap-2'>
@@ -1006,6 +1042,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                       <div className='h-6 w-16 bg-gray-100 dark:bg-gray-800 rounded-lg' />
                     </div>
                   ))
+                : topProducts.length === 0 ? (
+                    <EmptyStateWidget
+                      icon="inventory_2"
+                      message={language === 'AR' ? 'لم يتم بيع أي أصناف اليوم' : 'No items sold today'}
+                      minHeight="min-h-[150px]"
+                    />
+                  )
                 : topProducts.map((p, idx) => (
                     <div
                       key={`${p.id || p.name || idx}`}
@@ -1083,24 +1126,32 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     </span>
                   </div>
                 </div>
-                <ResponsiveContainer width='55%' height='100%' debounce={50}>
-                  <PieChart>
-                    <Pie
-                      data={paymentPieData}
-                      cx='50%'
-                      cy='50%'
-                      innerRadius={60}
-                      outerRadius={80}
-                      strokeWidth={0}
-                      dataKey='value'
-                    >
-                      {paymentPieData.map((e, i) => (
-                        <Cell key={`${e.name}-${i}`} fill={e.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(val: number) => formatCurrency(val)} />
-                  </PieChart>
-                </ResponsiveContainer>
+                {revenue === 0 ? (
+                   <div className="w-[55%] h-full flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full border-[12px] border-[var(--bg-skeleton)] flex items-center justify-center">
+                         <span className="material-symbols-rounded text-[var(--primary-500)] dark:text-[var(--primary-400)] opacity-60 text-3xl">pie_chart</span>
+                      </div>
+                   </div>
+                ) : (
+                  <ResponsiveContainer width='55%' height='100%' debounce={50}>
+                    <PieChart>
+                      <Pie
+                        data={paymentPieData}
+                        cx='50%'
+                        cy='50%'
+                        innerRadius={60}
+                        outerRadius={80}
+                        strokeWidth={0}
+                        dataKey='value'
+                      >
+                        {paymentPieData.map((e, i) => (
+                          <Cell key={`${e.name}-${i}`} fill={e.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </>
             )}
           </div>
@@ -1138,24 +1189,32 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     );
                   })}
                 </div>
-                <ResponsiveContainer width='55%' height='100%' debounce={50}>
-                  <PieChart>
-                    <Pie
-                      data={categoryPieData}
-                      cx='50%'
-                      cy='50%'
-                      innerRadius={60}
-                      outerRadius={80}
-                      strokeWidth={0}
-                      dataKey='value'
-                    >
-                      {categoryPieData.map((e, i) => (
-                        <Cell key={`${e.name}-${i}`} fill={e.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(val: number) => formatCurrency(val)} />
-                  </PieChart>
-                </ResponsiveContainer>
+                {revenue === 0 ? (
+                   <div className="w-[55%] h-full flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full border-[12px] border-[var(--bg-skeleton)] flex items-center justify-center">
+                         <span className="material-symbols-rounded text-[var(--primary-500)] dark:text-[var(--primary-400)] opacity-60 text-3xl">donut_small</span>
+                      </div>
+                   </div>
+                ) : (
+                  <ResponsiveContainer width='55%' height='100%' debounce={50}>
+                    <PieChart>
+                      <Pie
+                        data={categoryPieData}
+                        cx='50%'
+                        cy='50%'
+                        innerRadius={60}
+                        outerRadius={80}
+                        strokeWidth={0}
+                        dataKey='value'
+                      >
+                        {categoryPieData.map((e, i) => (
+                          <Cell key={`${e.name}-${i}`} fill={e.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </>
             )}
           </div>
@@ -1180,52 +1239,63 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             )}
           </div>
           <div className='flex-1 flex flex-col justify-center items-center text-center space-y-4'>
-            <div className='w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center mb-2'>
-              <span className='material-symbols-rounded text-3xl'>assignment_return</span>
-            </div>
-            <div>
-              <div className='text-3xl font-bold'>
-                <AnimatedCounter value={returnsData.count} />
-              </div>
-              <p className='text-sm text-gray-500'>
-                {t.realTimeSales?.returnsProcessed || 'Returns Processed'}
-              </p>
-            </div>
-            <div className='w-full pt-4 border-t border-[var(--border-divider)] grid grid-cols-3 gap-2'>
-              <div className='px-2'>
-                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
-                  {t.realTimeSales?.value || 'Value'}
-                </p>
-                <div className='text-sm font-bold text-rose-600'>
-                  <AnimatedCounter value={returnedValue} />
+            {returnsData.count === 0 ? (
+              <EmptyStateWidget
+                icon="verified"
+                message={language === 'AR' ? 'يوم ممتاز!' : 'Great day!'}
+                subMessage={language === 'AR' ? 'لم تحدث أي مرتجعات اليوم' : 'No returns happened today'}
+                minHeight="min-h-[150px]"
+              />
+            ) : (
+              <>
+                <div className='w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center mb-2'>
+                  <span className='material-symbols-rounded text-3xl'>assignment_return</span>
                 </div>
-              </div>
-              <div className='px-2'>
-                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
-                  {t.realTimeSales?.tableItems || 'Items'}
-                </p>
-                <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
-                  <AnimatedCounter value={returnsData.returnedQty} />
+                <div>
+                  <div className='text-3xl font-bold'>
+                    <AnimatedCounter value={returnsData.count} />
+                  </div>
+                  <p className='text-sm text-gray-500'>
+                    {t.realTimeSales?.returnsProcessed || 'Returns Processed'}
+                  </p>
                 </div>
-              </div>
-              <div className='px-2'>
-                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
-                  {t.realTimeSales?.rate || 'Rate'}
-                </p>
-                <div
-                  className='text-sm font-bold flex items-center justify-center gap-0.5 text-gray-700 dark:text-gray-300'
-                  dir='ltr'
-                >
-                  <AnimatedCounter
-                    value={
-                      returnsData.count > 0 ? (returnsData.count / (transactions || 1)) * 100 : 0
-                    }
-                    fractionDigits={1}
-                  />
-                  <span className='text-[10px] font-normal opacity-50'>%</span>
+                <div className='w-full pt-4 border-t border-[var(--border-divider)] grid grid-cols-3 gap-2'>
+                  <div className='px-2'>
+                    <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
+                      {t.realTimeSales?.value || 'Value'}
+                    </p>
+                    <div className='text-sm font-bold text-rose-600'>
+                      <AnimatedCounter value={returnedValue} />
+                    </div>
+                  </div>
+                  <div className='px-2'>
+                    <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
+                      {t.realTimeSales?.tableItems || 'Items'}
+                    </p>
+                    <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
+                      <AnimatedCounter value={returnsData.returnedQty} />
+                    </div>
+                  </div>
+                  <div className='px-2'>
+                    <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>
+                      {t.realTimeSales?.rate || 'Rate'}
+                    </p>
+                    <div
+                      className='text-sm font-bold flex items-center justify-center gap-0.5 text-gray-700 dark:text-gray-300'
+                      dir='ltr'
+                    >
+                      <AnimatedCounter
+                        value={
+                          returnsData.count > 0 ? (returnsData.count / (transactions || 1)) * 100 : 0
+                        }
+                        fractionDigits={1}
+                      />
+                      <span className='text-[10px] font-normal opacity-50'>%</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>
