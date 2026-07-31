@@ -93,6 +93,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
     } else if (isAuthenticated === false) {
       // Reset state on logout so next login triggers fresh onboarding check
       setHasChecked(false);
+      setIsChecking(true);
       setActiveStep(0);
       setError(null);
     }

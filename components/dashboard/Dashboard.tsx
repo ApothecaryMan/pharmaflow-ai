@@ -156,48 +156,48 @@ const GenericListItem: React.FC<{
   onClick,
   actionLabel,
 }) => (
-  <div
-    dir='ltr'
-    className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'
-  >
-    <div className='flex items-center gap-4 min-w-0 flex-1'>
-      {icon && (
-        <div className='badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0'>
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-            {icon}
-          </span>
+    <div
+      dir='ltr'
+      className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'
+    >
+      <div className='flex items-center gap-4 min-w-0 flex-1'>
+        {icon && (
+          <div className='badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0'>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+              {icon}
+            </span>
+          </div>
+        )}
+        <div className='min-w-0'>
+          <p className='font-bold text-(--text-primary) truncate'>{title}</p>
         </div>
-      )}
-      <div className='min-w-0'>
-        <p className='font-bold text-(--text-primary) truncate'>{title}</p>
+      </div>
+      <div className='flex items-center gap-3 shrink-0 ms-4'>
+        <p className='text-xs text-(--text-tertiary) shrink-0'>{subtitle}</p>
+        {badge && (
+          <span
+            className={
+              badgeColor.includes('badge-')
+                ? `${badgeColor} shrink-0`
+                : `text-[10px] font-bold uppercase shrink-0 ${badgeColor}`
+            }
+          >
+            {badge}
+          </span>
+        )}
+        {value && <p className='font-bold text-(--text-primary)'>{value}</p>}
+        {onClick && (
+          <button
+            onClick={onClick}
+            className='text-xs px-3 py-1.5 rounded-xl font-bold bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white transition-all active:scale-95'
+            type='button'
+          >
+            {actionLabel}
+          </button>
+        )}
       </div>
     </div>
-    <div className='flex items-center gap-3 shrink-0 ms-4'>
-      <p className='text-xs text-(--text-tertiary) shrink-0'>{subtitle}</p>
-      {badge && (
-        <span
-          className={
-            badgeColor.includes('badge-')
-              ? `${badgeColor} shrink-0`
-              : `text-[10px] font-bold uppercase shrink-0 ${badgeColor}`
-          }
-        >
-          {badge}
-        </span>
-      )}
-      {value && <p className='font-bold text-(--text-primary)'>{value}</p>}
-      {onClick && (
-        <button
-          onClick={onClick}
-          className='text-xs px-3 py-1.5 rounded-xl font-bold bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white transition-all active:scale-95'
-          type='button'
-        >
-          {actionLabel}
-        </button>
-      )}
-    </div>
-  </div>
-);
+  );
 
 export const Dashboard: React.FC<DashboardProps> = ({
   color,
@@ -548,25 +548,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
           items={
             id === 'profit'
               ? [
-                  { label: t.revenue, value: formatCurrency(totalRevenue) },
-                  { label: t.expenses, value: formatCurrency(expensesTotal) },
-                  {
-                    label: t.expand?.profitMargin || 'Margin',
-                    value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%`,
-                  },
-                ]
+                { label: t.revenue, value: formatCurrency(totalRevenue) },
+                { label: t.expenses, value: formatCurrency(expensesTotal) },
+                {
+                  label: t.expand?.profitMargin || 'Margin',
+                  value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%`,
+                },
+              ]
               : id === 'expenses'
                 ? [{ label: t.expenses, value: formatCurrency(expensesTotal) }]
                 : [
-                    {
-                      label: t.expand?.metrics || 'Total Count',
-                      value: totalTransactions,
-                    },
-                    {
-                      label: t.expand?.amount || 'Average',
-                      value: formatCurrency(averageOrderValue),
-                    },
-                  ]
+                  {
+                    label: t.expand?.metrics || 'Total Count',
+                    value: totalTransactions,
+                  },
+                  {
+                    label: t.expand?.amount || 'Average',
+                    value: formatCurrency(averageOrderValue),
+                  },
+                ]
           }
         />
 
@@ -746,108 +746,107 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       achievements: achievements
         ? {
-            title: `${t.target || 'Target'} — ${achievements.monthName} ${achievements.year}`,
-            children: (
-              <div className='space-y-6'>
-                <SummaryCard
-                  title={t.monthlyProgress || 'Monthly Progress'}
-                  value={`${achievements.overallPct}%`}
-                  colorClass={
-                    achievements.overallPct >= 100
-                      ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100'
-                      : achievements.overallPct >= 80
-                        ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100'
-                        : achievements.overallPct >= 50
-                          ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-100'
-                          : 'bg-red-50 dark:bg-red-950/20 border-red-100'
-                  }
-                  footer={`${achievements.monthlyRevenueFormatted} / ${achievements.monthlyTargetFormatted}`}
-                />
-                <MonthlyHeatmap
-                  days={achievements.days}
-                  year={currentYear}
-                  month={currentMonth}
-                  monthlyRevenue={achievements.monthlyRevenue}
-                  monthlyTarget={achievements.monthlyTarget}
-                  overallPct={achievements.overallPct}
-                  monthlyRevenueFormatted={achievements.monthlyRevenueFormatted}
-                  monthlyTargetFormatted={achievements.monthlyTargetFormatted}
-                  language={language}
-                  isLoading={achievementsLoading}
-                  showDetailsInline={true}
-                />
+          title: `${t.target || 'Target'} — ${achievements.monthName} ${achievements.year}`,
+          children: (
+            <div className='space-y-6'>
+              <SummaryCard
+                title={t.monthlyProgress || 'Monthly Progress'}
+                value={`${achievements.overallPct}%`}
+                colorClass={
+                  achievements.overallPct >= 100
+                    ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100'
+                    : achievements.overallPct >= 80
+                      ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100'
+                      : achievements.overallPct >= 50
+                        ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-100'
+                        : 'bg-red-50 dark:bg-red-950/20 border-red-100'
+                }
+                footer={`${achievements.monthlyRevenueFormatted} / ${achievements.monthlyTargetFormatted}`}
+              />
+              <MonthlyHeatmap
+                days={achievements.days}
+                year={currentYear}
+                month={currentMonth}
+                monthlyRevenue={achievements.monthlyRevenue}
+                monthlyTarget={achievements.monthlyTarget}
+                overallPct={achievements.overallPct}
+                monthlyRevenueFormatted={achievements.monthlyRevenueFormatted}
+                monthlyTargetFormatted={achievements.monthlyTargetFormatted}
+                language={language}
+                isLoading={achievementsLoading}
+                showDetailsInline={true}
+              />
 
-                <div className='overflow-x-auto rounded-2xl border border-(--border-primary)'>
-                  <table className='w-full text-sm text-start'>
-                    <thead className='bg-(--bg-secondary) text-(--text-tertiary) text-xs uppercase'>
-                      <tr>
-                        <th className='px-4 py-3 font-medium text-start'>{t.expand.date}</th>
-                        <th className='px-4 py-3 font-medium text-end'>{t.expand.target}</th>
-                        <th className='px-4 py-3 font-medium text-end'>{t.expand.revenue}</th>
-                        <th className='px-4 py-3 font-medium text-end'>{t.expand.achievement}</th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-y divide-(--border-primary) bg-(--bg-panel)'>
-                      {achievements.days.map((day) => (
-                        <tr
-                          key={day.date}
-                          className={
-                            day.isFuture
-                              ? 'opacity-50 bg-gray-50 dark:bg-gray-800/20'
-                              : 'hover:bg-(--bg-menu-hover)'
-                          }
-                        >
-                          <td className='px-4 py-3 font-medium text-(--text-primary)'>
-                            {day.day} {achievements.monthName}
-                            {day.isFuture && (
-                              <span className='text-[10px] text-(--text-tertiary) ms-2'>
-                                ({t.expand.upcoming})
-                              </span>
-                            )}
-                          </td>
-                          <td className='px-4 py-3 text-end text-(--text-tertiary)'>
-                            {formatCurrency(day.target, undefined, language, 0)}
-                          </td>
-                          <td className='px-4 py-3 text-end font-semibold text-(--text-primary)'>
-                            {!day.isFuture
-                              ? formatCurrency(day.revenue, undefined, language, 0)
-                              : '-'}
-                          </td>
-                          <td className='px-4 py-3 text-end'>
-                            {!day.isFuture ? (
-                              <span
-                                className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${
-                                  day.achievementPct >= 100
-                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
-                                    : day.achievementPct >= 80
-                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                      : day.achievementPct >= 50
-                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+              <div className='overflow-x-auto rounded-2xl border border-(--border-primary)'>
+                <table className='w-full text-sm text-start'>
+                  <thead className='bg-(--bg-secondary) text-(--text-tertiary) text-xs uppercase'>
+                    <tr>
+                      <th className='px-4 py-3 font-medium text-start'>{t.expand.date}</th>
+                      <th className='px-4 py-3 font-medium text-end'>{t.expand.target}</th>
+                      <th className='px-4 py-3 font-medium text-end'>{t.expand.revenue}</th>
+                      <th className='px-4 py-3 font-medium text-end'>{t.expand.achievement}</th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-(--border-primary) bg-(--bg-panel)'>
+                    {achievements.days.map((day) => (
+                      <tr
+                        key={day.date}
+                        className={
+                          day.isFuture
+                            ? 'opacity-50 bg-gray-50 dark:bg-gray-800/20'
+                            : 'hover:bg-(--bg-menu-hover)'
+                        }
+                      >
+                        <td className='px-4 py-3 font-medium text-(--text-primary)'>
+                          {day.day} {achievements.monthName}
+                          {day.isFuture && (
+                            <span className='text-[10px] text-(--text-tertiary) ms-2'>
+                              ({t.expand.upcoming})
+                            </span>
+                          )}
+                        </td>
+                        <td className='px-4 py-3 text-end text-(--text-tertiary)'>
+                          {formatCurrency(day.target, undefined, language, 0)}
+                        </td>
+                        <td className='px-4 py-3 text-end font-semibold text-(--text-primary)'>
+                          {!day.isFuture
+                            ? formatCurrency(day.revenue, undefined, language, 0)
+                            : '-'}
+                        </td>
+                        <td className='px-4 py-3 text-end'>
+                          {!day.isFuture ? (
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${day.achievementPct >= 100
+                                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
+                                  : day.achievementPct >= 80
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                    : day.achievementPct >= 50
+                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                                      : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                                 }`}
-                              >
-                                {day.achievementPct}%
-                              </span>
-                            ) : (
-                              <span className='text-(--text-tertiary)'>-</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            >
+                              {day.achievementPct}%
+                            </span>
+                          ) : (
+                            <span className='text-(--text-tertiary)'>-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ),
-          }
+            </div>
+          ),
+        }
         : {
-            title: t.target || 'Target',
-            children: (
-              <div className='flex items-center justify-center h-64 text-(--text-tertiary)'>
-                {language === 'AR' ? 'لا توجد بيانات' : 'No data available'}
-              </div>
-            ),
-          },
+          title: t.target || 'Target',
+          children: (
+            <div className='flex items-center justify-center h-64 text-(--text-tertiary)'>
+              {language === 'AR' ? 'لا توجد بيانات' : 'No data available'}
+            </div>
+          ),
+        },
     };
   }, [
     filteredData,
@@ -1294,75 +1293,82 @@ export const Dashboard: React.FC<DashboardProps> = ({
               recentSales.map((sale, idx) => (
                 <div
                   key={sale.key || sale.id || `rs-${idx}`}
-                  className='flex items-center justify-between p-2 rounded-xl hover:bg-(--bg-menu-hover) transition-colors'
+                  className='flex items-center p-2 rounded-xl hover:bg-(--bg-menu-hover) transition-colors gap-3'
                 >
-                  <div className='flex items-center gap-3'>
-                    <div>
-                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2'>
+                  <div className='flex items-center gap-4 flex-1 min-w-0'>
+                    {/* Transaction Code (First) */}
+                    <span data-no-convert='true' dir='ltr' className='text-xs font-bold text-gray-900 dark:text-gray-100 truncate shrink-0'>
+                      #{sale.serialId || sale.id}
+                    </span>
+
+                    {/* Customer Name & Code */}
+                    <div className='flex items-center gap-2 shrink-0 max-w-[120px] sm:max-w-[160px]'>
+                      <p className='text-sm text-(--text-tertiary) truncate'>
                         {sale.customerName || 'Guest'}
-                        {sale.customerCode && (
-                          <span
-                            dir='ltr'
-                            className='badge-zinc inline-flex items-center gap-1.5! px-1.5! py-0.5! text-[10px]! tracking-wider'
-                          >
-                            <span
-                              className='material-symbols-rounded'
-                              style={{ fontSize: 'var(--icon-sm)' }}
-                            >
-                              tag
-                            </span>
-                            {sale.customerCode}
-                          </span>
-                        )}
                       </p>
-                      <p className='text-xs text-gray-500 flex items-center gap-2'>
-                        <span className='text-(--text-tertiary)'>{sale.timeAgo}</span>
-                        <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-                        <span data-no-convert='true' dir='ltr' className='text-xs'>
-                          #{sale.serialId || sale.id}
-                        </span>
-                        <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
+                      {sale.customerCode && (
                         <span
-                          className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
+                          dir='ltr'
+                          className='badge-zinc inline-flex items-center gap-1 px-1.5 py-0.5 text-[12px] tracking-wider shrink-0'
                         >
-                          <span
-                            className='material-symbols-rounded'
-                            style={{ fontSize: 'var(--icon-base)' }}
-                          >
-                            {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
-                          </span>
-                        </span>
-                        <span className='badge-zinc inline-flex items-center gap-1! px-1.5! py-0.5! text-[10px]! tracking-wider'>
-                          <span
-                            className='material-symbols-rounded'
-                            style={{ fontSize: 'var(--icon-sm)' }}
-                          >
-                            package_2
-                          </span>
-                          {sale.items.length}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className='text-end'>
-                    <p className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                      {formatCurrency(sale.netTotal ?? sale.total)}
-                    </p>
-                    <p className='text-xs text-gray-500 flex items-center justify-end gap-1'>
-                      {sale.hasReturns && sale.returnStats && (
-                        <span className='text-orange-500 flex items-center gap-0.5'>
                           <span
                             className='material-symbols-rounded'
                             style={{ fontSize: 'var(--icon-xs)' }}
                           >
-                            keyboard_return
+                            tag
                           </span>
-                          <span className='text-[10px]'>
-                            ({sale.returnStats.returned}/{sale.returnStats.total})
-                          </span>
+                          {sale.customerCode}
                         </span>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Date/Time (Before Badges) */}
+                  <div className='flex items-center text-xs text-gray-500 truncate hidden sm:flex shrink-0'>
+                    <span className='text-(--text-tertiary)'>{sale.timeAgo}</span>
+                  </div>
+
+                  {/* Badges (Payment, Items) */}
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <span
+                      className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
+                    >
+                      <span
+                        className='material-symbols-rounded'
+                        style={{ fontSize: 'var(--icon-base)' }}
+                      >
+                        {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
+                      </span>
+                    </span>
+                    <span className='badge-zinc inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] tracking-wider'>
+                      <span
+                        className='material-symbols-rounded'
+                        style={{ fontSize: 'var(--icon-sm)' }}
+                      >
+                        package_2
+                      </span>
+                      {sale.items.length}
+                    </span>
+                  </div>
+
+                  {/* Amount */}
+                  <div className='text-end shrink-0 ms-2 min-w-[80px]'>
+                    <p className='text-sm font-bold text-gray-900 dark:text-gray-100'>
+                      {formatCurrency(sale.netTotal ?? sale.total)}
                     </p>
+                    {sale.hasReturns && sale.returnStats && (
+                      <span className='text-orange-500 flex items-center justify-end gap-0.5 mt-0.5'>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-xs)' }}
+                        >
+                          keyboard_return
+                        </span>
+                        <span className='text-[10px]'>
+                          ({sale.returnStats.returned}/{sale.returnStats.total})
+                        </span>
+                      </span>
+                    )}
                   </div>
                 </div>
               ))

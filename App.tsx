@@ -14,7 +14,7 @@ const AuthPage = lazy(() =>
   }))
 );
 
-import { AppLoadingScreen } from './components/common/AppLoadingScreen';
+import { PageLoader } from './components/common/PageLoader';
 import { AuthenticatedContent } from './components/layout/AuthenticatedContent';
 import { preloadAllPages, preloadPage } from './hooks/layout/usePreloadPage';
 
@@ -316,7 +316,7 @@ const App: React.FC = () => {
 
   const content = authState.isAuthenticated ? (
     isEmployeePortalUser ? (
-      <Suspense fallback={<AppLoadingScreen message={t.global?.loading} />}>
+      <Suspense fallback={<PageLoader />}>
         <EmployeeDashboard
           view={appState.view as 'profile' | 'requests'}
           onViewChange={appState.setView}
@@ -334,7 +334,11 @@ const App: React.FC = () => {
   let finalContent: React.ReactNode;
 
   if (authState.isAuthenticated && !isOnboardingReady) {
-    finalContent = null; // boot splash stays visible
+    finalContent = (
+      <div className='absolute inset-0 z-50 flex flex-col bg-[var(--bg-page-surface)]'>
+        <PageLoader />
+      </div>
+    ); // boot splash covers this on initial load, but serves as fallback on manual login
   } else {
     // Once onboarding is ready, render the appropriate content
     finalContent = content;

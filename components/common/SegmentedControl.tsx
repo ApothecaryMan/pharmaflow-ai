@@ -86,7 +86,7 @@ export function SegmentedControl<T extends string | number | boolean>({
       setTimeout(() => {
         setChangedValue(null);
         changeLockRef.current = false;
-      }, 500);
+      }, 100);
     },
     [value, onChange]
   );
@@ -154,8 +154,8 @@ export function SegmentedControl<T extends string | number | boolean>({
           }
           transition={
             useAnimations && changedValue
-              ? { type: 'tween', duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }
-              : { type: 'tween', duration: 0.2, ease: 'easeOut' }
+              ? { type: 'tween', duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }
+              : { type: 'tween', duration: 0.15, ease: 'easeOut' }
           }
         />
       )}
@@ -181,7 +181,7 @@ export function SegmentedControl<T extends string | number | boolean>({
                 className='material-symbols-rounded'
                 style={{ fontSize: `var(${iconSize || sz.i})` }}
                 animate={isChanging ? { scale: [1, 1.04, 1], rotate: [0, 2, -2, 0] } : undefined}
-                transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+                transition={{ duration: 0.1, ease: [0.34, 1.56, 0.64, 1] }}
               >
                 {o.icon}
               </motion.span>
@@ -193,7 +193,7 @@ export function SegmentedControl<T extends string | number | boolean>({
                     className='absolute inline-flex h-full w-full rounded-full'
                     style={{ backgroundColor: o.dotColor }}
                     animate={isChanging ? { scale: [1, 1.3, 1], opacity: [0.75, 0.25, 0.75] } : { scale: 1, opacity: 0.75 }}
-                    transition={{ duration: 0.5 }}
+                    transition={{ duration: 0.1 }}
                   />
                 )}
                 <span
@@ -211,7 +211,7 @@ export function SegmentedControl<T extends string | number | boolean>({
                   fontSize: useGraphicFont ? '1.05em' : undefined,
                 }}
                 animate={isChanging ? { y: [0, -1, 0] } : {}}
-                transition={{ duration: 0.35 }}
+                transition={{ duration: 0.1 }}
               >
                 {o.label}
               </motion.span>
