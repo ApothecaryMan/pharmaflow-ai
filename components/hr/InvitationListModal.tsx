@@ -99,7 +99,7 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
           </div>
         ) : requests.length === 0 ? (
           <div className='text-center py-16'>
-            <div className='w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4'>
+            <div className='w-16 h-16 bg-[var(--bg-skeleton)] rounded-full flex items-center justify-center mx-auto mb-4'>
               <span className='material-symbols-rounded text-zinc-400 text-3xl'>how_to_reg</span>
             </div>
             <h3 className='text-lg font-bold text-zinc-500 dark:text-zinc-400 mb-1'>
@@ -129,7 +129,7 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
                   key={req.id}
                   className='flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50 hover:border-zinc-200 dark:hover:border-zinc-700/50 transition-colors'
                 >
-                  <div className='w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden'>
+                  <div className='w-10 h-10 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center shrink-0 overflow-hidden'>
                     {profile?.image ? (
                       <img src={profile.image} alt='' className='w-full h-full object-cover' />
                     ) : (

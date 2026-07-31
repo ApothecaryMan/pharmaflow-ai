@@ -159,7 +159,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color: _colo
                   </span>
                   <p
                     id='org-id'
-                    className='text-sm font-mono text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 select-all'
+                    className='text-sm font-mono text-zinc-400 bg-[var(--bg-skeleton)] opacity-60 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 select-all'
                   >
                     {org.id}
                   </p>
@@ -219,7 +219,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color: _colo
                     className='p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors'
                   >
                     <div className='flex items-center gap-3'>
-                      <div className='w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 font-bold border border-zinc-200 dark:border-zinc-700'>
+                      <div className='w-10 h-10 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center text-zinc-500 font-bold border border-zinc-200 dark:border-zinc-700'>
                         {employee?.name?.charAt(0) || '?'}
                       </div>
                       <div>
@@ -377,7 +377,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color: _colo
               {logs.length > 0 ? (
                 <div className='space-y-6'>
                   {/* Vertical Line */}
-                  <div className='absolute left-[39px] top-8 bottom-8 w-px bg-zinc-100 dark:bg-zinc-800'></div>
+                  <div className='absolute left-[39px] top-8 bottom-8 w-px bg-[var(--bg-skeleton)]'></div>
 
                   {logs.map((log, _idx) => {
                     const employee =

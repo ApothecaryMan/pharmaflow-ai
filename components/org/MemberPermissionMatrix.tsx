@@ -48,7 +48,7 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
                   {language === 'AR' ? employee.nameArabic || employee.name : employee.name}
                 </span>
                 {isSelf && (
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-bold uppercase tracking-wider'>
+                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-[var(--bg-skeleton)] text-zinc-500 text-[10px] font-bold uppercase tracking-wider'>
                     <span
                       className='material-symbols-rounded'
                       style={{ fontSize: 'var(--icon-sm)' }}
@@ -90,7 +90,7 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
           if (!hasAccount) {
             return (
               <div
-                className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-dashed border-zinc-200 dark:border-zinc-700 text-zinc-400 text-[10px] font-bold uppercase tracking-widest cursor-help'
+                className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-skeleton)] opacity-60 border border-dashed border-zinc-200 dark:border-zinc-700 text-zinc-400 text-[10px] font-bold uppercase tracking-widest cursor-help'
                 title={t.noAccountNote}
               >
                 <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>
@@ -205,7 +205,7 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
             </div>
           </div>
 
-          <div className='hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-200 dark:border-zinc-700'>
+          <div className='hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg-skeleton)] text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-200 dark:border-zinc-700'>
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>
               info
             </span>

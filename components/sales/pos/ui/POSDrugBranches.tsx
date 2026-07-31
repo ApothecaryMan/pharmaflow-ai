@@ -186,7 +186,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({
               >
                 <div className='flex justify-between items-start'>
                   <div className='flex items-center gap-3'>
-                    <div className='w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 group-hover:text-primary-500 transition-colors'>
+                    <div className='w-10 h-10 rounded-xl bg-[var(--bg-skeleton)] flex items-center justify-center text-gray-500 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 group-hover:text-primary-500 transition-colors'>
                       <span
                         className='material-symbols-rounded'
                         style={{ fontSize: 'var(--icon-lg)', lineHeight: 1 }}

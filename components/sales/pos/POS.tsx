@@ -1187,7 +1187,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
               customEmptyState={
                 search.trim() === '' ? (
                   <div className='h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4 p-8 select-none'>
-                    <div className='bg-zinc-100 dark:bg-zinc-800 p-6 rounded-full'>
+                    <div className='bg-[var(--bg-skeleton)] p-6 rounded-full'>
                       <span
                         className='material-symbols-rounded text-zinc-400 dark:text-zinc-500'
                         style={{ fontSize: '64px' }}

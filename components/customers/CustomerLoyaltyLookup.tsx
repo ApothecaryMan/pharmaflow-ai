@@ -224,7 +224,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       return {
         tier: 'Silver',
         color: 'text-gray-500 dark:text-gray-400',
-        bg: 'bg-gray-100 dark:bg-gray-800/40',
+        bg: 'bg-[var(--bg-skeleton)]/40',
         border: 'border-gray-200 dark:border-gray-700/50',
         icon: 'shield',
       };

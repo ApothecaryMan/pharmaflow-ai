@@ -87,7 +87,7 @@ export const AnimationLab: React.FC = () => {
             عاصفة رملية (Dust Storm)
           </button>
 
-          <div className="w-full h-px bg-zinc-100 dark:bg-zinc-800 my-2" />
+          <div className="w-full h-px bg-[var(--bg-skeleton)] my-2" />
 
           <button 
             onClick={(e) => {

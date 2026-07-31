@@ -55,7 +55,7 @@ const BranchRow: React.FC<{
       className={`flex items-center justify-between py-2.5 px-4 border-b border-border last:border-0 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors ${isLoading ? 'animate-pulse' : ''}`}
     >
       <div className='flex items-center gap-4'>
-        <div className='w-10 h-10 rounded-xl flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 shrink-0'>
+        <div className='w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--bg-skeleton)] text-zinc-600 dark:text-zinc-400 shrink-0'>
           {isLoading ? null : (
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
               store
@@ -65,8 +65,8 @@ const BranchRow: React.FC<{
         <div className='space-y-0.5'>
           {isLoading ? (
             <>
-              <div className='h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
-              <div className='h-3 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+              <div className='h-4 w-24 bg-[var(--bg-skeleton)] rounded' />
+              <div className='h-3 w-16 bg-[var(--bg-skeleton)] opacity-60 rounded' />
             </>
           ) : (
             <>
@@ -74,7 +74,7 @@ const BranchRow: React.FC<{
                 <h4 className='font-semibold text-zinc-900 dark:text-zinc-100 text-sm'>
                   {branch?.name}
                 </h4>
-                <span className='text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded'>
+                <span className='text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider bg-[var(--bg-skeleton)] px-1.5 py-0.5 rounded'>
                   {branch?.code}
                 </span>
               </div>
@@ -102,8 +102,8 @@ const BranchRow: React.FC<{
       <div className='flex items-center gap-6'>
         {isLoading ? (
           <>
-            <div className='h-4 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded-full' />
-            <div className='h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+            <div className='h-4 w-16 bg-[var(--bg-skeleton)] opacity-60 rounded-full' />
+            <div className='h-4 w-12 bg-[var(--bg-skeleton)] opacity-60 rounded' />
           </>
         ) : (
           <>
@@ -160,7 +160,7 @@ export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({
         <h3 className='text-base font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2'>
           {language === 'ar' ? 'مراقبة الفروع' : 'Branch Monitor'}
         </h3>
-        <span className='text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-lg'>
+        <span className='text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-[var(--bg-skeleton)] text-zinc-500 rounded-lg'>
           {branches.length} {language === 'ar' ? 'فروع' : 'Branches'}
         </span>
       </div>

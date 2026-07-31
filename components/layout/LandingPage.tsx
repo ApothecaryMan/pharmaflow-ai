@@ -31,7 +31,7 @@ export const LandingPage: React.FC<{ language: 'EN' | 'AR'; darkMode: boolean }>
 
       <div className='space-y-6 mb-10'>
         <div className='flex items-center justify-center gap-6'>
-          <div className='h-px w-12 bg-zinc-200 dark:bg-zinc-800' />
+          <div className='h-px w-12 bg-[var(--bg-skeleton)]' />
           <div
             className='flex items-center gap-2 md:gap-3 text-zinc-900 dark:text-zinc-50'
             dir='ltr'
@@ -79,7 +79,7 @@ export const LandingPage: React.FC<{ language: 'EN' | 'AR'; darkMode: boolean }>
               </svg>
             ))}
           </div>
-          <div className='h-px w-12 bg-zinc-200 dark:bg-zinc-800' />
+          <div className='h-px w-12 bg-[var(--bg-skeleton)]' />
         </div>
 
         <div className='space-y-3'>

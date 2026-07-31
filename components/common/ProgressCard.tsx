@@ -147,7 +147,7 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({
       {/* Category Label Section */}
       <div className='shrink-0'>
         {isLoading ? (
-          <div className='h-4 w-12 bg-gray-100 dark:bg-gray-800 rounded' />
+          <div className='h-4 w-12 bg-[var(--bg-skeleton)] rounded' />
         ) : (
           <span className='text-[10px] font-bold text-gray-400 uppercase tracking-widest writing-mode-vertical sm:writing-mode-horizontal'>
             {category}
@@ -166,7 +166,7 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({
             <div className='flex justify-between items-end mb-2'>
               {isLoading ? (
                 <>
-                  <div className='h-5 w-12 bg-gray-100 dark:bg-gray-800 rounded' />
+                  <div className='h-5 w-12 bg-[var(--bg-skeleton)] rounded' />
                   <div className='h-3 w-8 bg-gray-50 dark:bg-gray-800/50 rounded' />
                 </>
               ) : (
@@ -242,7 +242,7 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
                 {[1, 2, 3].map((i) => (
                   <div
                     key={`legend-sk-${i}`}
-                    className='h-3 w-8 bg-zinc-100 dark:bg-zinc-800 rounded'
+                    className='h-3 w-8 bg-[var(--bg-skeleton)] rounded'
                   />
                 ))}
               </div>
@@ -300,8 +300,8 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
         >
           {isLoading ? (
             <div className='space-y-2 flex flex-col items-end'>
-              <div className='h-3 w-16 bg-zinc-100 dark:bg-zinc-800 rounded' />
-              <div className='h-8 w-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg' />
+              <div className='h-3 w-16 bg-[var(--bg-skeleton)] rounded' />
+              <div className='h-8 w-24 bg-[var(--bg-skeleton)] rounded-lg' />
             </div>
           ) : (
             sideStat && (

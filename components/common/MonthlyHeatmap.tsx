@@ -62,13 +62,13 @@ export const MonthlyHeatmap: React.FC<MonthlyHeatmapProps> = ({
         className={`${CARD_BASE} ${compact ? 'p-4' : 'p-5'} rounded-3xl ${compact ? 'h-48' : 'h-64'} flex flex-col animate-pulse ${className}`}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        <div className='h-5 w-36 bg-gray-100 dark:bg-gray-800 rounded mb-4' />
+        <div className='h-5 w-36 bg-[var(--bg-skeleton)] rounded mb-4' />
         <div className='grid grid-cols-7 gap-2'>
           {Array.from({ length: 35 }).map((_, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading, no stable id
             <div
               key={`heatmap-${i}`}
-              className='w-5 h-5 rounded-[5px] bg-gray-100 dark:bg-gray-800'
+              className='w-5 h-5 rounded-[5px] bg-[var(--bg-skeleton)]'
             />
           ))}
         </div>

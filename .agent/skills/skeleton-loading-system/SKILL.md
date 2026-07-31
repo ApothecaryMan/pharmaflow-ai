@@ -241,11 +241,11 @@ Tables should generate their own skeleton rows based on column definitions:
 
 | Variant | Light Mode | Dark Mode | Usage |
 |---|---|---|---|
-| **Primary block** | `bg-zinc-100` | `dark:bg-zinc-800` | Icons, titles, main content areas |
-| **Secondary block** | `bg-zinc-50` | `dark:bg-zinc-800/50` | Subtitles, badges, secondary info |
-| **Card container** | `bg-white` | `dark:bg-zinc-900` | Full card skeletons |
+| **Primary block** | `bg-[var(--bg-skeleton)]` | `bg-[var(--bg-skeleton)]` | Icons, titles, main content areas |
+| **Secondary block** | `bg-[var(--bg-skeleton)] opacity-60` | `bg-[var(--bg-skeleton)] opacity-60` | Subtitles, badges, secondary info |
+| **Card container** | `bg-white` | `dark:bg-(--bg-card-base)` | Full card skeletons |
 
-> **Standard palette**: Always use `zinc` variants for all skeletons. Do NOT mix `gray`/`neutral` colors.
+> **Standard palette**: Always use `bg-[var(--bg-skeleton)]` for all skeletons. It integrates with `useTheme` to provide perfectly tinted grays that match the user's color selection.
 
 ### Border & Rounding
 

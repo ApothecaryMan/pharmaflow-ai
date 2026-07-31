@@ -1050,7 +1050,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
                       <span className='material-symbols-rounded text-lg'>inventory_2</span>
                       <span className='text-sm'>{t.details?.unitsPerPack || 'Units per Pack'}</span>
                     </div>
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full'>
+                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300 bg-[var(--bg-skeleton)] px-3 py-1 rounded-full'>
                       {viewingDrug.unitsPerPack || 1}
                     </span>
                   </div>
@@ -1248,7 +1248,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
               <button
                 type='button'
                 onClick={() => setPrintQuantity(Math.max(1, printQuantity - 1))}
-                className='w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors'
+                className='w-12 h-12 rounded-xl bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors'
               >
                 <span className='material-symbols-rounded text-xl'>remove</span>
               </button>
@@ -1267,7 +1267,7 @@ export const Inventory: React.FC<InventoryProps> = ({ color, t, onViewChange }) 
               <button
                 type='button'
                 onClick={() => setPrintQuantity(Math.min(100, printQuantity + 1))}
-                className='w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors'
+                className='w-12 h-12 rounded-xl bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors'
               >
                 <span className='material-symbols-rounded text-xl'>add</span>
               </button>

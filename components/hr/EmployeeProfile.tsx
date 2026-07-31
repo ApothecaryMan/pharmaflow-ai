@@ -988,7 +988,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             )}
 
             {/* Date Filter */}
-            <div className='flex bg-zinc-100 dark:bg-zinc-800/50 rounded-xl p-1 border border-zinc-200/50 dark:border-zinc-700/50'>
+            <div className='flex bg-[var(--bg-skeleton)]/50 rounded-xl p-1 border border-zinc-200/50 dark:border-zinc-700/50'>
               {(['today', 'week', 'month', 'year', 'all'] as const).map((period) => (
                 <button
                   key={period}

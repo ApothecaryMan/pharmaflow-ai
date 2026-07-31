@@ -584,7 +584,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                       setSelectedPurchase(null);
                       setRejectReason('');
                     }}
-                    className='flex-1 py-3.5 rounded-2xl font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm border border-gray-200 dark:border-gray-700'
+                    className='flex-1 py-3.5 rounded-2xl font-bold text-gray-700 dark:text-gray-200 bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm border border-gray-200 dark:border-gray-700'
                     type='button'
                   >
                     <span className='material-symbols-rounded text-lg'>cancel</span>

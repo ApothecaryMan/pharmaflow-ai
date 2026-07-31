@@ -142,7 +142,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
             </h3>
 
             <div className='space-y-4'>
-              <div className='flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-transparent dark:border-(--border-divider)'>
+              <div className='flex items-center justify-between p-3 bg-[var(--bg-skeleton)] opacity-60 rounded-xl border border-transparent dark:border-(--border-divider)'>
                 <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   {pt.enabled || (language === 'AR' ? 'تفعيل QZ Tray' : 'QZ Tray Enabled')}
                 </span>
@@ -153,7 +153,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                 />
               </div>
 
-              <div className='flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-transparent dark:border-(--border-divider)'>
+              <div className='flex items-center justify-between p-3 bg-[var(--bg-skeleton)] opacity-60 rounded-xl border border-transparent dark:border-(--border-divider)'>
                 <StatusBadge />
                 <div className='flex items-center gap-2'>
                   {status === 'disconnected' && settings.enabled && (
@@ -304,7 +304,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                     className={`h-[40px] px-4 text-xs font-bold rounded-xl transition-colors ${
                       settings.receiptPrinter
                         ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
-                        : 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
+                        : 'bg-[var(--bg-skeleton)] text-gray-400 cursor-not-allowed'
                     }`}
                     type='button'
                   >
@@ -356,7 +356,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
                     className={`h-[40px] px-4 text-xs font-bold rounded-xl transition-colors ${
                       settings.labelPrinter
                         ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
-                        : 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
+                        : 'bg-[var(--bg-skeleton)] text-gray-400 cursor-not-allowed'
                     }`}
                     type='button'
                   >

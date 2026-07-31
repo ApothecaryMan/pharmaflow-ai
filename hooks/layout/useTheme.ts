@@ -135,6 +135,7 @@ export const useTheme = (
         const menuPct = vividBg === 'vivid' ? 8 : 3; // Menus need slightly more tint to pop out
         const navbarPct = vividBg === 'vivid' ? 6 : 2.5; // Navbar tint
         const borderPct = vividBg === 'vivid' ? 15 : 6; // Borders need a strong tint to be visible
+        const skeletonPct = vividBg === 'vivid' ? 6 : 2;
         
         root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} ${surfacePct}%, #f8fafc)`);
         root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} ${statusPct}%, var(--color-gray-200))`); // Hardcode base to avoid double tint
@@ -146,6 +147,7 @@ export const useTheme = (
         root.style.setProperty('--bg-menu-hover', `color-mix(in srgb, ${hex} ${menuPct + 5}%, var(--color-gray-100))`);
         root.style.setProperty('--bg-navbar', `color-mix(in srgb, ${hex} ${navbarPct}%, #ffffff)`);
         root.style.setProperty('--bg-navbar-hover', `color-mix(in srgb, ${hex} ${navbarPct + 5}%, var(--color-gray-100))`);
+        root.style.setProperty('--bg-skeleton', `color-mix(in srgb, ${hex} ${skeletonPct}%, #f3f4f6)`);
         
         // Tint Borders so they don't disappear into the tinted background
         root.style.setProperty('--border-divider', `color-mix(in srgb, ${hex} ${borderPct}%, var(--color-gray-200))`);
@@ -178,6 +180,7 @@ export const useTheme = (
     } else {
       root.style.setProperty('--bg-page-surface', '');
       root.style.setProperty('--bg-statusbar', '');
+      root.style.setProperty('--bg-skeleton', darkMode ? '#3f3f46' : '#f3f4f6');
       root.style.setProperty('--bg-secondary', '');
       root.style.setProperty('--bg-card-base', '');
       root.style.setProperty('--bg-internal-card', '');

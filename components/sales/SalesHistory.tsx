@@ -371,7 +371,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const hasImage = !!employee?.image;
           return (
             <div className='flex items-center gap-1.5'>
-              <div className='w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
+              <div className='w-5 h-5 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center shrink-0 overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
                 {hasImage ? (
                   <img src={employee.image} className='w-full h-full object-cover' alt='' />
                 ) : (

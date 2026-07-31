@@ -43,7 +43,7 @@ const CountdownTimer = ({ expiresAt, language }: { expiresAt: string; language: 
   return (
     <div
       dir='ltr'
-      className='text-sm font-bold font-mono text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1.5 rounded-lg inline-block border border-zinc-200 dark:border-zinc-700/50'
+      className='text-sm font-bold font-mono text-zinc-800 dark:text-zinc-200 bg-[var(--bg-skeleton)]/50 px-3 py-1.5 rounded-lg inline-block border border-zinc-200 dark:border-zinc-700/50'
     >
       {timeLeft}
     </div>
@@ -492,21 +492,21 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
                   <button
                     type='button'
                     onClick={() => setExpiresIn(1)}
-                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === 1 ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === 1 ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-[var(--bg-skeleton)] dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
                   >
                     {t.oneHour}
                   </button>
                   <button
                     type='button'
                     onClick={() => setExpiresIn(24)}
-                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === 24 ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === 24 ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-[var(--bg-skeleton)] dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
                   >
                     {t.oneDay}
                   </button>
                   <button
                     type='button'
                     onClick={() => setExpiresIn(null)}
-                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === null ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === null ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-[var(--bg-skeleton)] dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
                   >
                     {t.noLimit}
                   </button>
@@ -575,7 +575,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
  100% { left: 100%; width: 35%; }
  }
  `}</style>
-              <div className='w-48 h-1.5 rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800 mb-4 relative'>
+              <div className='w-48 h-1.5 rounded-full overflow-hidden bg-[var(--bg-skeleton)] mb-4 relative'>
                 <div
                   className='absolute top-0 h-full rounded-full'
                   style={{
@@ -618,8 +618,8 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
 
           {phase === 'setup' && acceptedEmployee && (
             <form onSubmit={handleSetupLocalCredentials} className='space-y-4 '>
-              <div className='p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700/50 mb-6 flex items-center gap-4'>
-                <div className='w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center font-bold text-lg text-zinc-500'>
+              <div className='p-4 bg-[var(--bg-skeleton)] opacity-60 rounded-xl border border-zinc-200 dark:border-zinc-700/50 mb-6 flex items-center gap-4'>
+                <div className='w-12 h-12 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center font-bold text-lg text-zinc-500'>
                   {acceptedEmployee.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -646,7 +646,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({
                   <input
                     readOnly
                     value={acceptedEmployee.username || acceptedEmployee.employee_code}
-                    className='w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold tracking-wider cursor-not-allowed opacity-70'
+                    className='w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-skeleton)] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold tracking-wider cursor-not-allowed opacity-70'
                   />
                   <p className='mt-2 text-xs text-zinc-500 flex items-start gap-1'>
                     <span className='material-symbols-rounded text-[14px]'>info</span>

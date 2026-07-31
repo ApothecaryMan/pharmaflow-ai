@@ -345,7 +345,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
         }
         rightContent={
           <div className='flex items-center gap-3'>
-            <span className='flex items-center gap-3 px-3 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
+            <span className='flex items-center gap-3 px-3 h-10 rounded-xl bg-[var(--bg-skeleton)] border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
               <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none shrink-0'>
                 {t.employeeList.globalView}
               </span>
@@ -357,7 +357,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                 <button
                   type='button'
                   onClick={() => setIsInvitationListOpen(true)}
-                  className='p-2.5 h-10 w-10 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all active:scale-95 cursor-pointer'
+                  className='p-2.5 h-10 w-10 flex items-center justify-center rounded-xl bg-[var(--bg-skeleton)] border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all active:scale-95 cursor-pointer'
                   title={language === 'AR' ? 'عرض الدعوات' : 'View Invitations'}
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>

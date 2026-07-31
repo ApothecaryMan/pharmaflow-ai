@@ -187,7 +187,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
         >
           <span className='invisible whitespace-pre'>{value}</span>
           <span
-            className={`inline-flex items-center px-1.5 py-1 ms-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-[11px] font-black text-gray-500 dark:text-gray-400 shadow-sm border border-transparent dark:border-zinc-700 animate-in fade-in duration-200 ${caps ? 'uppercase' : ''}`}
+            className={`inline-flex items-center px-1.5 py-1 ms-1 rounded-lg bg-[var(--bg-skeleton)] text-[11px] font-black text-gray-500 dark:text-gray-400 shadow-sm border border-transparent dark:border-zinc-700 animate-in fade-in duration-200 ${caps ? 'uppercase' : ''}`}
           >
             {caps ? ghost.toUpperCase() : ghost}
             <span className='material-symbols-rounded text-[14px] ms-1 opacity-70'>

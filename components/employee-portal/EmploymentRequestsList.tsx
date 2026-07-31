@@ -190,7 +190,7 @@ export function EmploymentRequestsList({
                   {request.orgName || 'Pharmacy Organization'}
                 </h4>
                 {request.branchName && (
-                  <p className='text-sm font-medium text-(--text-primary) mb-2 flex items-center justify-center sm:justify-start gap-1.5 bg-zinc-100 dark:bg-zinc-800/50 w-fit px-2.5 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700'>
+                  <p className='text-sm font-medium text-(--text-primary) mb-2 flex items-center justify-center sm:justify-start gap-1.5 bg-[var(--bg-skeleton)]/50 w-fit px-2.5 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700'>
                     <span
                       className='material-symbols-rounded text-emerald-500'
                       style={{ fontSize: '16px' }}
@@ -201,7 +201,7 @@ export function EmploymentRequestsList({
                   </p>
                 )}
                 <div className='flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-2 text-xs sm:text-sm text-(--text-secondary)'>
-                  <span className='inline-flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[11px] sm:text-xs uppercase tracking-wide bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'>
+                  <span className='inline-flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[11px] sm:text-xs uppercase tracking-wide bg-[var(--bg-skeleton)] text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'>
                     {request.role}
                   </span>
                   {request.sentByName && (

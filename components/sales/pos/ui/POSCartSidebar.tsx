@@ -781,7 +781,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       money.toSmallestUnit(parseFloat(amountPaid) || 0) >=
                       money.toSmallestUnit(finalTotal)
                         ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700`
-                        : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                        : 'bg-[var(--bg-skeleton)] border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     <span className='text-[8px] text-gray-500 uppercase font-bold text-center'>
@@ -827,7 +827,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                       setIsCheckoutMode(false);
                       setAmountPaid('');
                     }}
-                    className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
+                    className='w-9 rounded-xl bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
                     type='button'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
@@ -912,7 +912,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                     onClick={() => {
                       setIsDeliveryMode(false);
                     }}
-                    className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
+                    className='w-9 rounded-xl bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
                     type='button'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>

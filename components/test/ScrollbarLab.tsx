@@ -479,7 +479,7 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
                 className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer active:scale-95 ${
                   copiedId === design.id
                     ? 'bg-emerald-500 text-white shadow-sm'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    : 'bg-[var(--bg-skeleton)] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                 }`}
                 type='button'
               >

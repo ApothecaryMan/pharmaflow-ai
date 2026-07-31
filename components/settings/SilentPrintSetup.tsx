@@ -97,7 +97,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
         type='button'
       >
         <div className='flex items-center gap-3'>
-          <div className='p-1.5 rounded-md bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300'>
+          <div className='p-1.5 rounded-md bg-[var(--bg-skeleton)] text-gray-700 dark:text-gray-300'>
             <span className='material-symbols-rounded text-[20px]'>rocket_launch</span>
           </div>
           <div>
@@ -120,7 +120,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
           <div className='space-y-4 mt-3'>
             {/* Step 1 */}
             <div className='flex gap-3'>
-              <div className='flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs'>
+              <div className='flex-shrink-0 w-6 h-6 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs'>
                 1
               </div>
               <div className='space-y-1.5 flex-1'>
@@ -144,7 +144,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
 
             {/* Step 2 */}
             <div className='flex gap-3'>
-              <div className='flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs'>
+              <div className='flex-shrink-0 w-6 h-6 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs'>
                 2
               </div>
               <div className='space-y-1.5 flex-1'>
@@ -164,7 +164,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
 
             {/* Step 3 */}
             <div className='flex gap-3'>
-              <div className='flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs'>
+              <div className='flex-shrink-0 w-6 h-6 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs'>
                 3
               </div>
               <div className='space-y-1.5 flex-1'>

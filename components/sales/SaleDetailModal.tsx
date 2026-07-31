@@ -362,10 +362,10 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   <div className='animate-pulse space-y-2 p-2'>
                     {[1, 2, 3].map((i) => (
                       <div key={i} className='bg-gray-50 dark:bg-white/[0.03] rounded-2xl p-3 border border-gray-100 dark:border-white/5 flex gap-4'>
-                        <div className='w-10 h-10 rounded-xl bg-gray-200 dark:bg-zinc-800 shrink-0' />
+                        <div className='w-10 h-10 rounded-xl bg-[var(--bg-skeleton)] shrink-0' />
                         <div className='flex-1 space-y-2'>
-                          <div className='h-4 bg-gray-200 dark:bg-zinc-800 rounded w-1/2' />
-                          <div className='h-3 bg-gray-100 dark:bg-zinc-800/50 rounded w-1/3' />
+                          <div className='h-4 bg-[var(--bg-skeleton)] rounded w-1/2' />
+                          <div className='h-3 bg-[var(--bg-skeleton)]/50 rounded w-1/3' />
                         </div>
                       </div>
                     ))}

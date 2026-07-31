@@ -111,7 +111,7 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ titl
           {title}
         </div>
         {/* Horizontal / Vertical layout selector */}
-        <div className='flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg text-[10px]'>
+        <div className='flex bg-[var(--bg-skeleton)] p-0.5 rounded-lg text-[10px]'>
           <button
             onClick={() => setLegendLayout('horizontal')}
             className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${

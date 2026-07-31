@@ -44,14 +44,14 @@ export const AnimatedCounterLab = () => {
               Random Value
             </button>
             <button
-              className='flex-1 min-w-[120px] py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95'
+              className='flex-1 min-w-[120px] py-2.5 bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95'
               onClick={() => setValue(0)}
               type='button'
             >
               Reset to 0
             </button>
             <button
-              className='flex-1 min-w-[120px] py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95'
+              className='flex-1 min-w-[120px] py-2.5 bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95'
               onClick={() => setValue(500)}
               type='button'
             >

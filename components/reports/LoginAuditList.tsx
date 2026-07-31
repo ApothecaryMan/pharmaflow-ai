@@ -403,7 +403,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
                 className={`w-6 h-6 flex items-center justify-center shrink-0 ${
                   isAdmin
                     ? ''
-                    : 'rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 text-[10px] font-bold border border-gray-200 dark:border-gray-700 overflow-hidden'
+                    : 'rounded-full bg-[var(--bg-skeleton)] text-gray-500 text-[10px] font-bold border border-gray-200 dark:border-gray-700 overflow-hidden'
                 }`}
               >
                 {isAdmin ? (

@@ -169,7 +169,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
                   onClick={() => setSelectedPlan(plan.id as any)}
                   className={`plan-card w-full p-4 rounded-2xl border flex items-center text-right ${
                     selectedPlan === plan.id
-                      ? 'border-zinc-800 dark:border-white bg-zinc-50 dark:bg-zinc-800/50'
+                      ? 'border-zinc-800 dark:border-white bg-[var(--bg-skeleton)] opacity-60'
                       : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700'
                   }`}
                   style={

@@ -162,18 +162,16 @@ export const SmallCard = ({
   // 3. Icon Sub-component
   const iconSection = (
     <div className='relative shrink-0 w-14 h-16 flex items-center justify-center ms-2'>
-      <div className='absolute inset-0 bg-zinc-200/60 dark:bg-zinc-800/40 rounded-lg rotate-[-3deg] translate-x-1 translate-y-1' />
-      <div className='absolute inset-0 bg-zinc-100 dark:bg-zinc-800/60 border border-(--border-divider) rounded-lg shadow-[4px_6px_12px_rgba(0,0,0,0.06)] rotate-[2deg] ltr:-translate-x-3 rtl:translate-x-3 -translate-y-0.5 flex items-center justify-center z-10'>
-        {!isLoading && (
-          <span
-            className='material-symbols-rounded text-zinc-600 dark:text-zinc-400 select-none'
-            style={{ fontSize: '36px', lineHeight: 1 }}
-          >
-            {icon}
-          </span>
-        )}
+      <div className='absolute inset-0 bg-zinc-200/60 dark:bg-black/20 rounded-lg rotate-[-3deg] translate-x-1 translate-y-1' />
+      <div className='absolute inset-0 bg-zinc-100 dark:bg-zinc-800 border border-(--border-divider) rounded-lg shadow-[4px_6px_12px_rgba(0,0,0,0.06)] rotate-[2deg] ltr:-translate-x-3 rtl:translate-x-3 -translate-y-0.5 flex items-center justify-center z-10'>
+        <span
+          className='material-symbols-rounded text-zinc-600 dark:text-zinc-400 select-none'
+          style={{ fontSize: '36px', lineHeight: 1 }}
+        >
+          {icon}
+        </span>
       </div>
-      {!isLoading && iconOverlay && (
+      {iconOverlay && (
         <div className='absolute -top-2 ltr:-left-4 rtl:-right-4 z-20 scale-90 drop-shadow-sm'>
           {iconOverlay}
         </div>
@@ -200,7 +198,7 @@ export const SmallCard = ({
 
         <div className='flex flex-col'>
           {isLoading ? (
-            <div className='h-8 w-20 bg-gray-200 dark:bg-zinc-800 rounded-lg animate-pulse' />
+            <div className='h-8 w-20 bg-[var(--bg-skeleton)] rounded-lg animate-pulse' />
           ) : (
             <div className='flex flex-col'>
               <div className='flex items-center gap-2 group/val'>

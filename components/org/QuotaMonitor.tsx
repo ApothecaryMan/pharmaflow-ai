@@ -27,7 +27,7 @@ const ProgressBar: React.FC<{
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
           <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-500 ${isLoading ? 'animate-pulse' : ''}`}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-skeleton)] text-zinc-500 ${isLoading ? 'animate-pulse' : ''}`}
           >
             {!isLoading && (
               <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>
@@ -36,14 +36,14 @@ const ProgressBar: React.FC<{
             )}
           </div>
           {isLoading ? (
-            <div className='h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse' />
+            <div className='h-4 w-24 bg-[var(--bg-skeleton)] rounded animate-pulse' />
           ) : (
             <span className='text-sm font-semibold text-zinc-700 dark:text-zinc-200'>{label}</span>
           )}
         </div>
         <div className='text-xs font-bold font-mono tracking-tighter'>
           {isLoading ? (
-            <div className='h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded animate-pulse' />
+            <div className='h-4 w-12 bg-[var(--bg-skeleton)] opacity-60 rounded animate-pulse' />
           ) : (
             <>
               <span className={isNearLimit ? 'text-red-500' : 'text-zinc-900 dark:text-zinc-100'}>
@@ -60,7 +60,7 @@ const ProgressBar: React.FC<{
       </div>
       <div className='h-2 w-full bg-(--border-divider) rounded-full overflow-hidden p-0.5'>
         <div
-          className={`h-full rounded-full transition-all duration-700 ease-out shadow-sm ${isLoading ? 'bg-zinc-200 dark:bg-zinc-700 animate-pulse' : isNearLimit ? 'bg-red-500' : colorClass}`}
+          className={`h-full rounded-full transition-all duration-700 ease-out shadow-sm ${isLoading ? 'bg-[var(--bg-skeleton)] animate-pulse' : isNearLimit ? 'bg-red-500' : colorClass}`}
           style={{ width: isLoading ? '100%' : `${percentage}%` }}
         />
       </div>

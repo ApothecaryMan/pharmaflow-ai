@@ -8,16 +8,16 @@ export const KPICardSkeleton = () => (
   <div className='bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm animate-pulse'>
     <div className='flex items-center gap-4'>
       {/* Icon Placeholder */}
-      <div className='w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800' />
+      <div className='w-12 h-12 rounded-2xl bg-[var(--bg-skeleton)]' />
 
       {/* Content Placeholder */}
       <div className='space-y-2 flex-1'>
         {/* Title */}
-        <div className='h-3 w-24 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+        <div className='h-3 w-24 bg-[var(--bg-skeleton)] opacity-60 rounded' />
         {/* Value */}
-        <div className='h-6 w-20 bg-zinc-100 dark:bg-zinc-800 rounded' />
+        <div className='h-6 w-20 bg-[var(--bg-skeleton)] rounded' />
         {/* Subvalue/Trend */}
-        <div className='h-3 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+        <div className='h-3 w-16 bg-[var(--bg-skeleton)] opacity-60 rounded' />
       </div>
     </div>
   </div>
@@ -41,13 +41,13 @@ export const KPIGridSkeleton = () => (
 export const SegmentedProgressSkeleton = () => (
   <div className='p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse space-y-4'>
     <div className='flex justify-between items-center'>
-      <div className='h-4 w-32 bg-zinc-100 dark:bg-zinc-800 rounded' />
-      <div className='h-4 w-16 bg-zinc-100 dark:bg-zinc-800 rounded' />
+      <div className='h-4 w-32 bg-[var(--bg-skeleton)] rounded' />
+      <div className='h-4 w-16 bg-[var(--bg-skeleton)] rounded' />
     </div>
-    <div className='h-8 w-full bg-zinc-50 dark:bg-zinc-800/50 rounded-xl' />
+    <div className='h-8 w-full bg-[var(--bg-skeleton)] opacity-60 rounded-xl' />
     <div className='grid grid-cols-2 gap-4'>
-      <div className='h-10 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl' />
-      <div className='h-10 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl' />
+      <div className='h-10 bg-[var(--bg-skeleton)] opacity-60 rounded-xl' />
+      <div className='h-10 bg-[var(--bg-skeleton)] opacity-60 rounded-xl' />
     </div>
   </div>
 );

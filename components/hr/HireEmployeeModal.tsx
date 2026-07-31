@@ -277,7 +277,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
                 </div>
               </div>
 
-              <div className='w-full h-px bg-zinc-200 dark:bg-zinc-800/50' />
+              <div className='w-full h-px bg-[var(--bg-skeleton)]/50' />
 
               <div className='flex flex-col gap-1'>
                 <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>

@@ -428,7 +428,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               color='gray'
               locale={language === 'AR' ? 'ar-EG' : 'en-US'}
             />
-            <span className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
+            <span className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg-skeleton)]/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
               <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
                 {t.globalView || 'Global'}
               </span>

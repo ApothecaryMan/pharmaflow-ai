@@ -194,7 +194,7 @@ export function ComboBox<T>({
                     className={`w-full text-left rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-between
                       ${
                         isSelected
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold'
+                          ? 'bg-[var(--bg-skeleton)] text-gray-900 dark:text-white font-bold'
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
                       }`}
                     style={{ padding: itemPaddingClasses }}

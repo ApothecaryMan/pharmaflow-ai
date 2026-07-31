@@ -425,7 +425,7 @@ const PLRow: React.FC<{
     >
       {isLoading ? (
         <div
-          className={`h-4 ${_isFinal ? 'h-8 w-32' : 'w-20'} bg-gray-100 dark:bg-gray-800 rounded-md animate-pulse`}
+          className={`h-4 ${_isFinal ? 'h-8 w-32' : 'w-20'} bg-[var(--bg-skeleton)] rounded-md animate-pulse`}
         />
       ) : (
         <CurrencyDisplay value={value} />

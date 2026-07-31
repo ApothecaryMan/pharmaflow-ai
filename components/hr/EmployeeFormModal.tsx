@@ -1291,7 +1291,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                         <button
                           type='button'
                           onClick={() => setFormData({ ...formData, nationalIdCard: undefined })}
-                          className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                          className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                         >
                           <span
                             className='material-symbols-rounded'
@@ -1364,7 +1364,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                             onClick={() =>
                               setFormData({ ...formData, nationalIdCardBack: undefined })
                             }
-                            className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                            className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                           >
                             <span
                               className='material-symbols-rounded'
@@ -1446,7 +1446,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                             onClick={() =>
                               setFormData({ ...formData, mainSyndicateCard: undefined })
                             }
-                            className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                            className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                           >
                             <span
                               className='material-symbols-rounded'
@@ -1519,7 +1519,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                               onClick={() =>
                                 setFormData({ ...formData, subSyndicateCard: undefined })
                               }
-                              className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                              className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                             >
                               <span
                                 className='material-symbols-rounded'

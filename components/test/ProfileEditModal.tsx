@@ -714,7 +714,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                           onClick={() => setEditForm({ ...editForm, nationalIdCard: undefined })}
                           className={`absolute -top-2.5 ${
                             language === 'AR' ? '-left-2.5' : '-right-2.5'
-                          } w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center`}
+                          } w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center`}
                         >
                           <span
                             className='material-symbols-rounded'
@@ -786,7 +786,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                           }
                           className={`absolute -top-2.5 ${
                             language === 'AR' ? '-left-2.5' : '-right-2.5'
-                          } w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center `}
+                          } w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center `}
                         >
                           <span
                             className='material-symbols-rounded'
@@ -867,7 +867,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                           onClick={() => setEditForm({ ...editForm, mainSyndicateCard: undefined })}
                           className={`absolute -top-2.5 ${
                             language === 'AR' ? '-left-2.5' : '-right-2.5'
-                          } w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center`}
+                          } w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center`}
                         >
                           <span
                             className='material-symbols-rounded'
@@ -937,7 +937,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                           onClick={() => setEditForm({ ...editForm, subSyndicateCard: undefined })}
                           className={`absolute -top-2.5 ${
                             language === 'AR' ? '-left-2.5' : '-right-2.5'
-                          } w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center`}
+                          } w-6 h-6 bg-[var(--bg-skeleton)] ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 flex items-center justify-center`}
                         >
                           <span
                             className='material-symbols-rounded'

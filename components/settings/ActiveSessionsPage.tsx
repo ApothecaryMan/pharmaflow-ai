@@ -720,7 +720,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                           className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${status === 'online' ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : status === 'stale' ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'} ${
                                             hasEmployee
                                               ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
-                                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                              : 'bg-[var(--bg-skeleton)] text-gray-500 dark:text-gray-400'
                                           }`}
                                         >
                                           {hasEmployee
@@ -821,7 +821,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                                           className='w-6 h-6 rounded-full object-cover border border-(--border-divider)'
                                                         />
                                                       ) : (
-                                                        <div className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'>
+                                                        <div className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-[var(--bg-skeleton)] text-gray-500 dark:text-gray-400'>
                                                           {prevName.charAt(0).toUpperCase()}
                                                         </div>
                                                       )}

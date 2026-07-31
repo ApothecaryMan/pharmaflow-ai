@@ -481,7 +481,7 @@ const PrescriptionAddButton: React.FC<{
       <div className='flex flex-col items-end justify-center'>
         {/* Units / Stock status */}
         {hasUnits ? (
-          <span className='text-[9px] text-gray-500 dark:text-gray-400 font-medium mt-1 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-sm whitespace-nowrap'>
+          <span className='text-[9px] text-gray-500 dark:text-gray-400 font-medium mt-1 bg-[var(--bg-skeleton)] px-1.5 py-0.5 rounded-sm whitespace-nowrap'>
             {drug.unitsPerPack} {isArabic ? 'وحدة' : 'Units'}
           </span>
         ) : (
@@ -640,7 +640,7 @@ const PrescriptionSummary: React.FC<{
                     </div>
                   </div>
 
-                  <div className='flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg p-0.5 shrink-0'>
+                  <div className='flex items-center gap-0.5 bg-[var(--bg-skeleton)]/50 rounded-lg p-0.5 shrink-0'>
                     <button
                       onClick={() => onUpdateQuantity(item.drug.id, -1)}
                       disabled={item.quantity <= 1}

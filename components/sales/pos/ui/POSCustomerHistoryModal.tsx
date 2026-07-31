@@ -137,7 +137,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
           <div className='flex items-center justify-between'>
             {/* Left: Avatar and Name */}
             <div className='flex items-center gap-3 w-1/3 min-w-0'>
-              <div className='w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-300 shrink-0 border border-zinc-200/50 dark:border-zinc-700/50'>
+              <div className='w-9 h-9 rounded-full bg-[var(--bg-skeleton)] flex items-center justify-center text-zinc-500 dark:text-zinc-300 shrink-0 border border-zinc-200/50 dark:border-zinc-700/50'>
                 <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                   person
                 </span>
@@ -304,7 +304,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                                     <span>
                                       {item.batchAllocations?.[0]?.batchNumber || '---'}
                                     </span>
-                                    <span className='w-px h-2 bg-zinc-200 dark:bg-zinc-700' />
+                                    <span className='w-px h-2 bg-[var(--bg-skeleton)]' />
                                     <span className='text-zinc-400 dark:text-zinc-500'>
                                       {item.batchAllocations?.[0]?.expiryDate
                                         ? format(
@@ -395,7 +395,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                     >
                       <div className='flex items-center justify-between w-full'>
                         <div className='flex items-center gap-3 min-w-0'>
-                          <div className='w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-zinc-100 font-black text-[11px] shrink-0 border border-zinc-200/50 dark:border-zinc-700/50 tabular-nums'>
+                          <div className='w-8 h-8 rounded-lg bg-[var(--bg-skeleton)] flex items-center justify-center text-zinc-900 dark:text-zinc-100 font-black text-[11px] shrink-0 border border-zinc-200/50 dark:border-zinc-700/50 tabular-nums'>
                             {frequency}
                           </div>
                           <div className='flex flex-col min-w-0'>

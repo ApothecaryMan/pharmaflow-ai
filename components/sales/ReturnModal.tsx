@@ -322,7 +322,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex items-center gap-1'>
                             {toggleBtn}
                             {isSelected ? (
-                              <div className='flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 border border-gray-200 dark:border-gray-700 shadow-xs'>
+                              <div className='flex items-center gap-1 bg-[var(--bg-skeleton)] rounded-full p-0.5 border border-gray-200 dark:border-gray-700 shadow-xs'>
                                 <button onClick={() => updateItemQuantity(item.saleItemId, Math.max(1, selectedQty - 1))} disabled={selectedQty <= 1} className='w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none' type='button'>
                                   <span className='material-symbols-rounded text-lg'>remove</span>
                                 </button>
@@ -451,7 +451,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300'>
                   {t.returns.itemsToReturn}
                 </h4>
-                <span className='text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full'>
+                <span className='text-xs font-medium text-gray-500 bg-[var(--bg-skeleton)] px-2 py-0.5 rounded-full'>
                   {selectedItems.size} {selectedItems.size === 1 ? t.returns.item : t.returns.items}
                 </span>
               </div>

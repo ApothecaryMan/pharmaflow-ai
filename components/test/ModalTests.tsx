@@ -798,7 +798,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color: _color, t: _t, la
   // Sample header action for testing
   const sampleHeaderAction = (
     <button
-      className='px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+      className='px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
       type='button'
     >
       Action

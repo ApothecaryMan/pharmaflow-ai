@@ -443,7 +443,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                     <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.id || 'ID'}
                     </span>
-                    <div className='w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
+                    <div className='w-full p-3 rounded-xl bg-[var(--bg-skeleton)] border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
                       {editForm.supplierCode ||
                         (language === 'AR' ? 'توليد تلقائي...' : 'Auto-generated...')}
                     </div>
@@ -622,7 +622,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
               <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 {t.form?.id || 'ID'}
               </span>
-              <div className='w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
+              <div className='w-full p-3 rounded-xl bg-[var(--bg-skeleton)] border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
                 {editForm.supplierCode || editForm.id}
               </div>
             </div>

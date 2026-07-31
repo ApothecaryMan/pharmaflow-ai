@@ -1076,7 +1076,7 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
                     {displayedRange.start}
                   </span>
                   <span
-                    className='font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800'
+                    className='font-medium px-2 py-0.5 rounded-full bg-[var(--bg-skeleton)]'
                     style={{ color }}
                   >
                     {displayedRange.count} {language === 'AR' ? 'سجل' : 'records'}

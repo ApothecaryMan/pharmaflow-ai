@@ -235,7 +235,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
               className={`h-[40px] flex-1 px-4 text-xs font-bold rounded-xl transition-colors ${
                 selectedReceiptPrinter && printerStatus !== 'testing'
                   ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100'
-                  : 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
+                  : 'bg-[var(--bg-skeleton)] text-gray-400 cursor-not-allowed'
               }`}
               type='button'
             >
@@ -279,8 +279,8 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                     onClick={() => setPreferredInterface(opt.value)}
                     className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
                       isSelected
-                        ? 'border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800'
-                        : 'border-transparent bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                        ? 'border-zinc-300 dark:border-zinc-600 bg-[var(--bg-skeleton)]'
+                        : 'border-transparent bg-[var(--bg-skeleton)] opacity-60 hover:bg-gray-100 dark:hover:bg-zinc-800'
                     }`}
                     type='button'
                   >
@@ -320,7 +320,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
             </h3>
 
             <div className='space-y-3'>
-              <div className='flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-transparent dark:border-(--border-divider)'>
+              <div className='flex items-center justify-between p-3 bg-[var(--bg-skeleton)] opacity-60 rounded-xl border border-transparent dark:border-(--border-divider)'>
                 <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   {dt.version}
                 </span>
@@ -360,7 +360,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
               {(updateStatus === 'idle' || updateStatus === 'up_to_date' || updateStatus === 'error') && (
                 <button
                   onClick={checkUpdates}
-                  className='w-full py-2.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all'
+                  className='w-full py-2.5 bg-[var(--bg-skeleton)] hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all'
                   type='button'
                 >
                   <span className='material-symbols-rounded text-[18px]'>update</span>
@@ -370,7 +370,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
               {updateStatus === 'checking' && (
                 <button
                   disabled
-                  className='w-full py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-400 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed'
+                  className='w-full py-2.5 bg-[var(--bg-skeleton)] text-gray-400 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed'
                   type='button'
                 >
                   <span className='material-symbols-rounded text-[18px] animate-spin'>sync</span>
@@ -404,7 +404,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className='p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-transparent hover:border-(--border-divider) transition-all group'
+                    className='p-3 bg-[var(--bg-skeleton)] opacity-60 rounded-xl border border-transparent hover:border-(--border-divider) transition-all group'
                   >
                     <span className={`material-symbols-rounded text-[18px] text-gray-400 group-hover:text-${color}-500 transition-colors mb-1 block`}>
                       {item.icon}
@@ -429,7 +429,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
 
       {/* Browser Version Banner */}
       <div className='mt-6'>
-        <div className='p-5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4'>
+        <div className='p-5 bg-[var(--bg-skeleton)] opacity-60 border border-gray-200 dark:border-zinc-700/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div className='flex items-center gap-4'>
             <div className='w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 flex items-center justify-center flex-shrink-0'>
               <span className='material-symbols-rounded text-[24px] text-gray-500 dark:text-gray-400'>

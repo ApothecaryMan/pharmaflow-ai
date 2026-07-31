@@ -74,7 +74,7 @@ function badgeClass(method: string) {
     return 'bg-amber-100 dark:bg-amber-900/35 text-amber-700 dark:text-amber-400';
   if (method === 'DELETE')
     return 'bg-rose-100 dark:bg-rose-900/35 text-rose-700 dark:text-rose-400';
-  return 'bg-gray-100 dark:bg-gray-800/40 text-gray-600 dark:text-gray-400';
+  return 'bg-[var(--bg-skeleton)]/40 text-gray-600 dark:text-gray-400';
 }
 
 function buildChartData(metrics: EndpointMetrics[], sortKey: keyof EndpointMetrics, limit = 10) {

@@ -266,15 +266,15 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           <div className='flex gap-3'>
             {isLoading ? (
               <>
-                <div className='h-pageheader px-4 rounded-lg bg-zinc-200 dark:bg-zinc-700 animate-pulse flex items-center gap-2'>
+                <div className='h-pageheader px-4 rounded-lg bg-[var(--bg-skeleton)] animate-pulse flex items-center gap-2'>
                   <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
                   <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
-                <div className='h-pageheader px-4 rounded-lg bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden md:flex items-center gap-2'>
+                <div className='h-pageheader px-4 rounded-lg bg-[var(--bg-skeleton)] animate-pulse hidden md:flex items-center gap-2'>
                   <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
                   <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
-                <div className='h-pageheader px-4 rounded-lg bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden lg:flex items-center gap-2'>
+                <div className='h-pageheader px-4 rounded-lg bg-[var(--bg-skeleton)] animate-pulse hidden lg:flex items-center gap-2'>
                   <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
                   <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
@@ -360,10 +360,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </p>
             <div className='flex items-center gap-3 mb-4'>
               <div
-                className={`w-3 h-3 rounded-full ${isLoading ? 'bg-zinc-200 dark:bg-zinc-700 animate-pulse' : currentShift ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+                className={`w-3 h-3 rounded-full ${isLoading ? 'bg-[var(--bg-skeleton)] animate-pulse' : currentShift ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
               ></div>
               <h3
-                className={`text-2xl font-bold ${isLoading ? 'h-8 w-24 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                className={`text-2xl font-bold ${isLoading ? 'h-8 w-24 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
               >
                 {!isLoading &&
                   (currentShift ? t.cashRegister.status.open : t.cashRegister.status.closed)}
@@ -377,7 +377,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.messages.started}:
                   </span>
                   {isLoading ? (
-                    <div className='h-5 w-24 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
+                    <div className='h-5 w-24 bg-[var(--bg-skeleton)] rounded-lg animate-pulse' />
                   ) : (
                     <>
                       <span className='badge-neutral gap-1.5'>
@@ -426,7 +426,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.messages.by}:
                   </span>
                   {isLoading ? (
-                    <div className='h-5 w-32 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
+                    <div className='h-5 w-32 bg-[var(--bg-skeleton)] rounded-lg animate-pulse' />
                   ) : (
                     <span className='badge-purple gap-1.5'>
                       <span className='material-symbols-rounded'>person</span>
@@ -442,7 +442,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.messages.id}:
                   </span>
                   {isLoading ? (
-                    <div className='h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
+                    <div className='h-5 w-16 bg-[var(--bg-skeleton)] rounded-lg animate-pulse' />
                   ) : (
                     <span className='badge-neutral gap-1.5'>
                       <span className='material-symbols-rounded'>tag</span>
@@ -473,7 +473,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     </p>
                   </div>
                   <div
-                    className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-center gap-2 ${isLoading ? 'h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-center gap-2 ${isLoading ? 'h-10 w-32 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -496,7 +496,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.openingBalance}
                   </p>
                   <div
-                    className={`text-base font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1 ${isLoading ? 'h-6 w-16 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -517,7 +517,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashSales}
                   </p>
                   <div
-                    className={`text-base font-bold text-emerald-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-emerald-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -544,7 +544,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cardSales}
                   </p>
                   <div
-                    className={`text-base font-bold text-sky-500 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-sky-500 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -571,7 +571,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashIn}
                   </p>
                   <div
-                    className={`text-base font-bold text-green-700 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-green-700 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -598,7 +598,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashOut}
                   </p>
                   <div
-                    className={`text-base font-bold text-amber-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-amber-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -625,7 +625,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashPurchases}
                   </p>
                   <div
-                    className={`text-base font-bold text-red-400 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-red-400 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -652,7 +652,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashPurchaseReturns}
                   </p>
                   <div
-                    className={`text-base font-bold text-yellow-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-yellow-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -679,7 +679,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.returns || 'Returns'}
                   </p>
                   <div
-                    className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-[var(--bg-skeleton)] rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>

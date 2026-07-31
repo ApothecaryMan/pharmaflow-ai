@@ -814,7 +814,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   <span className='hidden md:inline'>{t.modal.kioskMode}</span>
                 </button>
               )}
-              <div className='flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
+              <div className='flex items-center gap-2 px-3 py-2 rounded-full bg-[var(--bg-skeleton)]/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
                 <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
                   {t.globalView}
                 </span>

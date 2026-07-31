@@ -66,7 +66,7 @@ const getThemeClass = (p: InteractiveCardPage) => {
     amber: 'bg-amber-50 dark:bg-amber-900/20',
     emerald: 'bg-emerald-50 dark:bg-emerald-900/20',
     red: 'bg-red-50 dark:bg-red-900/20',
-    gray: 'bg-gray-100 dark:bg-gray-800/30',
+    gray: 'bg-[var(--bg-skeleton)]/30',
   };
   
   return themeClasses[p.color || 'primary'];

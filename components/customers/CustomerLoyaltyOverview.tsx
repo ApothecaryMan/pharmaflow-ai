@@ -155,7 +155,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       return {
         tier: 'Silver',
         color: 'text-gray-500 dark:text-gray-400',
-        bg: 'bg-gray-100 dark:bg-gray-800',
+        bg: 'bg-[var(--bg-skeleton)]',
       };
     return {
       tier: 'Bronze',
@@ -379,7 +379,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                     <div>
                       <p className='font-medium text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2'>
                         {sale.customerName}
-                        <span className='text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded'>
+                        <span className='text-[10px] font-mono text-gray-400 bg-[var(--bg-skeleton)] px-1.5 py-0.5 rounded'>
                           {sale.customerCode}
                         </span>
                       </p>
@@ -434,7 +434,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                       <div className='overflow-hidden'>
                         <p className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate flex items-center gap-2'>
                           {customer.name}
-                          <span className='text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800/50 px-1.5 py-0.5 rounded shrink-0'>
+                          <span className='text-[10px] font-mono text-gray-400 bg-[var(--bg-skeleton)]/50 px-1.5 py-0.5 rounded shrink-0'>
                             {customer.code}
                           </span>
                         </p>

@@ -374,7 +374,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
           <button
             type='button'
             onClick={handleCloseInternal}
-            className='w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 group bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 cursor-pointer'
+            className='w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 group bg-zinc-100 text-zinc-600 hover:bg-[var(--bg-skeleton)] dark:text-zinc-400 dark:hover:bg-zinc-700 cursor-pointer'
           >
             {t.common.close}
           </button>

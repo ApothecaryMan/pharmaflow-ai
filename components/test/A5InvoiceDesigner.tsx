@@ -430,7 +430,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
 
             <div className='flex items-center gap-3'>
               {/* Zoom Controls */}
-              <div className='flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-xl border border-zinc-200 dark:border-zinc-700'>
+              <div className='flex items-center gap-1 bg-[var(--bg-skeleton)] p-0.5 rounded-xl border border-zinc-200 dark:border-zinc-700'>
                 <button
                   type='button'
                   onClick={() => setZoomScale((prev) => Math.max(0.5, prev - 0.1))}
@@ -466,7 +466,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
               </div>
 
               {/* Quick orientation toggle */}
-              <div className='flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-xl'>
+              <div className='flex items-center gap-1.5 bg-[var(--bg-skeleton)] p-0.5 rounded-xl'>
                 <button
                   type='button'
                   onClick={() => setOrientation('portrait')}

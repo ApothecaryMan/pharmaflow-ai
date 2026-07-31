@@ -86,7 +86,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
         <div className='mb-12'>
           <div
             style={{ width: '180px', height: '180px' }}
-            className='rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center mx-auto border border-zinc-200 dark:border-zinc-700/50 shadow-sm'
+            className='rounded-full bg-[var(--bg-skeleton)]/50 flex items-center justify-center mx-auto border border-zinc-200 dark:border-zinc-700/50 shadow-sm'
           >
             <span
               style={{ fontSize: '96px' }}

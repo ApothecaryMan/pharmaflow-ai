@@ -92,8 +92,8 @@ const BranchCard: React.FC<BranchCardProps> = ({
           <div className='flex flex-col min-w-0 space-y-1.5'>
             {isLoading ? (
               <>
-                <div className='h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
-                <div className='h-3 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+                <div className='h-4 w-24 bg-[var(--bg-skeleton)] rounded' />
+                <div className='h-3 w-16 bg-[var(--bg-skeleton)] opacity-60 rounded' />
               </>
             ) : (
               <>
@@ -107,7 +107,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
             )}
           </div>
           {isLoading ? (
-            <div className='h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-full' />
+            <div className='h-4 w-12 bg-[var(--bg-skeleton)] opacity-60 rounded-full' />
           ) : (
             <div
               className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-tight shrink-0 ${
@@ -130,7 +130,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
             [1, 2, 3].map((i) => (
               <div
                 key={`avatar-sk-${i}`}
-                className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 border-2 border-white dark:border-zinc-900'
+                className='w-8 h-8 rounded-full bg-[var(--bg-skeleton)] border-2 border-white dark:border-zinc-900'
               />
             ))
           ) : (
@@ -149,7 +149,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
                   }
                 >
                   <div
-                    className='w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-600 dark:text-zinc-400 shadow-sm transition-transform hover:-translate-y-0.5 cursor-pointer relative overflow-hidden'
+                    className='w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-[var(--bg-skeleton)] flex items-center justify-center text-[10px] font-bold text-zinc-600 dark:text-zinc-400 shadow-sm transition-transform hover:-translate-y-0.5 cursor-pointer relative overflow-hidden'
                     style={{ zIndex: 10 - idx }}
                   >
                     {emp.image ? (
@@ -166,7 +166,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
               ))}
               {remainingCount > 0 && (
                 <div
-                  className='w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 shadow-sm'
+                  className='w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-[var(--bg-skeleton)] flex items-center justify-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 shadow-sm'
                   style={{ zIndex: 0 }}
                 >
                   +{remainingCount}
@@ -186,8 +186,8 @@ const BranchCard: React.FC<BranchCardProps> = ({
         <div className='space-y-2 pt-3 border-t border-zinc-100 dark:border-zinc-800/50'>
           {isLoading ? (
             <>
-              <div className='h-3 w-full bg-zinc-50 dark:bg-zinc-800/50 rounded' />
-              <div className='h-3 w-2/3 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+              <div className='h-3 w-full bg-[var(--bg-skeleton)] opacity-60 rounded' />
+              <div className='h-3 w-2/3 bg-[var(--bg-skeleton)] opacity-60 rounded' />
             </>
           ) : (
             <>
@@ -235,14 +235,14 @@ const BranchCard: React.FC<BranchCardProps> = ({
       <div className='flex items-center gap-2 mt-auto pt-3'>
         {isLoading ? (
           <>
-            <div className='h-8 flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg' />
-            <div className='h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg' />
+            <div className='h-8 flex-1 bg-[var(--bg-skeleton)] rounded-lg' />
+            <div className='h-8 w-8 bg-[var(--bg-skeleton)] rounded-lg' />
           </>
         ) : (
           <>
             <button
               onClick={() => onEdit(branch!)}
-              className='flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition-none'
+              className='flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold rounded-lg bg-[var(--bg-skeleton)] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition-none'
               type='button'
             >
               <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
@@ -550,7 +550,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                 >
                   <div className='flex items-center w-full gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-none shrink-0 ${isSelected ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-none shrink-0 ${isSelected ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950' : 'bg-[var(--bg-skeleton)] text-zinc-500'}`}
                     >
                       {isSelected ? (
                         <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
@@ -643,7 +643,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
     return (
       <div className='flex flex-col gap-5'>
         {/* Shift Start Time */}
-        <div className='p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 space-y-4'>
+        <div className='p-4 rounded-xl bg-[var(--bg-skeleton)] opacity-60 border border-zinc-200 dark:border-zinc-700/50 space-y-4'>
           <div className='flex items-center gap-3'>
             <div className='w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center'>
               <span
@@ -692,7 +692,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           </div>
         </div>
 
-        <div className='h-px bg-zinc-100 dark:bg-zinc-800/50' />
+        <div className='h-px bg-[var(--bg-skeleton)]/50' />
 
         {/* Title */}
         <div className='flex items-center gap-3'>
@@ -753,7 +753,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               <button
                 onClick={handleGenerate}
                 disabled={isGeneratingToken}
-                className='flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-50 transition-none'
+                className='flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--bg-skeleton)] text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-50 transition-none'
                 type='button'
               >
                 <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
