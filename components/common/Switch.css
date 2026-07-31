@@ -17,7 +17,7 @@
   background: #e5e5ea;
   position: relative;
   cursor: pointer;
-  transition: background 0.25s ease;
+  
   flex-shrink: 0;
 }
 
@@ -31,14 +31,15 @@
   border-radius: 50%;
   background: #fff;
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 2px;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateY(-50%);
+  
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
 }
 
 .s1-track.on .s1-thumb {
-  transform: translateX(20px);
+  transform: translate(20px, -50%);
 }
 
 /* ── S2: Image switch (Default V2 design) ── */
@@ -49,7 +50,7 @@
   background: #3a3a3c;
   position: relative;
   cursor: pointer;
-  transition: background 0.3s ease;
+  
   flex-shrink: 0;
 }
 
@@ -63,9 +64,10 @@
   border-radius: 50%;
   background: #fff;
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 2px;
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateY(-50%);
+  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,14 +75,14 @@
 }
 
 .s2-track.on .s2-thumb {
-  transform: translateX(20px);
+  transform: translate(20px, -50%);
 }
 
 .s2-check {
   width: 12px;
   height: 12px;
   opacity: 0;
-  transition: opacity 0.2s;
+  
   color: var(--primary-500, #3478f6);
 }
 
@@ -97,15 +99,13 @@
   border: 0.5px solid var(--sw-border);
   position: relative;
   cursor: pointer;
-  transition:
-    background 0.2s,
-    border-color 0.2s;
+  
   flex-shrink: 0;
 }
 
 .s3-track.on {
-  background: #111;
-  border-color: #111;
+  background: var(--primary-500, #3478f6);
+  border-color: var(--primary-500, #3478f6);
 }
 
 .s3-thumb {
@@ -114,15 +114,14 @@
   border-radius: 2px;
   background: var(--sw-border);
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 2px;
-  transition:
-    transform 0.2s ease,
-    background 0.2s;
+  transform: translateY(-50%);
+  
 }
 
 .s3-track.on .s3-thumb {
-  transform: translateX(20px);
+  transform: translate(20px, -50%);
   background: #fff;
 }
 
@@ -135,9 +134,7 @@
   border: 0.5px solid var(--sw-border);
   position: relative;
   cursor: pointer;
-  transition:
-    background 0.25s,
-    border-color 0.25s;
+  
   display: flex;
   align-items: center;
   padding: 0 6px;
@@ -153,13 +150,13 @@
 .s4-moon {
   font-size: 11px;
   color: var(--sw-text-secondary);
-  transition: opacity 0.2s;
+  
 }
 
 .s4-sun {
   font-size: 11px;
   color: #facc15;
-  transition: opacity 0.2s;
+  
 }
 
 .s4-track.on .s4-moon {
@@ -176,14 +173,15 @@
   border-radius: 50%;
   background: #fff;
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 3px;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateY(-50%);
+  
   flex-shrink: 0;
 }
 
 .s4-track.on .s4-thumb {
-  transform: translateX(26px);
+  transform: translate(26px, -50%);
 }
 
 /* ── S5: Vertical rocker ── */
@@ -195,7 +193,7 @@
   border: 0.5px solid var(--sw-border);
   position: relative;
   cursor: pointer;
-  transition: background 0.25s;
+  
   flex-shrink: 0;
 }
 
@@ -211,12 +209,13 @@
   background: #fff;
   position: absolute;
   bottom: 3px;
-  left: 3px;
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  left: 50%;
+  transform: translateX(-50%);
+  
 }
 
 .s5-track.on .s5-thumb {
-  transform: translateY(-20px);
+  transform: translate(-50%, -20px);
 }
 
 /* ── S6: Squircle style ── */
@@ -228,7 +227,7 @@
   border: 0.5px solid #bbf7d0;
   position: relative;
   cursor: pointer;
-  transition: all 0.2s;
+  
   flex-shrink: 0;
 }
 
@@ -243,15 +242,14 @@
   border-radius: 4px;
   background: #16a34a;
   position: absolute;
-  top: 3px;
+  top: 50%;
   left: 3px;
-  transition:
-    transform 0.22s ease,
-    background 0.2s;
+  transform: translateY(-50%);
+  
 }
 
 .s6-track.on .s6-thumb {
-  transform: translateX(20px);
+  transform: translate(20px, -50%);
   background: #fff;
 }
 
@@ -272,7 +270,7 @@
   position: absolute;
   top: 8px;
   left: 0;
-  transition: background 0.2s;
+  
 }
 
 .s7-wrap.on .s7-track {
@@ -286,15 +284,14 @@
   background: var(--sw-bg-primary);
   border: 2px solid var(--sw-border);
   position: absolute;
-  top: 1px;
+  top: 50%;
   left: 0;
-  transition:
-    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-color 0.2s;
+  transform: translateY(-50%);
+  
 }
 
 .s7-wrap.on .s7-thumb {
-  transform: translateX(26px);
+  transform: translate(26px, -50%);
   border-color: var(--sw-active-color);
 }
 
@@ -307,7 +304,7 @@
   border: 2px solid var(--sw-border);
   position: relative;
   cursor: pointer;
-  transition: border-color 0.25s;
+  
   flex-shrink: 0;
 }
 
@@ -321,15 +318,14 @@
   border-radius: 50%;
   background: var(--sw-border);
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 2px;
-  transition:
-    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background 0.2s;
+  transform: translateY(-50%);
+  
 }
 
 .s8-track.on .s8-thumb {
-  transform: translateX(20px);
+  transform: translate(20px, -50%);
   background: #e11d48;
 }
 
@@ -345,7 +341,7 @@
   padding: 2px;
   gap: 2px;
   cursor: pointer;
-  transition: background 0.2s;
+  
   flex-shrink: 0;
 }
 
@@ -360,9 +356,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--sw-text-secondary);
-  transition:
-    background 0.2s,
-    color 0.2s;
+  
 }
 
 .s9-track.on .s9-seg:last-child {
@@ -384,7 +378,7 @@
   border: 0.5px solid #3f3f46;
   position: relative;
   cursor: pointer;
-  transition: background 0.2s;
+  
   flex-shrink: 0;
 }
 
@@ -399,7 +393,7 @@
   border-radius: 12px;
   opacity: 0;
   background: #fbbf2422;
-  transition: opacity 0.2s;
+  
 }
 
 .s10-track.on .s10-glow {
@@ -412,14 +406,13 @@
   border-radius: 50%;
   background: #52525b;
   position: absolute;
-  top: 3px;
+  top: 50%;
   left: 3px;
-  transition:
-    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background 0.2s;
+  transform: translateY(-50%);
+  
 }
 
 .s10-track.on .s10-thumb {
-  transform: translateX(24px);
+  transform: translate(24px, -50%);
   background: #fbbf24;
 }
