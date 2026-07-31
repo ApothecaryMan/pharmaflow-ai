@@ -62,7 +62,7 @@ const SALE_LIST_COLUMNS = [
   'net_total',
   'item_returned_quantities',
   'daily_order_number',
-  'sale_items:sale_items(id, drug_id, name, quantity, public_price, is_unit, discount, units_per_pack)',
+  'sale_items:sale_items(id, drug_id, name, quantity, public_price, is_unit, discount, units_per_pack, batch_allocations:sale_item_batches(batch_id, quantity, stock_batches(batch_number, expiry_date)))',
 ].join(',');
 
 const SALE_FULL_COLUMNS = `${SALE_LIST_COLUMNS}, notes, modification_history`;

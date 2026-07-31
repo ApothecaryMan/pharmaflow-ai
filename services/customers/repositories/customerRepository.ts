@@ -3,9 +3,9 @@ import type { Customer } from '../../../types';
 import type { CustomerFilters } from '../types';
 
 const CUSTOMER_LIST_COLUMNS =
-  'id, org_id, branch_id, code, name, phone, total_purchases, points, last_visit, vip, status';
+  'id, org_id, branch_id, code, name, phone, total_purchases, points, last_visit, vip, status, email, governorate, city, area, street_address';
 
-const CUSTOMER_FULL_COLUMNS = `${CUSTOMER_LIST_COLUMNS}, email, governorate, city, area, street_address, insurance_provider, policy_number, preferred_location, preferred_contact, chronic_conditions, notes, registered_by, created_at`;
+const CUSTOMER_FULL_COLUMNS = `${CUSTOMER_LIST_COLUMNS}, insurance_provider, policy_number, preferred_location, preferred_contact, chronic_conditions, notes, registered_by, created_at`;
 
 export const customerRepository = {
   tableName: 'customers',
