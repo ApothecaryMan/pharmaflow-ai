@@ -8,6 +8,11 @@
       "env": {
         "MCP_WS_PORT": "3456"
       }
+    },
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=vhewcoumaxicnfsjwcai",
+      "enabled": true
     }
   }
 }
