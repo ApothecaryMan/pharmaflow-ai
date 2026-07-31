@@ -1124,6 +1124,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
             : item.unitCostPrice
           : undefined,
       })),
+      subtotal: taxResults.base,
       totalCost: taxResults.total,
       totalTax: taxResults.taxAmount,
       status: 'completed',
@@ -1250,6 +1251,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
             : item.unitCostPrice
           : undefined,
       })),
+      subtotal: taxResults.base,
       totalCost: taxResults.total,
       totalTax: taxResults.taxAmount,
       status: 'pending',

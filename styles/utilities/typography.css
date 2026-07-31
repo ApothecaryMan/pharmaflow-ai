@@ -171,8 +171,8 @@ We force the variable update for these utility classes. */
 }
 
 /* Force Arabic Bold Buttons - Using Full Firewall Stack */
-html[dir="rtl"] .font-bold,
-html[lang="ar"] .font-bold {
+html[dir="rtl"] .font-bold:not(.material-symbols-rounded),
+html[lang="ar"] .font-bold:not(.material-symbols-rounded) {
   font-weight: 700;
   font-family: var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif;
 }

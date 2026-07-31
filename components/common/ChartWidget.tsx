@@ -360,13 +360,14 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
         style={{ minHeight: 200, minWidth: 0 }}
       >
         {isLoading && (
-          <div className='absolute inset-0 z-10 flex items-center justify-center'>
-            <span
-              className='material-symbols-rounded animate-spin text-primary-500 dark:text-primary-400'
-              style={{ fontSize: '32px' }}
-            >
-              progress_activity
-            </span>
+          <div className='absolute inset-0 z-10 flex items-end gap-1.5 sm:gap-2.5 px-2 pt-6 pb-4 overflow-hidden animate-pulse'>
+            {[40, 70, 45, 90, 60, 85, 50, 75, 55, 80].map((h, i) => (
+              <div
+                key={i}
+                className='flex-1 bg-[var(--bg-skeleton)] rounded-t-md'
+                style={{ height: `${h}%` }}
+              />
+            ))}
           </div>
         )}
         {isReady && !isLoading && (

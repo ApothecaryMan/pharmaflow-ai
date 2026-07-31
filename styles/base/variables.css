@@ -276,8 +276,8 @@
   --bg-page-surface: #282828;
   --bg-statusbar: var(--bg-navbar);
   --bg-menu: #262626;
-  --bg-menu-hover: #323232;
-  --bg-navbar-hover: #323232;
+  --bg-menu-hover: #3f3f3f;
+  --bg-navbar-hover: #3f3f3f;
   --bg-surface-neutral: #2d2d2d;
   --button-base-inactive: rgba(80, 80, 80, 0.4);
   --button-base-active: #141413;

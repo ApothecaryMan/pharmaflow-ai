@@ -89,14 +89,18 @@ Deno.serve(async (req: Request) => {
       ).getDate();
       const dailyTarget = Math.round(branch.monthly_sales_target / daysInMonth);
 
+      const endDateExclusive = new Date(endDate);
+      endDateExclusive.setDate(endDateExclusive.getDate() + 1);
+      const endDateExclusiveStr = endDateExclusive.toISOString().slice(0, 10);
+
       // Fetch completed sales for the date range
       const { data: sales, error: salesError } = await supabase
         .from('sales')
         .select('date, total, net_total')
         .eq('branch_id', branch.id)
         .eq('status', 'completed')
-        .gte('date', `${startDate}T00:00:00.000Z`)
-        .lte('date', `${endDate}T23:59:59.999Z`);
+        .gte('date', startDate)
+        .lt('date', endDateExclusiveStr);
 
       if (salesError) {
         console.error(

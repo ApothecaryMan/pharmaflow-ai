@@ -157,6 +157,7 @@ export const useTheme = (
         const menuPct = vividBg === 'vivid' ? 5 : 2;
         const navbarPct = vividBg === 'vivid' ? 4 : 1.5;
         const borderPct = vividBg === 'vivid' ? 10 : 5;
+        const skeletonPct = vividBg === 'vivid' ? 8 : 4;
         
         root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} ${surfacePct}%, #18181b)`); // zinc-900
         root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} ${surfacePct}%, #1f1f1f)`);
@@ -168,6 +169,7 @@ export const useTheme = (
         root.style.setProperty('--bg-menu-hover', `color-mix(in srgb, ${hex} ${menuPct + 4}%, #323232)`);
         root.style.setProperty('--bg-navbar', `color-mix(in srgb, ${hex} ${navbarPct}%, #1f1f1f)`);
         root.style.setProperty('--bg-navbar-hover', `color-mix(in srgb, ${hex} ${navbarPct + 4}%, #323232)`);
+        root.style.setProperty('--bg-skeleton', `color-mix(in srgb, ${hex} ${skeletonPct}%, #3f3f46)`);
         
         // Tint Borders
         root.style.setProperty('--border-divider', `color-mix(in srgb, ${hex} ${borderPct}%, #3f3f46)`); // gray-700

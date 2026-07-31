@@ -177,13 +177,12 @@ export const FilterPill: React.FC<FilterPillProps> = ({
       onClick={handleOpenMenu}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenMenu(e); } }}
       className={`
-        flex items-center gap-1.5 
+        flex items-center 
+        ${collapsed ? 'gap-1 rounded-md ps-1 pe-0.5 py-0.5' : 'gap-1.5 rounded-full ps-2 pe-1 py-1'}
         leading-none select-none cursor-pointer
         border border-(--border-divider)
         bg-(--bg-surface-neutral) hover:bg-(--bg-menu-hover)
-        text-gray-700 dark:text-white 
-        rounded-full
-        ${collapsed ? 'ps-1.5 pe-1 py-1' : 'ps-2 pe-1 py-1'}
+        text-gray-700 dark:text-white
       `}
     >
       {/* Icon */}

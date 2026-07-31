@@ -73,7 +73,6 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const dir = useSmartDirection(value, placeholder);
     const showClear = value && onClear;
     const { showMenu, hideMenu, isMouseOverMenu } = useContextMenu();
-    const filterButtonRef = useRef<HTMLButtonElement>(null);
     const filterLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isCapsLock, setIsCapsLock] = useState(false);
 
@@ -138,6 +137,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const handleOpenFilterMenu = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
 
       if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
 
@@ -186,10 +186,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         </div>
       );
 
-      if (filterButtonRef.current) {
-        const rect = filterButtonRef.current.getBoundingClientRect();
-        showMenu(rect.left, rect.bottom + 5, menuContent);
-      }
+      const rect = target.getBoundingClientRect();
+      showMenu(rect.left, rect.bottom + 5, menuContent);
     };
 
     const handleFilterMouseLeave = () => {
@@ -220,6 +218,69 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     }, [expanded]);
 
     if (compact) {
+      const renderCompactFilters = () => {
+        if (filterConfigs.length === 0) return null;
+        return (
+          <div className='flex items-center gap-0.5 shrink-0 -me-1 ms-1'>
+            {hasActiveFilters && (
+              <div className='flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0 max-w-[120px] sm:max-w-[180px]'>
+                {activeGroups.map((groupId) => {
+                  const config = filterConfigs.find((c) => c.id === groupId);
+                  const values = activeFilters[groupId];
+                  if (!config || !values) return null;
+                  return (
+                    <FilterPill
+                      key={groupId}
+                      config={config}
+                      selectedValues={values}
+                      collapsed={true}
+                      onUpdate={(newVals) => onUpdateFilter?.(groupId, newVals)}
+                      onRemove={() => onUpdateFilter?.(groupId, [])}
+                      rounded={rounded}
+                    />
+                  );
+                })}
+              </div>
+            )}
+            
+            {hasActiveFilters && (
+              <Tooltip content={t.global.table.clearAllFilters}>
+                <button
+                  type='button'
+                  onClick={handleClearAllFilters}
+                  className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-6 h-6 rounded-md shrink-0'
+                >
+                  <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                    filter_list_off
+                  </span>
+                </button>
+              </Tooltip>
+            )}
+
+            <Tooltip content={t.global.table.addFilter}>
+              <button
+                type='button'
+                onMouseEnter={handleOpenFilterMenu}
+                onMouseLeave={handleFilterMouseLeave}
+                onClick={handleOpenFilterMenu}
+                className={`
+                  flex items-center justify-center w-6 h-6 rounded-md shrink-0 transition-colors
+                  ${
+                    hasActiveFilters
+                      ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+                      : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }
+                `}
+              >
+                <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                  tune
+                </span>
+              </button>
+            </Tooltip>
+          </div>
+        );
+      };
+
       if (expandable) {
         return (
           <>
@@ -253,6 +314,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         autoCorrect='off'
                         autoCapitalize='none'
                       />
+                      {renderCompactFilters()}
                     </div>
                     <button
                       type='button'
@@ -267,7 +329,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <button
                   type='button'
                   onClick={() => setExpanded(true)}
-                  className='flex items-center justify-center gap-2 px-3 h-pageheader rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
+                  className='relative flex items-center justify-center gap-2 px-3 h-pageheader rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
                 >
                   <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <title>Search</title>
@@ -279,6 +341,12 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                     />
                   </svg>
                   {t.common?.search || 'Search'}
+                  {hasActiveFilters && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  )}
                 </button>
               )}
             </div>
@@ -319,6 +387,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   autoCapitalize='none'
                   {...props}
                 />
+                {renderCompactFilters()}
               </div>
             </div>
           </>
@@ -361,6 +430,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             autoCapitalize='none'
             {...props}
           />
+          {renderCompactFilters()}
         </div>
       );
     }
@@ -479,23 +549,13 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
         <div className='flex items-center gap-1.5 ms-auto self-stretch'>
           {filterConfigs.length > 0 && (
-            <div
-              className={`
-              flex items-center h-8 px-1 ${rounded === 'full' ? 'rounded-full' : 'rounded-2xl'}
-              border
-              ${
-                hasActiveFilters
-                  ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
-                  : 'border-transparent bg-transparent hover:border-gray-200 dark:hover:border-(--border-divider) hover:bg-gray-50 dark:hover:bg-(--bg-surface-neutral)'
-              }
-            `}
-            >
+            <>
               {hasActiveFilters && (
                 <Tooltip content={t.global.table.clearAllFilters}>
                   <button
                     type='button'
                     onClick={handleClearAllFilters}
-                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-7 h-7 rounded-full'
+                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-8 h-8 rounded-full'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                       filter_list_off
@@ -506,17 +566,16 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
               <Tooltip content={t.global.table.addFilter}>
                 <button
-                  ref={filterButtonRef}
                   type='button'
                   onMouseEnter={handleOpenFilterMenu}
                   onMouseLeave={handleFilterMouseLeave}
                   onClick={handleOpenFilterMenu}
                   className={`
-                    flex items-center justify-center w-7 h-7 rounded-full
+                    flex items-center justify-center w-8 h-8 rounded-full transition-colors
                     ${
                       hasActiveFilters
-                        ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                        : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                        ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30'
+                        : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }
                   `}
                 >
@@ -525,7 +584,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   </span>
                 </button>
               </Tooltip>
-            </div>
+            </>
           )}
 
           {(badge ||
