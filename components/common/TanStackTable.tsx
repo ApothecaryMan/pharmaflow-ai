@@ -234,7 +234,7 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
               }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!isJumping) { setIsJumping(true); setJumpValue((table.getState().pagination.pageIndex + 1).toString()); } } }}
               className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${
-                !isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
+                !isJumping ? 'cursor-pointer hover:bg-(--bg-menu-hover)' : ''
               }`}
             >
               {isJumping ? (
@@ -315,7 +315,7 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
             className={`px-2.5 h-full flex items-center justify-center transition-colors ${
               isShowAll
                 ? `text-primary-600 bg-primary-500/10 dark:text-primary-400 dark:bg-primary-400/10`
-                : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
+                : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-menu-hover)'
             }`}
             title={isShowAll ? 'Paginated View' : t.showAll || 'Show All'}
             type='button'

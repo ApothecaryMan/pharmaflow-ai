@@ -1096,7 +1096,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               topSelling.map((item, index) => (
                 <div
                   key={item.id || `ts-${index}`}
-                  className='flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  className='flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-(--bg-menu-hover) transition-colors'
                 >
                   <div className='flex items-center gap-3 overflow-hidden'>
                     <span className='text-2xl font-black text-gray-300 dark:text-gray-600 shrink-0 w-6 text-center mt-1'>
@@ -1135,7 +1135,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               renderItem: (item: any) => (
                 <div
                   key={item.id}
-                  className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  className='flex justify-between items-center p-2 rounded-xl hover:bg-(--bg-menu-hover) transition-colors'
                 >
                   <div className='flex items-center gap-3 overflow-hidden flex-1'>
                     <div className='min-w-0'>
@@ -1178,7 +1178,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 return (
                   <div
                     key={item.id}
-                    className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                    className='flex justify-between items-center p-2 rounded-xl hover:bg-(--bg-menu-hover) transition-colors'
                   >
                     <div className='flex items-center gap-3 overflow-hidden flex-1'>
                       <div className='min-w-0'>
@@ -1295,7 +1295,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               recentSales.map((sale, idx) => (
                 <div
                   key={sale.key || sale.id || `rs-${idx}`}
-                  className='flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  className='flex items-center justify-between p-2 rounded-xl hover:bg-(--bg-menu-hover) transition-colors'
                 >
                   <div className='flex items-center gap-3'>
                     <div>

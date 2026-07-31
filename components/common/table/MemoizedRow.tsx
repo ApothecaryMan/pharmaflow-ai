@@ -76,7 +76,7 @@ export const MemoizedRow = React.memo(
             }
           }}
           className={`group/row transition-all duration-200 outline-none
-        ${onRowClick ? 'cursor-pointer hover:bg-gray-50/80 dark:hover:bg-white/[0.03]' : ''}
+        ${onRowClick ? 'cursor-pointer hover:bg-(--bg-menu-hover)' : ''}
         ${isPending || localLoading || isLoading ? 'animate-pulse' : ''}
         ${isPending ? 'opacity-60 grayscale-[0.5]' : ''}
         ${isNew ? 'bg-emerald-500/[0.08] dark:bg-emerald-500/[0.12] animate-in fade-in zoom-in-95 duration-300 ease-out' : ''}
