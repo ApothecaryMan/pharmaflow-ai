@@ -1,49 +1,49 @@
-import type React from 'react';
-import { AngelWings } from './angel-wings';
-import { ArcaneAstralSigil } from './arcane-astral-sigil';
-import { ArcaneMagicRunes } from './arcane-magic-runes';
-import { ArcaneTimekeeper } from './arcane-timekeeper';
-import { CatEars } from './cat-ears';
-import { ChronoMatrixInfinity } from './chrono-matrix-infinity';
-import { CosmicRingStars } from './cosmic-ring-stars';
-import { Crown } from './crown';
-import { CryoVaporNexus } from './cryo-vapor-nexus';
-import { CrystalBastion } from './crystal-bastion';
-import { CyberOrbitalShroud } from './cyber-orbital-shroud';
-import { DevilHorns } from './devil-horns';
-import { DivineRadiantSun } from './divine-radiant-sun';
-import { DragonWings } from './dragon-wings';
-import { EnchantedLeafWreath } from './enchanted-leaf-wreath';
-import { EtherealHeavenVortex } from './ethereal-heaven-vortex';
-import { EtherealSpiritDragons } from './ethereal-spirit-dragons';
-import { FairyWings } from './fairy-wings';
-import { Fakhma } from './fakhma';
-import { FeatheryWings } from './feathery-wings';
-import { FlowerCrown } from './flower-crown';
-import { GalacticBlackHole } from './galactic-black-hole';
-import { GeniusGeometricMatrix } from './genius-geometric-matrix';
-import { GoldenHorusWings } from './golden-horus-wings';
-import { Heart } from './heart';
-import { HeartRing } from './heart-ring';
-import { IceQueen } from './ice-queen';
-import { LegendaryPhoenixAura } from './legendary-phoenix-aura';
-import { MechanicalWings } from './mechanical-wings';
-import { NeonCosmicVortex } from './neon-cosmic-vortex';
-import { NeonCyberHex } from './neon-cyber-hex';
-import { NoneDecoration } from './none';
-import { OverlordChaosHorns } from './overlord-chaos-horns';
-import { PhoenixWings } from './phoenix-wings';
-import { QuantumAstralOrbitals } from './quantum-astral-orbitals';
-import { RabbitEars } from './rabbit-ears';
-import { RoyalFedoraHat } from './royal-fedora-hat';
-import { SakuraBlossomWind } from './sakura-blossom-wind';
-import { Snowflake } from './snowflake';
-import { StarHalo } from './star-halo';
-import { StellarConstellations } from './stellar-constellations';
-import { ToxicSymbiote } from './toxic-symbiote';
-import { TwinButterflies } from './twin-butterflies';
-import { UltimateChronogearNexus } from './ultimate-chronogear-nexus';
-import { UltraRainbowAura } from './ultra-rainbow-aura';
+import type React from "react";
+import { AngelWings } from "./angel-wings";
+import { ArcaneAstralSigil } from "./arcane-astral-sigil";
+import { ArcaneMagicRunes } from "./arcane-magic-runes";
+import { ArcaneTimekeeper } from "./arcane-timekeeper";
+import { CatEars } from "./cat-ears";
+import { ChronoMatrixInfinity } from "./chrono-matrix-infinity";
+import { CosmicRingStars } from "./cosmic-ring-stars";
+import { Crown } from "./crown";
+import { CryoVaporNexus } from "./cryo-vapor-nexus";
+import { CrystalBastion } from "./crystal-bastion";
+import { CyberOrbitalShroud } from "./cyber-orbital-shroud";
+import { DevilHorns } from "./devil-horns";
+import { DivineRadiantSun } from "./divine-radiant-sun";
+import { DragonWings } from "./dragon-wings";
+import { EnchantedLeafWreath } from "./enchanted-leaf-wreath";
+import { EtherealHeavenVortex } from "./ethereal-heaven-vortex";
+import { EtherealSpiritDragons } from "./ethereal-spirit-dragons";
+import { FairyWings } from "./fairy-wings";
+import { Fakhma } from "./fakhma";
+import { FeatheryWings } from "./feathery-wings";
+import { FlowerCrown } from "./flower-crown";
+import { GalacticBlackHole } from "./galactic-black-hole";
+import { GeniusGeometricMatrix } from "./genius-geometric-matrix";
+import { GoldenHorusWings } from "./golden-horus-wings";
+import { Heart } from "./heart";
+import { HeartRing } from "./heart-ring";
+import { IceQueen } from "./ice-queen";
+import { LegendaryPhoenixAura } from "./legendary-phoenix-aura";
+import { MechanicalWings } from "./mechanical-wings";
+import { NeonCosmicVortex } from "./neon-cosmic-vortex";
+import { NeonCyberHex } from "./neon-cyber-hex";
+import { NoneDecoration } from "./none";
+import { OverlordChaosHorns } from "./overlord-chaos-horns";
+import { PhoenixWings } from "./phoenix-wings";
+import { QuantumAstralOrbitals } from "./quantum-astral-orbitals";
+import { RabbitEars } from "./rabbit-ears";
+import { RoyalFedoraHat } from "./royal-fedora-hat";
+import { SakuraBlossomWind } from "./sakura-blossom-wind";
+import { Snowflake } from "./snowflake";
+import { StarHalo } from "./star-halo";
+import { StellarConstellations } from "./stellar-constellations";
+import { ToxicSymbiote } from "./toxic-symbiote";
+import { TwinButterflies } from "./twin-butterflies";
+import { UltimateChronogearNexus } from "./ultimate-chronogear-nexus";
+import { UltraRainbowAura } from "./ultra-rainbow-aura";
 
 export { NoneDecoration };
 export { CatEars };
@@ -97,229 +97,347 @@ export interface DecorationDef {
   nameAr: string;
   svg: React.ReactNode;
   isAnimated?: boolean;
+  emoji: string;
 }
 
 export const AVATAR_DECORATIONS: DecorationDef[] = [
-  { id: 'none', name: 'None', nameAr: 'بدون', svg: <NoneDecoration /> },
+  {
+    id: "none",
+    name: "None",
+    nameAr: "بدون",
+    svg: <NoneDecoration />,
+    emoji: "🚫",
+  },
 
   // --- Ears & Horns (آذان وقرون) ---
-  { id: 'cat_ears', name: 'Cat Ears', nameAr: 'آذان القط', svg: <CatEars />, isAnimated: true },
-  { id: 'rabbit_ears', name: 'Rabbit Ears', nameAr: 'آذان الأرنب', svg: <RabbitEars /> },
-  { id: 'devil_horns', name: 'Devil Horns', nameAr: 'قرون الشيطان', svg: <DevilHorns /> },
   {
-    id: 'overlord_chaos_horns',
-    name: 'Chaos Horns',
-    nameAr: 'قرون سيد الفوضى',
+    id: "cat_ears",
+    name: "Cat Ears",
+    nameAr: "آذان القط",
+    svg: <CatEars />,
+    isAnimated: true,
+    emoji: "🐱",
+  },
+  {
+    id: "rabbit_ears",
+    name: "Rabbit Ears",
+    nameAr: "آذان الأرنب",
+    svg: <RabbitEars />,
+    emoji: "🐰",
+  },
+  {
+    id: "devil_horns",
+    name: "Devil Horns",
+    nameAr: "قرون الشيطان",
+    svg: <DevilHorns />,
+    emoji: "😈",
+  },
+  {
+    id: "overlord_chaos_horns",
+    name: "Chaos Horns",
+    nameAr: "قرون سيد الفوضى",
     svg: <OverlordChaosHorns />,
+    emoji: "👺",
   },
 
   // --- Headwear & Crowns (قبعات وتيجان) ---
-  { id: 'crown', name: 'Crown', nameAr: 'تاج', svg: <Crown />, isAnimated: true },
-  { id: 'dynamic_ice_queen', name: 'Ice Queen', nameAr: 'ملكة الجليد', svg: <IceQueen /> },
-  { id: 'star_halo', name: 'Star Halo', nameAr: 'هالة النجوم', svg: <StarHalo /> },
-  { id: 'fakhma', name: 'Fakhma', nameAr: 'فخامة', svg: <Fakhma />, isAnimated: true },
   {
-    id: 'royal_fedora_hat',
-    name: 'Royal Hat',
-    nameAr: 'قبعة فيدورا الملكية',
-    svg: <RoyalFedoraHat />,
+    id: "crown",
+    name: "Crown",
+    nameAr: "تاج",
+    svg: <Crown />,
+    isAnimated: true,
+    emoji: "👑",
   },
-  { id: 'flower_crown', name: 'Flower Crown', nameAr: 'إكليل الزهور', svg: <FlowerCrown /> },
   {
-    id: 'enchanted_leaf_wreath',
-    name: 'Enchanted Leaves',
-    nameAr: 'إكليل الأوراق السحرية',
+    id: "dynamic_ice_queen",
+    name: "Ice Queen",
+    nameAr: "ملكة الجليد",
+    svg: <IceQueen />,
+    emoji: "❄️",
+  },
+  {
+    id: "star_halo",
+    name: "Star Halo",
+    nameAr: "هالة النجوم",
+    svg: <StarHalo />,
+    emoji: "⭐",
+  },
+  {
+    id: "fakhma",
+    name: "Fakhma",
+    nameAr: "فخامة",
+    svg: <Fakhma />,
+    isAnimated: true,
+    emoji: "💎",
+  },
+  {
+    id: "royal_fedora_hat",
+    name: "Royal Hat",
+    nameAr: "قبعة فيدورا الملكية",
+    svg: <RoyalFedoraHat />,
+    emoji: "🎩",
+  },
+  {
+    id: "flower_crown",
+    name: "Flower Crown",
+    nameAr: "إكليل الزهور",
+    svg: <FlowerCrown />,
+    emoji: "🌸",
+  },
+  {
+    id: "enchanted_leaf_wreath",
+    name: "Enchanted Leaves",
+    nameAr: "إكليل الأوراق السحرية",
     svg: <EnchantedLeafWreath />,
+    emoji: "🌿",
   },
 
   // --- Wings (أجنحة) ---
   {
-    id: 'angel_wings',
-    name: 'Angel Wings',
-    nameAr: 'أجنحة الملاك',
+    id: "angel_wings",
+    name: "Angel Wings",
+    nameAr: "أجنحة الملاك",
     svg: <AngelWings />,
     isAnimated: true,
+    emoji: "👼",
   },
-  { id: 'fairy_wings', name: 'Fairy Wings', nameAr: 'أجنحة الجنية', svg: <FairyWings /> },
   {
-    id: 'dragon_wings',
-    name: 'Dragon Wings',
-    nameAr: 'أجنحة التنين',
+    id: "fairy_wings",
+    name: "Fairy Wings",
+    nameAr: "أجنحة الجنية",
+    svg: <FairyWings />,
+    emoji: "🧚",
+  },
+  {
+    id: "dragon_wings",
+    name: "Dragon Wings",
+    nameAr: "أجنحة التنين",
     svg: <DragonWings />,
     isAnimated: true,
+    emoji: "🐉",
   },
-  { id: 'phoenix_wings', name: 'Phoenix Wings', nameAr: 'أجنحة الفينيق', svg: <PhoenixWings /> },
   {
-    id: 'mechanical_wings',
-    name: 'Mechanical Wings',
-    nameAr: 'أجنحة ميكانيكية',
+    id: "phoenix_wings",
+    name: "Phoenix Wings",
+    nameAr: "أجنحة الفينيق",
+    svg: <PhoenixWings />,
+    emoji: "🦅",
+  },
+  {
+    id: "mechanical_wings",
+    name: "Mechanical Wings",
+    nameAr: "أجنحة ميكانيكية",
     svg: <MechanicalWings />,
+    emoji: "⚙️",
   },
-  { id: 'feathery_wings', name: 'Feathery Wings', nameAr: 'أجنحة ريشية', svg: <FeatheryWings /> },
   {
-    id: 'golden_horus_wings',
-    name: 'Golden Horus',
-    nameAr: 'أجنحة حورس الذهبية',
+    id: "feathery_wings",
+    name: "Feathery Wings",
+    nameAr: "أجنحة ريشية",
+    svg: <FeatheryWings />,
+    emoji: "🪶",
+  },
+  {
+    id: "golden_horus_wings",
+    name: "Golden Horus",
+    nameAr: "أجنحة حورس الذهبية",
     svg: <GoldenHorusWings />,
+    emoji: "🪽",
   },
 
   // --- Auras & Halos (هالات وإشعاعات) ---
   {
-    id: 'cosmic_ring_stars',
-    name: 'Cosmic Ring Stars',
-    nameAr: 'طوق النجوم الكوني',
+    id: "cosmic_ring_stars",
+    name: "Cosmic Ring Stars",
+    nameAr: "طوق النجوم الكوني",
     svg: <CosmicRingStars />,
+    emoji: "🌌",
   },
   {
-    id: 'cyber_orbital_shroud',
-    name: 'Cyber Orbital Shroud',
-    nameAr: 'الغلاف المداري السميك',
+    id: "cyber_orbital_shroud",
+    name: "Cyber Orbital Shroud",
+    nameAr: "الغلاف المداري السميك",
     svg: <CyberOrbitalShroud />,
+    emoji: "🧿",
   },
   {
-    id: 'legendary_phoenix_aura',
-    name: 'Phoenix Aura',
-    nameAr: 'هالة العنقاء الأسطورية',
+    id: "legendary_phoenix_aura",
+    name: "Phoenix Aura",
+    nameAr: "هالة العنقاء الأسطورية",
     svg: <LegendaryPhoenixAura />,
+    emoji: "🔥",
   },
   {
-    id: 'quantum_astral_orbitals',
-    name: 'Quantum Orbitals',
-    nameAr: 'المدارات الكمية',
+    id: "quantum_astral_orbitals",
+    name: "Quantum Orbitals",
+    nameAr: "المدارات الكمية",
     svg: <QuantumAstralOrbitals />,
+    emoji: "⚛️",
   },
   {
-    id: 'arcane_astral_sigil',
-    name: 'Arcane Astral Sigil',
-    nameAr: 'ختم الأركين النجمي',
+    id: "arcane_astral_sigil",
+    name: "Arcane Astral Sigil",
+    nameAr: "ختم الأركين النجمي",
     svg: <ArcaneAstralSigil />,
+    emoji: "🔯",
   },
 
   // --- Nature & Magic (طبيعة وسحر) ---
   {
-    id: 'twin_butterflies',
-    name: 'Twin Butterflies',
-    nameAr: 'الفراشات التوأم',
+    id: "twin_butterflies",
+    name: "Twin Butterflies",
+    nameAr: "الفراشات التوأم",
     svg: <TwinButterflies />,
+    emoji: "🦋",
   },
-  { id: 'heart', name: 'Heart', nameAr: 'قلب', svg: <Heart /> },
-  { id: 'heart_ring', name: 'Heart Ring', nameAr: 'حلقة قلب', svg: <HeartRing /> },
-  { id: 'snowflake', name: 'Snowflake', nameAr: 'ندفة الثلج', svg: <Snowflake /> },
+  { id: "heart", name: "Heart", nameAr: "قلب", svg: <Heart />, emoji: "❤️" },
   {
-    id: 'sakura_blossom_wind',
-    name: 'Sakura Wind',
-    nameAr: 'رياح الساكورا',
+    id: "heart_ring",
+    name: "Heart Ring",
+    nameAr: "حلقة قلب",
+    svg: <HeartRing />,
+    emoji: "💖",
+  },
+  {
+    id: "snowflake",
+    name: "Snowflake",
+    nameAr: "ندفة الثلج",
+    svg: <Snowflake />,
+    emoji: "🌨️",
+  },
+  {
+    id: "sakura_blossom_wind",
+    name: "Sakura Wind",
+    nameAr: "رياح الساكورا",
     svg: <SakuraBlossomWind />,
+    emoji: "🍃",
   },
   {
-    id: 'toxic_symbiote',
-    name: 'Toxic Symbiote',
-    nameAr: 'السيمبيوت السام',
+    id: "toxic_symbiote",
+    name: "Toxic Symbiote",
+    nameAr: "السيمبيوت السام",
     svg: <ToxicSymbiote />,
+    emoji: "🦠",
   },
   {
-    id: 'arcane_timekeeper',
-    name: 'Arcane Timekeeper',
-    nameAr: 'أسطرلاب الزمن',
+    id: "arcane_timekeeper",
+    name: "Arcane Timekeeper",
+    nameAr: "أسطرلاب الزمن",
     svg: <ArcaneTimekeeper />,
+    emoji: "⌛",
   },
   {
-    id: 'neon_crystal_bastion',
-    name: 'Crystal Bastion',
-    nameAr: 'الحصن الكريستالي',
+    id: "neon_crystal_bastion",
+    name: "Crystal Bastion",
+    nameAr: "الحصن الكريستالي",
     svg: <CrystalBastion />,
+    emoji: "🔮",
   },
   {
-    id: 'chrono_matrix_infinity',
-    name: 'Chrono Matrix',
-    nameAr: 'مصفوفة التحكم بالزمن',
+    id: "chrono_matrix_infinity",
+    name: "Chrono Matrix",
+    nameAr: "مصفوفة التحكم بالزمن",
     svg: <ChronoMatrixInfinity />,
+    emoji: "⏳",
   },
 
   // --- Epic & Animated (أسطورية ومتحركة) ---
   {
-    id: 'neon_cosmic_vortex',
-    name: 'Cosmic Vortex',
-    nameAr: 'دوامة المجرة',
+    id: "neon_cosmic_vortex",
+    name: "Cosmic Vortex",
+    nameAr: "دوامة المجرة",
     svg: <NeonCosmicVortex />,
     isAnimated: true,
+    emoji: "🌀",
   },
   {
-    id: 'stellar_constellations',
-    name: 'Stellar Constellation',
-    nameAr: 'الكوكبة الفلكية',
+    id: "stellar_constellations",
+    name: "Stellar Constellation",
+    nameAr: "الكوكبة الفلكية",
     svg: <StellarConstellations />,
     isAnimated: true,
+    emoji: "✨",
   },
   {
-    id: 'ethereal_heaven_vortex',
-    name: 'Ethereal Heaven',
-    nameAr: 'الفردوس الأثيري المضيء',
+    id: "ethereal_heaven_vortex",
+    name: "Ethereal Heaven",
+    nameAr: "الفردوس الأثيري المضيء",
     svg: <EtherealHeavenVortex />,
     isAnimated: true,
+    emoji: "🌟",
   },
   {
-    id: 'ultimate_chronogear_nexus',
-    name: 'Chronogear Nexus',
-    nameAr: 'آلة الزمن السحرية',
+    id: "ultimate_chronogear_nexus",
+    name: "Chronogear Nexus",
+    nameAr: "آلة الزمن السحرية",
     svg: <UltimateChronogearNexus />,
     isAnimated: true,
+    emoji: "🕰️",
   },
   {
-    id: 'galactic_black_hole',
-    name: 'Galactic Black Hole',
-    nameAr: 'الثقب الأسود المجري',
+    id: "galactic_black_hole",
+    name: "Galactic Black Hole",
+    nameAr: "الثقب الأسود المجري",
     svg: <GalacticBlackHole />,
     isAnimated: true,
+    emoji: "🕳️",
   },
   {
-    id: 'neon_cyber_hex',
-    name: 'Neon Cyber Hex',
-    nameAr: 'مصفوفة السايبر-بانك السداسية',
+    id: "neon_cyber_hex",
+    name: "Neon Cyber Hex",
+    nameAr: "مصفوفة السايبر-بانك السداسية",
     svg: <NeonCyberHex />,
     isAnimated: true,
+    emoji: "💠",
   },
   {
-    id: 'arcane_magic_runes',
-    name: 'Arcane Magic Runes',
-    nameAr: 'حلقات السحر الرونية',
+    id: "arcane_magic_runes",
+    name: "Arcane Magic Runes",
+    nameAr: "حلقات السحر الرونية",
     svg: <ArcaneMagicRunes />,
     isAnimated: true,
+    emoji: "🧿",
   },
   {
-    id: 'ethereal_spirit_dragons',
-    name: 'Ethereal Spirit Dragons',
-    nameAr: 'تنانين الروح الأثيرية',
+    id: "ethereal_spirit_dragons",
+    name: "Ethereal Spirit Dragons",
+    nameAr: "تنانين الروح الأثيرية",
     svg: <EtherealSpiritDragons />,
     isAnimated: true,
+    emoji: "🐲",
   },
   {
-    id: 'divine_radiant_sun',
-    name: 'Divine Radiant Sun',
-    nameAr: 'شمس الإشعاع الإلهي',
+    id: "divine_radiant_sun",
+    name: "Divine Radiant Sun",
+    nameAr: "شمس الإشعاع الإلهي",
     svg: <DivineRadiantSun />,
     isAnimated: true,
+    emoji: "☀️",
   },
   {
-    id: 'genius_geometric_matrix',
-    name: 'Genius Matrix',
-    nameAr: 'مصفوفة العبقرية الهندسية',
+    id: "genius_geometric_matrix",
+    name: "Genius Matrix",
+    nameAr: "مصفوفة العبقرية الهندسية",
     svg: <GeniusGeometricMatrix />,
     isAnimated: true,
+    emoji: "📐",
   },
   {
-    id: 'cryo_vapor_nexus',
-    name: 'Cryo-Vapor Nexus',
-    nameAr: 'رابطة الجليد والبخار',
+    id: "cryo_vapor_nexus",
+    name: "Cryo-Vapor Nexus",
+    nameAr: "رابطة الجليد والبخار",
     svg: <CryoVaporNexus />,
     isAnimated: true,
+    emoji: "🧊",
   },
   {
-    id: 'ultra_rainbow_aura',
-    name: 'Ultra Rainbow Aura',
-    nameAr: 'هالة قوس قزح الخارقة',
+    id: "ultra_rainbow_aura",
+    name: "Ultra Rainbow Aura",
+    nameAr: "هالة قوس قزح الخارقة",
     svg: <UltraRainbowAura />,
     isAnimated: true,
+    emoji: "🌈",
   },
 ];
 
@@ -331,7 +449,9 @@ export const DECORATION_KEYFRAMES = `
 
 export const DECORATION_MAP = new Map(AVATAR_DECORATIONS.map((d) => [d.id, d]));
 
-export const getDecoration = (id: string | null | undefined): React.ReactNode => {
+export const getDecoration = (
+  id: string | null | undefined,
+): React.ReactNode => {
   if (!id) return null;
   return DECORATION_MAP.get(id)?.svg ?? null;
 };

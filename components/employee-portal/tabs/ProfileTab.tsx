@@ -824,48 +824,18 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                       key={dec.id}
                       type='button'
                       onClick={() => setAvatarDecoration(dec.id)}
-                      className='w-12 h-12 flex items-center justify-center relative overflow-visible transition-transform duration-150 hover:scale-110 active:scale-95 snap-start shrink-0'
+                      className='w-10 h-10 flex items-center justify-center relative overflow-visible transition-transform duration-150 hover:scale-110 active:scale-95 snap-start shrink-0'
                       title={isRTL ? dec.nameAr : dec.name}
                     >
-                      {/* Mini avatar circle */}
                       <div
-                        className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
+                        className={`absolute inset-0 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
                           avatarDecoration === dec.id
                             ? 'ring-2 ring-primary-500 shadow-md'
                             : 'ring-1 ring-(--border-secondary) shadow-sm'
                         }`}
                       >
-                        <div className='w-full h-full bg-gradient-to-br from-primary-500/10 to-primary-600/20' />
+                        <span className='text-xl select-none z-[1]'>{dec.emoji}</span>
                       </div>
-                      {/* Decoration overlay matching real avatar layout */}
-                      {dec.svg ? (
-                        <div className='absolute inset-0 pointer-events-none z-[1]'>{dec.svg}</div>
-                      ) : (
-                        <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
-                          close
-                        </span>
-                      )}
-                      {dec.isAnimated && (
-                        <div className='absolute inset-0 z-10 flex items-center justify-center pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'>
-                          <svg
-                            width='24'
-                            height='24'
-                            viewBox='0 0 24 24'
-                            fill='currentColor'
-                            className='text-white'
-                          >
-                            <title>{decorationAnimated ? 'Pause animation' : 'Play animation'}</title>
-                            {decorationAnimated ? (
-                              <>
-                                <rect x='6' y='4' width='4' height='16' rx='1' />
-                                <rect x='14' y='4' width='4' height='16' rx='1' />
-                              </>
-                            ) : (
-                              <polygon points='5,3 19,12 5,21' />
-                            )}
-                          </svg>
-                        </div>
-                      )}
                     </button>
                   ))
                 )}
