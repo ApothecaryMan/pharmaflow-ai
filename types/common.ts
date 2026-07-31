@@ -94,6 +94,7 @@ export type ExpandedView =
   | 'expiring'
   | 'recentSales'
   | 'achievements'
+  | 'supplierDebts'
   | null;
 
 /** Date range filter for reports */

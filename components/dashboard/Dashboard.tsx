@@ -405,6 +405,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
     [lowStockTooltipData, language]
   );
 
+  const debtsValue = useMemo(() => {
+    return filteredData.purchases
+      .filter((p) => p.paymentMethod === 'credit' && p.status !== 'rejected')
+      .reduce((sum, p) => sum + (p.totalCost || 0), 0);
+  }, [filteredData.purchases]);
+
+  const debtsTooltip = useMemo(() => {
+    const data = {
+      title: language === 'AR' ? 'مديونيات الموردين' : 'Supplier Debts',
+      value: debtsValue,
+      valueLabel: language === 'AR' ? 'إجمالي المديونيات' : 'Total Debts',
+      icon: 'credit_card',
+      iconColorClass: 'text-amber-400',
+      calculations: [
+        {
+          label: language === 'AR' ? 'الفواتير الآجلة غير المسددة' : 'Unpaid Credit Invoices',
+          math: <span className="font-bold text-amber-300">{formatCurrency(debtsValue, undefined, language)}</span>,
+        },
+      ],
+      details: [
+        {
+          icon: 'receipt_long',
+          label: language === 'AR' ? 'عدد الفواتير' : 'Invoice Count',
+          value: filteredData.purchases.filter((p) => p.paymentMethod === 'credit' && p.status !== 'rejected').length,
+          isCurrency: false,
+        },
+      ],
+    };
+    return <InsightTooltip {...data} language={language} />;
+  }, [debtsValue, filteredData.purchases, language]);
+
   const activeTopSellingFull = topSellingMode === 'qty' ? topSellingByQtyFull : topSellingFull;
   const topSelling = useMemo(() => activeTopSellingFull.slice(0, 5), [activeTopSellingFull]);
   const topSelling20 = activeTopSellingFull;
@@ -739,6 +770,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         ),
       },
+      supplierDebts: {
+        title: language === 'AR' ? 'تفاصيل مديونيات الموردين' : 'Supplier Debts Details',
+        actions: exportBtn('debts', filteredData.purchases.filter((p) => p.paymentMethod === 'credit' && p.status !== 'rejected')),
+        children: (
+          <div className='space-y-3'>
+            {filteredData.purchases.filter((p) => p.paymentMethod === 'credit' && p.status !== 'rejected').length === 0 ? (
+              <div className='h-32 flex items-center justify-center text-gray-400 text-sm'>
+                {language === 'AR' ? 'لا توجد فواتير آجلة' : 'No credit invoices found'}
+              </div>
+            ) : (
+              filteredData.purchases
+                .filter((p) => p.paymentMethod === 'credit' && p.status !== 'rejected')
+                .map((purchase, idx) => (
+                  <GenericListItem
+                    key={purchase.id || `debt-${idx}`}
+                    icon='receipt_long'
+                    title={purchase.supplierName || 'Unknown Supplier'}
+                    subtitle={`${purchase.externalInvoiceId || purchase.id} • ${new Date(purchase.date).toLocaleDateString()}`}
+                    value={formatCurrency(purchase.totalCost || 0, undefined, language)}
+                    badge={purchase.status === 'pending' ? (language === 'AR' ? 'قيد الانتظار' : 'Pending') : undefined}
+                    badgeColor={purchase.status === 'pending' ? 'badge-warning' : 'badge-zinc'}
+                  />
+                ))
+            )}
+          </div>
+        ),
+      },
       salesChart: {
         title: t.trend,
         actions: exportBtn('sales_trend', salesData),
@@ -914,7 +972,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       />
 
       {/* Stats Cards Row */}
-      <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3'>
         {[
           {
             id: 'revenue',
@@ -954,6 +1012,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
             iconColor: 'orange',
             type: 'number',
             tooltip: lowStockTooltip,
+          },
+          {
+            id: 'supplierDebts',
+            title: language === 'AR' ? 'المديونيات' : 'Debts',
+            value: debtsValue,
+            icon: 'credit_card',
+            iconColor: 'amber',
+            type: 'currency',
+            tooltip: debtsTooltip,
+            permission: 'reports.view_financial',
           },
         ].map((card, _idx) => {
           const cardContent = (
