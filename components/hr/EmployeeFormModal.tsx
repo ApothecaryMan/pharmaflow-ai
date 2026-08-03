@@ -7,6 +7,7 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import type { Branch, Employee } from '../../types';
 import { BANNER_STYLES, renderBanner } from '../../utils/banners';
 import { idGenerator } from '../../utils/idGenerator';
+import { compressImage } from '../../utils/imageCompressor';
 import {
   INPUT_BASE,
   MODAL_FOOTER_BTN_CANCEL,
@@ -436,11 +437,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                             );
                             return;
                           }
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setFormData((prev) => ({ ...prev, image: reader.result as string }));
-                          };
-                          reader.readAsDataURL(file);
+                          compressImage(file).then((dataUrl) => {
+                            setFormData((prev) => ({ ...prev, image: dataUrl }));
+                          });
                         }
                       }}
                     />

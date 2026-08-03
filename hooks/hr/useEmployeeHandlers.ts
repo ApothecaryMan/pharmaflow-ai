@@ -87,8 +87,8 @@ export function useEmployeeHandlers({
         }
       }
 
-      await employeeService.update(id, updates);
-      setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+      const updated = await employeeService.update(id, updates);
+      setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...updated } : e)));
       success('Employee updated successfully');
       auditService.log('user.update', {
         userId: currentEmployeeId || 'System',

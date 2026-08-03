@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MAX_UPLOAD_SIZE_KB } from '../../../config';
 import type { Employee, EmploymentRequest, UserProfile } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
+import { compressImage } from '../../../utils/imageCompressor';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
 
@@ -60,6 +61,19 @@ const readFileAsBase64 = (
     };
     reader.readAsDataURL(file);
   });
+};
+
+const readFileAsCompressedImage = (
+  file: File,
+  t: Translations,
+  readerRef?: React.MutableRefObject<FileReader | null>
+): Promise<string> => {
+  if (file.size > MAX_UPLOAD_SIZE_KB * 1024) {
+    return Promise.reject(
+      new Error(t.employeeProfile.fileTooLarge.replace('{{size}}', MAX_UPLOAD_SIZE_KB.toString()))
+    );
+  }
+  return compressImage(file).catch(() => readFileAsBase64(file, t, readerRef));
 };
 
 interface EditFieldProps {
@@ -545,7 +559,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       const file = e.target.files?.[0];
       if (!file) return;
       try {
-        const base64 = await readFileAsBase64(file, t, readerRef);
+        const base64 = await readFileAsCompressedImage(file, t, readerRef);
         setPreview(base64);
         setRemoveImage(false);
       } catch (err) {

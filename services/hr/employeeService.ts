@@ -8,6 +8,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { BaseDomainService } from '../core/baseDomainService';
 import { orgService } from '../org/orgService';
 import { settingsService } from '../settings/settingsService';
+import { uploadPhotoToStorage, deletePhotoFromStorage } from '../storage/photoStorage';
 import { employeeRepository } from './repositories/employeeRepository';
 
 class EmployeeServiceImpl extends BaseDomainService<Employee> {
@@ -77,6 +78,15 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
       orgId: effectiveOrgId || undefined,
     } as Employee;
 
+    if (newEmployee.image?.startsWith('data:image/')) {
+      if (!effectiveOrgId) throw new Error('Cannot upload photo: active organization not set');
+      newEmployee.image = await uploadPhotoToStorage(
+        newEmployee.image,
+        newEmployee.id,
+        effectiveOrgId
+      );
+    }
+
     if (!newEmployee.employeeCode) {
       let inserted = false;
       let lastErr = null;
@@ -120,6 +130,18 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
   }
 
   async update(id: string, updates: Partial<Employee>): Promise<Employee> {
+    if (updates.image?.startsWith('data:image/')) {
+      const settings = await settingsService.getAll();
+      const orgId = orgService.getActiveOrgId() || settings.orgId;
+      if (!orgId) throw new Error('Cannot upload photo: active organization not set');
+
+      const oldPhoto = await employeeRepository.getPhoto(id);
+      updates = { ...updates, image: await uploadPhotoToStorage(updates.image, id, orgId) };
+
+      const result = await employeeRepository.update(id, updates);
+      if (oldPhoto) void deletePhotoFromStorage(oldPhoto).catch(() => {});
+      return result;
+    }
     return employeeRepository.update(id, updates);
   }
 

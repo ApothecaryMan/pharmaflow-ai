@@ -1,5 +1,7 @@
 import { supabase } from '../../../lib/supabase';
 import type { UserProfile } from '../../../types';
+import { orgService } from '../../org/orgService';
+import { uploadPhotoToStorage, deletePhotoFromStorage } from '../../storage/photoStorage';
 
 export const employeeProfileRepository = {
   BASE_PROFILE_COLUMNS:
@@ -97,6 +99,18 @@ export const employeeProfileRepository = {
    */
   async update(id: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {
     try {
+      let oldImage: string | null | undefined;
+      if (updates.image?.startsWith('data:image/')) {
+        const orgId = orgService.getActiveOrgId();
+        if (!orgId) throw new Error('Cannot upload photo: active organization not set');
+        const { data: current } = await supabase
+          .from('user_profiles')
+          .select('image')
+          .eq('id', id)
+          .maybeSingle();
+        oldImage = current?.image;
+        updates = { ...updates, image: await uploadPhotoToStorage(updates.image, id, orgId) };
+      }
       const payload: Record<string, any> = {};
       if (updates.username !== undefined) payload.username = updates.username;
       if (updates.fullName !== undefined) payload.full_name = updates.fullName;
@@ -123,6 +137,7 @@ export const employeeProfileRepository = {
         .single();
 
       if (error) throw error;
+      if (oldImage) void deletePhotoFromStorage(oldImage).catch(() => {});
       return this.mapToModel(data);
     } catch (err) {
       console.error('Failed to update user profile:', err);
