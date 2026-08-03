@@ -1,6 +1,6 @@
 [package]
 name = "zinc"
-version = "2.0.72"
+version = "2.0.73"
 description = "ZINC - Smart Pharmacy Management System"
 authors = ["ZINC Team"]
 license = "UNLICENSED"
