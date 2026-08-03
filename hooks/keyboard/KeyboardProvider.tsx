@@ -162,6 +162,14 @@ export function KeyboardProvider({
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Prevent key repeat issues globally
+      if (e.repeat) {
+        if (e.key === 'Tab') {
+          e.preventDefault(); // Prevent native Tab from spamming focus changes
+        }
+        return; // Ignore held-down keys for all custom shortcuts
+      }
+
       const isModalOpen = document.querySelector('[role="dialog"]');
       const activeEl = document.activeElement;
       const activeTag = activeEl?.tagName;
