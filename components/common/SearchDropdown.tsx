@@ -31,6 +31,7 @@ export function SearchDropdown<T extends { id: string | number }>({
   const isAR = language === 'AR';
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const rowRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const [edgeFades, setEdgeFades] = React.useState({ top: false, bottom: false });
 
   // Scroll highlighted item into view
   React.useEffect(() => {
@@ -42,14 +43,28 @@ export function SearchDropdown<T extends { id: string | number }>({
     }
   }, [highlightedIndex]);
 
+  const updateEdgeFades = React.useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    setEdgeFades({
+      top: scrollTop > 2,
+      bottom: scrollHeight - scrollTop - clientHeight > 2,
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (results.length > 0) updateEdgeFades(scrollContainerRef.current);
+  }, [results.length, updateEdgeFades]);
+
   if (!isVisible) return null;
 
   if (results.length === 0) {
     return (
       <div
-        className={`absolute top-full mt-2 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) p-4 text-center text-gray-500 text-sm z-50 ${className}`}
+        className={`absolute top-full mt-1.5 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) py-5 px-6 text-center text-sm z-50 flex flex-col items-center gap-1.5 ${className}`}
       >
-        {emptyMessage}
+        <span className='inline-block h-1 w-8 rounded-full bg-gray-200 dark:bg-(--border-divider)' />
+        <p className='text-gray-500 dark:text-gray-400'>{emptyMessage}</p>
       </div>
     );
   }
@@ -85,8 +100,15 @@ export function SearchDropdown<T extends { id: string | number }>({
       {/* Scrollable Data Rows Area */}
       <div
         ref={scrollContainerRef}
-        className='max-h-[340px] overflow-y-auto overflow-x-hidden scrollbar-hide'
+        onScroll={(e) => updateEdgeFades(e.currentTarget)}
+        className='relative max-h-[340px] overflow-y-auto overflow-x-hidden scrollbar-hide'
       >
+        {/* Top edge fade */}
+        <div
+          className={`pointer-events-none absolute inset-x-0 top-0 h-3 z-20 bg-gradient-to-b from-white/95 to-white/0 dark:from-(--bg-card)/95 dark:to-(--bg-card)/0 transition-opacity duration-150 ${
+            edgeFades.top ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
         {results.map((item, index) => (
           <button
             key={item.id}
@@ -95,28 +117,38 @@ export function SearchDropdown<T extends { id: string | number }>({
               rowRefs.current[index] = el;
             }}
             onClick={() => onSelect(item)}
-            className={`w-full text-start border-b border-gray-50 dark:border-(--border-divider) last:border-0 transition-colors group ${
+            className={`relative w-full text-start border-b border-gray-50 dark:border-(--border-divider) last:border-0 transition-colors group ${
               highlightedIndex === index
-                ? 'bg-gray-50/50 dark:bg-primary-900/20'
+                ? 'bg-primary-50/60 dark:bg-primary-900/25'
                 : 'hover:bg-gray-50 dark:hover:bg-(--bg-hover)'
             }`}
           >
+            {/* Highlight accent bar */}
+            <span
+              className={`pointer-events-none absolute inset-y-0 start-0 w-0.5 transition-colors ${
+                highlightedIndex === index ? 'bg-primary-500 dark:bg-primary-400' : 'bg-transparent'
+              }`}
+            />
             <div className='flex items-stretch w-full text-sm text-gray-600 dark:text-white'>
               {columns.map((col, colIndex) => {
                 const headerLower = String(col.header || '').toLowerCase();
                 const isNameCol = ['name', 'الاسم', 'المنتج', 'product'].some((k) =>
                   headerLower.includes(k)
                 );
-                const cellAlignClass = isNameCol ? 'justify-start text-start' : '';
+                const cellAlignClass = isNameCol
+                  ? 'justify-start text-start'
+                  : col.className?.includes('center')
+                    ? 'justify-center text-center'
+                    : '';
 
                 return (
                   <div
                     key={col.header || `cell-${colIndex}`}
-                    className={`${col.width || 'flex-1'} py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center ${cellAlignClass} ${col.className || ''}`}
+                    className={`${col.width || 'flex-1'} min-w-0 py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center overflow-hidden ${cellAlignClass} ${col.className || ''}`}
                   >
                     <div
                       dir={isNameCol ? 'ltr' : undefined}
-                      className='w-full flex items-center justify-start'
+                      className='w-full min-w-0 flex items-center justify-start truncate'
                     >
                       {col.render(item)}
                     </div>
@@ -126,6 +158,31 @@ export function SearchDropdown<T extends { id: string | number }>({
             </div>
           </button>
         ))}
+        {/* Bottom edge fade */}
+        <div
+          className={`pointer-events-none sticky bottom-0 inset-x-0 h-3 z-20 bg-gradient-to-t from-white to-white/40 dark:from-(--bg-card) dark:to-(--bg-card)/40 transition-opacity duration-150 ${
+            edgeFades.bottom ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      </div>
+
+      {/* Footer Hint Bar */}
+      <div className='flex items-center justify-between px-3 py-1.5 bg-gray-50/80 dark:bg-(--bg-card) border-t border-gray-100 dark:border-(--border-divider) text-[10px] text-gray-400 rounded-b-xl'>
+        <span className='font-medium'>
+          {results.length} {results.length === 1 ? 'result' : 'results'}
+        </span>
+        <span className='flex items-center gap-2'>
+          <span className='flex items-center gap-1'>
+            <kbd className='px-1 rounded bg-gray-200 dark:bg-(--border-divider)'>↑</kbd>
+            <kbd className='px-1 rounded bg-gray-200 dark:bg-(--border-divider)'>↓</kbd> nav
+          </span>
+          <span className='flex items-center gap-1'>
+            <kbd className='px-1 rounded bg-gray-200 dark:bg-(--border-divider)'>Enter</kbd> select
+          </span>
+          <span className='flex items-center gap-1'>
+            <kbd className='px-1 rounded bg-gray-200 dark:bg-(--border-divider)'>Esc</kbd> close
+          </span>
+        </span>
       </div>
     </div>
   );

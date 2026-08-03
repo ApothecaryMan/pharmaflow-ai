@@ -16,6 +16,8 @@ const DATE_PICKER_TRANSLATIONS: Record<string, any> = {
     pm: 'PM',
     from: 'From',
     to: 'To',
+    startOfDay: 'Start of Day',
+    endOfDay: 'End of Day',
   },
   'ar-EG': {
     cancel: 'إلغاء',
@@ -26,6 +28,8 @@ const DATE_PICKER_TRANSLATIONS: Record<string, any> = {
     pm: 'م',
     from: 'من',
     to: 'إلى',
+    startOfDay: 'بداية اليوم',
+    endOfDay: 'نهاية اليوم',
   },
 };
 
@@ -192,12 +196,15 @@ interface DatePickerProps {
     minute: string;
     am?: string;
     pm?: string;
+    startOfDay?: string;
+    endOfDay?: string;
   };
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   rounded?: 'full' | 'xl' | 'lg' | 'md' | 'none';
-  variant?: 'default' | 'ghost' | 'pill-dark';
+  variant?: 'default' | 'ghost' | 'pill-dark' | 'input';
   maxDate?: string;
+  quickAction?: 'startOfDay' | 'endOfDay';
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -215,6 +222,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   rounded = 'full',
   variant = 'default',
   maxDate,
+  quickAction,
 }) => {
   const { language, numeralSystem } = useSettings();
   const isAR = language === 'AR';
@@ -227,8 +235,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   const translations =
     customTranslations ||
-    DATE_PICKER_TRANSLATIONS[activeLocale] ||
-    DATE_PICKER_TRANSLATIONS[isAR ? 'ar-EG' : 'en-US'];
+    DATE_PICKER_TRANSLATIONS[languageLocale] ||
+    DATE_PICKER_TRANSLATIONS['en-US'];
   // --- State ---
   const [isOpen, setIsOpen] = useState(false);
   const [alignMode, setAlignMode] = useState<'left' | 'center' | 'right'>('center');
@@ -476,11 +484,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   const confirmSelection = () => {
     if (tempDate) {
-      // Convert to ISO string for output, handling timezone offset properly
-      // We want to preserve the selected local time in the string
-      const offset = tempDate.getTimezoneOffset() * 60000;
-      const localISODate = new Date(tempDate.getTime() - offset).toISOString().slice(0, 10);
-      onChange(localISODate);
+      // Return the full ISO string to preserve both the selected date and time.
+      // Slicing it to (0, 10) strips the time and causes UTC parsing issues (e.g. 3 AM bug).
+      onChange(tempDate.toISOString());
     } else {
       onChange('');
     }
@@ -534,6 +540,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-gray-100/80 dark:hover:bg-(--bg-card)/50 font-bold';
     }
 
+    if (variant === 'input') {
+      return 'w-full px-3 py-2.5 bg-(--bg-input) border border-(--border-divider) focus:border-gray-400 dark:focus:border-gray-500 transition-colors justify-between text-sm';
+    }
+
     // Default variant
     return value
       ? 'bg-white dark:bg-(--bg-input) border-gray-200 dark:border-(--border-divider) text-gray-900 dark:text-white font-bold shadow-sm'
@@ -541,7 +551,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   return (
-    <div className='relative inline-block'>
+    <div className={`relative ${className?.includes('w-full') || variant === 'input' ? 'w-full block' : 'inline-block'}`}>
       {/* --- Trigger Button --- */}
       <button
         ref={triggerRef}
@@ -557,57 +567,114 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           setIsOpen(!isOpen);
         }}
         className={`
- flex items-center transition-all select-none outline-hidden focus:ring-0
- ${variant === 'default' ? 'border' : 'border'}
- ${styles[size]}
- ${styles.innerRounded[rounded]}
+ flex items-center transition-all select-none outline-hidden focus:ring-0 border
+ ${variant === 'input' ? '' : styles[size]}
+ ${variant === 'input' ? styles.rounded[rounded] : styles.innerRounded[rounded]}
  ${getVariantStyles()}
  ${className}
  `}
       >
-        {iconPosition === 'start' && !value && (
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-            {icon}
-          </span>
-        )}
-        <span className='text-sm font-medium whitespace-nowrap'>
-          {value
-            ? (() => {
-                const d = new Date(value);
-                const month = d.toLocaleDateString(languageLocale, { month: 'short' });
-                const day = d.getDate().toLocaleString(activeLocale, { useGrouping: false });
-                const hour = (d.getHours() % 12 || 12).toLocaleString(activeLocale, {
-                  useGrouping: false,
-                });
-                const minute = d
-                  .getMinutes()
-                  .toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false });
-                const ampm = d.getHours() >= 12 ? translations.pm || 'PM' : translations.am || 'AM';
-
-                return isAR
-                  ? `${day} ${month}، ${hour}:${minute} ${ampm}`
-                  : `${month} ${day}, ${hour}:${minute} ${ampm}`;
-              })()
-            : placeholder || label}
-        </span>
-        {iconPosition === 'end' && !value && (
-          <span className='material-symbols-rounded ml-1.5' style={{ fontSize: 'var(--icon-md)' }}>
-            {icon}
-          </span>
-        )}
-
-        {value && (
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={clearSelection}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clearSelection(e); } }}
-            className='hidden sm:flex items-center justify-center w-4 h-4 rounded -me-[5px] text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-[#1F1F1F] transition-colors cursor-pointer'
-          >
-            <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
-              close
+        {variant === 'input' ? (
+          <>
+            {value && (
+              <div
+                role='button'
+                tabIndex={0}
+                onClick={clearSelection}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    clearSelection(e);
+                  }
+                }}
+                className='hidden sm:flex items-center justify-center shrink-0 w-5 h-5 rounded-full text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer mr-1.5 rtl:mr-0 rtl:ml-1.5'
+              >
+                <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                  close
+                </span>
+              </div>
+            )}
+            <span
+              className={`text-sm truncate flex-1 text-start ${
+                value ? 'font-medium text-(--text-primary)' : 'font-normal text-(--text-tertiary)'
+              }`}
+            >
+              {value
+                ? (() => {
+                    const d = new Date(value);
+                    const month = d.toLocaleDateString(languageLocale, { month: 'short' });
+                    const day = d.getDate().toLocaleString(activeLocale, { useGrouping: false });
+                    const hour = (d.getHours() % 12 || 12).toLocaleString(activeLocale, {
+                      useGrouping: false,
+                    });
+                    const minute = d
+                      .getMinutes()
+                      .toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false });
+                    const ampm = d.getHours() >= 12 ? translations.pm || 'PM' : translations.am || 'AM';
+                    return isAR
+                      ? `${day} ${month}، ${hour}:${minute} ${ampm}`
+                      : `${month} ${day}, ${hour}:${minute} ${ampm}`;
+                  })()
+                : placeholder || label}
             </span>
-          </div>
+            <div className='flex items-center shrink-0'>
+              <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: '20px' }}>
+                {icon}
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            {iconPosition === 'start' && !value && (
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                {icon}
+              </span>
+            )}
+            <span className='text-sm font-medium whitespace-nowrap'>
+              {value
+                ? (() => {
+                    const d = new Date(value);
+                    const month = d.toLocaleDateString(languageLocale, { month: 'short' });
+                    const day = d.getDate().toLocaleString(activeLocale, { useGrouping: false });
+                    const hour = (d.getHours() % 12 || 12).toLocaleString(activeLocale, {
+                      useGrouping: false,
+                    });
+                    const minute = d
+                      .getMinutes()
+                      .toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false });
+                    const ampm = d.getHours() >= 12 ? translations.pm || 'PM' : translations.am || 'AM';
+
+                    return isAR
+                      ? `${day} ${month}، ${hour}:${minute} ${ampm}`
+                      : `${month} ${day}, ${hour}:${minute} ${ampm}`;
+                  })()
+                : placeholder || label}
+            </span>
+            {iconPosition === 'end' && !value && (
+              <span className='material-symbols-rounded ml-1.5' style={{ fontSize: 'var(--icon-md)' }}>
+                {icon}
+              </span>
+            )}
+
+            {value && (
+              <div
+                role='button'
+                tabIndex={0}
+                onClick={clearSelection}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    clearSelection(e);
+                  }
+                }}
+                className='hidden sm:flex items-center justify-center w-4 h-4 rounded -me-[5px] text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-[#1F1F1F] transition-colors cursor-pointer'
+              >
+                <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
+                  close
+                </span>
+              </div>
+            )}
+          </>
         )}
       </button>
 
@@ -697,29 +764,53 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               </div>
 
               {/* Footer Actions */}
-              <div className='flex items-center justify-end gap-1.5 border-t border-gray-100 dark:border-(--border-divider) pt-2 mt-1'>
-                <button
-                  type='button'
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsOpen(false);
-                  }}
-                  className='px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors'
-                >
-                  {translations.cancel}
-                </button>
-                <button
-                  type='button'
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    confirmSelection();
-                  }}
-                  className={`${BUTTON_BASE} text-sm font-medium text-white border border-transparent dark:border-(--border-divider) active:scale-95 transition-all`}
-                >
-                  {translations.ok}
-                </button>
+              <div className='flex items-center gap-2 pt-3 mt-1 w-full'>
+                {quickAction && (
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const d = new Date(tempDate || new Date());
+                      if (quickAction === 'startOfDay') {
+                        d.setHours(0, 0, 0, 0);
+                      } else {
+                        d.setHours(23, 59, 59, 999);
+                      }
+                      setTempDate(d);
+                    }}
+                    className='shrink-0 px-3 py-2.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded-lg transition-all active:scale-95 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  >
+                    {quickAction === 'startOfDay'
+                      ? translations.startOfDay || 'Start of Day'
+                      : translations.endOfDay || 'End of Day'}
+                  </button>
+                )}
+                
+                <div className='flex items-center gap-2 flex-1'>
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsOpen(false);
+                    }}
+                    className='flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white border border-gray-200 hover:bg-gray-50 dark:bg-white/10 dark:border-transparent dark:hover:bg-white/20 rounded-full transition-colors text-center'
+                  >
+                    {translations.cancel}
+                  </button>
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      confirmSelection();
+                    }}
+                    className='flex-1 px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 rounded-full active:scale-95 transition-all text-center shadow-sm'
+                  >
+                    {translations.ok}
+                  </button>
+                </div>
               </div>
             </div>
           </div>,
@@ -756,7 +847,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   locale = 'en-US',
   rounded = 'full',
 }) => {
-  const t = DATE_PICKER_TRANSLATIONS[locale] || DATE_PICKER_TRANSLATIONS['en-US'];
+  const { language } = useSettings();
+  const isAR = language === 'AR';
+  const effectiveLocale = isAR ? 'ar-EG' : locale || 'en-US';
+  const t = DATE_PICKER_TRANSLATIONS[effectiveLocale] || DATE_PICKER_TRANSLATIONS['en-US'];
 
   const roundedClass = rounded === 'full' ? 'rounded-full' : `rounded-${rounded}`;
 
@@ -776,6 +870,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         iconPosition='start'
         icon='edit_calendar'
         rounded={rounded}
+        quickAction='startOfDay'
       />
 
       <span className='material-symbols-rounded text-gray-400 dark:text-gray-600 px-1 text-sm rtl:rotate-180'>
@@ -794,6 +889,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         iconPosition='start'
         icon='edit_calendar'
         rounded={rounded}
+        quickAction='endOfDay'
       />
     </div>
   );

@@ -56,11 +56,13 @@ export const Tooltip: React.FC<{
   textColor,
 }) => {
   let tooltipStyle = 'default';
+  let isMuted = false;
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     // biome-ignore lint/correctness/useHookAtTopLevel: intentional fallback pattern
     const themeContext = useTheme();
     tooltipStyle = themeContext.tooltipStyle;
+    isMuted = themeContext.vividBg === 'muted';
   } catch (_e) {
     // Fallback if rendered outside ThemeProvider
   }
@@ -165,7 +167,7 @@ export const Tooltip: React.FC<{
           >
             <div
               className={`relative group rounded-[10px] shadow-xl ${
-                fillColor ? '' : 'bg-black/90 dark:bg-white/10 backdrop-blur-md glass-edge'
+                fillColor ? '' : isMuted ? 'bg-black/90 dark:bg-white/10 backdrop-blur-md glass-edge' : 'bg-primary-950 dark:bg-white/10 backdrop-blur-md glass-edge'
               }`}
               style={{
                 backgroundColor: fillColor || undefined,
