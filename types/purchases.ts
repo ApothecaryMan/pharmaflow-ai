@@ -12,6 +12,10 @@ export interface PurchaseItem {
   id: string;
   /** Drug ID being purchased */
   drugId: string;
+  /** International barcode */
+  barcode?: string;
+  /** System generated internal code */
+  internalCode?: string;
   /** Drug name for display */
   name: string;
   /** Quantity (in packs or units based on isUnit) */

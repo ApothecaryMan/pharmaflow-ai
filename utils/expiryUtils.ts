@@ -49,6 +49,53 @@ export const formatExpiryDate = (expiryDate: any): string => {
 export type ExpiryStatus = 'valid' | 'invalid' | 'near-expiry' | 'incomplete';
 
 /**
+ * Returns the number of whole months until the expiry date (can be negative if expired),
+ * or null if the date cannot be parsed.
+ * Handles MMYY, YYYY-MM, YYYY-MM-DD, and MM/YY / MM/YYYY formats.
+ */
+export const getExpiryMonthsRemaining = (date: string): number | null => {
+  if (!date) return null;
+
+  let month = 0;
+  let year = 0;
+
+  if (date.length === 4 && !date.includes('/')) {
+    // MMYY format (exactly 4 digits)
+    month = parseInt(date.slice(0, 2), 10);
+    year = parseInt(date.slice(2), 10);
+  } else if (/^\d{4}-\d{2}$/.test(date)) {
+    // YYYY-MM format
+    const parts = date.split('-');
+    year = parseInt(parts[0].slice(-2), 10);
+    month = parseInt(parts[1], 10);
+  } else if (/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(date)) {
+    // YYYY-MM-DD or full ISO string
+    const parts = date.split('T')[0].split('-');
+    year = parseInt(parts[0].slice(-2), 10);
+    month = parseInt(parts[1], 10);
+  } else if (date.includes('/')) {
+    // MM/YY or MM/YYYY format
+    const parts = date.split('/');
+    if (parts.length === 2) {
+      month = parseInt(parts[0], 10);
+      year = parts[1].length === 4 ? parseInt(parts[1], 10) % 100 : parseInt(parts[1], 10);
+    }
+  } else {
+    return null;
+  }
+
+  if (Number.isNaN(month) || Number.isNaN(year) || month < 1 || month > 12) return null;
+
+  const now = new Date();
+  const currentYear = now.getFullYear() % 100;
+  const currentMonth = now.getMonth() + 1;
+  const currentTotalMonths = currentYear * 12 + currentMonth;
+  const expiryTotalMonths = year * 12 + month;
+
+  return expiryTotalMonths - currentTotalMonths;
+};
+
+/**
  * Validate and sanitize expiry input as user types
  * @param input - Raw user input
  * @param previousValue - Previous value (for comparison)

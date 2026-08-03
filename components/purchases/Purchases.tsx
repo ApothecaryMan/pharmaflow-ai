@@ -1,21 +1,3 @@
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { TabBar } from '../../components/layout/TabBar';
@@ -39,13 +21,13 @@ import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   checkExpiryStatus,
   formatExpiryDate,
-  getExpiryStatusStyle,
+  getExpiryMonthsRemaining,
   sanitizeExpiryInput,
 } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
 import { money, pricing, tax } from '../../utils/money';
 import { storage } from '../../utils/storage';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import {
   type FilterConfig,
   FloatingInput,
@@ -53,6 +35,7 @@ import {
   SearchDropdown,
   SearchInput,
   SegmentedControl,
+  Modal,
   useContextMenu,
   useSearchKeyboardNavigation,
   useSmartDirection,
@@ -60,7 +43,9 @@ import {
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { SupplierDirectoryModal } from './SupplierDirectoryModal';
-
+import { useBulkSelection } from './hooks/useBulkSelection';
+import { BulkEditBar } from './ui/BulkEditBar';
+import { computeUpdatedItem } from './utils/calculations';
 interface PurchasesProps {
   color: string;
   t: Translations;
@@ -70,7 +55,7 @@ interface PurchasesProps {
   isLoading?: boolean;
 }
 
-interface SortableCartItemProps {
+interface CartTableRowProps {
   item: PurchaseItem;
   index: number;
   selectedCartIndex: number;
@@ -89,9 +74,13 @@ interface SortableCartItemProps {
   money: any;
   tax: any;
   taxMode: 'exclusive' | 'inclusive';
+  cellSelection: { field: keyof PurchaseItem | 'rowSelection'; indices: number[] } | null;
+  onCellMouseDown: (index: number, field: keyof PurchaseItem | 'rowSelection') => void;
+  onCellMouseEnter: (index: number, field: keyof PurchaseItem | 'rowSelection') => void;
+  showUnitPrices: boolean;
 }
 
-const SortableCartItem = React.memo(
+const CartTableRow = React.memo(
   ({
     item,
     index,
@@ -111,23 +100,23 @@ const SortableCartItem = React.memo(
     money,
     tax,
     taxMode,
-  }: SortableCartItemProps) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition: _transition,
-      isDragging,
-    } = useSortable({
-      id: item.id,
-    });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      zIndex: isDragging ? 50 : undefined,
+    cellSelection,
+    onCellMouseDown,
+    onCellMouseEnter,
+    showUnitPrices,
+  }: CartTableRowProps) => {
+    const isCellSelected = (field: keyof PurchaseItem | 'rowSelection') => {
+      if (!cellSelection || cellSelection.field !== field) return false;
+      if (cellSelection.indices.length <= 1) return false;
+      return cellSelection.indices.includes(index);
     };
 
+    const handleMouseDown = (e: React.MouseEvent, field: keyof PurchaseItem | 'rowSelection') => {
+      if (cellSelection && cellSelection.indices.length > 1) {
+        e.preventDefault();
+      }
+      onCellMouseDown(index, field);
+    };
     const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
     const calculatedSubtotal =
       taxMode === 'exclusive' ? lineTotal : tax.inclusiveBase(lineTotal, item.tax ?? 14);
@@ -136,20 +125,20 @@ const SortableCartItem = React.memo(
         ? lineTotal
         : money.add(lineTotal, tax.exclusiveAmount(lineTotal, item.tax ?? 14));
 
+    const expiryMonthsLeft = getExpiryMonthsRemaining(item.expiryDate || '');
+    const expiryColorClass =
+      expiryMonthsLeft === null
+        ? 'text-gray-900 dark:text-gray-100'
+        : expiryMonthsLeft < 0
+          ? 'text-red-500 dark:text-red-400'
+          : expiryMonthsLeft < 12
+            ? 'text-orange-500 dark:text-orange-400'
+            : 'text-gray-900 dark:text-gray-100';
+
     return (
-      <div
-        ref={setNodeRef}
-        role="button"
-        tabIndex={0}
-        style={style}
-        dir='ltr'
+      <tr
         onClick={() => setSelectedCartIndex(index)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedCartIndex(index); } }}
-        className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer border border-transparent ${
-          selectedCartIndex === index
-            ? `bg-primary-50 dark:bg-(--bg-navbar) border-primary-100 dark:border-primary-900/30`
-            : 'bg-gray-50 dark:bg-(--bg-navbar) hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral)'
-        } ${isDragging ? 'z-50 bg-white dark:bg-gray-800 border-primary-500/50' : ''}`}
+        className='group transition-colors border-b border-gray-300 dark:border-gray-600 last:border-b-0 divide-x divide-gray-200 dark:divide-gray-700 bg-white dark:bg-[#1a1b1e]'
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -159,7 +148,9 @@ const SortableCartItem = React.memo(
               icon: 'visibility',
               action: () =>
                 alert(
-                  `Details for ${item.name}\nQuantity: ${item.quantity}\nCost Price: ${item.costPrice}`
+                  `Details for ${item.name}
+Quantity: ${item.quantity}
+Cost Price: ${item.costPrice}`
                 ),
             },
             {
@@ -180,188 +171,195 @@ const SortableCartItem = React.memo(
           ]);
         }}
       >
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className='absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 z-20'
+        {/* Row Number */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'rowSelection')}
+          onMouseEnter={() => onCellMouseEnter(index, 'rowSelection')}
+          className={`py-1.5 px-2 align-middle text-center cursor-pointer transition-colors ${isCellSelected('rowSelection') ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+            }`}
         >
-          <span className='material-symbols-rounded text-lg'>drag_indicator</span>
-        </div>
+          <span className={`text-[1.4rem] font-black tabular-nums leading-none ${isCellSelected('rowSelection') ? 'text-red-500' : 'text-gray-300 dark:text-gray-600'
+            }`}>{index + 1}</span>
+        </td>
 
-        <button
-          onClick={() => removeItem(item.id)}
-          className='absolute top-1/2 -translate-y-1/2 right-0 w-6 h-full flex items-center justify-center text-gray-400 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl'
-          type='button'
+        {/* Barcode */}
+        <td className='py-1.5 px-2 align-middle'>
+          {item.barcode ? (
+            <div className='flex items-center gap-1.5'>
+              <span className='font-bold tabular-nums text-gray-900 dark:text-gray-100'>{item.barcode}</span>
+            </div>
+          ) : item.internalCode ? (
+            <div className='flex items-center gap-1.5' title={language === 'AR' ? 'كود داخلي' : 'Internal Code'}>
+              <span className='material-symbols-rounded text-gray-400'>qr_code_2</span>
+              <span className='font-bold tabular-nums text-[13px] text-gray-500 dark:text-gray-400'>{item.internalCode}</span>
+            </div>
+          ) : (
+            <span className='text-gray-400 block text-center'>-</span>
+          )}
+        </td>
+
+        {/* Product Name */}
+        <td className='py-1.5 px-3 align-middle'>
+          <p className='font-bold text-[13px] drug-name line-clamp-2 leading-tight' title={item.name}>
+            {getDisplayName(item, textTransform)}
+          </p>
+        </td>
+
+        {/* 1. Qty */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'quantity')}
+          onMouseEnter={() => onCellMouseEnter(index, 'quantity')}
+          className='p-1 relative group/qty align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
         >
-          <span className='material-symbols-rounded text-lg'>close</span>
-        </button>
+          <input
+            ref={(el) => { inputRefs.current[`${index}-quantity`] = el; }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
+            type='number'
+            maxLength={4}
+            value={item.quantity}
+            disabled={isLoading}
+            className={`w-full h-8 bg-transparent text-right font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums ${isCellSelected('quantity')
+              ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+              : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+              }`}
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) => {
+              const val = e.target.value.slice(0, 4);
+              updateItem(item.id, 'quantity', parseFloat(val) || 0);
+            }}
+          />
+          {/* Actual units floating badge on hover — absolute position without row height change */}
+          {(item.unitsPerPack ?? 1) > 1 && item.quantity > 0 && (
+            <div className='absolute -top-2 -right-1 hidden group-hover/qty:flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-600 dark:bg-primary-500 text-white rounded-full text-[10px] font-black shadow-md z-20 pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-150 tabular-nums'>
+              <span>{item.quantity * (item.unitsPerPack ?? 1)}</span>
+              <span className='text-[8px] font-normal opacity-80 pe-0.5'>وحدة</span>
+            </div>
+          )}
+        </td>
 
-        {/* Single Row: Name + All Inputs */}
-        <div className='flex gap-1.5 items-center pe-4 ps-5'>
-          {/* Product Name */}
-          <div className='flex-1 min-w-0'>
-            <p className='font-bold text-md drug-name truncate mb-1' title={item.name}>
-              {getDisplayName(item, textTransform)}
-            </p>
-          </div>
-
-          {/* 1. Qty */}
-          <div className='w-12 relative group/qty'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-quantity`] = el;
-              }}
-              onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
-              label={t.cartFields?.qty || 'Qty'}
-              isLoading={isLoading}
-              type='number'
-              maxLength={4}
-              value={item.quantity}
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+        {/* 2. Expiry */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'expiryDate')}
+          onMouseEnter={() => onCellMouseEnter(index, 'expiryDate')}
+          className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+        >
+          <input
+            ref={(el) => { inputRefs.current[`${index}-expiryDate`] = el; }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
+            type='text'
+            maxLength={4}
+            disabled={isLoading}
+            className={`w-full h-8 bg-transparent text-center font-bold ${expiryColorClass} outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums ${isCellSelected('expiryDate')
+              ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+              : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+              }`}
+            value={
+              focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
+                ? item.expiryDate?.includes('-')
+                  ? item.expiryDate.split('-')[1] + item.expiryDate.split('-')[0].slice(2)
+                  : item.expiryDate
+                : formatExpiryDate(item.expiryDate || '')
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              setFocusedInput({ id: item.id, field: 'expiryDate' });
+              setTimeout(() => e.target.select(), 10);
+            }}
+            onBlur={() => {
+              setFocusedInput(null);
+              const status = checkExpiryStatus(item.expiryDate || '');
+              if (status === 'incomplete') {
+                alert(
+                  t.alerts?.incompleteExpiry ||
+                  'Please enter a complete expiry date (4 digits: MMYY)'
+                );
               }
-              onFocus={(e) => {
-                setSelectedCartIndex(index);
-                e.target.select();
-              }}
-              onChange={(e) => {
-                const val = e.target.value.slice(0, 4);
-                updateItem(item.id, 'quantity', parseFloat(val) || 0);
-              }}
-            />
-            {item.unitsPerPack > 1 && (
-              <div className='absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 whitespace-nowrap opacity-0 group-hover/qty:opacity-100 transition-opacity pointer-events-none'>
-                x{item.unitsPerPack} u
-              </div>
-            )}
-          </div>
-
-          {/* 2. Expiry */}
-          <div className='w-[74px]'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-expiryDate`] = el;
-              }}
-              onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
-              label={t.cartFields?.expiry || 'Expiry'}
-              isLoading={isLoading}
-              type='text'
-              maxLength={4}
-              inputClassName={(() => {
-                const isFocused =
-                  focusedInput?.id === item.id && focusedInput?.field === 'expiryDate';
-                const status = checkExpiryStatus(item.expiryDate || '', {
-                  checkIncomplete: !isFocused,
-                });
-                return getExpiryStatusStyle(status, 'input');
-              })()}
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }}
+            onChange={(e) => {
+              const sanitized = sanitizeExpiryInput(e.target.value, item.expiryDate || '');
+              if (sanitized !== null) {
+                updateItem(item.id, 'expiryDate', sanitized);
               }
-              value={
-                focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
-                  ? item.expiryDate?.includes('-')
-                    ? item.expiryDate.split('-')[1] + item.expiryDate.split('-')[0].slice(2)
-                    : item.expiryDate
-                  : formatExpiryDate(item.expiryDate || '')
-              }
-              onFocus={(e) => {
-                setSelectedCartIndex(index);
-                setFocusedInput({ id: item.id, field: 'expiryDate' });
-                setTimeout(() => e.target.select(), 10);
-              }}
-              onBlur={() => {
-                setFocusedInput(null);
-                // Alert if expiry date is incomplete (1-3 digits)
-                const status = checkExpiryStatus(item.expiryDate || '');
-                if (status === 'incomplete') {
-                  alert(
-                    t.alerts?.incompleteExpiry ||
-                      'Please enter a complete expiry date (4 digits: MMYY)'
-                  );
-                }
-              }}
-              onChange={(e) => {
-                const sanitized = sanitizeExpiryInput(e.target.value, item.expiryDate || '');
-                if (sanitized !== null) {
-                  updateItem(item.id, 'expiryDate', sanitized);
-                }
-              }}
-            />
-          </div>
+            }}
+          />
+        </td>
 
-          {/* Batch number */}
-          <div className='w-[110px]'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-batchNumber`] = el;
-              }}
-              onKeyDown={(e) => handleInputKeyDown(e, index, 'batchNumber')}
-              label={t.cartFields?.batchNumber || 'Batch #'}
-              isLoading={isLoading}
-              type='text'
-              value={item.batchNumber || ''}
-              onFocus={(e) => {
-                setSelectedCartIndex(index);
-                setTimeout(() => e.target.select(), 10);
-              }}
-              onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
-            />
-          </div>
+        {/* Batch number */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'batchNumber')}
+          onMouseEnter={() => onCellMouseEnter(index, 'batchNumber')}
+          className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+        >
+          <input
+            ref={(el) => { inputRefs.current[`${index}-batchNumber`] = el; }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'batchNumber')}
+            type='text'
+            value={item.batchNumber || ''}
+            disabled={isLoading}
+            className={`w-full h-8 bg-transparent text-left font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all ${isCellSelected('batchNumber')
+              ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+              : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+              }`}
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              setTimeout(() => e.target.select(), 10);
+            }}
+            onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
+          />
+        </td>
 
-          {/* 3. Cost */}
-          <div className='w-14'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-costPrice`] = el;
-              }}
-              onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
-              label={t.cartFields?.cost || 'Cost'}
-              isLoading={isLoading}
-              type='number'
-              value={item.costPrice}
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
-              }
-              onFocus={(e) => {
-                setSelectedCartIndex(index);
-                e.target.select();
-              }}
-              onChange={(e) => updateItem(item.id, 'costPrice', parseFloat(e.target.value) || 0)}
-            />
-          </div>
+        {/* 3. Cost */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'costPrice')}
+          onMouseEnter={() => onCellMouseEnter(index, 'costPrice')}
+          className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+        >
+          <input
+            ref={(el) => { inputRefs.current[`${index}-costPrice`] = el; }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
+            type='number'
+            value={item.costPrice ?? ''}
+            disabled={isLoading}
+            className={`w-full h-8 bg-transparent text-right font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums ${isCellSelected('costPrice')
+              ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+              : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+              }`}
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) => updateItem(item.id, 'costPrice', parseFloat(e.target.value) || 0)}
+          />
+        </td>
 
-          {/* 3b. Unit Cost */}
-          <div className='w-14'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-unitCostPrice`] = el;
-              }}
+        {/* 3b. Unit Cost */}
+        {showUnitPrices && (
+          <td
+            onMouseDown={(e) => handleMouseDown(e, 'unitCostPrice')}
+            onMouseEnter={() => onCellMouseEnter(index, 'unitCostPrice')}
+            className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+          >
+            <input
+              ref={(el) => { inputRefs.current[`${index}-unitCostPrice`] = el; }}
               onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
-              label={language === 'AR' ? 'ت. وحدة' : 'U. Cost'}
-              isLoading={isLoading}
               type='number'
-              value={item.unitCostPrice || 0}
+              value={item.unitCostPrice || ''}
+              disabled={isLoading}
               placeholder={
                 item.costPrice && item.unitsPerPack
                   ? money.divide(item.costPrice, item.unitsPerPack).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
                   : ''
               }
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
-              }
+              className={`w-full h-8 bg-transparent text-right font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums placeholder:text-gray-300 dark:placeholder:text-gray-600 ${isCellSelected('unitCostPrice')
+                ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+                : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+                }`}
               onFocus={(e) => {
                 setSelectedCartIndex(index);
                 e.target.select();
@@ -370,144 +368,141 @@ const SortableCartItem = React.memo(
                 updateItem(item.id, 'unitCostPrice', parseFloat(e.target.value) || 0)
               }
             />
-          </div>
+          </td>
+        )}
 
-          {/* 4. Discount */}
-          <div className='w-14'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-discount`] = el;
-              }}
-              onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
-              label={t.cartFields?.discount || 'Disc %'}
-              isLoading={isLoading}
-              type='number'
-              min={0}
-              max={100}
-              value={item.discount || 0}
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
-              }
-              onFocus={(e) => {
-                setSelectedCartIndex(index);
-                e.target.select();
-              }}
-              onChange={(e) => updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)}
-            />
-          </div>
+        {/* 4. Discount */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'discount')}
+          onMouseEnter={() => onCellMouseEnter(index, 'discount')}
+          className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+        >
+          <input
+            ref={(el) => { inputRefs.current[`${index}-discount`] = el; }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
+            type='number'
+            min={0}
+            max={100}
+            value={item.discount || ''}
+            disabled={isLoading}
+            className={`w-full h-8 bg-transparent text-center font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums ${isCellSelected('discount')
+              ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+              : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+              }`}
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) => updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)}
+          />
+        </td>
 
-          {/* 5. Sale Price */}
-          <div className='w-14'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-publicPrice`] = el;
-              }}
-              onKeyDown={(e) => handleInputKeyDown(e, index, 'publicPrice')}
-              label={t.cartFields?.sale || 'Sale'}
-              isLoading={isLoading}
-              type='number'
-              value={item.publicPrice || 0}
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
-              }
-              onFocus={(e) => {
-                setSelectedCartIndex(index);
-                e.target.select();
-              }}
-              onChange={(e) => updateItem(item.id, 'publicPrice', parseFloat(e.target.value) || 0)}
-            />
-          </div>
+        {/* 5. Sale Price */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'publicPrice')}
+          onMouseEnter={() => onCellMouseEnter(index, 'publicPrice')}
+          className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+        >
+          <input
+            ref={(el) => { inputRefs.current[`${index}-publicPrice`] = el; }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'publicPrice')}
+            type='number'
+            value={item.publicPrice || ''}
+            disabled={isLoading}
+            className={`w-full h-8 bg-transparent text-right font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums ${isCellSelected('publicPrice')
+              ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+              : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+              }`}
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) => updateItem(item.id, 'publicPrice', parseFloat(e.target.value) || 0)}
+          />
+        </td>
 
-          {/* 5b. Unit Sale */}
-          <div className='w-14'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-unitPrice`] = el;
-              }}
+        {/* 5b. Unit Sale */}
+        {showUnitPrices && (
+          <td
+            onMouseDown={(e) => handleMouseDown(e, 'unitPrice')}
+            onMouseEnter={() => onCellMouseEnter(index, 'unitPrice')}
+            className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+          >
+            <input
+              ref={(el) => { inputRefs.current[`${index}-unitPrice`] = el; }}
               onKeyDown={(e) => handleInputKeyDown(e, index, 'unitPrice')}
-              label={language === 'AR' ? 'س. وحدة' : 'U. Sale'}
-              isLoading={isLoading}
               type='number'
-              value={item.unitPrice || 0}
+              value={item.unitPrice || ''}
+              disabled={isLoading}
               placeholder={
                 item.publicPrice && item.unitsPerPack
                   ? money.divide(item.publicPrice, item.unitsPerPack).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
                   : ''
               }
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
-              }
+              className={`w-full h-8 bg-transparent text-right font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums placeholder:text-gray-300 dark:placeholder:text-gray-600 ${isCellSelected('unitPrice')
+                ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+                : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+                }`}
               onFocus={(e) => {
                 setSelectedCartIndex(index);
                 e.target.select();
               }}
               onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
             />
-          </div>
+          </td>
+        )}
 
-          {/* 6. Tax % */}
-          <div className='w-12'>
-            <FloatingInput
-              inputRef={(el) => {
-                inputRefs.current[`${index}-tax`] = el;
-              }}
-              onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
-              label={t.cartFields?.tax || 'Tax %'}
-              isLoading={isLoading}
-              type='number'
-              value={item.tax ?? 14}
-              labelBgClassName={
-                selectedCartIndex === index
-                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
-              }
-              onFocus={(e) => {
-                setSelectedCartIndex(index);
-                e.target.select();
-              }}
-              onChange={(e) => updateItem(item.id, 'tax', parseFloat(e.target.value) || 0)}
-            />
-          </div>
+        {/* 6. Tax % */}
+        <td
+          onMouseDown={(e) => handleMouseDown(e, 'tax')}
+          onMouseEnter={() => onCellMouseEnter(index, 'tax')}
+          className='p-1 align-middle hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+        >
+          <input
+            ref={(el) => { inputRefs.current[`${index}-tax`] = el; }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
+            type='number'
+            value={item.tax ?? ''}
+            disabled={isLoading}
+            className={`w-full h-8 bg-transparent text-center font-bold text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 rounded transition-all tabular-nums ${isCellSelected('tax')
+              ? 'border-2 border-primary-500 bg-white dark:bg-gray-800 shadow-xs'
+              : 'border border-transparent focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+              }`}
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) => updateItem(item.id, 'tax', parseFloat(e.target.value) || 0)}
+          />
+        </td>
 
-          {/* 7. Subtotal */}
-          <div className='w-16 flex flex-col items-center gap-0.5'>
-            <span className='text-[8px] text-gray-400 uppercase font-bold leading-none'>
-              {t.headers?.subtotal || 'Subtotal'}
-            </span>
-            <div className='tabular-nums text-[15px] font-black text-(--text-primary)'>
-              {calculatedSubtotal.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
+        {/* 7. Subtotal */}
+        <td className='p-2 text-right align-middle'>
+          <div className='tabular-nums font-bold text-gray-900 dark:text-white'>
+            {calculatedSubtotal.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </div>
+        </td>
 
-          {/* 8. Total */}
-          <div className='w-16 flex flex-col items-center gap-0.5'>
-            <span className='text-[8px] text-primary-500 uppercase font-bold leading-none'>
-              {t.headers?.totalPlusTax || 'Total+Tax'}
-            </span>
-            <div className='tabular-nums text-[15px] font-black text-primary-600 dark:text-primary-400'>
-              {calculatedTotal.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
+        {/* 8. Total */}
+        <td className='p-2 text-right align-middle'>
+          <div className='tabular-nums font-bold text-primary-600 dark:text-primary-400'>
+            {calculatedTotal.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   }
 );
+
 
 export const Purchases: React.FC<PurchasesProps> = ({
   color,
@@ -582,6 +577,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const paymentMethod = activeTab?.paymentMethod || 'cash';
   const externalInvoiceId = activeTab?.externalInvoiceId || '';
 
+  const activeSupplier = suppliers.find((s) => s.id === selectedSupplierId);
+  const showUnitPrices = activeSupplier?.showUnitPrices || false;
+
   const cartTotal = useMemo(() => {
     const taxResults = tax.multiRate(
       cart.map((item) => ({
@@ -599,6 +597,76 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
+  const [paidNowInput, setPaidNowInput] = useState<string | null>(null); // raw string mirror for amount input
+  const [confirmMoveToTab, setConfirmMoveToTab] = useState<{ id: string; name: string; count: number } | null>(null);
+
+  const {
+    cellSelection,
+    bulkInputValue,
+    setBulkInputValue,
+    handleCellMouseDown,
+    handleCellMouseEnter,
+    clearSelection,
+    tableContainerRef,
+  } = useBulkSelection<keyof PurchaseItem | 'rowSelection'>();
+
+  const applyBulkValue = useCallback(() => {
+    if (!cellSelection || bulkInputValue === '') return;
+    const field = cellSelection.field;
+    const indices = cellSelection.indices;
+
+    setCart((prevCart) => {
+      return prevCart.map((item, idx) => {
+        if (indices.includes(idx)) {
+          let val: any = bulkInputValue;
+          if (
+            field === 'quantity' ||
+            field === 'costPrice' ||
+            field === 'unitCostPrice' ||
+            field === 'discount' ||
+            field === 'publicPrice' ||
+            field === 'unitPrice' ||
+            field === 'tax'
+          ) {
+            val = parseFloat(bulkInputValue) || 0;
+          }
+          return computeUpdatedItem(item, field as keyof PurchaseItem, val);
+        }
+        return item;
+      });
+    });
+
+    clearSelection();
+  }, [cellSelection, bulkInputValue, clearSelection]);
+
+  const clearBulkValue = useCallback(() => {
+    if (!cellSelection) return;
+    const field = cellSelection.field;
+    const indices = cellSelection.indices;
+
+    setCart((prevCart) => {
+      return prevCart.map((item, idx) => {
+        if (indices.includes(idx)) {
+          let val: any = '';
+          if (
+            field === 'quantity' ||
+            field === 'costPrice' ||
+            field === 'unitCostPrice' ||
+            field === 'discount' ||
+            field === 'publicPrice' ||
+            field === 'unitPrice' ||
+            field === 'tax'
+          ) {
+            val = 0;
+          }
+          return computeUpdatedItem(item, field as keyof PurchaseItem, val);
+        }
+        return item;
+      });
+    });
+
+    clearSelection();
+  }, [cellSelection, clearSelection]);
 
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [isSupplierIconHovered, setIsSupplierIconHovered] = useState(false);
@@ -658,6 +726,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
     updateTab(activeTabId, { paidNow: amount });
   };
 
+  // Normalize amount input: keep digits + single decimal, strip leading zeros, max 3 fraction digits
+  const sanitizeAmountInput = (raw: string): string => {
+    let v = raw.replace(/[^\d.]/g, '');
+    const dotIdx = v.indexOf('.');
+    if (dotIdx !== -1) {
+      v = v.slice(0, dotIdx + 1) + v.slice(dotIdx + 1).replace(/\./g, '').slice(0, 3);
+    }
+    v = v.replace(/^0+(?=\d)/, '');
+    return v;
+  };
+
   const setExternalInvoiceId = (id: string) => {
     updateTab(activeTabId, { externalInvoiceId: id });
   };
@@ -694,6 +773,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
     setSupplierSearch('');
     setIsSupplierOpen(false);
   }, []);
+
+  // Reset paid-now input mirror when switching tabs
+  useEffect(() => {
+    setPaidNowInput(null);
+  }, [activeTabId]);
 
   // Handle add tab with alert
   const handleAddTab = () => {
@@ -754,6 +838,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
         {
           id: idGenerator.generateSync('generic', activeBranchId),
           drugId: drug.id,
+          barcode: drug.barcode,
+          internalCode: drug.internalCode,
           name: getDisplayName(drug, textTransform),
           quantity: 1,
           costPrice: cost,
@@ -797,33 +883,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // Reduced distance for better responsiveness
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    // Get fresh cart from activeTab directly to ensure we have current state
-    const currentActiveTab = tabs.find((t) => t.id === activeTabId);
-    const currentCart = currentActiveTab?.cart || [];
-
-    const oldIndex = currentCart.findIndex((item) => item.id === active.id);
-    const newIndex = currentCart.findIndex((item) => item.id === over.id);
-
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newCart = arrayMove(currentCart, oldIndex, newIndex);
-      updateTab(activeTabId, { cart: newCart });
-    }
-  };
 
   const handleInputKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -984,64 +1044,54 @@ export const Purchases: React.FC<PurchasesProps> = ({
     setCart((prev) =>
       prev.map((i) => {
         if (i.id !== itemId) return i;
-
-        // T3: Allow empty string to pass through for better typing UX
-        const updatedItem = { ...i, [field]: value };
-
-        // Convert to number for calculations, but keep string for display if empty
-        const numValue =
-          value === '' ? 0 : typeof value === 'number' ? value : parseFloat(value as string) || 0;
-
-        // Auto-format expiry date: 1125 -> 2025-11-01 (ISO format)
-        if (
-          field === 'expiryDate' &&
-          typeof value === 'string' &&
-          value.length === 4 &&
-          /^\d+$/.test(value)
-        ) {
-          const month = value.slice(0, 2);
-          const year = value.slice(2);
-          updatedItem.expiryDate = `20${year}-${month}`;
-        }
-
-        // Interdependent Calculation Logic (Smart Sync Chain)
-        if (field === 'discount') {
-          updatedItem.costPrice = pricing.afterDiscount(i.publicPrice, numValue);
-          updatedItem.unitCostPrice = money.divide(updatedItem.costPrice, i.unitsPerPack || 1);
-        } else if (field === 'costPrice') {
-          if (i.publicPrice > 0) {
-            updatedItem.discount = pricing.actualMargin(numValue, i.publicPrice);
-          }
-          updatedItem.unitCostPrice = money.divide(numValue, i.unitsPerPack || 1);
-        } else if (field === 'unitCostPrice') {
-          const newCost = money.multiply(numValue, i.unitsPerPack || 1, 0);
-          const currentCostFromThisUnit = money.divide(i.costPrice, i.unitsPerPack || 1);
-          if (!money.isEqual(currentCostFromThisUnit, numValue)) {
-            updatedItem.costPrice = newCost;
-            if (i.publicPrice > 0) {
-              updatedItem.discount = pricing.actualMargin(updatedItem.costPrice, i.publicPrice);
-            }
-          }
-        } else if (field === 'publicPrice') {
-          updatedItem.costPrice = pricing.afterDiscount(numValue, i.discount || 0);
-          updatedItem.unitPrice = money.divide(numValue, i.unitsPerPack || 1);
-          updatedItem.unitCostPrice = money.divide(updatedItem.costPrice, i.unitsPerPack || 1);
-        } else if (field === 'unitPrice') {
-          const newSale = money.multiply(numValue, i.unitsPerPack || 1, 0);
-          const currentSaleFromThisUnit = money.divide(i.publicPrice, i.unitsPerPack || 1);
-          if (!money.isEqual(currentSaleFromThisUnit, numValue)) {
-            updatedItem.publicPrice = newSale;
-            if (updatedItem.publicPrice > 0) {
-              updatedItem.discount = pricing.actualMargin(i.costPrice, updatedItem.publicPrice);
-            }
-          }
-        } else if (field === 'tax') {
-          updatedItem.tax = numValue;
-        }
-
-        return updatedItem;
+        return computeUpdatedItem(i, field, value);
       })
     );
+  };
+
+  const handleMoveRowsToTab = (targetTabId: string) => {
+    if (!cellSelection || cellSelection.field !== 'rowSelection') return;
+    const indicesToRemove = new Set(cellSelection.indices);
+    const itemsToMove = cart.filter((_, idx) => indicesToRemove.has(idx));
+
+    if (itemsToMove.length === 0) return;
+
+    const targetTab = tabs.find((t) => t.id === targetTabId);
+    if (targetTab && targetTab.cart.length > 0) {
+      setConfirmMoveToTab({ id: targetTabId, name: targetTab.name, count: targetTab.cart.length });
+      return;
+    }
+
+    executeMoveRowsToTab(targetTabId);
+  };
+
+  const executeMoveRowsToTab = (targetTabId: string) => {
+    if (!cellSelection || cellSelection.field !== 'rowSelection') return;
+    const indicesToRemove = new Set(cellSelection.indices);
+    const itemsToMove = cart.filter((_, idx) => indicesToRemove.has(idx));
+
+    // Append to target tab
+    updateTab(targetTabId, (prev) => {
+      const updatedCart = [...prev.cart, ...itemsToMove];
+      const updates: any = { cart: updatedCart };
+      if ((!prev.createdAt || prev.createdAt === 0) && updatedCart.length > 0) {
+        updates.createdAt = Date.now();
+      }
+      return updates;
+    });
+
+    // Remove from current tab
+    setCart((prev) => prev.filter((_, idx) => !indicesToRemove.has(idx)));
+    clearSelection();
+    setConfirmMoveToTab(null);
+  };
+
+  const deleteSelectedRows = () => {
+    if (cellSelection && cellSelection.field === 'rowSelection') {
+      const indicesToRemove = new Set(cellSelection.indices);
+      setCart((prev) => prev.filter((_, idx) => !indicesToRemove.has(idx)));
+      clearSelection();
+    }
   };
 
   const removeItem = (itemId: string) => {
@@ -1082,7 +1132,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          'This Invoice ID already exists. Please enter a unique Invoice ID.'
+        'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
       inputRefs.current.externalInvoiceId?.focus();
       return;
@@ -1210,7 +1260,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          'This Invoice ID already exists. Please enter a unique Invoice ID.'
+        'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
       inputRefs.current.externalInvoiceId?.focus();
       return;
@@ -1595,8 +1645,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
         showBottom={showPurchaseTabs}
         onToggleBottom={() => setShowPurchaseTabs(!showPurchaseTabs)}
         toggleTooltip={showPurchaseTabs ? 'Hide Tabs' : 'Show Tabs'}
-        bottomContent={
-          tabs.length > 0 && (
+      />
+
+      <div className='flex gap-1.5 h-full overflow-hidden'>
+        {/* Vertical Tabs Sidebar */}
+        {showPurchaseTabs && tabs.length > 0 && (
+          <div className={`shrink-0 w-52 min-h-0 overflow-hidden rounded-3xl ${CARD_BASE}`}>
             <TabBar
               tabs={tabs as any}
               activeTabId={activeTabId}
@@ -1606,19 +1660,18 @@ export const Purchases: React.FC<PurchasesProps> = ({
               onTabRename={renameTab}
               onTogglePin={togglePin}
               onTabReorder={(newOrder) => reorderTabs(newOrder as any)}
-              onOpenClosedHistory={() => {}}
+              onOpenClosedHistory={() => { }}
               maxTabs={maxTabs}
               color={color}
               t={t}
               isLoading={isConfirming}
+              vertical
             />
-          )
-        }
-      />
+          </div>
+        )}
 
-      <div className='flex flex-col gap-1.5 h-full overflow-hidden'>
         {/* BOTTOM: Order Cart */}
-        <div className={`flex-1 ${CARD_BASE} p-5 pb-0 rounded-3xl flex flex-col overflow-hidden`}>
+        <div className={`flex-1 min-w-0 ${CARD_BASE} p-5 pb-0 rounded-3xl flex flex-col overflow-hidden`}>
           <div className='flex justify-between items-center mb-4 gap-4'>
             {/* Left: Selected Item Details (Existing Inventory) */}
             <div className='flex-1 min-w-0'>
@@ -1636,7 +1689,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 return (
                   <div className='flex items-center gap-3 '>
                     {/* Stock */}
-                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
+                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5'>
                       <span className='material-symbols-rounded text-gray-400 text-lg'>
                         inventory_2
                       </span>
@@ -1653,7 +1706,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     </div>
 
                     {/* Expiry */}
-                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
+                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5'>
                       <span className='material-symbols-rounded text-orange-400 text-lg'>
                         event_upcoming
                       </span>
@@ -1668,7 +1721,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     </div>
 
                     {/* Profit */}
-                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
+                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5'>
                       <span
                         className={`material-symbols-rounded text-lg ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
                       >
@@ -1697,7 +1750,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
                     {language === 'AR' ? 'وقت البدء' : 'Started at'}
                   </span>
-                  <div className='flex items-center h-7 gap-1 text-base font-bold text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-white/5 px-2 rounded-lg border border-gray-100/50 dark:border-white/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
+                  <div className='flex items-center h-7 gap-1 text-base font-bold text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-white/5 px-2 rounded-lg border border-gray-300/70 dark:border-gray-600/70 shadow-sm shadow-gray-900/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
                     <span className='material-symbols-rounded text-lg opacity-60'>schedule</span>
                     {new Intl.DateTimeFormat(language === 'AR' ? 'ar-EG' : 'en-US', {
                       hour: '2-digit',
@@ -1715,7 +1768,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 </span>
                 <div
                   dir='ltr'
-                  className='relative h-10 flex items-center px-2 py-0.5 select-none text-xl font-mono font-bold text-gray-600 dark:text-gray-300'
+                  className='relative h-10 flex items-center px-2 py-0.5 select-none text-xl font-bold text-gray-600 dark:text-gray-300'
                 >
                   <span>{invoicePrefix}</span>
                   <AnimatedCounter
@@ -1731,7 +1784,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                   {t.tableHeaders?.invId || 'Invoice #'}
                 </span>
-                <div className='relative inline-grid items-center h-10'>
+                <div className='relative inline-grid items-center h-[34px]'>
                   <span className='invisible text-xl font-mono font-bold px-2 py-0.5 whitespace-pre min-w-[6rem]'>
                     {externalInvoiceId || t.placeholders?.enterId || 'Enter ID'}
                   </span>
@@ -1753,37 +1806,49 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {activeTab && (
                 <div className='group relative flex items-center gap-2'>
                   <div className='relative'>
-                  <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
-                    {t.paymentMethod || 'Payment Method'}
-                  </span>
-                  <SegmentedControl
-                    value={paymentMethod}
-                    onChange={(val) => setPaymentMethod(val as 'cash' | 'credit' | 'partial')}
-                    size='xs'
-                    options={[
-                      { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
-                      { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
-                      { label: t.partial || 'Partial', value: 'partial', activeColor: 'amber' },
-                    ]}
-                    className='w-fit'
-                    disableAnimation={!activeTab}
-                  />
+                    <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                      {t.paymentMethod || 'Payment Method'}
+                    </span>
+                    <SegmentedControl
+                      value={paymentMethod}
+                      onChange={(val) => setPaymentMethod(val as 'cash' | 'credit' | 'partial')}
+                      size='xs'
+                      options={[
+                        { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
+                        { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
+                        { label: t.partial || 'Partial', value: 'partial', activeColor: 'amber' },
+                      ]}
+                      className='w-fit'
+                      disableAnimation={!activeTab}
+                    />
                   </div>
                   {paymentMethod === 'partial' && (
-                    <div className='relative'>
-                      <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                    <div className='group relative'>
+                      <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                         {t.paidNow || 'Paid Now'}
                       </span>
-                      <input
-                        type='number'
-                        min='0'
-                        step='0.01'
-                        value={activeTab.paidNow ?? cartTotal}
-                        onChange={(e) => setPaidNow(parseFloat(e.target.value) || 0)}
-                        dir='ltr'
-                        className='w-24 p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all text-sm text-end'
-                        style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                      />
+                      <div className='relative inline-grid items-center h-[34px]'>
+                        <span className='invisible text-xl font-mono font-bold px-2 py-0.5 whitespace-pre min-w-[6rem]'>
+                          {paidNowInput ?? String(activeTab.paidNow ?? cartTotal)}
+                        </span>
+                        <input
+                          type='text'
+                          inputMode='decimal'
+                          value={paidNowInput ?? String(activeTab.paidNow ?? cartTotal)}
+                          onChange={(e) => {
+                            const val = sanitizeAmountInput(e.target.value);
+                            if (val === '' || val === '.') {
+                              setPaidNowInput(null);
+                              setPaidNow(0);
+                            } else {
+                              setPaidNowInput(val);
+                              setPaidNow(parseFloat(val));
+                            }
+                          }}
+                          dir='ltr'
+                          className='absolute inset-0 text-xl font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 rounded-lg px-2 py-0.5 outline-hidden transition-all text-left text-gray-600 dark:text-gray-300 w-full h-full'
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1819,9 +1884,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
             </div>
           </div>
 
-          <div
-            className={`flex-1 space-y-1.5 mb-4 custom-scrollbar pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
-          >
+          <div className='flex-1 space-y-1.5 mb-1.5 overflow-hidden relative'>
             {isLoading && cart.length === 0 ? (
               <div className='space-y-2'>
                 {[1, 2, 3, 4].map((i) => (
@@ -1849,52 +1912,89 @@ export const Purchases: React.FC<PurchasesProps> = ({
             ) : cart.length === 0 ? (
               <div className='text-center text-gray-400 py-10'>{t.emptyCart}</div>
             ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-                modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
-              >
-                <SortableContext
-                  items={cart.map((i) => i.id)}
-                  strategy={verticalListSortingStrategy}
+              <>
+                {/* Floating Bulk Edit Bar placed outside the scroll container so it stays fixed */}
+                {cellSelection && cellSelection.indices.length > 1 && (
+                  <BulkEditBar
+                    cellSelection={cellSelection}
+                    bulkInputValue={bulkInputValue}
+                    setBulkInputValue={setBulkInputValue}
+                    onApply={applyBulkValue}
+                    onClearValues={clearBulkValue}
+                    onClose={clearSelection}
+                    onDeleteRows={deleteSelectedRows}
+                    onMoveToTab={handleMoveRowsToTab}
+                    availableTabs={tabs
+                      .filter((t) => t.id !== activeTabId)
+                      .map((t) => ({ id: t.id, name: t.name, itemCount: t.cart.length }))}
+                    language={language}
+                  />
+                )}
+                <div
+                  ref={tableContainerRef}
+                  onDragStart={(e) => e.preventDefault()}
+                  className='relative h-full overflow-auto no-scrollbar border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5 rounded-lg select-none'
                 >
-                  <div className='space-y-1.5'>
-                    {cart.map((item, index) => (
-                      <SortableCartItem
-                        key={item.id}
-                        item={item}
-                        index={index}
-                        selectedCartIndex={selectedCartIndex}
-                        setSelectedCartIndex={setSelectedCartIndex}
-                        removeItem={removeItem}
-                        updateItem={updateItem}
-                        showMenu={showMenu}
-                        t={t}
-                        isLoading={!!isLoading}
-                        textTransform={textTransform}
-                        language={language}
-                        focusedInput={focusedInput}
-                        setFocusedInput={setFocusedInput}
-                        inputRefs={inputRefs}
-                        handleInputKeyDown={handleInputKeyDown}
-                        money={money}
-                        tax={tax}
-                        taxMode={taxMode}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+                  <table dir='ltr' className='w-full text-left border-collapse'>
+                    <thead className='sticky top-0 z-30 bg-white dark:bg-[#1a1b1e] backdrop-blur-sm rounded-t-lg'>
+                      <tr className='text-[10px] uppercase text-gray-500 dark:text-gray-400 divide-x divide-gray-200 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-600'>
+                        <th className='h-10 align-middle px-2 text-center font-semibold w-10 text-gray-400'>#</th>
+                        <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{language === 'AR' ? 'الباركود' : 'Barcode'}</th>
+                        <th className='h-10 align-middle px-3 font-semibold'>{t.headers?.product || 'Product'}</th>
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-14'>{t.cartFields?.qty || 'Qty'}</th>
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.expiry || 'Expiry'}</th>
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-24'>{t.cartFields?.batchNumber || 'Batch #'}</th>
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{t.cartFields?.cost || 'Cost'}</th>
+                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{language === 'AR' ? 'ت. وحدة' : 'U. Cost'}</th>}
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.discount || 'Disc'}</th>
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{t.cartFields?.sale || 'Sale'}</th>
+                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{language === 'AR' ? 'س. وحدة' : 'U. Sale'}</th>}
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-12'>{t.cartFields?.tax || 'Tax %'}</th>
+                        <th className='h-10 align-middle px-2 text-center font-semibold w-20'>{t.headers?.subtotal || 'Subtotal'}</th>
+                        <th className='h-10 align-middle px-2 text-center font-semibold w-20 text-primary-500'>{t.headers?.totalPlusTax || 'Total+Tax'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                      {cart.map((item, index) => (
+                        <CartTableRow
+                          key={item.id}
+                          item={item}
+                          index={index}
+                          selectedCartIndex={selectedCartIndex}
+                          setSelectedCartIndex={setSelectedCartIndex}
+                          removeItem={removeItem}
+                          updateItem={updateItem}
+                          showMenu={showMenu}
+                          t={t}
+                          isLoading={!!isLoading}
+                          textTransform={textTransform}
+                          language={language}
+                          focusedInput={focusedInput}
+                          setFocusedInput={setFocusedInput}
+                          inputRefs={inputRefs}
+                          handleInputKeyDown={handleInputKeyDown}
+                          money={money}
+                          tax={tax}
+                          taxMode={taxMode}
+                          cellSelection={cellSelection}
+                          onCellMouseDown={handleCellMouseDown}
+                          onCellMouseEnter={handleCellMouseEnter}
+                          showUnitPrices={showUnitPrices}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
 
-          <div className='border-t border-gray-100 dark:border-(--border-divider) mt-auto px-1 py-4'>
+          <div className='mt-auto px-1 py-1.5'>
             <div className='flex items-center justify-between gap-3'>
               {/* Left: Metrics Group */}
               <div className='flex items-center gap-2 text-sm py-1'>
                 {/* Items Count */}
-                <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5'>
                   <span className='text-[10px] uppercase text-gray-400 font-bold tracking-wider'>
                     {t.summary.totalItems}
                   </span>
@@ -1918,7 +2018,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                   const { amount: formattedDiscount, symbol } = formatCurrencyParts(totalDiscount);
                   return (
-                    <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                    <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5'>
                       <span
                         className={`text-[10px] uppercase font-bold tracking-wider ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-400'}`}
                       >
@@ -1949,7 +2049,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     taxResults.taxAmount
                   );
                   return (
-                    <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                    <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5'>
                       <span className='text-[10px] uppercase text-orange-600 font-bold tracking-wider'>
                         {t.summary.tax || 'Tax'}
                       </span>
@@ -1965,9 +2065,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {/* Right: Total & Actions */}
               <div className='flex items-center gap-3'>
                 {/* Total Display - Fixed Height for alignment */}
-                <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5'>
                   <span
-                    className={`text-[10px] uppercase font-bold tracking-wider ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
+                    className={`text-[10px] uppercase font-bold tracking-wider ${paymentMethod === 'cash'
+                      ? 'text-green-600'
+                      : paymentMethod === 'partial'
+                        ? 'text-amber-600'
+                        : 'text-primary-600'
+                      }`}
                   >
                     {t.summary.totalCost}
                   </span>
@@ -1991,19 +2096,64 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   })()}
                 </div>
 
+                {/* Remaining balance for partial payments */}
+                {paymentMethod === 'partial' &&
+                  (() => {
+                    const taxResults = tax.multiRate(
+                      cart.map((item) => ({
+                        amount: money.multiply(item.costPrice, item.quantity, 0),
+                        taxPct: item.tax || 0,
+                      })),
+                      taxMode
+                    );
+                    const remaining = money.subtract(
+                      taxResults.total,
+                      activeTab?.paidNow ?? 0
+                    );
+                    const { amount: formattedRemaining, symbol } = formatCurrencyParts(remaining);
+                    return (
+                      <div
+                        className={`flex items-center gap-2 px-3 h-10 rounded-xl border transition-colors ${remaining > 0
+                          ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/50'
+                          : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/50'
+                          }`}
+                      >
+                        <span
+                          className={`material-symbols-rounded text-base ${remaining > 0 ? 'text-amber-600' : 'text-green-600'
+                            }`}
+                        >
+                          {remaining > 0 ? 'hourglass_top' : 'check_circle'}
+                        </span>
+                        <div className='flex flex-col'>
+                          <span
+                            className={`text-[10px] uppercase font-bold tracking-wider leading-none mb-0.5 ${remaining > 0 ? 'text-amber-600' : 'text-green-600'
+                              }`}
+                          >
+                            {t.summary?.remaining || 'Remaining'}
+                          </span>
+                          <span className='text-base font-black leading-none text-gray-900 dark:text-white'>
+                            {formattedRemaining}{' '}
+                            <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span>
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                 {/* Action Buttons */}
-                <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-3'>
                   <button
                     onClick={handlePendingPO}
                     disabled={cart.length === 0 || !selectedSupplierId}
-                    className='h-10 w-10 flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-800 transition-all active:scale-95 shadow-sm shadow-orange-200 dark:shadow-none'
+                    className='h-11 w-11 flex items-center justify-center rounded-xl border-2 border-orange-300 dark:border-orange-500/40 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-500 hover:bg-orange-100 dark:hover:bg-orange-500/20 disabled:!bg-gray-100 dark:disabled:!bg-neutral-800 disabled:!text-gray-400 dark:disabled:!text-neutral-600 disabled:!border-gray-200 dark:disabled:!border-neutral-700 transition-all active:scale-95 disabled:active:scale-100 disabled:cursor-not-allowed'
                     type='button'
+                    title={language === 'AR' ? 'تعليق الفاتورة' : 'Suspend Invoice'}
                   >
                     <span className='material-symbols-rounded text-xl'>pending_actions</span>
                   </button>
 
                   {(paymentMethod === 'cash' || (paymentMethod === 'partial' && (activeTab?.paidNow ?? 0) > 0)) && !currentShift ? (
-                    <div className='h-10 px-4 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/50 gap-2 text-xs'>
+                    <div className='h-10 px-4 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border-2 border-amber-300 dark:border-amber-900/60 gap-2 text-xs'>
                       <span className='material-symbols-rounded text-base'>lock</span>
                       {t.summary?.openShiftFirst || 'Open Shift First'}
                     </div>
@@ -2011,7 +2161,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     <button
                       onClick={handleConfirm}
                       disabled={cart.length === 0 || !selectedSupplierId || isConfirming}
-                      className={`h-10 px-10 justify-center rounded-xl flex items-center gap-2 shadow-sm ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95 text-sm relative overflow-hidden`}
+                      className={`h-11 px-8 justify-center rounded-xl flex items-center gap-2 border-2 border-transparent disabled:border-gray-200 dark:disabled:border-neutral-800 ${paymentMethod === 'cash'
+                        ? 'border-emerald-700 dark:border-emerald-400 bg-emerald-500 hover:bg-emerald-600'
+                        : paymentMethod === 'partial'
+                          ? 'border-amber-700 dark:border-amber-400 bg-amber-500 hover:bg-amber-600'
+                          : 'border-blue-700 dark:border-blue-400 bg-blue-600 hover:bg-blue-700'
+                        } text-white disabled:!bg-gray-100 dark:disabled:!bg-neutral-800 disabled:!text-gray-400 dark:disabled:!text-neutral-600 font-bold transition-all active:scale-95 disabled:active:scale-100 text-sm relative overflow-hidden disabled:cursor-not-allowed`}
                       type='button'
                     >
                       {isConfirming ? (
@@ -2056,6 +2211,50 @@ export const Purchases: React.FC<PurchasesProps> = ({
         t={t}
         color={color}
       />
+
+      {/* Confirmation Modal for moving items */}
+      <Modal
+        isOpen={!!confirmMoveToTab}
+        onClose={() => setConfirmMoveToTab(null)}
+        title={language === 'AR' ? 'تأكيد دمج الأصناف' : 'Confirm Merge Items'}
+        size='sm'
+        icon='move_item'
+        bodyClassName='px-4 py-1'
+        footer={
+          <div className='flex gap-1.5'>
+            <button
+              onClick={() => confirmMoveToTab && executeMoveRowsToTab(confirmMoveToTab.id)}
+              className={`${MODAL_FOOTER_BTN_PRIMARY} !py-1.5`}
+            >
+              {language === 'AR' ? 'تأكيد النقل' : 'Confirm Move'}
+            </button>
+            <button
+              onClick={() => setConfirmMoveToTab(null)}
+              className={`${MODAL_FOOTER_BTN_CANCEL} !py-1.5`}
+            >
+              {language === 'AR' ? 'إلغاء' : 'Cancel'}
+            </button>
+          </div>
+        }
+      >
+        <p className='text-gray-700 dark:text-gray-300 font-medium leading-relaxed py-2 text-sm'>
+          {language === 'AR' ? (
+            <>
+              الفاتورة <strong className='text-primary-500'>"{confirmMoveToTab?.name}"</strong> تحتوي بالفعل على{' '}
+              <strong className='text-orange-500'>{confirmMoveToTab?.count} أصناف</strong>.
+              <br />
+              هل أنت متأكد من دمج الأصناف المحددة معها؟
+            </>
+          ) : (
+            <>
+              The invoice <strong className='text-primary-500'>"{confirmMoveToTab?.name}"</strong> already contains{' '}
+              <strong className='text-orange-500'>{confirmMoveToTab?.count} items</strong>.
+              <br />
+              Are you sure you want to merge the selected items into it?
+            </>
+          )}
+        </p>
+      </Modal>
     </div>
   );
 };
