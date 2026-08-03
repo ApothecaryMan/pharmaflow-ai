@@ -19,6 +19,10 @@ export const supplierRepository = {
       area: db.area || '',
       supplierCode: db.supplier_code || '',
       status: db.status || 'active',
+      openingBalance: db.opening_balance ?? 0,
+      paymentType: db.payment_type || 'credit',
+      creditDays: db.credit_days ?? 0,
+      creditLimit: db.credit_limit ?? undefined,
       createdAt: db.created_at || new Date().toISOString(),
       updatedAt: db.updated_at || new Date().toISOString(),
     };
@@ -39,6 +43,10 @@ export const supplierRepository = {
     if (s.area !== undefined) db.area = s.area;
     if (s.supplierCode !== undefined) db.supplier_code = s.supplierCode;
     if (s.status !== undefined) db.status = s.status;
+    if (s.openingBalance !== undefined) db.opening_balance = s.openingBalance;
+    if (s.paymentType !== undefined) db.payment_type = s.paymentType;
+    if (s.creditDays !== undefined) db.credit_days = s.creditDays;
+    if (s.creditLimit !== undefined) db.credit_limit = s.creditLimit;
     return db;
   },
 

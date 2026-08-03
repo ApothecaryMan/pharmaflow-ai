@@ -30,3 +30,4 @@ export { holidaysService } from './settings/holidaysService';
 export { settingsService } from './settings/settingsService';
 export * from './suppliers';
 export { supplierService } from './suppliers/supplierService';
+export { supplierAccountService } from './suppliers/supplierAccountService';

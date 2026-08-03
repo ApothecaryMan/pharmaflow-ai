@@ -9,7 +9,7 @@ const SHIFT_LIST_COLUMNS =
 const SHIFT_FULL_COLUMNS = `${SHIFT_LIST_COLUMNS}, branch_name, closed_by, notes`;
 
 const TX_LIST_COLUMNS =
-  'id, branch_id, shift_id, time, type, amount, reason, user_id';
+  'id, branch_id, shift_id, time, type, amount, reason, user_id, related_purchase_id, related_supplier_id';
 
 const TX_FULL_COLUMNS = `${TX_LIST_COLUMNS}, org_id, related_sale_id`;
 
@@ -48,6 +48,8 @@ interface CashTransactionDbRow {
   reason?: string;
   user_id?: string;
   related_sale_id?: string;
+  related_purchase_id?: string;
+  related_supplier_id?: string;
 }
 
 interface ShiftRpcPayload {
@@ -185,6 +187,8 @@ export const cashRepository = {
       reason: db.reason,
       userId: db.user_id,
       relatedSaleId: db.related_sale_id,
+      relatedPurchaseId: db.related_purchase_id,
+      relatedSupplierId: db.related_supplier_id,
     };
   },
 
@@ -200,6 +204,8 @@ export const cashRepository = {
     if (t.reason !== undefined) db.reason = t.reason;
     if (t.userId !== undefined) db.user_id = t.userId;
     if (t.relatedSaleId !== undefined) db.related_sale_id = t.relatedSaleId;
+    if (t.relatedPurchaseId !== undefined) db.related_purchase_id = t.relatedPurchaseId;
+    if (t.relatedSupplierId !== undefined) db.related_supplier_id = t.relatedSupplierId;
     return db;
   },
 
