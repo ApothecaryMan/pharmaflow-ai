@@ -98,7 +98,7 @@ export function useDashboardStats(branchId: string) {
           .gt('quantity', 0),
         supabase
           .from('purchases')
-          .select('id, date, total, supplier_name, notes')
+          .select('id, date, total_cost, supplier_name_snapshot, external_invoice_id, status')
           .eq('branch_id', branchId)
           .order('date', { ascending: false })
           .limit(5),
