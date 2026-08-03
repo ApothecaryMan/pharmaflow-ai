@@ -7,12 +7,13 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
+import { restrictToHorizontalAxis, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   horizontalListSortingStrategy,
   SortableContext,
   useSortable,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type React from 'react';
@@ -39,6 +40,7 @@ interface TabBarProps {
   color?: string;
   t: typeof TRANSLATIONS.EN.pos; // Strict translation prop
   isLoading?: boolean;
+  vertical?: boolean;
 }
 
 interface SortableTabProps {
@@ -61,6 +63,7 @@ interface SortableTabProps {
   onCloseOthers: (id: string) => void;
   t: typeof TRANSLATIONS.EN.pos;
   isLoading?: boolean;
+  vertical?: boolean;
 }
 
 const SortableTab = ({
@@ -81,6 +84,7 @@ const SortableTab = ({
   onCloseOthers,
   t,
   isLoading,
+  vertical,
 }: SortableTabProps) => {
   const { tooltipBlur } = useSettings();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -161,11 +165,15 @@ const SortableTab = ({
       {...listeners}
       className={`
         group relative flex items-center gap-2 ps-3 pe-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer
-        min-w-[100px] max-w-[180px] touch-manipulation backdrop-blur-md
+        ${vertical ? 'w-full shrink-0' : 'min-w-[100px] max-w-[180px]'} touch-manipulation backdrop-blur-md
         ${
-          isActive
-            ? `bg-white/80 dark:bg-(--bg-surface-neutral) border border-gray-200/50 dark:border-(--border-divider) shadow-xs text-gray-900 dark:text-white`
-            : 'bg-transparent border border-transparent hover:bg-white/40 dark:hover:bg-(--bg-surface-neutral) hover:border-gray-200/30 dark:hover:border-(--border-divider) text-gray-600 dark:text-gray-400'
+          vertical
+            ? isActive
+              ? 'bg-primary-500/10 dark:bg-primary-500/15 border border-primary-400/60 dark:border-primary-500/60 shadow-none text-primary-700 dark:text-primary-200'
+              : 'bg-transparent border border-transparent dark:border-gray-700/60 hover:bg-primary-500/5 dark:hover:bg-(--bg-surface-neutral) hover:border-primary-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400'
+            : isActive
+              ? `bg-white/80 dark:bg-(--bg-surface-neutral) border border-gray-200/50 dark:border-(--border-divider) shadow-xs text-gray-900 dark:text-white`
+              : 'bg-transparent border border-transparent hover:bg-white/40 dark:hover:bg-(--bg-surface-neutral) hover:border-gray-200/30 dark:hover:border-(--border-divider) text-gray-600 dark:text-gray-400'
         }
         ${isDragging ? 'z-[100] shadow-2xl bg-white/95 dark:bg-gray-800/90 border-primary-500/50' : ''}
       `}
@@ -350,6 +358,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   color = 'blue',
   t,
   isLoading,
+  vertical = false,
 }) => {
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -403,14 +412,24 @@ export const TabBar: React.FC<TabBarProps> = ({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
-      modifiers={[restrictToHorizontalAxis]}
+      modifiers={[vertical ? restrictToVerticalAxis : restrictToHorizontalAxis]}
     >
-      <div className='flex items-center gap-2 px-3 pb-2 pt-1 overflow-x-auto no-scrollbar select-none touch-pan-x'>
+      <div
+        className={
+          vertical
+            ? 'flex flex-col gap-1.5 p-2 h-full overflow-y-auto custom-scrollbar select-none touch-none'
+            : 'flex items-center gap-2 px-3 pb-2 pt-1 overflow-x-auto no-scrollbar select-none touch-pan-x'
+        }
+      >
         {/* Tabs Container */}
-        <div className='flex items-center gap-2 flex-1'>
+        <div
+          className={
+            vertical ? 'flex flex-col gap-1.5 flex-1 min-h-0' : 'flex items-center gap-2 flex-1'
+          }
+        >
           <SortableContext
             items={useMemo(() => tabs.map((t) => t.id), [tabs])}
-            strategy={horizontalListSortingStrategy}
+            strategy={vertical ? verticalListSortingStrategy : horizontalListSortingStrategy}
           >
             {tabs.map((tab) => (
               <SortableTab
@@ -433,6 +452,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 onCloseOthers={handleCloseOthers}
                 t={t}
                 isLoading={isLoading}
+                vertical={vertical}
               />
             ))}
           </SortableContext>

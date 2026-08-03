@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import type { MenuItem } from '../../../config/menuData';
 import { useSettings } from '../../../context';
 import { preloadPages } from '../../../hooks/layout/usePreloadPage';
@@ -101,12 +102,67 @@ export const NavModules: React.FC<NavModulesProps> = ({
     }
   };
 
+  const isRtl = language === 'AR';
+  const ScrollStartIcon = isRtl ? ChevronRight : ChevronLeft;
+  const ScrollEndIcon = isRtl ? ChevronLeft : ChevronRight;
+
+  const [canScrollStart, setCanScrollStart] = useState(false);
+  const [canScrollEnd, setCanScrollEnd] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    if (dropdownRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = dropdownRef.current;
+      // In RTL, scrollLeft can be negative or positive depending on the browser.
+      // Safest approach is to use absolute value and a small tolerance.
+      const absScrollLeft = Math.abs(scrollLeft);
+      
+      setCanScrollStart(absScrollLeft > 1);
+      setCanScrollEnd(Math.ceil(absScrollLeft + clientWidth) < scrollWidth - 1);
+    }
+  }, [dropdownRef]);
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [checkScroll, menuItems, activeModule, language]);
+
+  // Re-check scroll on layout changes, e.g. when expanding items
+  useEffect(() => {
+    const timeout = setTimeout(checkScroll, 100);
+    return () => clearTimeout(timeout);
+  }, [menuItems, checkScroll]);
+
+  const scrollContainerBy = (amount: number) => {
+    if (dropdownRef.current) {
+      // scrollBy automatically handles logical left/right based on standard coords
+      dropdownRef.current.scrollBy({
+        left: amount * (isRtl ? -1 : 1),
+        behavior: 'smooth'
+      });
+      // Re-check after scrolling
+      setTimeout(checkScroll, 300);
+    }
+  };
+
   return (
-    <div
-      className={`flex items-center gap-0.5 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`}
-      ref={dropdownRef}
-      onWheel={handleWheel}
-    >
+    <div className="relative flex-1 min-w-0 flex items-center h-full">
+      {canScrollStart && (
+        <button
+          onClick={() => scrollContainerBy(-200)}
+          className="absolute start-0 z-10 h-full w-10 flex items-center justify-start ltr:pl-1 rtl:pr-1 ltr:bg-gradient-to-r rtl:bg-gradient-to-l from-[var(--bg-navbar)] to-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"
+          aria-label="Scroll left"
+        >
+          <ScrollStartIcon size={20} />
+        </button>
+      )}
+
+      <div
+        className={`flex items-center gap-0.5 w-full h-full scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'} scroll-smooth`}
+        ref={dropdownRef}
+        onWheel={handleWheel}
+        onScroll={checkScroll}
+      >
       {menuItems
         .filter((m) => m.id !== 'test' || developerMode)
         .map((module) => {
@@ -227,6 +283,17 @@ export const NavModules: React.FC<NavModulesProps> = ({
             </div>
           );
         })}
+      </div>
+
+      {canScrollEnd && (
+        <button
+          onClick={() => scrollContainerBy(200)}
+          className="absolute end-0 z-10 h-full w-10 flex items-center justify-end ltr:pr-1 rtl:pl-1 ltr:bg-gradient-to-l rtl:bg-gradient-to-r from-[var(--bg-navbar)] to-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"
+          aria-label="Scroll right"
+        >
+          <ScrollEndIcon size={20} />
+        </button>
+      )}
     </div>
   );
 };

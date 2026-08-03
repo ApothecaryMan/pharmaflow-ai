@@ -181,7 +181,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className={`max-h-[60vh] overflow-y-auto ${isMulti ? 'p-3' : 'py-2'}`}>
+      <div className={`max-h-[60vh] overflow-y-auto scrollbar-hide ${isMulti ? 'p-3' : 'py-2'}`}>
         {isMulti ? (
           <div className='flex gap-3'>
             {columns.map((col, colIdx) => (
