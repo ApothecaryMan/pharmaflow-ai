@@ -1,6 +1,6 @@
 import * as QRCode from 'qrcode';
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
 import { useDebounce } from '../../hooks/common/useDebounce';
@@ -273,7 +273,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     );
   }, [dims.w, isLoaded]);
 
-  const applyDesignState = (state: any) => {
+  const applyDesignState = useCallback((state: any) => {
     if (state.selectedPreset) setSelectedPreset(state.selectedPreset);
     if (state.customDims) setCustomDims(state.customDims);
     if (state.elements) {
@@ -311,23 +311,16 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     if (typeof state.labelGap !== 'undefined') setLabelGap(state.labelGap);
     if (state.currency) setCurrency(state.currency);
     if (state.printerLanguage) setPrinterLanguage(state.printerLanguage);
-    if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
-    if (state.currency) setCurrency(state.currency);
-  };
+  }, []);
 
-  const initializeLayout = (presetKey: string) => {
-    const { w: _w, h: _h } =
-      presetKey === 'custom' ? customDims : LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25'];
-
+  const initializeLayout = useCallback(() => {
     const newElements = [...DEFAULT_LABEL_DESIGN.elements];
     setElements(newElements);
     setHistory([]);
     setRedoStack([]);
-    setHistory([]);
-    setRedoStack([]);
     setActiveTemplateId(null);
     justLoaded.current = true;
-  };
+  }, []);
 
   // Load Templates & Last State
   useEffect(() => {
@@ -472,21 +465,38 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     [history, redoStack, elements, selectedElementId]
   );
 
-  const getDesignState = () => ({
-    selectedPreset,
-    customDims,
-    elements,
-    storeName,
-    hotline,
-    uploadedLogo,
-    barcodeSource,
-    activeTemplateId,
-    showPrintBorders,
-    printOffsetX,
-    printOffsetY,
-    labelGap,
-    currency,
-  });
+  const getDesignState = useCallback(
+    () => ({
+      selectedPreset,
+      customDims,
+      elements,
+      storeName,
+      hotline,
+      uploadedLogo,
+      barcodeSource,
+      activeTemplateId,
+      showPrintBorders,
+      printOffsetX,
+      printOffsetY,
+      labelGap,
+      currency,
+    }),
+    [
+      selectedPreset,
+      customDims,
+      elements,
+      storeName,
+      hotline,
+      uploadedLogo,
+      barcodeSource,
+      activeTemplateId,
+      showPrintBorders,
+      printOffsetX,
+      printOffsetY,
+      labelGap,
+      currency,
+    ]
+  );
 
   // Track unsaved changes
   useEffect(() => {
@@ -978,9 +988,59 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
   ];
 
   // Shared HTML generator - used by BOTH print and preview to ensure 100% match
-  const generatePrintHTML = (forPrint: boolean = false, isSingleLabel: boolean = false) => {
-    if (!selectedDrug) return '';
-    const design: LabelDesign = {
+  const generatePrintHTML = useCallback(
+    (forPrint: boolean = false, isSingleLabel: boolean = false) => {
+      if (!selectedDrug) return '';
+      const design: LabelDesign = {
+        elements,
+        selectedPreset,
+        customDims,
+        barcodeSource,
+        showPrintBorders,
+        printOffsetX,
+        printOffsetY,
+        labelGap,
+      };
+      const receiptSettings = { storeName, hotline };
+
+      const isDouble = selectedPreset === '38x25';
+      const labelHeight = isDouble ? 12 : dims.h;
+      const innerGap = isDouble ? 1 : 0;
+      const outerGap = labelGap || 3;
+      const pageHeight = isDouble ? labelHeight * 2 + innerGap + outerGap : labelHeight + outerGap;
+      const renderDims = { w: dims.w, h: labelHeight };
+
+      const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
+      const singleLabelHTML = generateLabelHTML(
+        selectedDrug,
+        design,
+        renderDims,
+        receiptSettings,
+        undefined,
+        qrCodeDataUrl,
+        uploadedLogo,
+        classNameMap
+      );
+
+      const labelsCount = !isSingleLabel && isDouble ? 2 : 1;
+      const finalHTML =
+        labelsCount === 2
+          ? `<div class="pair-container">${singleLabelHTML}<div style="height: ${innerGap}mm;"></div>${singleLabelHTML}</div>`
+          : singleLabelHTML;
+
+      let html = generatePageHTML(finalHTML, templateCSS, dims, pageHeight, {
+        x: printOffsetX,
+        y: printOffsetY,
+      });
+      if (forPrint)
+        html = html.replace(
+          '</body>',
+          '<script>document.fonts.ready.then(() => window.print());</script></body>'
+        );
+      return html;
+    },
+    [
+      selectedDrug,
       elements,
       selectedPreset,
       customDims,
@@ -989,45 +1049,13 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
       printOffsetX,
       printOffsetY,
       labelGap,
-    };
-    const receiptSettings = { storeName, hotline };
-
-    const isDouble = selectedPreset === '38x25';
-    const labelHeight = isDouble ? 12 : dims.h;
-    const innerGap = isDouble ? 1 : 0;
-    const outerGap = labelGap || 3;
-    const pageHeight = isDouble ? labelHeight * 2 + innerGap + outerGap : labelHeight + outerGap;
-    const renderDims = { w: dims.w, h: labelHeight };
-
-    const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
-    const singleLabelHTML = generateLabelHTML(
-      selectedDrug,
-      design,
-      renderDims,
-      receiptSettings,
-      undefined,
-      qrCodeDataUrl,
+      storeName,
+      hotline,
       uploadedLogo,
-      classNameMap
-    );
-
-    const labelsCount = !isSingleLabel && isDouble ? 2 : 1;
-    const finalHTML =
-      labelsCount === 2
-        ? `<div class="pair-container">${singleLabelHTML}<div style="height: ${innerGap}mm;"></div>${singleLabelHTML}</div>`
-        : singleLabelHTML;
-
-    let html = generatePageHTML(finalHTML, templateCSS, dims, pageHeight, {
-      x: printOffsetX,
-      y: printOffsetY,
-    });
-    if (forPrint)
-      html = html.replace(
-        '</body>',
-        '<script>document.fonts.ready.then(() => window.print());</script></body>'
-      );
-    return html;
-  };
+      qrCodeDataUrl,
+      dims,
+    ]
+  );
 
   const payloadSize = useMemo(() => {
     if (!selectedDrug || !isLoaded) return '0 B';
@@ -1067,7 +1095,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
   return (
     <div
-      role="button"
+      role='button'
       tabIndex={0}
       className='h-full flex flex-col space-y-4 '
       onMouseMove={handleMouseMove}
@@ -1077,7 +1105,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
     >
       {/* Unified Control Bar */}
       <div
-        className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-30 backdrop-blur-md bg-white/90 dark:bg-muted/90 border border-gray-100 dark:border-border`}
+        className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-30 backdrop-blur-md bg-white/90 dark:bg-muted/90 border border-gray-100 dark:border-border mt-4`}
       >
         {/* Left Side: Branding & Templates */}
         <div className='flex items-center gap-3'>
@@ -1276,13 +1304,13 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
         </div>
 
         {/* Center: Element Toggles (Compacted) */}
-        <div className='flex-1 flex justify-center min-w-0'>
-          <div className='flex items-center gap-1 p-1 bg-gray-100 dark:bg-muted/50 rounded-xl border border-gray-200 dark:border-border overflow-x-auto scrollbar-hide h-10 shrink-0'>
+        <div className='flex justify-center min-w-0'>
+          <div className='flex items-center gap-0.5 p-1 bg-gray-100 dark:bg-muted/50 rounded-xl border border-gray-200 dark:border-border overflow-x-auto scrollbar-hide h-10 shrink-0'>
             {elements.map((el) => (
               <button
                 key={el.id}
                 onClick={() => toggleVisibility(el.id)}
-                className={`whitespace-nowrap px-2 h-8 flex items-center justify-center rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                className={`whitespace-nowrap px-1.5 h-8 flex items-center justify-center rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${
                   el.isVisible
                     ? `bg-primary-500/10 text-primary-600 border-primary-200/50 dark:bg-accent dark:text-foreground dark:border-border/30`
                     : 'bg-transparent text-gray-400 border-transparent hover:bg-white dark:hover:bg-accent dark:text-muted-foreground transition-all'
@@ -1422,7 +1450,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
           {/* Canvas */}
           <div
-            role="button"
+            role='button'
             tabIndex={0}
             className={`flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] overflow-hidden`}
             onDragOver={handleDragOver}

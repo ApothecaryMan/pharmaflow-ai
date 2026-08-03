@@ -395,48 +395,25 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   }, [previewDims]);
 
   return (
-    <div className='h-full flex flex-col gap-6 overflow-hidden '>
-      {/* Header Section */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight text-text-primary page-title'>
-            {t.barcodePrinter?.title || 'Barcode Printer'}
-          </h1>
-          <p className='text-sm text-text-secondary mt-1'>
-            {t.barcodePrinter?.subtitle || 'Queue and print product labels'}
-          </p>
-        </div>
+    <div className='h-full flex flex-col gap-3 overflow-hidden pt-4 sm:pt-6'>
+      {/* Header Section - SupplierStatement-style */}
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
+        <h1
+          className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-gray-900 dark:text-white page-title shrink-0'
+          style={{
+            fontFeatureSettings:
+              '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1',
+          }}
+        >
+          {t.barcodePrinter?.title || 'Barcode Printer'}
+        </h1>
 
-        <div className='flex items-center gap-2'>
-          {queue.length > 0 && (
-            <button
-              onClick={clearQueue}
-              className='px-4 py-2 text-sm font-medium text-text-secondary hover:text-red-500 transition-colors'
-              type='button'
-            >
-              {t.barcodePrinter?.clearQueue || 'Clear Queue'}
-            </button>
-          )}
-          <button
-            ref={printButtonRef}
-            onClick={handlePrint}
-            disabled={queue.length === 0}
-            className='w-12 h-12 flex items-center justify-center bg-primary-600 hover:bg-blue-700 text-white rounded-xl transition-all active:scale-95 disabled:opacity-30 disabled:grayscale font-semibold'
-            title={t.barcodePrinter?.printLabels || 'Print Labels'}
-            type='button'
-          >
-            <span className='material-symbols-rounded text-2xl'>print</span>
-          </button>
-        </div>
-      </div>
-
-      <div className='flex-1 flex flex-col lg:flex-row gap-6 min-h-0'>
-        {/* Main Section: Search & Queue (2/3 width on large screens) */}
-        <div className='flex-[1.5] flex flex-col gap-4 min-h-0'>
-          {/* Search Container - Flat with border */}
-          <div className='relative z-20' ref={searchRef}>
+        <div className='flex items-center gap-2 w-full sm:w-auto'>
+          <div className='relative z-20 flex-1 sm:flex-none' ref={searchRef}>
             <SearchInput
               ref={searchInputRef}
+              compact
+              expandable
               value={search}
               onSearchChange={(val) => {
                 setSearch(val);
@@ -448,8 +425,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               color={color}
               autoComplete='off'
               onFocus={() => setShowSuggestions(true)}
-              wrapperClassName={`${CARD_BASE} rounded-xl shadow-none border-border/80`}
-              className='bg-transparent'
+              wrapperClassName='w-full sm:w-[250px] lg:w-[300px]'
             />
 
             <SearchDropdown
@@ -462,8 +438,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               columns={[
                 {
                   header: t.inventory?.headers?.codes || 'Codes',
-                  width: 'w-32 shrink-0',
-                  className: 'text-text-secondary text-xs font-mono',
+                  width: 'w-41 shrink-0',
+                  className: 'text-text-secondary',
                   render: (drug: Drug) => drug.internalCode || drug.barcode || drug.id,
                 },
                 {
@@ -473,14 +449,14 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   render: (drug: Drug) => (
                     <span className={`${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
                       {drug.name}{' '}
-                      <span className='opacity-60 font-normal text-xs'>{drug.dosageForm}</span>
+                      <span className='font-bold'>{drug.dosageForm}</span>
                     </span>
                   ),
                 },
                 {
                   header: t.inventory?.headers?.expiry || 'Expiry',
-                  width: 'w-24 shrink-0',
-                  className: 'text-center justify-center text-text-secondary text-xs',
+                  width: 'w-19 shrink-0',
+                  className: 'text-center justify-center text-text-secondary',
                   render: (drug: Drug) => {
                     if (!drug.expiryDate) return null;
                     const date = new Date(drug.expiryDate);
@@ -496,9 +472,36 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               isVisible={showSuggestions && !!search.trim()}
               highlightedIndex={selectedSuggestionIndex}
               emptyMessage={t.pos?.noResults}
+              className='end-0 w-[400px] sm:w-[520px] lg:w-[640px]'
             />
           </div>
 
+          {queue.length > 0 && (
+            <button
+              onClick={clearQueue}
+              className='px-4 py-2 text-sm font-medium rounded-xl border-2 border-border/80 text-text-secondary hover:border-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shrink-0'
+              type='button'
+            >
+              {t.barcodePrinter?.clearQueue || 'Clear Queue'}
+            </button>
+          )}
+          <button
+            ref={printButtonRef}
+            onClick={handlePrint}
+            disabled={queue.length === 0}
+            className='h-pageheader px-3 inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl border-2 border-primary-700 dark:border-primary-400 transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed font-semibold shrink-0 text-sm'
+            title={t.barcodePrinter?.printLabels || 'Print Labels'}
+            type='button'
+          >
+            <span className='material-symbols-rounded text-lg'>print</span>
+            <span className='hidden lg:inline'>{t.barcodePrinter?.printLabels || 'Print Labels'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className='flex-1 flex flex-col lg:flex-row gap-6 min-h-0'>
+        {/* Main Section: Print Queue (2/3 width on large screens) */}
+        <div className='flex-[1.5] flex flex-col gap-4 min-h-0'>
           {/* Queue Container - Standardized with CARD_BASE */}
           <div className={`flex-1 min-h-0 ${CARD_BASE} rounded-2xl flex flex-col overflow-hidden`}>
             <div className='p-4 bg-bg-secondary/80 flex justify-between items-center'>
@@ -512,19 +515,18 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               {queue.length > 0 ? (
                 <div className='flex flex-col gap-2'>
                   {queue.map((item) => (
-                  <div
-                    key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                      selectedDrug?.id === item.drug.id || lastAddedId === item.id
+                    <div
+                      key={item.id}
+                      role="button"
+                      tabIndex={0}
+                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${selectedDrug?.id === item.drug.id || lastAddedId === item.id
                         ? 'bg-primary-500/10 border-primary-500/40'
                         : 'bg-bg-card border-border/40 hover:border-border/80'
-                    }`}
-                    dir='ltr'
-                    onClick={() => setSelectedDrug(item.drug)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDrug(item.drug); } }}
-                  >
+                        }`}
+                      dir='ltr'
+                      onClick={() => setSelectedDrug(item.drug)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDrug(item.drug); } }}
+                    >
                       {/* Drag Handle or Indicator */}
                       <div className='w-1 h-6 rounded-full bg-border/40 transition-colors group-hover:bg-primary-500/50' />
 
@@ -767,19 +769,17 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                     }))
                   }
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPrintConfig((p) => ({ ...p, [setting.key]: !p[setting.key as keyof typeof p] })); } }}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-150 select-none group/row ${
-                    printConfig[setting.key as keyof typeof printConfig]
-                      ? 'text-text-primary'
-                      : 'text-text-tertiary opacity-60 hover:opacity-100'
-                  } hover:bg-bg-card/50`}
+                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-150 select-none group/row ${printConfig[setting.key as keyof typeof printConfig]
+                    ? 'text-text-primary'
+                    : 'text-text-tertiary opacity-60 hover:opacity-100'
+                    } hover:bg-bg-card/50`}
                 >
                   <div className='flex items-center gap-3 pointer-events-none'>
                     <span
-                      className={`material-symbols-rounded text-lg transition-colors ${
-                        printConfig[setting.key as keyof typeof printConfig]
-                          ? 'text-primary-600 dark:text-white'
-                          : 'opacity-40'
-                      }`}
+                      className={`material-symbols-rounded text-lg transition-colors ${printConfig[setting.key as keyof typeof printConfig]
+                        ? 'text-primary-600 dark:text-white'
+                        : 'opacity-40'
+                        }`}
                     >
                       {setting.icon}
                     </span>
