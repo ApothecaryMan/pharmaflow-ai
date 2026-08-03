@@ -269,7 +269,10 @@ export const holidaysService = {
         return data.map((item: HolidayRow) => ({
           id: item.id,
           date: item.date,
-          type: item.type,
+          type:
+            item.type === 'national' || item.type === 'religious' || item.type === 'observance'
+              ? item.type
+              : 'observance',
           nameEN: item.name_en,
           nameAR: item.name_ar,
           isDayOff: item.is_day_off,
@@ -331,7 +334,10 @@ export const holidaysService = {
     return {
       id: result.id,
       date: result.date,
-      type: result.type,
+      type:
+        result.type === 'national' || result.type === 'religious' || result.type === 'observance'
+          ? result.type
+          : 'observance',
       nameEN: result.name_en,
       nameAR: result.name_ar,
       isDayOff: result.is_day_off,

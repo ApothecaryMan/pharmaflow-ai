@@ -57,14 +57,18 @@ export const orgMembersService = {
       const data = await orgMembersRepository.getInviteByToken(token);
       if (!data) return null;
 
+      const role: OrgRole = data.role === 'owner' || data.role === 'admin' || data.role === 'member' ? data.role : 'member';
+      const status: OrgInvite['status'] =
+        data.status === 'pending' || data.status === 'accepted' || data.status === 'expired' ? data.status : 'pending';
+
       return {
         id: data.id,
         orgId: data.org_id,
         email: data.email,
-        role: data.role,
+        role,
         token: data.token,
         expiresAt: data.expires_at,
-        status: data.status,
+        status,
       };
     } catch {
       return null;
