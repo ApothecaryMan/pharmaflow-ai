@@ -36,6 +36,18 @@ export const queryKeys = {
   },
   suppliers: {
     all: (branchId: string) => ['suppliers', branchId] as const,
+    account: {
+      balance: (supplierId: string) => ['suppliers', 'account', 'balance', supplierId] as const,
+      statement: (supplierId: string, dateFrom?: string, dateTo?: string) =>
+        ['suppliers', 'account', 'statement', supplierId, dateFrom, dateTo] as const,
+      aging: (branchId: string, asOfDate?: string) =>
+        ['suppliers', 'account', 'aging', branchId, asOfDate] as const,
+      openPayables: (supplierId: string, branchId: string) =>
+        ['suppliers', 'account', 'open-payables', supplierId, branchId] as const,
+      payments: (supplierId: string, branchId: string) =>
+        ['suppliers', 'account', 'payments', supplierId, branchId] as const,
+      detail: (paymentId: string) => ['suppliers', 'account', 'payment', paymentId] as const,
+    },
   },
   org: {
     detail: (orgId: string) => ['org', orgId] as const,
