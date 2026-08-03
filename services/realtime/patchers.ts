@@ -12,22 +12,24 @@ function mapPayloadRecord<T>(raw: Record<string, unknown>): T {
 
 /**
  * Patch a flat list cache (e.g. `['inventory', branchId]`) when a row
- * matching the current branch is inserted, updated, or deleted.
- * Only patches if the payload's `branch_id` matches the active branch.
+ * matching the current scope is inserted, updated, or deleted.
+ * Only patches if the payload's `matchField` (default `branch_id`)
+ * equals `currentId`.
  *
  * Incoming data from Supabase Realtime arrives in snake_case.
  * We convert it to camelCase before merging into the cache so the
  * UI reads the correct property names (e.g. `cashSales` not `cash_sales`).
  */
 export function patchListCache<T extends { id: string }>(
-  queryKeyFactory: (branchId: string) => readonly unknown[],
-  currentBranchId: string,
+  queryKeyFactory: (id: string) => readonly unknown[],
+  currentId: string,
+  matchField: string = 'branch_id'
 ): (payload: RealtimePostgresChangesPayload<T>) => void {
   return (payload: RealtimePostgresChangesPayload<T>) => {
-    const recordBranchId = (payload.new as any)?.branch_id || (payload.old as any)?.branch_id;
-    if (recordBranchId !== currentBranchId) return;
+    const recordId = (payload.new as any)?.[matchField] || (payload.old as any)?.[matchField];
+    if (recordId !== currentId) return;
 
-    const queryKey = queryKeyFactory(currentBranchId);
+    const queryKey = queryKeyFactory(currentId);
     queryClient.setQueryData(queryKey, (old: T[] | undefined) => {
       if (!old) return old;
 

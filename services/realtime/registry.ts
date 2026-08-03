@@ -124,13 +124,16 @@ export function createRegistry(branchId: string, orgId: string): PatcherEntry[] 
     },
 
     // ── Employees ───────────────────────────────────────────────────
+    // Subscribed org-wide so the allByOrg list also stays fresh for
+    // employees in other branches. The branch-scoped handler still
+    // guards on branch_id, so only the active branch's list is touched.
     {
       table: 'employees',
       events: ['*'],
-      filter: () => `branch_id=eq.${branchId}`,
+      filter: () => `org_id=eq.${orgId}`,
       handlers: [
         patchListCache((bid: string) => queryKeys.employees.all(bid), branchId),
-        patchListCache((oid: string) => queryKeys.employees.allByOrg(oid), orgId),
+        patchListCache((oid: string) => queryKeys.employees.allByOrg(oid), orgId, 'org_id'),
       ],
     },
 
