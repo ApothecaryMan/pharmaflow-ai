@@ -286,7 +286,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canAddCash && (
                   <button
                     onClick={() => setModalMode('in')}
-                    className={`h-pageheader px-3 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap text-[13px]`}
+                    className={`h-pageheader px-3 rounded-xl border-2 border-emerald-300 dark:border-emerald-500/40 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/20 font-bold transition-all flex items-center gap-2 whitespace-nowrap text-[13px]`}
                     type='button'
                   >
                     <span
@@ -301,7 +301,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canRemoveCash && (
                   <button
                     onClick={() => setModalMode('out')}
-                    className={`h-pageheader px-3 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap text-[13px]`}
+                    className={`h-pageheader px-3 rounded-xl border-2 border-orange-300 dark:border-orange-500/40 bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-500/20 font-bold transition-all flex items-center gap-2 whitespace-nowrap text-[13px]`}
                     type='button'
                   >
                     <span
@@ -316,7 +316,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canCloseShift && (
                   <button
                     onClick={() => setModalMode('close')}
-                    className={`h-pageheader px-3 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap text-[13px]`}
+                    className={`h-pageheader px-3 rounded-xl border-2 border-red-300 dark:border-red-500/40 bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/20 font-bold transition-all flex items-center gap-2 whitespace-nowrap text-[13px]`}
                     type='button'
                   >
                     <span
@@ -333,7 +333,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               permissions.canOpenShift && (
                 <button
                   onClick={() => setModalMode('open')}
-                  className={`h-pageheader px-4 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-950 dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2 text-[13px]`}
+                  className={`h-pageheader px-4 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-2 border-zinc-700 dark:border-zinc-300 hover:bg-zinc-950 dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2 text-[13px]`}
                   type='button'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>

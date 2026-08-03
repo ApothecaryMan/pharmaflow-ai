@@ -50,6 +50,6 @@ export const PROFILE_GLASS_CARD_BASE =
 
 // Modal footer button shared classes (one place to update all modal footer buttons)
 export const MODAL_FOOTER_BTN = 'flex-1 py-3 rounded-full';
-export const MODAL_FOOTER_BTN_CANCEL = `${MODAL_FOOTER_BTN} font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors`;
+export const MODAL_FOOTER_BTN_CANCEL = `${MODAL_FOOTER_BTN} font-medium text-gray-700 dark:text-gray-300 bg-white border border-gray-200 hover:bg-gray-50 dark:bg-white/10 dark:border-transparent dark:hover:bg-white/20 transition-colors`;
 export const MODAL_FOOTER_BTN_PRIMARY = `${MODAL_FOOTER_BTN} font-bold text-white bg-zinc-900 hover:bg-zinc-950 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 active:scale-95 transition-all`;
 export const MODAL_FOOTER_BTN_DANGER = `${MODAL_FOOTER_BTN} font-bold text-white bg-red-500 hover:bg-red-600 active:scale-95 transition-all`;

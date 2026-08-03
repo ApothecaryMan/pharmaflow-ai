@@ -398,7 +398,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     }
                     position='bottom'
                   >
-                    <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium'>
+                    <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100/60 dark:bg-blue-900/40 backdrop-blur-md border border-blue-200/50 dark:border-blue-800/50 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium shadow-sm'>
                       <span>{processedSessions.length}</span>
                       <span>{t.activeSessions.activeCount}</span>
                     </div>
@@ -421,7 +421,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       }
                       position='bottom'
                     >
-                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium'>
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-green-100/60 dark:bg-green-900/40 backdrop-blur-md border border-green-200/50 dark:border-green-800/50 text-green-800 dark:text-green-300 rounded-lg text-sm font-medium shadow-sm'>
                         <span className='w-1.5 h-1.5 rounded-full bg-green-500 inline-block' />
                         <span>{onlineCount}</span>
                         <span>{t.activeSessions.online}</span>
@@ -445,7 +445,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       }
                       position='bottom'
                     >
-                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium'>
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium shadow-sm'>
                         <span className='w-1.5 h-1.5 rounded-full bg-gray-400 inline-block' />
                         <span>{offlineCount}</span>
                         <span>{t.activeSessions.offline}</span>
@@ -466,7 +466,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       }
                       position='bottom'
                     >
-                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium'>
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50/70 dark:bg-blue-900/40 backdrop-blur-md border border-blue-200/50 dark:border-blue-800/50 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium shadow-sm'>
                         <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
                           <title>Current</title>
                           <circle cx='5' cy='5' r='4' />
@@ -505,7 +505,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       }
                       position='bottom'
                     >
-                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium'>
+                      <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-amber-100/60 dark:bg-amber-900/40 backdrop-blur-md border border-amber-200/50 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 rounded-lg text-sm font-medium shadow-sm'>
                         <svg className='w-2.5 h-2.5' fill='currentColor' viewBox='0 0 10 10'>
                           <title>Stale</title>
                           <circle cx='5' cy='5' r='4' />
