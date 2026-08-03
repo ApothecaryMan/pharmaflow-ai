@@ -54,6 +54,11 @@ export type PermissionAction =
   | 'supplier.update'
   | 'supplier.delete'
 
+  // Supplier Accounts (AP)
+  | 'supplier.pay' // Record/void supplier payments
+  | 'supplier.statement' // View supplier statements (ledger)
+  | 'supplier.aging' // View supplier aging report
+
   // Customers
   | 'customer.view'
   | 'customer.view_loyalty'
@@ -125,6 +130,9 @@ const ALL_PERMISSIONS: PermissionAction[] = [
   'supplier.add',
   'supplier.update',
   'supplier.delete',
+  'supplier.pay',
+  'supplier.statement',
+  'supplier.aging',
   'customer.view',
   'customer.view_loyalty',
   'customer.add',
@@ -193,6 +201,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'supplier.add',
     'supplier.update',
     'supplier.delete',
+    'supplier.pay',
+    'supplier.statement',
+    'supplier.aging',
     'customer.view',
     'customer.view_loyalty',
     'customer.add',
@@ -251,6 +262,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'supplier.view',
     'supplier.add',
     'supplier.update',
+    'supplier.pay',
+    'supplier.statement',
+    'supplier.aging',
     'customer.view',
     'customer.view_loyalty',
     'customer.add',
@@ -302,6 +316,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'attendance.clock',
     'expense.create',
     'expense.view',
+    'supplier.statement',
+    'supplier.aging',
   ],
 
   inventory_officer: [
@@ -369,6 +385,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'attendance.clock',
     'expense.create',
     'expense.view',
+    'supplier.statement',
+    'supplier.aging',
   ],
 
   cashier: [
@@ -409,6 +427,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'expense.create',
     'expense.view',
     'expense.approve',
+    'supplier.pay',
+    'supplier.statement',
+    'supplier.aging',
   ],
 
   hr_manager: [

@@ -367,6 +367,9 @@ export const MENU_TRANSLATIONS = {
     'Payment Terms': 'شروط الدفع',
     'Supplier Catalog': 'كتالوج المورد',
     'Supplier Contracts': 'عقود الموردين',
+    'Supplier Payments': 'مدفوعات الموردين',
+    'Supplier Statement': 'كشف حساب المورد',
+    'Supplier Aging': 'أعمار الديون',
 
     // Purchase Returns Items
     'Create Return': 'إنشاء إرجاع',

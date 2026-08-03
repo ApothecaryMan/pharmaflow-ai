@@ -144,6 +144,9 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     'sales-history': { ...t.salesHistory, datePickerTranslations: t.global.datePicker },
     'return-history': { ...t.returnHistory, datePickerTranslations: t.global.datePicker },
     suppliers: t.suppliers,
+    'supplier-payments': { ...t.supplierAccounts, datePickerTranslations: t.global.datePicker },
+    'supplier-statement': { ...t.supplierAccounts, datePickerTranslations: t.global.datePicker },
+    'supplier-aging': t.supplierAccounts,
     purchases: {
       ...t.purchases,
       pendingApproval: t.pendingApproval,

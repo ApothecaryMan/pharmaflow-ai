@@ -542,6 +542,24 @@ export const PHARMACY_MENU: MenuItem[] = [
         permission: 'supplier.view',
         items: [
           { label: 'Supplier List', view: 'suppliers', icon: 'local_shipping' },
+          {
+            label: 'Supplier Payments',
+            view: 'supplier-payments',
+            icon: 'payments',
+            permission: 'supplier.pay',
+          },
+          {
+            label: 'Supplier Statement',
+            view: 'supplier-statement',
+            icon: 'receipt_long',
+            permission: 'supplier.statement',
+          },
+          {
+            label: 'Supplier Aging',
+            view: 'supplier-aging',
+            icon: 'timelapse',
+            permission: 'supplier.aging',
+          },
           { label: 'Supplier Profile', icon: 'contact_page' },
           { label: 'Supplier Ratings', icon: 'star_half' },
           { label: 'Payment Terms', icon: 'payment' },

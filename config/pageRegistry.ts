@@ -115,6 +115,17 @@ const Purchases = createLazyPage(() =>
 const SuppliersList = createLazyPage(() =>
   import('../components/purchases/SuppliersList').then((m) => ({ default: m.SuppliersList }))
 );
+const SupplierPayments = createLazyPage(() =>
+  import('../components/purchases/SupplierPayments').then((m) => ({ default: m.SupplierPayments }))
+);
+const SupplierStatement = createLazyPage(() =>
+  import('../components/reports/SupplierStatement').then((m) => ({
+    default: m.SupplierStatement,
+  }))
+);
+const SupplierAging = createLazyPage(() =>
+  import('../components/reports/SupplierAging').then((m) => ({ default: m.SupplierAging }))
+);
 const LoginAuditList = createLazyPage(() =>
   import('../components/reports/LoginAuditList').then((m) => ({ default: m.LoginAuditList }))
 );
@@ -396,6 +407,42 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'purchase',
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING.suppliers,
+  },
+  'supplier-payments': {
+    id: 'supplier-payments',
+    component: SupplierPayments.component,
+    preload: SupplierPayments.preload,
+    menuLabel: 'Supplier Payments',
+    menuLabelAr: 'مدفوعات الموردين',
+    icon: 'payments',
+    category: 'purchase',
+    requiredProps: ['color', 't', 'language', 'currentEmployeeId'],
+    permission: PERMISSIONS_MAPPING['supplier-payments'],
+    layout: 'standard',
+  },
+  'supplier-statement': {
+    id: 'supplier-statement',
+    component: SupplierStatement.component,
+    preload: SupplierStatement.preload,
+    menuLabel: 'Supplier Statement',
+    menuLabelAr: 'كشف حساب المورد',
+    icon: 'receipt_long',
+    category: 'reports',
+    requiredProps: ['color', 't', 'language', 'navigationParams'],
+    permission: PERMISSIONS_MAPPING['supplier-statement'],
+    layout: 'standard',
+  },
+  'supplier-aging': {
+    id: 'supplier-aging',
+    component: SupplierAging.component,
+    preload: SupplierAging.preload,
+    menuLabel: 'Supplier Aging',
+    menuLabelAr: 'أعمار الديون',
+    icon: 'timelapse',
+    category: 'reports',
+    requiredProps: ['color', 't', 'language', 'onViewChange', 'navigationParams'],
+    permission: PERMISSIONS_MAPPING['supplier-aging'],
+    layout: 'standard',
   },
   purchases: {
     id: 'purchases',
