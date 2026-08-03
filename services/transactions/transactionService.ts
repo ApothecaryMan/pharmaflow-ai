@@ -323,7 +323,8 @@ export const transactionService = {
         newPurchase.id,
         context.performerId,
         context.performerName,
-        context.shiftId
+        context.shiftId,
+        purchase.paidNow
       );
 
       return { success: true, data: receivedPurchase };
@@ -345,7 +346,8 @@ export const transactionService = {
       const savedReturn = await returnService.createPurchaseReturn(
         {
           ...returnInput,
-          paymentMethod: originalPurchase.paymentMethod,
+          paymentMethod:
+            returnInput.paymentMethod || (originalPurchase.paymentMethod === 'cash' ? 'cash' : 'credit'),
           shiftId: context.shiftId,
         } as unknown as PurchaseReturn,
         context.branchId

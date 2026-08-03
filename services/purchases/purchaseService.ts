@@ -128,9 +128,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         expiry_date: normalizeDate(item.expiryDate),
         discount: item.discount || 0,
         public_price: item.publicPrice,
+        unit_price: item.unitPrice || null,
+        unit_cost_price: item.unitCostPrice || null,
         tax: item.tax || 0,
         is_unit: item.isUnit || false,
         units_per_pack: item.unitsPerPack || 1,
+        batch_number: item.batchNumber || null,
       }));
 
       try {
@@ -164,13 +167,14 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     id: string,
     receiverId: string,
     receiverName: string,
-    shiftId?: string
+    shiftId?: string,
+    paidNow?: number
   ): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
     if (purchase.status === 'received' || purchase.status === 'completed') return purchase;
 
-    await this.processInventoryReceipt(purchase, receiverId, receiverName, shiftId);
+    await this.processInventoryReceipt(purchase, receiverId, receiverName, shiftId, paidNow);
 
     const updatedPurchase = await this.getById(id);
     return updatedPurchase || purchase;
@@ -180,13 +184,15 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     purchase: Purchase,
     performerId: string,
     performerName: string,
-    shiftId?: string
+    shiftId?: string,
+    paidNow?: number
   ): Promise<void> {
     const data = await purchaseRepository.processReceiptRPC({
       purchaseId: purchase.id,
       performerId,
       performerName,
       shiftId,
+      paidNow,
     });
 
     if (!data?.success) {

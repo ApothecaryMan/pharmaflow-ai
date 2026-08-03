@@ -138,8 +138,8 @@ describe('transactionService', () => {
   });
 
   it('processPurchaseTransaction approves purchase and logs audit', async () => {
-    purchaseService.getById.mockResolvedValue({ id: 'P1', status: 'pending', invoiceId: 'INV-001' });
-    purchaseService.approve.mockResolvedValue({ id: 'P1', status: 'approved' });
+    vi.mocked(purchaseService.getById).mockResolvedValue({ id: 'P1', status: 'pending', invoiceId: 'INV-001' } as any);
+    vi.mocked(purchaseService.approve).mockResolvedValue({ id: 'P1', status: 'approved' } as any);
 
     const result = await transactionService.processPurchaseTransaction('P1', mockContext);
 
@@ -149,7 +149,7 @@ describe('transactionService', () => {
   });
 
   it('processPurchaseTransaction skips if already completed', async () => {
-    purchaseService.getById.mockResolvedValue({ id: 'P1', status: 'completed' });
+    vi.mocked(purchaseService.getById).mockResolvedValue({ id: 'P1', status: 'completed' } as any);
 
     const result = await transactionService.processPurchaseTransaction('P1', mockContext);
 
@@ -158,8 +158,8 @@ describe('transactionService', () => {
   });
 
   it('processDirectPurchaseTransaction creates purchase and marks as received', async () => {
-    purchaseService.create.mockResolvedValue({ id: 'P1', status: 'pending', branchId: 'BR1' });
-    purchaseService.markAsReceived.mockResolvedValue({ id: 'P1', status: 'received' });
+    vi.mocked(purchaseService.create).mockResolvedValue({ id: 'P1', status: 'pending', branchId: 'BR1' } as any);
+    vi.mocked(purchaseService.markAsReceived).mockResolvedValue({ id: 'P1', status: 'received' } as any);
 
     const result = await transactionService.processDirectPurchaseTransaction(
       {
@@ -177,12 +177,12 @@ describe('transactionService', () => {
 
     expect(result.success).toBe(true);
     expect(purchaseService.create).toHaveBeenCalled();
-    expect(purchaseService.markAsReceived).toHaveBeenCalledWith('P1', 'EMP1', 'Test Employee', 'SHIFT1');
+    expect(purchaseService.markAsReceived).toHaveBeenCalledWith('P1', 'EMP1', 'Test Employee', 'SHIFT1', undefined);
   });
 
   it('processPurchaseReturnTransaction creates purchase return and logs audit', async () => {
-    purchaseService.getById.mockResolvedValue({ id: 'P1', status: 'completed', paymentMethod: 'cash', invoiceId: 'INV-001' });
-    returnService.createPurchaseReturn.mockResolvedValue({ id: 'PR1', purchaseId: 'P1' });
+    vi.mocked(purchaseService.getById).mockResolvedValue({ id: 'P1', status: 'completed', paymentMethod: 'cash', invoiceId: 'INV-001' } as any);
+    vi.mocked(returnService.createPurchaseReturn).mockResolvedValue({ id: 'PR1', purchaseId: 'P1' } as any);
 
     const result = await transactionService.processPurchaseReturnTransaction(
       { purchaseId: 'P1', supplierId: 'SUP1', items: [], totalRefund: 100 } as any,
@@ -219,7 +219,7 @@ describe('transactionService', () => {
   });
 
   it('processCheckout returns error on db failure', async () => {
-    transactionRepository.processCheckout.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+    vi.mocked(transactionRepository.processCheckout).mockResolvedValue({ data: null, error: { message: 'DB error' } } as any);
     const result = await transactionService.processCheckout(
       { items: [], customerName: 'Guest', paymentMethod: 'cash', total: 100, subtotal: 100, globalDiscount: 0 },
       [],

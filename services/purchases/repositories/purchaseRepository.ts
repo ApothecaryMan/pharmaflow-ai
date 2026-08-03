@@ -14,9 +14,12 @@ interface PurchaseItemRow {
   expiry_date: string | null;
   discount: number | null;
   public_price: number;
+  unit_price: number | null;
+  unit_cost_price: number | null;
   tax: number | null;
   is_unit: boolean | null;
   units_per_pack: number | null;
+  batch_number?: string | null;
   drug: Drug | null;
 }
 
@@ -28,11 +31,14 @@ interface PurchaseItemInsert {
   cost_price: number;
   expiry_date?: string;
   public_price: number;
+  unit_price?: number | null;
+  unit_cost_price?: number | null;
   discount?: number;
   tax?: number;
   is_unit?: boolean;
   dosage_form?: string;
   units_per_pack?: number;
+  batch_number?: string | null;
 }
 
 interface ReceiptPayload {
@@ -40,6 +46,7 @@ interface ReceiptPayload {
   performerId: string;
   performerName: string;
   shiftId?: string;
+  paidNow?: number;
 }
 
 interface ReceiptRpcResult {
@@ -69,6 +76,9 @@ export const purchaseRepository = {
         dosageForm: item.dosage_form ?? undefined,
         discount: item.discount ?? undefined,
         publicPrice: item.public_price,
+        unitPrice: item.unit_price ?? undefined,
+        unitCostPrice: item.unit_cost_price ?? undefined,
+        batchNumber: item.batch_number ?? undefined,
         tax: item.tax ?? undefined,
         isUnit: item.is_unit ?? undefined,
         unitsPerPack: item.units_per_pack ?? undefined,
@@ -88,6 +98,8 @@ export const purchaseRepository = {
       createdByName: db.created_by_name,
       invoiceId: db.invoice_id,
       version: db.version,
+      dueDate: db.due_date ?? undefined,
+      notes: db.notes ?? undefined,
     };
   },
 
@@ -103,7 +115,8 @@ export const purchaseRepository = {
     if (p.discount !== undefined) db.discount = p.discount;
     if (p.totalTax !== undefined) db.total_tax = p.totalTax;
     if (p.totalCost !== undefined) db.total_cost = p.totalCost;
-    if (p.paymentMethod !== undefined) db.payment_type = p.paymentMethod;
+    if (p.paymentMethod !== undefined)
+      db.payment_type = p.paymentMethod === 'partial' ? 'credit' : p.paymentMethod;
     if (p.status !== undefined) db.status = p.status;
     if (p.approvedBy !== undefined) db.approved_by = p.approvedBy;
     if (p.approvalDate !== undefined) db.approval_date = p.approvalDate;
@@ -112,6 +125,8 @@ export const purchaseRepository = {
     if (p.externalInvoiceId !== undefined) db.external_invoice_id = p.externalInvoiceId;
     if (p.invoiceId !== undefined) db.invoice_id = p.invoiceId;
     if (p.version !== undefined) db.version = p.version;
+    if (p.dueDate !== undefined) db.due_date = p.dueDate;
+    if (p.notes !== undefined) db.notes = p.notes;
     if (p.createdBy !== undefined) db.created_by = p.createdBy;
     if (p.createdByName !== undefined) db.created_by_name = p.createdByName;
     return db;

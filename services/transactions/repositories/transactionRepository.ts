@@ -5,6 +5,8 @@ interface TransactionRpcSuccess {
   success?: boolean;
   error?: string;
   sale?: Record<string, unknown>;
+  returnId?: string;
+  totalRefund?: number;
 }
 
 interface TransactionRpcResult {

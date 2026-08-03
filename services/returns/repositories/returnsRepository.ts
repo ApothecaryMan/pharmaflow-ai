@@ -39,6 +39,7 @@ interface PurchaseReturnPayload {
   totalRefund: number;
   processedBy?: string;
   processedByName?: string;
+  paymentMethod?: 'cash' | 'credit';
 }
 
 interface PurchaseReturnItemDbRow {
@@ -129,6 +130,7 @@ export const returnsRepository = {
       })),
       totalRefund: db.total_refund,
       status: db.status || 'completed',
+      paymentMethod: db.payment_method || undefined,
       notes: db.notes,
     };
   },
@@ -145,6 +147,7 @@ export const returnsRepository = {
     if (r.supplierName !== undefined) db.supplier_name_snapshot = r.supplierName;
     if (r.totalRefund !== undefined) db.total_refund = r.totalRefund;
     if (r.status !== undefined) db.status = r.status;
+    if (r.paymentMethod !== undefined) db.payment_method = r.paymentMethod;
     if (r.notes !== undefined) db.notes = r.notes;
     return db;
   },
