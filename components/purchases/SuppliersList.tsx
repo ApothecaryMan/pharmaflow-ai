@@ -28,6 +28,7 @@ import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartEmailInput, SmartPhoneInput, useSmartDirection } from '../common/SmartInputs';
+import { Switch } from '../common/Switch';
 import { TanStackTable } from '../common/TanStackTable';
 
 interface SuppliersListProps {
@@ -115,6 +116,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
     paymentType: 'credit',
     creditDays: 0,
     creditLimit: undefined,
+    showUnitPrices: false,
   });
 
   const nameDir = useSmartDirection(
@@ -226,6 +228,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
       paymentType: 'credit',
       creditDays: 0,
       creditLimit: undefined,
+      showUnitPrices: false,
     });
   };
 
@@ -691,6 +694,18 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                       dir='ltr'
                     />
                   </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {language === 'AR' ? 'إظهار سعر الوحدة في الفاتورة' : 'Show Unit Price in Invoice'}
+                    </span>
+                    <div className='flex items-center h-[50px]'>
+                      <Switch
+                        checked={editForm.showUnitPrices || false}
+                        onChange={(checked) => setEditForm({ ...editForm, showUnitPrices: checked })}
+                        color='primary'
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -958,6 +973,18 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                       placeholder='0.00'
                       dir='ltr'
                     />
+                  </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {language === 'AR' ? 'إظهار سعر الوحدة في الفاتورة' : 'Show Unit Price in Invoice'}
+                    </span>
+                    <div className='flex items-center h-[50px]'>
+                      <Switch
+                        checked={editForm.showUnitPrices || false}
+                        onChange={(checked) => setEditForm({ ...editForm, showUnitPrices: checked })}
+                        color='primary'
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

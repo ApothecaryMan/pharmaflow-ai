@@ -40,4 +40,6 @@ export interface Supplier {
   creditLimit?: number;
   /** Live payable balance — computed via get_supplier_balance, never stored */
   currentBalance?: number;
+  /** Whether to show unit price columns in the purchase invoice for this supplier */
+  showUnitPrices?: boolean;
 }
