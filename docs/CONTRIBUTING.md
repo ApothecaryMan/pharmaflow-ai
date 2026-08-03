@@ -496,7 +496,7 @@ pharmaflow-ai/
 │   ├── reports/                     # LoginAuditList, ProfitLossPage
 │   ├── sales/                       # 18 files (POS/, CashRegister, SalesHistory, ReturnHistory, etc.)
 │   ├── settings/                    # 10 files (BranchSettings, ThemeStudio, DesktopSettings, etc.)
-│   ├── test/                        # ModalTests, AnimatedCounterLab, FilterDropdownTest, etc.
+│   ├── test/                        # ModalTests, AnimatedCounterLab, ComponentCreation, etc.
 │   └── ui/                          # Shadcn/ui primitives (button, card, dialog, etc.)
 │
 ├── lib/                             # Library initializations

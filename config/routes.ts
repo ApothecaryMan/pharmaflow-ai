@@ -7,7 +7,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: 'forgot-password' as ViewState,
   MODAL_TESTS: 'modal-tests' as ViewState,
   ANIMATED_COUNTER_LAB: 'animated-counter-lab' as ViewState,
-  FILTER_DROPDOWN_TEST: 'filter-dropdown-test' as ViewState,
+  COMPONENT_CREATION: 'component-creation' as ViewState,
   TEST_THEME: 'test-theme' as ViewState,
   INVENTORY: 'inventory' as ViewState,
   POS: 'pos' as ViewState,

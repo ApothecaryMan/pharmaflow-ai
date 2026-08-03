@@ -176,8 +176,8 @@ const AnimatedCounterLab = createLazyPage(() =>
 const AnimationLab = createLazyPage(() =>
   import('../components/test/AnimationLab').then((m) => ({ default: m.AnimationLab }))
 );
-const FilterDropdownTest = createLazyPage(() =>
-  import('../components/test/FilterDropdownTest').then((m) => ({ default: m.FilterDropdownTest }))
+const ComponentCreation = createLazyPage(() =>
+  import('../components/test/ComponentCreation').then((m) => ({ default: m.ComponentCreation }))
 );
 const ModalTests = createLazyPage(() =>
   import('../components/test/ModalTests').then((m) => ({ default: m.ModalTests }))
@@ -454,6 +454,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'purchase',
     requiredProps: ['color', 't', 'language', 'navigationParams', 'onViewChange'],
     permission: PERMISSIONS_MAPPING.purchases,
+    layout: 'full-bleed',
   },
   'pending-approval': {
     id: 'pending-approval',
@@ -760,16 +761,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     permission: PERMISSIONS_MAPPING['a5-invoice-designer'],
     layout: 'standard',
   },
-  'filter-dropdown-test': {
-    id: 'filter-dropdown-test',
-    component: FilterDropdownTest.component,
-    preload: FilterDropdownTest.preload,
-    menuLabel: 'Filter Dropdown Test',
-    menuLabelAr: 'اختبار القائمة المنسدلة',
+  'component-creation': {
+    id: 'component-creation',
+    component: ComponentCreation.component,
+    preload: ComponentCreation.preload,
+    menuLabel: 'Component Creation',
+    menuLabelAr: 'إنشاء المكونات',
     icon: 'filter_alt',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: PERMISSIONS_MAPPING['filter-dropdown-test'],
+    permission: PERMISSIONS_MAPPING['component-creation'],
     layout: 'standard',
   },
   'employee-list': {

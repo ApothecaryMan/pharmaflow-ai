@@ -152,11 +152,6 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
       pendingApproval: t.pendingApproval,
       datePickerTranslations: t.global.datePicker,
     },
-    'purchases-test': {
-      ...t.purchases,
-      pendingApproval: t.pendingApproval,
-      datePickerTranslations: t.global.datePicker,
-    },
     'pending-approval': {
       ...t.purchases,
       pendingApproval: t.pendingApproval,

@@ -1,4 +1,4 @@
-import { GitCommit, Layers, Maximize, MinusSquare, Sliders, Sparkles } from 'lucide-react';
+import { GitCommit, Layers, Maximize, MinusSquare, Sliders, Sparkles, Zap } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -12,7 +12,7 @@ interface SimpleItem {
   icon: string;
 }
 
-export const FilterDropdownTest: React.FC = () => {
+export const ComponentCreation: React.FC = () => {
   const testItems: SimpleItem[] = [
     { id: '1', name: 'Main Pharmacy', nameAr: 'الصيدلية الرئيسية', icon: 'store' },
     { id: '2', name: 'Downtown Branch', nameAr: 'فرع وسط البلد', icon: 'location_on' },
@@ -228,6 +228,151 @@ export const FilterDropdownTest: React.FC = () => {
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CONTAINER 4: Buttons with Icons */}
+          <div className={`p-6 rounded-3xl ${CARD_BASE} border border-divider flex flex-col gap-6`}>
+            <div className='flex items-center gap-3 border-b border-divider pb-4'>
+              <div className='p-2 bg-violet-500/10 rounded-lg text-violet-500'>
+                <Zap size={24} />
+              </div>
+              <h2 className='text-xl font-bold text-gray-800 dark:text-gray-100'>
+                Button Styles: Icon Inside (أزرار مع أيقونات)
+              </h2>
+            </div>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 py-4'>
+              {/* New Prescription */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  New Prescription
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-indigo-700 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 active:bg-indigo-800 dark:active:bg-indigo-700 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>medication</span>
+                  New Prescription
+                </button>
+              </div>
+
+              {/* New Sale */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  New Sale
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-700 dark:hover:bg-emerald-600 active:bg-emerald-800 dark:active:bg-emerald-700 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>shopping_cart</span>
+                  New Sale
+                </button>
+              </div>
+
+              {/* Add Medicine */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Add Medicine
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-sky-700 dark:border-sky-400 bg-sky-600 dark:bg-sky-500 text-white text-sm font-semibold hover:bg-sky-700 dark:hover:bg-sky-600 active:bg-sky-800 dark:active:bg-sky-700 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:focus-visible:ring-sky-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>add_box</span>
+                  Add Medicine
+                </button>
+              </div>
+
+              {/* New Purchase Order */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  New Purchase Order
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-gray-300 dark:border-white/25 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-100 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-white/15 active:bg-gray-300 dark:active:bg-white/20 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>note_add</span>
+                  New Purchase Order
+                </button>
+              </div>
+
+              {/* Receive Stock */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Receive Stock
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-blue-300 dark:border-blue-500/40 bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 text-sm font-bold hover:bg-blue-200 dark:hover:bg-blue-900/40 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>local_shipping</span>
+                  Receive Stock
+                </button>
+              </div>
+
+              {/* Export Report */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Export Report
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-dashed border-gray-400 dark:border-white/30 text-gray-700 dark:text-gray-100 text-sm font-semibold hover:border-gray-500 dark:hover:border-white/40 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>file_download</span>
+                  Export Report
+                </button>
+              </div>
+
+              {/* Accept */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Accept
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-teal-700 dark:border-teal-400 bg-teal-600 dark:bg-teal-500 text-white text-sm font-semibold hover:bg-teal-700 dark:hover:bg-teal-600 active:bg-teal-800 dark:active:bg-teal-700 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:focus-visible:ring-teal-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>check</span>
+                  Accept
+                </button>
+              </div>
+
+              {/* Cancel */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Cancel
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/40 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>close</span>
+                  Cancel
+                </button>
+              </div>
+
+              {/* Print */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Print
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-slate-400 dark:border-white/30 bg-white dark:bg-white/10 text-slate-700 dark:text-gray-100 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-white/15 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>print</span>
+                  Print
+                </button>
+              </div>
+
+              {/* Sell */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Sell
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-amber-700 dark:border-amber-400 bg-amber-500 dark:bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 active:bg-amber-700 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>point_of_sale</span>
+                  Sell
+                </button>
+              </div>
+
+              {/* Refund */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Refund
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-orange-300 dark:border-orange-500/40 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 text-sm font-bold hover:bg-orange-100 dark:hover:bg-orange-900/40 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>undo</span>
+                  Refund
+                </button>
+              </div>
+
+              {/* Checkout */}
+              <div className='flex flex-col gap-3'>
+                <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                  Checkout
+                </span>
+                <button className='flex items-center justify-center gap-2 w-full h-11 rounded-xl border-2 border-dashed border-violet-400 dark:border-violet-500/50 text-violet-700 dark:text-violet-300 text-sm font-bold hover:border-violet-500 dark:hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950'>
+                  <span className='material-symbols-rounded text-[17px]'>credit_card</span>
+                  Checkout
+                </button>
               </div>
             </div>
           </div>
@@ -998,9 +1143,10 @@ export const FilterDropdownTest: React.FC = () => {
 
               </div>
             </div>
+            </div>
           </div>
+
         </div>
-      </div>
     </div>
   );
 };

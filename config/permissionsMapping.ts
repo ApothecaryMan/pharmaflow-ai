@@ -43,7 +43,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'animated-counter-lab': 'system.debug',
   'scrollbar-lab': 'system.debug',
   'a5-invoice-designer': 'system.debug',
-  'filter-dropdown-test': 'system.debug',
+  'component-creation': 'system.debug',
   'employee-list': 'users.view',
   'employee-profile': 'users.view',
   'active-sessions': 'users.manage',
