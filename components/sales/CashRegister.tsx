@@ -37,6 +37,7 @@ const getTxBadgeClass = (type: string): string => {
     case 'closing':
     case 'closing_balance':
     case 'expense':
+    case 'supplier_payment':
       return 'badge-danger';
     case 'purchase':
       return 'badge-indigo';
@@ -67,6 +68,7 @@ const TX_ICONS: Record<string, string> = {
   purchase: 'shopping_cart_checkout',
   purchase_return: 'keyboard_return',
   expense: 'receipt_long',
+  supplier_payment: 'payments',
 };
 
 export const CashRegister: React.FC<CashRegisterProps> = ({

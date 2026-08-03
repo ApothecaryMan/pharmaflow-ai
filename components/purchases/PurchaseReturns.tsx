@@ -9,6 +9,7 @@ import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
 import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
+import { useSupplierBalance } from '../../hooks/suppliers/useSupplierAccount';
 import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { purchaseService } from '../../services/purchases/purchaseService';
@@ -30,6 +31,7 @@ import {
   PriceDisplay,
   SearchDropdown,
   SearchInput,
+  SegmentedControl,
   SmartTextarea,
   TanStackTable,
   useContextMenu,
@@ -69,6 +71,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
     createPurchaseReturn: infra.createPurchaseReturn,
   });
   const { showMenu } = useContextMenu();
+
   const [_mode, _setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
 
@@ -110,6 +113,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [notes, setNotes] = useState('');
+  const [refundMethod, setRefundMethod] = useState<'cash' | 'credit'>('cash');
+
+  const supplierIdForBalance =
+    refundMethod === 'credit' && selectedPurchase ? selectedPurchase.supplierId : '';
+  const { data: currentSupplierBalance = 0 } = useSupplierBalance(supplierIdForBalance);
 
   // Helper: Get total returned quantity for an item
   const getReturnedQuantity = (purchaseId: string, drugId: string): number => {
@@ -411,6 +419,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
       items: itemsToSubmit,
       totalRefund: calculatedTotalRefund,
       status: 'pending',
+      paymentMethod: refundMethod,
       notes,
       branchId: activeBranchId || '',
       orgId: activeOrgId,
@@ -426,6 +435,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
     setReturnReasons({});
     setReturnConditions({});
     setNotes('');
+    setRefundMethod('cash');
     setIsCreateModalOpen(false);
   };
 
@@ -858,6 +868,43 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                     </span>
                   </div>
                 )}
+
+                {/* Refund Method */}
+                <div className='space-y-1.5'>
+                  <span className='block text-xs font-bold text-gray-700 dark:text-gray-300'>
+                    {t.purchaseReturns?.refundMethod || 'Refund Method'}
+                  </span>
+                  <SegmentedControl
+                    value={refundMethod}
+                    onChange={(val) => setRefundMethod(val as 'cash' | 'credit')}
+                    size='sm'
+                    options={[
+                      { label: t.purchaseReturns?.cashRefund || 'Cash', value: 'cash', activeColor: 'green' },
+                      { label: t.purchaseReturns?.creditNote || 'Credit Note', value: 'credit', activeColor: 'blue' },
+                    ]}
+                    className='w-fit'
+                  />
+                  {refundMethod === 'credit' && (
+                    <>
+                      <p className='text-xs text-blue-600 dark:text-blue-400'>
+                        {t.purchaseReturns?.creditNoteHint ||
+                          'This will be added to the supplier account and reduce their balance.'}
+                      </p>
+                      <div className='flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 pt-1'>
+                        <span className='font-medium'>
+                          {t.purchaseReturns?.currentBalance || 'Current balance'}:
+                        </span>
+                        <span className='tabular-nums font-bold'>
+                          <PriceDisplay value={currentSupplierBalance} />
+                        </span>
+                        <span className='text-gray-400'>→</span>
+                        <span className='font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums'>
+                          <PriceDisplay value={money.subtract(currentSupplierBalance, calculatedTotalRefund)} />
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
 
                 {/* Additional Notes */}
                 <div className='space-y-1.5'>

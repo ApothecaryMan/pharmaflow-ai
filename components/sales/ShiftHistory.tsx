@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
 import { useShiftTransactions } from '../../hooks/queries/useShiftsQuery';
 import { useShift } from '../../hooks/sales/useShift';
 import { auditService } from '../../services/audit/auditService';
@@ -38,6 +39,7 @@ const getTxBadgeClass = (type: string): string => {
     case 'closing':
     case 'closing_balance':
     case 'purchase':
+    case 'supplier_payment':
       return 'badge-danger';
     case 'sale':
       return 'badge-success';
@@ -66,6 +68,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
 }) => {
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: employees = [] } = useEmployees(activeBranchId);
+  const { data: suppliers = [] } = useSuppliers(activeBranchId);
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -760,6 +763,15 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                         <div>
                           <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                             {tx.reason}
+                            {tx.relatedSupplierId &&
+                              (tx.type === 'supplier_payment' || tx.type === 'purchase') && (
+                                <span className='text-gray-500 dark:text-gray-400 font-normal'>
+                                  {' '}
+                                  •{' '}
+                                  {suppliers?.find((s) => s.id === tx.relatedSupplierId)?.name ||
+                                    t.supplier || 'Supplier'}
+                                </span>
+                              )}
                           </div>
                           {tx.time && (
                             <div className='text-[10px] text-gray-400 flex items-center gap-2'>

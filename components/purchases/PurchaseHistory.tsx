@@ -7,6 +7,7 @@ import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useInventory, useSuppliers } from '../../hooks/queries/useInventoryQuery';
 import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
 import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
+import { useSupplierOpenPayables } from '../../hooks/suppliers/useSupplierAccount';
 import { useHandlerInfrastructure } from '../../hooks/useHandlerInfrastructure';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
@@ -70,6 +71,12 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
     createPurchaseReturn: infra.createPurchaseReturn,
   });
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
+
+  const { data: openPayables = [] } = useSupplierOpenPayables(
+    selectedPurchase?.supplierId || '',
+    activeBranchId || ''
+  );
+  const selectedPayable = openPayables.find((o) => o.purchaseId === selectedPurchase?.id);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
   const [historySearch, setHistorySearch] = useState('');
@@ -678,6 +685,50 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                 </tfoot>
               </table>
             </div>
+
+            {/* Payment Status */}
+            {selectedPurchase.status === 'received' && (
+              <div className='flex flex-col gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700'>
+                <div className='flex items-center justify-between gap-4 flex-wrap'>
+                  <div className='flex items-center gap-6 flex-wrap'>
+                    {selectedPurchase.dueDate && (
+                      <div>
+                        <div className='text-[10px] uppercase tracking-wider text-gray-400 font-bold'>
+                          {t.dueDate || 'Due Date'}
+                        </div>
+                        <div className='text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums'>
+                          {new Date(selectedPurchase.dueDate).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US')}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <div className='text-[10px] uppercase tracking-wider text-gray-400 font-bold'>
+                        {t.openAmount || 'Open Amount'}
+                      </div>
+                      <div
+                        className={`text-sm font-black tabular-nums ${
+                          (selectedPayable?.openAmount ?? 0) > 0.005
+                            ? 'text-amber-600'
+                            : 'text-emerald-600'
+                        }`}
+                      >
+                        <PriceDisplay value={selectedPayable?.openAmount ?? 0} />
+                      </div>
+                    </div>
+                  </div>
+                  {(selectedPayable?.openAmount ?? 0) > 0.005 && (
+                    <button
+                      onClick={() => onViewChange?.('supplier-payments')}
+                      className='flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-all shadow-sm text-sm'
+                      type='button'
+                    >
+                      <span className='material-symbols-rounded text-base'>payments</span>
+                      {t.payNow || 'Pay Now'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {selectedPurchase.status === 'approved' && (
               <div className='flex justify-end'>

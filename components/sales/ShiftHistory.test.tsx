@@ -38,6 +38,10 @@ vi.mock('../../hooks/queries/useShiftsQuery', () => ({
   useShiftTransactions: (...args: any[]) => mockUseShiftTransactions(...args),
 }));
 
+vi.mock('../../hooks/queries/useInventoryQuery', () => ({
+  useSuppliers: vi.fn().mockReturnValue({ data: [] }),
+}));
+
 vi.mock('../../stores/authStore', () => ({
   useAuthStore: vi.fn().mockReturnValue('B1'), // activeBranchId
 }));

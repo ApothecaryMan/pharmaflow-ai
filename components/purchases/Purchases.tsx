@@ -295,6 +295,25 @@ const SortableCartItem = React.memo(
             />
           </div>
 
+          {/* Batch number */}
+          <div className='w-[110px]'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-batchNumber`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'batchNumber')}
+              label={t.cartFields?.batchNumber || 'Batch #'}
+              isLoading={isLoading}
+              type='text'
+              value={item.batchNumber || ''}
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                setTimeout(() => e.target.select(), 10);
+              }}
+              onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
+            />
+          </div>
+
           {/* 3. Cost */}
           <div className='w-14'>
             <FloatingInput
@@ -563,6 +582,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const paymentMethod = activeTab?.paymentMethod || 'cash';
   const externalInvoiceId = activeTab?.externalInvoiceId || '';
 
+  const cartTotal = useMemo(() => {
+    const taxResults = tax.multiRate(
+      cart.map((item) => ({
+        amount: money.multiply(item.costPrice, item.quantity, 0),
+        taxPct: item.tax || 0,
+      })),
+      taxMode
+    );
+    return taxResults.total || 0;
+  }, [cart, taxMode]);
+
   const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<{ id: string; field: string } | null>(null);
@@ -620,8 +650,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
     updateTab(activeTabId, { taxMode: mode });
   };
 
-  const setPaymentMethod = (method: 'cash' | 'credit') => {
+  const setPaymentMethod = (method: 'cash' | 'credit' | 'partial') => {
     updateTab(activeTabId, { paymentMethod: method });
+  };
+
+  const setPaidNow = (amount: number) => {
+    updateTab(activeTabId, { paidNow: amount });
   };
 
   const setExternalInvoiceId = (id: string) => {
@@ -1131,6 +1165,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentMethod: paymentMethod,
+      paidNow: paymentMethod === 'cash' ? taxResults.total : paymentMethod === 'partial' ? activeTab.paidNow ?? cartTotal : 0,
       createdBy: authService.getCurrentUserSync()?.employeeId,
       createdByName:
         authService.getCurrentUserSync()?.employeeName ||
@@ -1716,21 +1751,41 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
               {/* Payment Method Toggle */}
               {activeTab && (
-                <div className='group relative'>
+                <div className='group relative flex items-center gap-2'>
+                  <div className='relative'>
                   <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
                     {t.paymentMethod || 'Payment Method'}
                   </span>
                   <SegmentedControl
                     value={paymentMethod}
-                    onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
+                    onChange={(val) => setPaymentMethod(val as 'cash' | 'credit' | 'partial')}
                     size='xs'
                     options={[
                       { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
                       { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
+                      { label: t.partial || 'Partial', value: 'partial', activeColor: 'amber' },
                     ]}
                     className='w-fit'
                     disableAnimation={!activeTab}
                   />
+                  </div>
+                  {paymentMethod === 'partial' && (
+                    <div className='relative'>
+                      <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                        {t.paidNow || 'Paid Now'}
+                      </span>
+                      <input
+                        type='number'
+                        min='0'
+                        step='0.01'
+                        value={activeTab.paidNow ?? cartTotal}
+                        onChange={(e) => setPaidNow(parseFloat(e.target.value) || 0)}
+                        dir='ltr'
+                        className='w-24 p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all text-sm text-end'
+                        style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1947,7 +2002,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     <span className='material-symbols-rounded text-xl'>pending_actions</span>
                   </button>
 
-                  {paymentMethod === 'cash' && !currentShift ? (
+                  {(paymentMethod === 'cash' || (paymentMethod === 'partial' && (activeTab?.paidNow ?? 0) > 0)) && !currentShift ? (
                     <div className='h-10 px-4 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/50 gap-2 text-xs'>
                       <span className='material-symbols-rounded text-base'>lock</span>
                       {t.summary?.openShiftFirst || 'Open Shift First'}

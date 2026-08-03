@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { useQueries } from '@tanstack/react-query';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
@@ -8,7 +9,9 @@ import {
   useUpdateSupplier,
 } from '../../hooks/mutations/useSupplierMutations';
 import { useSuppliers } from '../../hooks/queries/useInventoryQuery';
+import { queryKeys } from '../../lib/queryKeys';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { supplierAccountService } from '../../services/suppliers/supplierAccountService';
 import { useAuthStore } from '../../stores/authStore';
 import type { Supplier } from '../../types';
 import {
@@ -67,6 +70,25 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
   const { showMenu } = useContextMenu();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { data: suppliers = [] } = useSuppliers(activeBranchId);
+
+  const canViewBalance = permissionsService.can('supplier.statement');
+
+  const balanceQueries = useQueries({
+    queries: suppliers.map((s) => ({
+      queryKey: queryKeys.suppliers.account.balance(s.id),
+      queryFn: () => supplierAccountService.getBalance(s.id),
+      enabled: !!s.id && !!activeBranchId && canViewBalance,
+      staleTime: 30 * 1000,
+    })),
+  });
+  const balanceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    suppliers.forEach((s, i) => {
+      const b = balanceQueries[i]?.data;
+      if (typeof b === 'number') map.set(s.id, b);
+    });
+    return map;
+  }, [suppliers, balanceQueries]);
   const addSupplier = useAddSupplier();
   const updateSupplier = useUpdateSupplier();
   const deleteSupplier = useDeleteSupplier();
@@ -89,6 +111,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
     address: '',
     status: 'active',
     branchId: activeBranchId || '',
+    openingBalance: 0,
+    paymentType: 'credit',
+    creditDays: 0,
+    creditLimit: undefined,
   });
 
   const nameDir = useSmartDirection(
@@ -196,6 +222,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
       address: '',
       status: 'active',
       branchId: activeBranchId || '',
+      openingBalance: 0,
+      paymentType: 'credit',
+      creditDays: 0,
+      creditLimit: undefined,
     });
   };
 
@@ -306,6 +336,34 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
         meta: { align: 'start' },
         cell: ({ getValue }) => <span className='truncate block'>{getValue() as string}</span>,
       },
+      ...(canViewBalance
+        ? [
+            {
+              id: 'current_balance',
+              accessorKey: 'currentBalance',
+              header: t.supplierAccounts?.currentBalance || 'Current Balance',
+              size: 140,
+              meta: { align: 'end' },
+              cell: ({ row }: { row: { original: Supplier } }) => {
+                const balance = balanceMap.get(row.original.id) ?? 0;
+                const color =
+                  balance > 0.005
+                    ? 'text-amber-600'
+                    : balance < -0.005
+                      ? 'text-emerald-600'
+                      : 'text-gray-500';
+                return (
+                  <span className={`truncate block font-semibold ${color}`} dir='ltr'>
+                    {balance.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                );
+              },
+            },
+          ]
+        : []),
       {
         id: 'governorate_display',
         accessorKey: 'governorate',
@@ -351,7 +409,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
         },
       },
     ],
-    [t, language]
+    [t, language, balanceMap, canViewBalance]
   ); // getRowActions is stable component reference but we just in case include it
 
   return (
@@ -551,6 +609,90 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                   </div>
                 </div>
               </div>
+
+              {/* Payment Terms Card */}
+              <div className={`${CARD_BASE} rounded-xl p-6`}>
+                <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
+                  <span className='material-symbols-rounded text-[18px]'>payments</span>
+                  {t.form?.paymentTerms || 'Payment Terms'}
+                </h3>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.openingBalance || 'Opening Balance'}
+                    </span>
+                    <input
+                      type='number'
+                      min='0'
+                      step='0.01'
+                      value={editForm.openingBalance ?? 0}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, openingBalance: parseFloat(e.target.value) || 0 })
+                      }
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
+                      placeholder='0.00'
+                      dir='ltr'
+                    />
+                  </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.paymentType || 'Default Payment Type'}
+                    </span>
+                    <SegmentedControl
+                      options={[
+                        { value: 'credit', label: t.form?.credit || 'Credit' },
+                        { value: 'cash', label: t.form?.cash || 'Cash' },
+                      ]}
+                      value={editForm.paymentType || 'credit'}
+                      onChange={(val) =>
+                        setEditForm({ ...editForm, paymentType: val as 'cash' | 'credit' })
+                      }
+                      shape='pill'
+                      size='md'
+                    />
+                  </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.creditDays || 'Credit Period (days)'}
+                    </span>
+                    <input
+                      type='number'
+                      min='0'
+                      step='1'
+                      value={editForm.creditDays ?? 0}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, creditDays: parseInt(e.target.value, 10) || 0 })
+                      }
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
+                      placeholder='0'
+                      dir='ltr'
+                    />
+                  </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.creditLimit || 'Credit Limit'}
+                    </span>
+                    <input
+                      type='number'
+                      min='0'
+                      step='0.01'
+                      value={editForm.creditLimit ?? ''}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          creditLimit: e.target.value === '' ? undefined : parseFloat(e.target.value),
+                        })
+                      }
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
+                      placeholder='0.00'
+                      dir='ltr'
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Action Buttons */}
@@ -733,6 +875,90 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ color, t, language
                     style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     placeholder={t.form?.emailPlaceholder || 'email@example.com'}
                   />
+                </div>
+              </div>
+
+              {/* Payment Terms Section */}
+              <div className='mt-6'>
+                <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2'>
+                  <span className='material-symbols-rounded text-[18px]'>payments</span>
+                  {t.form?.paymentTerms || 'Payment Terms'}
+                </h4>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.openingBalance || 'Opening Balance'}
+                    </span>
+                    <input
+                      type='number'
+                      min='0'
+                      step='0.01'
+                      value={editForm.openingBalance ?? 0}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, openingBalance: parseFloat(e.target.value) || 0 })
+                      }
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
+                      placeholder='0.00'
+                      dir='ltr'
+                    />
+                  </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.paymentType || 'Default Payment Type'}
+                    </span>
+                    <SegmentedControl
+                      options={[
+                        { value: 'credit', label: t.form?.credit || 'Credit' },
+                        { value: 'cash', label: t.form?.cash || 'Cash' },
+                      ]}
+                      value={editForm.paymentType || 'credit'}
+                      onChange={(val) =>
+                        setEditForm({ ...editForm, paymentType: val as 'cash' | 'credit' })
+                      }
+                      shape='pill'
+                      size='md'
+                    />
+                  </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.creditDays || 'Credit Period (days)'}
+                    </span>
+                    <input
+                      type='number'
+                      min='0'
+                      step='1'
+                      value={editForm.creditDays ?? 0}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, creditDays: parseInt(e.target.value, 10) || 0 })
+                      }
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
+                      placeholder='0'
+                      dir='ltr'
+                    />
+                  </div>
+                  <div>
+                    <span className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.creditLimit || 'Credit Limit'}
+                    </span>
+                    <input
+                      type='number'
+                      min='0'
+                      step='0.01'
+                      value={editForm.creditLimit ?? ''}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          creditLimit: e.target.value === '' ? undefined : parseFloat(e.target.value),
+                        })
+                      }
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
+                      placeholder='0.00'
+                      dir='ltr'
+                    />
+                  </div>
                 </div>
               </div>
             </div>
