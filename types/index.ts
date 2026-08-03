@@ -20,3 +20,4 @@ export * from './purchases';
 export * from './returns';
 export * from './sales';
 export * from './suppliers';
+export * from './supplierAccounts';

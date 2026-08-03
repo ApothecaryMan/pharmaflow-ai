@@ -30,4 +30,14 @@ export interface Supplier {
   updatedAt?: string;
   /** Active status */
   status: 'active' | 'inactive';
+  /** Opening payable (prior debt owed to supplier) — feeds the ledger */
+  openingBalance?: number;
+  /** Default payment type for new invoices from this supplier */
+  paymentType?: 'cash' | 'credit';
+  /** Default credit period in days (due_date = invoice date + this) */
+  creditDays?: number;
+  /** Optional credit ceiling (alert-only) */
+  creditLimit?: number;
+  /** Live payable balance — computed via get_supplier_balance, never stored */
+  currentBalance?: number;
 }

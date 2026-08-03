@@ -10,6 +10,7 @@ export type CashTransactionType =
   | 'card_return'
   | 'purchase'
   | 'purchase_return'
+  | 'supplier_payment'
   | 'adjustment'
   | 'expense';
 
@@ -38,6 +39,10 @@ export interface CashTransaction {
   userId: string;
   /** Related sale ID (for sale transactions) */
   relatedSaleId?: string;
+  /** Related purchase ID — structured link for purchase/supplier_payment cash movements */
+  relatedPurchaseId?: string;
+  /** Related supplier ID — structured link back to the supplier account */
+  relatedSupplierId?: string;
 }
 
 /**

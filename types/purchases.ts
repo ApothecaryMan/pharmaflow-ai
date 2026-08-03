@@ -36,6 +36,8 @@ export interface PurchaseItem {
   isUnit?: boolean;
   /** Units per pack for conversion */
   unitsPerPack?: number;
+  /** Optional supplier batch/lot number for the stock batch created on receipt */
+  batchNumber?: string;
 }
 
 /**
@@ -72,7 +74,7 @@ export interface Purchase {
   /** Order status */
   status: PurchaseStatus;
   /** Payment method */
-  paymentMethod: 'cash' | 'credit';
+  paymentMethod: 'cash' | 'credit' | 'partial';
   /** Internal invoice ID */
   invoiceId?: string;
   /** Supplier's invoice number */
@@ -95,6 +97,14 @@ export interface Purchase {
   createdByName?: string;
   /** Optimistic lock version */
   version?: number;
+  /** Due date for the credit portion (date + supplier.credit_days) — set on receipt */
+  dueDate?: string;
+  /** Free-text notes (e.g. rejection reason) */
+  notes?: string;
+  /** Amount paid at receipt time — display-only, derived from linked supplier_payments */
+  immediatePayment?: number;
+  /** Amount paid at receipt time (0/absent = pure credit, total = full cash, else partial) */
+  paidNow?: number;
 }
 
 /**
@@ -117,7 +127,9 @@ export interface PurchaseTab {
   /** Tax calculation mode */
   taxMode: 'exclusive' | 'inclusive';
   /** Payment method for this purchase */
-  paymentMethod: 'cash' | 'credit';
+  paymentMethod: 'cash' | 'credit' | 'partial';
+  /** Amount paid now (partial only) */
+  paidNow?: number;
   /** Timestamp when tab was created */
   createdAt: number;
   /** Whether this tab is pinned */
@@ -182,6 +194,8 @@ export interface PurchaseReturn {
   totalRefund: number;
   /** Return status */
   status: 'pending' | 'approved' | 'completed';
+  /** Refund settlement method: cash back vs credit note */
+  paymentMethod?: 'cash' | 'credit';
   /** Additional notes */
   notes?: string;
 }
