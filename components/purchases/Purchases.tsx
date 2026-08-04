@@ -233,7 +233,7 @@ Cost Price: ${item.costPrice}`
           />
           {/* Actual units floating badge on hover — absolute position without row height change */}
           {(item.unitsPerPack ?? 1) > 1 && item.quantity > 0 && (
-            <div className='absolute -top-2 -right-1 hidden group-hover/qty:flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-600 dark:bg-primary-500 text-white rounded-full text-[10px] font-black shadow-md z-20 pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-150 tabular-nums'>
+            <div className='absolute -top-2 -right-1 hidden group-hover/qty:flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-600 dark:bg-primary-500 text-white rounded-full text-[10px] font-black shadow-md z-40 pointer-events-none tabular-nums'>
               <span>{item.quantity * (item.unitsPerPack ?? 1)}</span>
               <span className='text-[8px] font-normal opacity-80 pe-0.5'>وحدة</span>
             </div>
