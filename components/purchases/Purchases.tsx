@@ -107,7 +107,7 @@ const CartTableRow = React.memo(
   }: CartTableRowProps) => {
     const isCellSelected = (field: keyof PurchaseItem | 'rowSelection') => {
       if (!cellSelection || cellSelection.field !== field) return false;
-      if (cellSelection.indices.length <= 1) return false;
+      if (cellSelection.indices.length <= 1 && field !== 'rowSelection') return false;
       return cellSelection.indices.includes(index);
     };
 
@@ -1924,7 +1924,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
             ) : (
               <>
                 {/* Floating Bulk Edit Bar placed outside the scroll container so it stays fixed */}
-                {cellSelection && cellSelection.indices.length > 1 && (
+                {cellSelection && (cellSelection.indices.length > 1 || (cellSelection.field === 'rowSelection' && cellSelection.indices.length > 0)) && (
                   <BulkEditBar
                     cellSelection={cellSelection}
                     bulkInputValue={bulkInputValue}
