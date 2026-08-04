@@ -254,7 +254,6 @@ const SortableTab = ({
             onMouseLeave={handleBadgeMouseLeave}
             className={`
                   flex items-center justify-center h-4.5 min-w-[18px] px-1.5 rounded-full text-[9px] font-black
-                  transition-all duration-300 animate-scale-in
                   ${
                     isActive
                       ? `bg-primary-500 dark:bg-primary-400 text-gray-50 dark:text-(--bg-surface-neutral) shadow-none`
@@ -298,7 +297,7 @@ const SortableTab = ({
         createPortal(
           <div
             className={`
-            fixed z-[9999] shadow-xl border rounded-xl p-2 min-w-[200px] pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200
+            fixed z-[9999] shadow-xl border rounded-xl p-2 min-w-[200px] max-w-[280px] pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200
             ${
               tooltipBlur
                 ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] border-(--border-divider)'
@@ -306,13 +305,24 @@ const SortableTab = ({
             }
             text-(--text-primary)
           `}
-            style={{
-              top: badgeRef.current.getBoundingClientRect().bottom + 8,
-              left:
-                badgeRef.current.getBoundingClientRect().left -
-                100 +
-                badgeRef.current.offsetWidth / 2,
-            }}
+            style={(() => {
+              if (typeof window === 'undefined') return { top: 0, left: 0 };
+              const rect = badgeRef.current.getBoundingClientRect();
+              const isNearRight = rect.right > window.innerWidth - 150;
+              const isNearLeft = rect.left < 150;
+
+              if (isNearRight) {
+                return { top: rect.bottom + 8, right: 10, left: 'auto' };
+              }
+              if (isNearLeft) {
+                return { top: rect.bottom + 8, left: 10, right: 'auto' };
+              }
+              return {
+                top: rect.bottom + 8,
+                left: rect.left - 100 + rect.width / 2,
+                right: 'auto',
+              };
+            })()}
           >
             <div className='text-[10px] font-black uppercase tracking-wider mb-2 border-b border-(--border-divider) pb-1 text-(--text-tertiary) flex items-center justify-between'>
               <span>{t.cartTitle || 'Cart Items'}</span>

@@ -240,7 +240,7 @@ Cost Price: ${item.costPrice}`
               <span className='font-bold tabular-nums text-gray-900 dark:text-gray-100'>{item.barcode}</span>
             </div>
           ) : item.internalCode ? (
-            <div className='flex items-center gap-1.5' title={language === 'AR' ? 'كود داخلي' : 'Internal Code'}>
+            <div className='flex items-center gap-1.5' title={t.headers?.internalCode || 'Internal Code'}>
               <span className='material-symbols-rounded text-gray-400'>qr_code_2</span>
               <span className='font-bold tabular-nums text-[13px] text-gray-500 dark:text-gray-400'>{item.internalCode}</span>
             </div>
@@ -284,9 +284,12 @@ Cost Price: ${item.costPrice}`
           />
           {/* Actual units floating badge on hover — absolute position without row height change */}
           {(item.unitsPerPack ?? 1) > 1 && item.quantity > 0 && (
-            <div className='absolute -top-2 -right-1 hidden group-hover/qty:flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-600 dark:bg-primary-500 text-white rounded-full text-[10px] font-black shadow-md z-40 pointer-events-none tabular-nums'>
+            <div 
+              className='absolute -top-2 -right-1 hidden group-hover/qty:flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-600 dark:bg-primary-500 text-white rounded-full text-[10px] font-black shadow-md z-40 pointer-events-none tabular-nums'
+              dir={language === 'AR' ? 'rtl' : 'ltr'}
+            >
               <span>{item.quantity * (item.unitsPerPack ?? 1)}</span>
-              <span className='text-[8px] font-normal opacity-80 pe-0.5'>وحدة</span>
+              <span className='text-[8px] font-normal opacity-80 pe-0.5'>{t.unit || 'Units'}</span>
             </div>
           )}
         </td>
@@ -1817,7 +1820,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {activeTab?.createdAt > 0 && (
                 <div className='group relative'>
                   <span className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
-                    {language === 'AR' ? 'وقت البدء' : 'Started at'}
+                    {t.startedAt || 'Started at'}
                   </span>
                   <div className='flex items-center h-7 gap-1 text-base font-bold text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-white/5 px-2 rounded-lg border border-gray-300/70 dark:border-gray-600/70 shadow-sm shadow-gray-900/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
                     <span className='material-symbols-rounded text-lg opacity-60'>schedule</span>
@@ -1927,7 +1930,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               {activeTab && (
                 <div className='group relative'>
                   <span className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
-                    {language === 'AR' ? 'نظام الضريبة' : 'Tax Mode'}
+                    {t.taxMode || 'Tax Mode'}
                   </span>
                   <SegmentedControl
                     value={taxMode}
@@ -1935,12 +1938,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     size='xs'
                     options={[
                       {
-                        label: language === 'AR' ? 'غير شامل' : 'Excl.',
+                        label: t.taxExclusive || 'Excl.',
                         value: 'exclusive',
                         activeColor: 'blue',
                       },
                       {
-                        label: language === 'AR' ? 'شامل' : 'Incl.',
+                        label: t.taxInclusive || 'Incl.',
                         value: 'inclusive',
                         activeColor: 'green',
                       },
@@ -1985,9 +1988,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 </div>
                 <h3 className='text-lg font-bold text-(--text-primary) mb-1'>{t.emptyCart}</h3>
                 <p className='text-sm text-(--text-tertiary)'>
-                  {language === 'AR'
-                    ? 'قم بالبحث وإضافة منتجات إلى الفاتورة'
-                    : 'Search and add products to the invoice'}
+                  {t.emptyCartHint || 'Search and add products to the invoice'}
                 </p>
               </div>
             ) : (
@@ -2023,16 +2024,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <thead className='sticky top-0 z-30 bg-(--bg-page-surface) backdrop-blur-sm rounded-t-lg'>
                         <tr className='text-[10px] uppercase text-(--text-tertiary)'>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-[60px] text-(--text-tertiary)'>#</th>
-                          <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{language === 'AR' ? 'الباركود' : 'Barcode'}</th>
+                          <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{t.tableHeaders?.barcode || 'Barcode'}</th>
                           <th className='h-10 align-middle px-3 font-semibold'>{t.headers?.product || 'Product'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-14'>{t.cartFields?.qty || 'Qty'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.expiry || 'Expiry'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-24'>{t.cartFields?.batchNumber || 'Batch #'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.cost || 'Cost'}</th>
-                          {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'ت. وحدة' : 'U. Cost'}</th>}
+                          {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.unitCost || 'U. Cost'}</th>}
                           <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.discount || 'Disc'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.sale || 'Sale'}</th>
-                          {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'س. وحدة' : 'U. Sale'}</th>}
+                          {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.unitSale || 'U. Sale'}</th>}
                           <th className='h-10 align-middle px-1 text-center font-semibold w-12'>{t.cartFields?.tax || 'Tax %'}</th>
                           <th className='h-10 align-middle px-2 text-center font-semibold w-20'>{t.headers?.subtotal || 'Subtotal'}</th>
                           <th className='h-10 align-middle px-2 text-center font-semibold w-20 text-primary-500'>{t.headers?.totalPlusTax || 'Total+Tax'}</th>
@@ -2234,7 +2235,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     disabled={cart.length === 0 || !selectedSupplierId}
                     className='h-11 w-11 flex items-center justify-center rounded-xl border-2 border-orange-300 dark:border-orange-500/40 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-500 hover:bg-orange-100 dark:hover:bg-orange-500/20 disabled:!bg-gray-100 dark:disabled:!bg-neutral-800 disabled:!text-gray-400 dark:disabled:!text-neutral-600 disabled:!border-gray-200 dark:disabled:!border-neutral-700 transition-all active:scale-95 disabled:active:scale-100 disabled:cursor-not-allowed'
                     type='button'
-                    title={language === 'AR' ? 'تعليق الفاتورة' : 'Suspend Invoice'}
+                    title={t.suspendInvoice || 'Suspend Invoice'}
                   >
                     <span className='material-symbols-rounded text-xl'>pending_actions</span>
                   </button>
@@ -2259,7 +2260,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       {isConfirming ? (
                         <div className='flex items-center gap-2'>
                           <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin'></span>
-                          <span>{language === 'AR' ? 'جاري التأكيد...' : 'Confirming...'}</span>
+                          <span>{t.confirming || 'Confirming...'}</span>
                         </div>
                       ) : (
                         <>
@@ -2303,7 +2304,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       <Modal
         isOpen={!!confirmMoveToTab}
         onClose={() => setConfirmMoveToTab(null)}
-        title={language === 'AR' ? 'تأكيد دمج الأصناف' : 'Confirm Merge Items'}
+        title={t.confirmMergeTitle || 'Confirm Merge Items'}
         size='sm'
         icon='move_item'
         bodyClassName='px-4 py-1'
@@ -2313,33 +2314,24 @@ export const Purchases: React.FC<PurchasesProps> = ({
               onClick={() => confirmMoveToTab && executeMoveRowsToTab(confirmMoveToTab.id)}
               className={`${MODAL_FOOTER_BTN_PRIMARY} !py-1.5`}
             >
-              {language === 'AR' ? 'تأكيد النقل' : 'Confirm Move'}
+              {t.confirmMove || 'Confirm Move'}
             </button>
             <button
               onClick={() => setConfirmMoveToTab(null)}
               className={`${MODAL_FOOTER_BTN_CANCEL} !py-1.5`}
             >
-              {language === 'AR' ? 'إلغاء' : 'Cancel'}
+              {t.cancel || 'Cancel'}
             </button>
           </div>
         }
       >
         <p className='text-gray-700 dark:text-gray-300 font-medium leading-relaxed py-2 text-sm'>
-          {language === 'AR' ? (
-            <>
-              الفاتورة <strong className='text-primary-500'>"{confirmMoveToTab?.name}"</strong> تحتوي بالفعل على{' '}
-              <strong className='text-orange-500'>{confirmMoveToTab?.count} أصناف</strong>.
-              <br />
-              هل أنت متأكد من دمج الأصناف المحددة معها؟
-            </>
-          ) : (
-            <>
-              The invoice <strong className='text-primary-500'>"{confirmMoveToTab?.name}"</strong> already contains{' '}
-              <strong className='text-orange-500'>{confirmMoveToTab?.count} items</strong>.
-              <br />
-              Are you sure you want to merge the selected items into it?
-            </>
-          )}
+          {t.mergeInvoiceHas || 'The invoice'}{' '}
+          <strong className='text-primary-500'>"{confirmMoveToTab?.name}"</strong>{' '}
+          {t.mergeAlreadyContains || 'already contains'}{' '}
+          <strong className='text-orange-500'>{confirmMoveToTab?.count} {t.mergeItemsCount || 'items'}</strong>.
+          <br />
+          {t.mergeQuestion || 'Are you sure you want to merge the selected items into it?'}
         </p>
       </Modal>
     </div>
