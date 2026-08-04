@@ -142,20 +142,20 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
 
       const menuContent = (
-      <div
-        role="button"
-        tabIndex={0}
-        className='font-sans'
-        onMouseEnter={() => {
-          if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
-        }}
-        onMouseLeave={() => {
-          filterLeaveTimeoutRef.current = setTimeout(() => {
-            hideMenu();
-          }, 150);
-        }}
-      >
-        <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
+        <div
+          role="button"
+          tabIndex={0}
+          className='font-sans'
+          onMouseEnter={() => {
+            if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
+          }}
+          onMouseLeave={() => {
+            filterLeaveTimeoutRef.current = setTimeout(() => {
+              hideMenu();
+            }, 150);
+          }}
+        >
+          <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
             {t.global.table.filters}
           </div>
           {filterConfigs.map((config) => {
@@ -218,6 +218,18 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     }, [expanded]);
 
     if (compact) {
+      const renderLeadingIcon = () =>
+        typeof icon === 'string' ? (
+          <span
+            className='material-symbols-rounded text-gray-400 shrink-0'
+            style={{ fontSize: '20px' }}
+          >
+            {icon}
+          </span>
+        ) : (
+          icon
+        );
+
       const renderCompactFilters = () => {
         if (filterConfigs.length === 0) return null;
         return (
@@ -242,7 +254,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 })}
               </div>
             )}
-            
+
             {hasActiveFilters && (
               <Tooltip content={t.global.table.clearAllFilters}>
                 <button
@@ -264,11 +276,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 onMouseLeave={handleFilterMouseLeave}
                 onClick={handleOpenFilterMenu}
                 className={`
-                  flex items-center justify-center w-6 h-6 rounded-md shrink-0 transition-colors
-                  ${
-                    hasActiveFilters
-                      ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
-                      : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  flex items-center justify-center w-6 h-6 rounded-md shrink-0 
+                  ${hasActiveFilters
+                    ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+                    : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }
                 `}
               >
@@ -278,6 +289,27 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               </button>
             </Tooltip>
           </div>
+        );
+      };
+
+      const renderCompactClear = () => {
+        if (!showClear) return null;
+        return (
+          <Tooltip content={t.global.table.clearAllFilters}>
+            <button
+              type='button'
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              className='flex items-center justify-center w-6 h-6 rounded-md shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              aria-label={t.global.table.clearAllFilters}
+            >
+              <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                close
+              </span>
+            </button>
+          </Tooltip>
         );
       };
 
@@ -292,12 +324,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                       className='flex-1 flex items-center gap-1 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding bg-(--bg-input) focus-within:ring-2 focus-within:ring-primary-500'
                       dir={dir}
                     >
-                      <span
-                        className='material-symbols-rounded text-gray-400 shrink-0'
-                        style={{ fontSize: '20px' }}
-                      >
-                        {typeof icon === 'string' ? icon : 'search'}
-                      </span>
+                      {renderLeadingIcon()}
                       <input
                         ref={ref}
                         type='text'
@@ -315,6 +342,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         autoCapitalize='none'
                       />
                       {renderCompactFilters()}
+                      {renderCompactClear()}
                     </div>
                     <button
                       type='button'
@@ -361,12 +389,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 `}
                 dir={dir}
               >
-                <span
-                  className='material-symbols-rounded text-gray-400 shrink-0'
-                  style={{ fontSize: '20px' }}
-                >
-                  {typeof icon === 'string' ? icon : 'search'}
-                </span>
+                {renderLeadingIcon()}
                 <input
                   ref={ref}
                   type='text'
@@ -388,6 +411,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   {...props}
                 />
                 {renderCompactFilters()}
+                {renderCompactClear()}
               </div>
             </div>
           </>
@@ -404,12 +428,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           `}
           dir={dir}
         >
-          <span
-            className='material-symbols-rounded text-gray-400 shrink-0'
-            style={{ fontSize: '20px' }}
-          >
-            {typeof icon === 'string' ? icon : 'search'}
-          </span>
+          {renderLeadingIcon()}
           <input
             ref={ref}
             type='text'
@@ -431,6 +450,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             {...props}
           />
           {renderCompactFilters()}
+          {renderCompactClear()}
         </div>
       );
     }
@@ -571,11 +591,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   onMouseLeave={handleFilterMouseLeave}
                   onClick={handleOpenFilterMenu}
                   className={`
-                    flex items-center justify-center w-8 h-8 rounded-full transition-colors
-                    ${
-                      hasActiveFilters
-                        ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30'
-                        : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    flex items-center justify-center w-8 h-8 rounded-full 
+                    ${hasActiveFilters
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30'
+                      : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }
                   `}
                 >
@@ -590,21 +609,21 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           {(badge ||
             isLoading ||
             (resultsCount !== undefined && (value?.trim().length ?? 0) > 0)) && (
-            <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
-              {badge || (
-                <div className='flex items-center gap-2'>
-                  {isLoading && (
-                    <span className='w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
-                  )}
-                  {!isLoading && resultsCount !== undefined && (
-                    <span className='inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200'>
-                      {resultsCount} {t.pos.resultsLabel}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+              <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
+                {badge || (
+                  <div className='flex items-center gap-2'>
+                    {isLoading && (
+                      <span className='w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
+                    )}
+                    {!isLoading && resultsCount !== undefined && (
+                      <span className='inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200'>
+                        {resultsCount} {t.pos.resultsLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
           {showClear && (
             <button
