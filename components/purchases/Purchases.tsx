@@ -138,7 +138,7 @@ const CartTableRow = React.memo(
     return (
       <tr
         onClick={() => setSelectedCartIndex(index)}
-        className='group transition-colors border-b border-gray-300 dark:border-gray-600 last:border-b-0 divide-x divide-gray-200 dark:divide-gray-700 bg-white dark:bg-[#1a1b1e]'
+        className='group transition-colors bg-(--bg-page-surface)'
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -1910,7 +1910,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 ))}
               </div>
             ) : cart.length === 0 ? (
-              <div className='text-center text-gray-400 py-10'>{t.emptyCart}</div>
+              <div className='flex flex-col items-center justify-center py-16 px-4 h-full min-h-[300px] bg-(--bg-page-surface) rounded-2xl border border-(--border-divider) shadow-sm'>
+                <div className='w-16 h-16 rounded-full badge-zinc border flex items-center justify-center mb-4'>
+                  <span className='material-symbols-rounded' style={{ fontSize: '32px' }}>shopping_cart_checkout</span>
+                </div>
+                <h3 className='text-lg font-bold text-(--text-primary) mb-1'>{t.emptyCart}</h3>
+                <p className='text-sm text-(--text-tertiary)'>
+                  {language === 'AR'
+                    ? 'قم بالبحث وإضافة منتجات إلى الفاتورة'
+                    : 'Search and add products to the invoice'}
+                </p>
+              </div>
             ) : (
               <>
                 {/* Floating Bulk Edit Bar placed outside the scroll container so it stays fixed */}
@@ -1933,28 +1943,28 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 <div
                   ref={tableContainerRef}
                   onDragStart={(e) => e.preventDefault()}
-                  className='relative h-full overflow-auto no-scrollbar border border-gray-300 dark:border-gray-600 shadow-sm shadow-gray-900/5 rounded-lg select-none'
+                  className='relative h-full overflow-auto no-scrollbar bg-(--bg-page-surface) border border-(--border-primary) shadow-sm shadow-gray-900/5 rounded-lg select-none'
                 >
-                  <table dir='ltr' className='w-full text-left border-collapse'>
-                    <thead className='sticky top-0 z-30 bg-white dark:bg-[#1a1b1e] backdrop-blur-sm rounded-t-lg'>
-                      <tr className='text-[10px] uppercase text-gray-500 dark:text-gray-400 divide-x divide-gray-200 dark:divide-gray-700 border-b border-gray-300 dark:border-gray-600'>
-                        <th className='h-10 align-middle px-2 text-center font-semibold w-10 text-gray-400'>#</th>
+                  <table dir='ltr' className='w-full text-left border-separate border-spacing-0 [&_th]:border-b [&_th]:border-r [&_td]:border-b [&_td]:border-r [&_th]:border-(--border-primary) [&_td]:border-(--border-primary) [&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0'>
+                    <thead className='sticky top-0 z-30 bg-(--bg-page-surface) backdrop-blur-sm rounded-t-lg'>
+                      <tr className='text-[10px] uppercase text-(--text-tertiary)'>
+                        <th className='h-10 align-middle px-2 text-center font-semibold w-10 text-(--text-tertiary)'>#</th>
                         <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{language === 'AR' ? 'الباركود' : 'Barcode'}</th>
                         <th className='h-10 align-middle px-3 font-semibold'>{t.headers?.product || 'Product'}</th>
                         <th className='h-10 align-middle px-1 text-center font-semibold w-14'>{t.cartFields?.qty || 'Qty'}</th>
                         <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.expiry || 'Expiry'}</th>
                         <th className='h-10 align-middle px-1 text-center font-semibold w-24'>{t.cartFields?.batchNumber || 'Batch #'}</th>
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{t.cartFields?.cost || 'Cost'}</th>
-                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{language === 'AR' ? 'ت. وحدة' : 'U. Cost'}</th>}
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.cost || 'Cost'}</th>
+                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'ت. وحدة' : 'U. Cost'}</th>}
                         <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.discount || 'Disc'}</th>
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{t.cartFields?.sale || 'Sale'}</th>
-                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-20'>{language === 'AR' ? 'س. وحدة' : 'U. Sale'}</th>}
+                        <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.sale || 'Sale'}</th>
+                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'س. وحدة' : 'U. Sale'}</th>}
                         <th className='h-10 align-middle px-1 text-center font-semibold w-12'>{t.cartFields?.tax || 'Tax %'}</th>
                         <th className='h-10 align-middle px-2 text-center font-semibold w-20'>{t.headers?.subtotal || 'Subtotal'}</th>
                         <th className='h-10 align-middle px-2 text-center font-semibold w-20 text-primary-500'>{t.headers?.totalPlusTax || 'Total+Tax'}</th>
                       </tr>
                     </thead>
-                    <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                    <tbody>
                       {cart.map((item, index) => (
                         <CartTableRow
                           key={item.id}
