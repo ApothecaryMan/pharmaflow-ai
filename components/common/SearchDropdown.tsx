@@ -98,69 +98,73 @@ export function SearchDropdown<T extends { id: string | number }>({
       </div>
 
       {/* Scrollable Data Rows Area */}
-      <div
-        ref={scrollContainerRef}
-        onScroll={(e) => updateEdgeFades(e.currentTarget)}
-        className='relative max-h-[340px] overflow-y-auto overflow-x-hidden scrollbar-hide'
-      >
+      <div className="relative w-full">
         {/* Top edge fade */}
         <div
           className={`pointer-events-none absolute inset-x-0 top-0 h-3 z-20 bg-gradient-to-b from-white/95 to-white/0 dark:from-(--bg-card)/95 dark:to-(--bg-card)/0 transition-opacity duration-150 ${
             edgeFades.top ? 'opacity-100' : 'opacity-0'
           }`}
         />
-        {results.map((item, index) => (
-          <button
-            key={item.id}
-            type='button'
-            ref={(el) => {
-              rowRefs.current[index] = el;
-            }}
-            onClick={() => onSelect(item)}
-            className={`relative w-full text-start border-b border-gray-50 dark:border-(--border-divider) last:border-0 transition-colors group ${
-              highlightedIndex === index
-                ? 'bg-primary-50/60 dark:bg-primary-900/25'
-                : 'hover:bg-gray-50 dark:hover:bg-(--bg-hover)'
-            }`}
-          >
-            {/* Highlight accent bar */}
-            <span
-              className={`pointer-events-none absolute inset-y-0 start-0 w-0.5 transition-colors ${
-                highlightedIndex === index ? 'bg-primary-500 dark:bg-primary-400' : 'bg-transparent'
+        
+        <div
+          ref={scrollContainerRef}
+          onScroll={(e) => updateEdgeFades(e.currentTarget)}
+          className='max-h-[340px] overflow-y-auto overflow-x-hidden scrollbar-hide'
+        >
+          {results.map((item, index) => (
+            <button
+              key={item.id}
+              type='button'
+              ref={(el) => {
+                rowRefs.current[index] = el;
+              }}
+              onClick={() => onSelect(item)}
+              className={`relative w-full text-start border-b border-gray-50 dark:border-(--border-divider) last:border-0 transition-colors group ${
+                highlightedIndex === index
+                  ? 'bg-primary-50/60 dark:bg-primary-900/25'
+                  : 'hover:bg-gray-50 dark:hover:bg-(--bg-hover)'
               }`}
-            />
-            <div className='flex items-stretch w-full text-sm text-gray-600 dark:text-white'>
-              {columns.map((col, colIndex) => {
-                const headerLower = String(col.header || '').toLowerCase();
-                const isNameCol = ['name', 'الاسم', 'المنتج', 'product'].some((k) =>
-                  headerLower.includes(k)
-                );
-                const cellAlignClass = isNameCol
-                  ? 'justify-start text-start'
-                  : col.className?.includes('center')
-                    ? 'justify-center text-center'
-                    : '';
+            >
+              {/* Highlight accent bar */}
+              <span
+                className={`pointer-events-none absolute inset-y-0 start-0 w-0.5 transition-colors ${
+                  highlightedIndex === index ? 'bg-primary-500 dark:bg-primary-400' : 'bg-transparent'
+                }`}
+              />
+              <div className='flex items-stretch w-full text-sm text-gray-600 dark:text-white'>
+                {columns.map((col, colIndex) => {
+                  const headerLower = String(col.header || '').toLowerCase();
+                  const isNameCol = ['name', 'الاسم', 'المنتج', 'product'].some((k) =>
+                    headerLower.includes(k)
+                  );
+                  const cellAlignClass = isNameCol
+                    ? 'justify-start text-start'
+                    : col.className?.includes('center')
+                      ? 'justify-center text-center'
+                      : '';
 
-                return (
-                  <div
-                    key={col.header || `cell-${colIndex}`}
-                    className={`${col.width || 'flex-1'} min-w-0 py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center overflow-hidden ${cellAlignClass} ${col.className || ''}`}
-                  >
+                  return (
                     <div
-                      dir={isNameCol ? 'ltr' : undefined}
-                      className='w-full min-w-0 flex items-center justify-start truncate'
+                      key={col.header || `cell-${colIndex}`}
+                      className={`${col.width || 'flex-1'} min-w-0 py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center overflow-hidden ${cellAlignClass} ${col.className || ''}`}
                     >
-                      {col.render(item)}
+                      <div
+                        dir={isNameCol ? 'ltr' : undefined}
+                        className='w-full min-w-0 flex items-center justify-start truncate'
+                      >
+                        {col.render(item)}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </button>
-        ))}
+                  );
+                })}
+              </div>
+            </button>
+          ))}
+        </div>
+
         {/* Bottom edge fade */}
         <div
-          className={`pointer-events-none sticky bottom-0 inset-x-0 h-3 z-20 bg-gradient-to-t from-white to-white/40 dark:from-(--bg-card) dark:to-(--bg-card)/40 transition-opacity duration-150 ${
+          className={`pointer-events-none absolute bottom-0 inset-x-0 h-3 z-20 bg-gradient-to-t from-white to-white/0 dark:from-(--bg-card) dark:to-(--bg-card)/0 transition-opacity duration-150 ${
             edgeFades.bottom ? 'opacity-100' : 'opacity-0'
           }`}
         />
