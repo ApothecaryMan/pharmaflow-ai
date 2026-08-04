@@ -1,4 +1,23 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { TabBar } from '../../components/layout/TabBar';
 import { useAlert, useSettings } from '../../context';
@@ -105,6 +124,18 @@ const CartTableRow = React.memo(
     onCellMouseEnter,
     showUnitPrices,
   }: CartTableRowProps) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+      id: item.id,
+    });
+
+    const rowRef = React.useRef<HTMLTableRowElement>(null);
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      ...(isDragging ? { zIndex: 50, position: 'relative' as const, boxShadow: '0 5px 15px rgba(0,0,0,0.1)' } : {}),
+    };
+
     const isCellSelected = (field: keyof PurchaseItem | 'rowSelection') => {
       if (!cellSelection || cellSelection.field !== field) return false;
       if (cellSelection.indices.length <= 1 && field !== 'rowSelection') return false;
@@ -137,8 +168,14 @@ const CartTableRow = React.memo(
 
     return (
       <tr
+        ref={(node) => {
+          setNodeRef(node);
+          // @ts-ignore
+          rowRef.current = node;
+        }}
+        style={style}
         onClick={() => setSelectedCartIndex(index)}
-        className='group transition-colors bg-(--bg-page-surface)'
+        className={`group transition-colors bg-(--bg-page-surface) ${isDragging ? 'opacity-90 bg-white/95 dark:bg-gray-800/90' : ''}`}
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -171,15 +208,29 @@ Cost Price: ${item.costPrice}`
           ]);
         }}
       >
-        {/* Row Number */}
-        <td
-          onMouseDown={(e) => handleMouseDown(e, 'rowSelection')}
-          onMouseEnter={() => onCellMouseEnter(index, 'rowSelection')}
-          className={`py-1.5 px-2 align-middle text-center cursor-pointer transition-colors ${isCellSelected('rowSelection') ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-            }`}
-        >
-          <span className={`text-[1.4rem] font-black tabular-nums leading-none ${isCellSelected('rowSelection') ? 'text-red-500' : 'text-gray-300 dark:text-gray-600'
-            }`}>{index + 1}</span>
+        {/* Row Number & Drag Handle */}
+        <td className={`relative py-1.5 px-1 align-middle transition-colors ${isCellSelected('rowSelection') ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
+          <div className="flex items-center gap-1 justify-between w-full h-full">
+            {/* Drag Handle */}
+            <div
+              {...attributes}
+              {...listeners}
+              className={`flex items-center justify-center select-none rounded p-0.5 ${isDragging ? 'cursor-grabbing text-primary-500 bg-primary-50/50 dark:bg-primary-900/20' : 'cursor-grab text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            >
+              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>drag_indicator</span>
+            </div>
+
+            {/* Row Number (Selection trigger) */}
+            <div
+              className="flex-1 flex items-center justify-center cursor-pointer h-full"
+              onMouseDown={(e) => handleMouseDown(e, 'rowSelection')}
+              onMouseEnter={() => onCellMouseEnter(index, 'rowSelection')}
+            >
+              <span className={`text-[1.3rem] font-black tabular-nums leading-none ${isCellSelected('rowSelection') ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+                {index + 1}
+              </span>
+            </div>
+          </div>
         </td>
 
         {/* Barcode */}
@@ -708,6 +759,24 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
       return updates;
     });
+  };
+
+  // Drag and Drop (dnd-kit)
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setCart((prevCart) => {
+        const oldIndex = prevCart.findIndex((item) => item.id === active.id);
+        const newIndex = prevCart.findIndex((item) => item.id === over.id);
+        return arrayMove(prevCart, oldIndex, newIndex);
+      });
+    }
   };
 
   const setSelectedSupplierId = (id: string) => {
@@ -1940,61 +2009,69 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     language={language}
                   />
                 )}
-                <div
-                  ref={tableContainerRef}
-                  onDragStart={(e) => e.preventDefault()}
-                  className='relative h-full overflow-auto no-scrollbar bg-(--bg-page-surface) border border-(--border-primary) shadow-sm shadow-gray-900/5 rounded-lg select-none'
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  modifiers={[restrictToVerticalAxis]}
                 >
-                  <table dir='ltr' className='w-full text-left border-separate border-spacing-0 [&_th]:border-b [&_th]:border-r [&_td]:border-b [&_td]:border-r [&_th]:border-(--border-primary) [&_td]:border-(--border-primary) [&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0'>
-                    <thead className='sticky top-0 z-30 bg-(--bg-page-surface) backdrop-blur-sm rounded-t-lg'>
-                      <tr className='text-[10px] uppercase text-(--text-tertiary)'>
-                        <th className='h-10 align-middle px-2 text-center font-semibold w-10 text-(--text-tertiary)'>#</th>
-                        <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{language === 'AR' ? 'الباركود' : 'Barcode'}</th>
-                        <th className='h-10 align-middle px-3 font-semibold'>{t.headers?.product || 'Product'}</th>
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-14'>{t.cartFields?.qty || 'Qty'}</th>
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.expiry || 'Expiry'}</th>
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-24'>{t.cartFields?.batchNumber || 'Batch #'}</th>
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.cost || 'Cost'}</th>
-                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'ت. وحدة' : 'U. Cost'}</th>}
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.discount || 'Disc'}</th>
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.sale || 'Sale'}</th>
-                        {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'س. وحدة' : 'U. Sale'}</th>}
-                        <th className='h-10 align-middle px-1 text-center font-semibold w-12'>{t.cartFields?.tax || 'Tax %'}</th>
-                        <th className='h-10 align-middle px-2 text-center font-semibold w-20'>{t.headers?.subtotal || 'Subtotal'}</th>
-                        <th className='h-10 align-middle px-2 text-center font-semibold w-20 text-primary-500'>{t.headers?.totalPlusTax || 'Total+Tax'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cart.map((item, index) => (
-                        <CartTableRow
-                          key={item.id}
-                          item={item}
-                          index={index}
-                          selectedCartIndex={selectedCartIndex}
-                          setSelectedCartIndex={setSelectedCartIndex}
-                          removeItem={removeItem}
-                          updateItem={updateItem}
-                          showMenu={showMenu}
-                          t={t}
-                          isLoading={!!isLoading}
-                          textTransform={textTransform}
-                          language={language}
-                          focusedInput={focusedInput}
-                          setFocusedInput={setFocusedInput}
-                          inputRefs={inputRefs}
-                          handleInputKeyDown={handleInputKeyDown}
-                          money={money}
-                          tax={tax}
-                          taxMode={taxMode}
-                          cellSelection={cellSelection}
-                          onCellMouseDown={handleCellMouseDown}
-                          onCellMouseEnter={handleCellMouseEnter}
-                          showUnitPrices={showUnitPrices}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                  <div
+                    ref={tableContainerRef}
+                    className='relative h-full overflow-auto no-scrollbar bg-(--bg-page-surface) border border-(--border-primary) shadow-sm shadow-gray-900/5 rounded-lg select-none'
+                  >
+                    <table dir='ltr' className='w-full text-left border-separate border-spacing-0 [&_th]:border-b [&_th]:border-r [&_td]:border-b [&_td]:border-r [&_th]:border-(--border-primary) [&_td]:border-(--border-primary) [&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0'>
+                      <thead className='sticky top-0 z-30 bg-(--bg-page-surface) backdrop-blur-sm rounded-t-lg'>
+                        <tr className='text-[10px] uppercase text-(--text-tertiary)'>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-[60px] text-(--text-tertiary)'>#</th>
+                          <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{language === 'AR' ? 'الباركود' : 'Barcode'}</th>
+                          <th className='h-10 align-middle px-3 font-semibold'>{t.headers?.product || 'Product'}</th>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-14'>{t.cartFields?.qty || 'Qty'}</th>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.expiry || 'Expiry'}</th>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-24'>{t.cartFields?.batchNumber || 'Batch #'}</th>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.cost || 'Cost'}</th>
+                          {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'ت. وحدة' : 'U. Cost'}</th>}
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.discount || 'Disc'}</th>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.sale || 'Sale'}</th>
+                          {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{language === 'AR' ? 'س. وحدة' : 'U. Sale'}</th>}
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-12'>{t.cartFields?.tax || 'Tax %'}</th>
+                          <th className='h-10 align-middle px-2 text-center font-semibold w-20'>{t.headers?.subtotal || 'Subtotal'}</th>
+                          <th className='h-10 align-middle px-2 text-center font-semibold w-20 text-primary-500'>{t.headers?.totalPlusTax || 'Total+Tax'}</th>
+                        </tr>
+                      </thead>
+                      <SortableContext items={cart.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                        <tbody>
+                          {cart.map((item, index) => (
+                            <CartTableRow
+                              key={item.id}
+                              item={item}
+                              index={index}
+                              selectedCartIndex={selectedCartIndex}
+                              setSelectedCartIndex={setSelectedCartIndex}
+                              removeItem={removeItem}
+                              updateItem={updateItem}
+                              showMenu={showMenu}
+                              t={t}
+                              isLoading={!!isLoading}
+                              textTransform={textTransform}
+                              language={language}
+                              focusedInput={focusedInput}
+                              setFocusedInput={setFocusedInput}
+                              inputRefs={inputRefs}
+                              handleInputKeyDown={handleInputKeyDown}
+                              money={money}
+                              tax={tax}
+                              taxMode={taxMode}
+                              cellSelection={cellSelection}
+                              onCellMouseDown={handleCellMouseDown}
+                              onCellMouseEnter={handleCellMouseEnter}
+                              showUnitPrices={showUnitPrices}
+                            />
+                          ))}
+                        </tbody>
+                      </SortableContext>
+                    </table>
+                  </div>
+                </DndContext>
               </>
             )}
           </div>
