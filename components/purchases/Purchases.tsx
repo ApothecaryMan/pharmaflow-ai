@@ -1533,6 +1533,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               color={color}
               className='h-9 text-sm'
               rounded='full'
+              compact
               filterConfigs={purchaseFilterConfigs}
               activeFilters={activeFilters}
               onUpdateFilter={(groupId, values) =>
@@ -1659,6 +1660,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               rounded='full'
               color={color}
               className='h-9 text-sm'
+              compact
               icon={
                 <span
                   role="button"
