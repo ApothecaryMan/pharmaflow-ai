@@ -1,16 +1,21 @@
--- Migration: Server-Side Employee Credential Verification
--- Date: 2026-06-20
--- NOTE: SUPERSEDED by 20260807000000_employee_credentials_bcrypt.sql
--- (switches to bcrypt + plain-password verification). Keep this file only as
--- historical reference; do not rely on it for the current contract.
--- Description: Adds verify_employee_credentials RPC so password hashes never leave the server.
--- Fixes the security antipattern where SecureGate reads employee.password client-side.
+-- Migration: Server-Side Employee Credential Verification (bcrypt)
+-- Date: 2026-08-07
+-- Description: Supersedes 20260620000000_verify_employee_credentials.sql.
+--
+-- Why this change:
+--   * Password hashes are bcrypt ($2a$...), which is non-deterministic (random salt).
+--     The old RPC compared hash-to-hash, which cannot work with bcrypt. The client
+--     now sends the PLAIN password and the server verifies it with pgcrypto.crypt().
+--   * No legacy SHA-256 path: employee passwords/PINs are reset to bcrypt by
+--     20260807000001_reset_employee_passwords.sql before this contract matters.
+--   * HARD CUTOVER: this RPC only accepts p_payload.password. Builds older than
+--     this migration send `passwordHash` (SHA-256 hex) and will fail login
+--     (`password_required`) — deploy the client update together with this migration.
 
 BEGIN;
 
--- Verify employee credentials server-side using SHA-256 hash comparison
--- The client sends the HASHED password (SHA-256 hex), and the server compares it
--- against the stored hash without ever exposing the stored hash to the client.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE OR REPLACE FUNCTION public.verify_employee_credentials(p_payload JSONB)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -19,7 +24,10 @@ SET search_path = public
 AS $$
 DECLARE
     v_username TEXT := NULLIF(TRIM(p_payload->>'username'), '');
-    v_password_hash TEXT := NULLIF(TRIM(p_payload->>'passwordHash'), '');
+    -- NOTE: password is NOT trimmed. Spaces are significant in passwords; the
+    -- write path hashes the raw value, so trimming here would reject a password
+    -- that was stored with leading/trailing spaces (silent lockout).
+    v_password TEXT := NULLIF(p_payload->>'password', '');
     v_branch_id UUID := NULLIF(p_payload->>'branchId', '')::UUID;
     v_employee RECORD;
     v_is_authorized BOOLEAN := FALSE;
@@ -28,7 +36,7 @@ BEGIN
     IF v_username IS NULL THEN
         RETURN jsonb_build_object('success', false, 'error', 'username_required');
     END IF;
-    IF v_password_hash IS NULL THEN
+    IF v_password IS NULL THEN
         RETURN jsonb_build_object('success', false, 'error', 'password_required');
     END IF;
 
@@ -52,8 +60,14 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'no_password_set');
     END IF;
 
-    -- Verify the password hash matches (constant-time comparison via PostgreSQL)
-    IF v_employee.password <> v_password_hash THEN
+    -- Verify the stored bcrypt hash with crypt() (constant-time).
+    -- Only `$2a$` is accepted: both hashPassword (via salt rewrite) and the reset
+    -- migration force `$2a$`, and pgcrypto's crypt() reliably supports that variant.
+    IF v_employee.password LIKE '$2a$%' THEN
+        IF v_employee.password <> crypt(v_password, v_employee.password) THEN
+            RETURN jsonb_build_object('success', false, 'error', 'invalid_credentials');
+        END IF;
+    ELSE
         RETURN jsonb_build_object('success', false, 'error', 'invalid_credentials');
     END IF;
 
