@@ -9,6 +9,8 @@ interface InlineBarcodeScannerProps {
   onClose: () => void;
   color?: string;
   isActive?: boolean;
+  /** When set, renders a square viewfinder: number = fixed pixel width, 'full' = full container width (kept square). */
+  size?: number | 'full';
 }
 
 export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
@@ -16,6 +18,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   onClose,
   color,
   isActive = true,
+  size,
 }) => {
   const { language } = useTypography();
   const _t = TRANSLATIONS[language];
@@ -223,8 +226,10 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
 
   return (
     <div
-      className='w-full relative overflow-hidden bg-black rounded-[32px] shadow-inner mb-3 transition-all duration-600 ease-[cubic-bezier(0.2,0.8,0.2,1)] group'
-      style={{ height: '180px' }}
+      className={`relative overflow-hidden bg-black rounded-[32px] shadow-inner mb-3 transition-all duration-600 ease-[cubic-bezier(0.2,0.8,0.2,1)] group ${
+        size === 'full' ? 'w-full aspect-square' : size ? 'w-full max-w-full' : 'w-full'
+      }`}
+      style={typeof size === 'number' ? { width: size, height: size } : size === 'full' ? undefined : { height: '180px' }}
     >
       {/* Video Feed */}
       <video

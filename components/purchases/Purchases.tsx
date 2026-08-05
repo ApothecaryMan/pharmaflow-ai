@@ -61,10 +61,30 @@ import {
 } from '../common';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { CartQRModal } from './CartQRModal';
+import { toMmyy, type CartQrLine } from '../../utils/cartQr';
 import { SupplierDirectoryModal } from './SupplierDirectoryModal';
 import { useBulkSelection } from './hooks/useBulkSelection';
 import { BulkEditBar } from './ui/BulkEditBar';
 import { computeUpdatedItem } from './utils/calculations';
+
+/**
+ * Add an item to the cart, merging by drug + same expiry (sum quantity).
+ * A different expiry always becomes a separate row (different batch), matching
+ * how manual adds behave so QR-imported items never duplicate spuriously.
+ */
+const upsertCartItem = (cart: PurchaseItem[], item: PurchaseItem): PurchaseItem[] => {
+  const idx = cart.findIndex(
+    (i) => i.drugId === item.drugId && (i.expiryDate || '') === (item.expiryDate || '')
+  );
+  if (idx === -1) return [...cart, item];
+  const existing = cart[idx];
+  const merged: PurchaseItem = {
+    ...existing,
+    quantity: (existing.quantity || 0) + (item.quantity || 0),
+  };
+  return cart.map((i, n) => (n === idx ? merged : i));
+};
 interface PurchasesProps {
   color: string;
   t: Translations;
@@ -567,7 +587,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   isLoading,
 }) => {
   const { getVerifiedDate } = useStatusBar();
-  const { error: showToastError } = useAlert();
+  const { error: showToastError, success: showToastSuccess, warning: showToastWarning } = useAlert();
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
   const activeBranchId = useAuthStore((s) => s.activeBranchId);
@@ -634,6 +654,15 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const activeSupplier = suppliers.find((s) => s.id === selectedSupplierId);
   const showUnitPrices = activeSupplier?.showUnitPrices || false;
 
+  // O(1) index by international barcode for QR scan resolution.
+  const barcodeIndex = useMemo(() => {
+    const map = new Map<string, Drug>();
+    for (const d of inventory) {
+      if (d.barcode) map.set(d.barcode, d);
+    }
+    return map;
+  }, [inventory]);
+
   const cartTotal = useMemo(() => {
     const taxResults = tax.multiRate(
       cart.map((item) => ({
@@ -647,6 +676,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
+  const [isCartQrOpen, setIsCartQrOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<{ id: string; field: string } | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -892,40 +922,38 @@ export const Purchases: React.FC<PurchasesProps> = ({
     [cart.length, tabs.length]
   );
 
+  const buildCartItem = (drug: Drug, overrides: Partial<PurchaseItem> = {}) => {
+    const cost = drug.costPrice || 0;
+    const sale = drug.publicPrice || 0;
+    let initialDiscount = 0;
+
+    if (sale > 0 && cost >= 0) {
+      initialDiscount = pricing.actualMargin(cost, sale);
+    }
+
+    return {
+      id: idGenerator.generateSync('generic', activeBranchId),
+      drugId: drug.id,
+      barcode: drug.barcode,
+      internalCode: drug.internalCode,
+      name: getDisplayName(drug, textTransform),
+      quantity: 1,
+      costPrice: cost,
+      unitCostPrice: drug.unitCostPrice || 0,
+      dosageForm: drug.dosageForm,
+      publicPrice: sale,
+      unitPrice: drug.unitPrice || 0,
+      discount: parseFloat(initialDiscount.toFixed(2)),
+      expiryDate: '',
+      tax: taxRate,
+      unitsPerPack: drug.unitsPerPack || 1,
+      ...overrides,
+    };
+  };
+
   const handleAddItem = (drug: Drug) => {
     playBeep();
-    setCart((prev) => {
-      const cost = drug.costPrice || 0;
-      const sale = drug.publicPrice || 0;
-      let initialDiscount = 0;
-
-      if (sale > 0 && cost >= 0) {
-        initialDiscount = pricing.actualMargin(cost, sale);
-      }
-
-      const initialTaxPercent = taxRate;
-
-      return [
-        ...prev,
-        {
-          id: idGenerator.generateSync('generic', activeBranchId),
-          drugId: drug.id,
-          barcode: drug.barcode,
-          internalCode: drug.internalCode,
-          name: getDisplayName(drug, textTransform),
-          quantity: 1,
-          costPrice: cost,
-          unitCostPrice: drug.unitCostPrice || 0,
-          dosageForm: drug.dosageForm,
-          publicPrice: sale,
-          unitPrice: drug.unitPrice || 0,
-          discount: parseFloat(initialDiscount.toFixed(2)),
-          expiryDate: '',
-          tax: initialTaxPercent,
-          unitsPerPack: drug.unitsPerPack || 1,
-        },
-      ];
-    });
+    setCart((prev) => upsertCartItem(prev, buildCartItem(drug)));
     setSelectedCartIndex(cart.length);
     setSearch('');
   };
@@ -1168,6 +1196,50 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   const removeItem = (itemId: string) => {
     setCart((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
+  // Resolve QR-scanned lines against inventory by international barcode (O(1) via index),
+  // then upsert into the cart merging by same drug + same expiry.
+  const handleCartScanned = (lines: CartQrLine[], report: { invalid: number }) => {
+    if (lines.length === 0) {
+      if (report.invalid > 0) {
+        showToastWarning('QR contained no recognizable items.');
+      }
+      return;
+    }
+
+    const notFound: string[] = [];
+    const added: PurchaseItem[] = [];
+
+    for (const line of lines) {
+      const drug = barcodeIndex.get(line.code);
+      if (!drug) {
+        notFound.push(line.code);
+        continue;
+      }
+      added.push(
+        buildCartItem(drug, {
+          quantity: line.qty,
+          expiryDate: toMmyy(line.expiry),
+        })
+      );
+    }
+
+    setCart((prev) =>
+      added.reduce((acc, item) => upsertCartItem(acc, item), prev)
+    );
+
+    playBeep();
+
+    if (added.length > 0) {
+      showToastSuccess(
+        `${added.length} ${t.cartQr?.done || 'items added'}${
+          notFound.length ? ` • ${notFound.length} ${t.cartQr?.notFound || 'not found'}` : ''
+        }`
+      );
+    } else {
+      showToastWarning(`${notFound.length} ${t.cartQr?.notFound || 'not found in inventory'}.`);
+    }
   };
 
   // Helper: Generate unique order ID (auto-increment if duplicate)
@@ -1818,6 +1890,19 @@ export const Purchases: React.FC<PurchasesProps> = ({
             </div>
 
             <div className='flex items-center gap-4'>
+              {/* Cart QR (export/import) */}
+              <div className='group relative'>
+                <button
+                  type='button'
+                  onClick={() => setIsCartQrOpen(true)}
+                  disabled={cart.length === 0}
+                  title={t.cartQr?.title || 'Cart QR'}
+                  className='h-10 w-10 flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-neutral-800/50 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                >
+                  <span className='material-symbols-rounded text-xl'>qr_code_2</span>
+                </button>
+              </div>
+
               {/* Session Timestamp */}
               {activeTab?.createdAt > 0 && (
                 <div className='group relative'>
@@ -2278,6 +2363,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
           </div>
         </div>
       </div>
+
+{/* Cart QR Export / Import Modal */}
+      <CartQRModal
+        isOpen={isCartQrOpen}
+        onClose={() => setIsCartQrOpen(false)}
+        cart={cart}
+        t={t}
+        language={language}
+        onScanned={handleCartScanned}
+      />
 
       {/* Suppliers Directory Modal */}
       <SupplierDirectoryModal
