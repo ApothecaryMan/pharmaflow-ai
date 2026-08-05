@@ -7,7 +7,6 @@ import {
   mergeDuplicateLines,
   parsePage,
   serializePages,
-  toMmyy,
   type CartQrLine,
 } from '../../utils/cartQr';
 import { InlineBarcodeScanner } from '../mobile/InlineBarcodeScanner';
@@ -54,6 +53,7 @@ interface CartQRModalProps {
   t: Translations;
   language: 'EN' | 'AR';
   onScanned: (lines: CartQrLine[], report: CartQrScanReport) => void;
+  resolveDrugInfo?: (barcode: string) => { name: string; dosageForm?: string } | undefined;
 }
 
 /** "items" label used inside the rendered QR caption. */
@@ -68,6 +68,7 @@ export const CartQRModal: React.FC<CartQRModalProps> = ({
   t,
   language,
   onScanned,
+  resolveDrugInfo,
 }) => {
   const [activeTab, setActiveTab] = useState<'generate' | 'scan'>('generate');
   const [pageIndex, setPageIndex] = useState(0);
@@ -118,6 +119,7 @@ export const CartQRModal: React.FC<CartQRModalProps> = ({
   // Reset scan state when opening.
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(cart.length === 0 ? 'scan' : 'generate');
       bufferRef.current = null;
       setBufferProgress(null);
       setScanStatus(null);
@@ -240,6 +242,29 @@ export const CartQRModal: React.FC<CartQRModalProps> = ({
       onClose={onClose}
       title={label('title', 'Cart QR')}
       size='md'
+      footer={
+        activeTab === 'scan' && pendingPreview ? (
+          <div className='flex items-center gap-3 w-full' dir={dir}>
+            <button
+              type='button'
+              onClick={discardPreview}
+              className='flex-1 py-3 rounded-full font-bold bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer transition-colors flex items-center justify-center gap-2'
+            >
+              <span className='material-symbols-rounded text-base'>close</span>
+              {label('discard', 'Discard')}
+            </button>
+            <button
+              type='button'
+              onClick={confirmAdd}
+              disabled={pendingPreview.length === 0}
+              className='flex-1 py-3 rounded-full font-bold text-white bg-primary-600 hover:bg-primary-700 cursor-pointer transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              <span className='material-symbols-rounded text-base'>add_shopping_cart</span>
+              {label('addToCart', 'Add to cart')}
+            </button>
+          </div>
+        ) : undefined
+      }
       tabs={[
         {
           value: 'generate',
@@ -258,14 +283,17 @@ export const CartQRModal: React.FC<CartQRModalProps> = ({
     >
       {activeTab === 'generate' ? (
         <div dir={dir} className='flex flex-col items-center gap-4 py-2'>
-          {!hasQr && (
+          {cart.length === 0 ? (
+            <div className='h-48 flex flex-col items-center justify-center gap-2 text-gray-400'>
+              <span className='material-symbols-rounded text-4xl opacity-50'>remove_shopping_cart</span>
+              <span className='text-sm'>{label('emptyCart', 'Cart is empty')}</span>
+            </div>
+          ) : !hasQr ? (
             <div className='h-48 flex flex-col items-center justify-center gap-2 text-gray-400'>
               <span className='material-symbols-rounded text-3xl animate-spin'>refresh</span>
               <span className='text-xs'>{label('generating', 'Generating...')}</span>
             </div>
-          )}
-
-          {hasQr && (
+          ) : (
             <>
               <div className='flex flex-col items-center gap-2'>
                 {pages > 1 && (
@@ -356,36 +384,30 @@ export const CartQRModal: React.FC<CartQRModalProps> = ({
                 </p>
               ) : (
                 <div className='max-h-56 overflow-y-auto custom-scrollbar rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800'>
-                  {pendingPreview.map((l) => (
-                    <div key={`${l.code}|${l.expiry}|${l.qty}`} className='flex items-center justify-between gap-3 px-3 py-2 text-sm'>
-                      <span className='font-mono text-xs text-gray-600 dark:text-gray-300 truncate'>
-                        {l.code}
-                      </span>
-                      <span className='text-xs text-gray-400'>{toMmyy(l.expiry)}</span>
-                      <span className='text-xs font-semibold text-gray-700 dark:text-gray-200'>
-                        x{l.qty}
-                      </span>
-                    </div>
-                  ))}
+                  {pendingPreview.map((l) => {
+                    const drugInfo = resolveDrugInfo?.(l.code);
+                    return (
+                      <div key={`${l.code}|${l.expiry}|${l.qty}`} dir='ltr' className='flex flex-row items-center justify-between gap-3 px-3 py-2 text-sm'>
+                        <div className='flex flex-col min-w-0 flex-1 text-left'>
+                          <span className='font-semibold text-xs text-gray-800 dark:text-gray-200 truncate'>
+                            {drugInfo
+                              ? `${drugInfo.name}${drugInfo.dosageForm ? ` ${drugInfo.dosageForm}` : ''}`
+                              : label('unknownDrug', 'Unknown Drug')}
+                          </span>
+                          <span className='font-mono text-[10px] text-gray-500 dark:text-gray-400 truncate'>
+                            {l.code}
+                          </span>
+                        </div>
+                        <span className='text-xs text-gray-400 whitespace-nowrap'>{l.expiry.split('-').reverse().join('/')}</span>
+                        <div className='flex items-baseline justify-end gap-0.5 min-w-[40px]'>
+                          <span className='text-xs font-semibold text-gray-500 dark:text-gray-400'>x</span>
+                          <span className='text-xl font-black text-gray-900 dark:text-white leading-none'>{l.qty}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-              <div className='flex items-center gap-2'>
-                <button
-                  type='button'
-                  onClick={confirmAdd}
-                  disabled={pendingPreview.length === 0}
-                  className='flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors disabled:opacity-40'
-                >
-                  {label('addToCart', 'Add to cart')}
-                </button>
-                <button
-                  type='button'
-                  onClick={discardPreview}
-                  className='text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors'
-                >
-                  {label('discard', 'Discard')}
-                </button>
-              </div>
             </div>
           ) : (
             <>

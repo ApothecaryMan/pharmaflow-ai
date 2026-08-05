@@ -179,16 +179,24 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setIsReady(true);
-        startDetection();
+        try {
+          await videoRef.current.play();
+          setIsReady(true);
+          startDetection();
 
-        const track = stream.getVideoTracks()[0];
-        if (track) {
-          const capabilities = track.getCapabilities() as any;
-          if (capabilities.torch) {
-            setHasFlash(true);
+          const track = stream.getVideoTracks()[0];
+          if (track) {
+            const capabilities = track.getCapabilities() as any;
+            if (capabilities.torch) {
+              setHasFlash(true);
+            }
           }
+        } catch (err: any) {
+          if (err.name === 'AbortError') {
+            // Ignore interruption due to unmount or rapid re-renders (Hot Reloading / Strict Mode)
+            return;
+          }
+          throw err;
         }
       }
     } catch (err: any) {
@@ -205,24 +213,16 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   useEffect(() => {
     if (isActive) {
       initScanner();
-    }
-    return () => {
-      stopScanner();
-    };
-  }, [initScanner, isActive, stopScanner]);
-
-  useEffect(() => {
-    if (isActive) {
-      if (!streamRef.current) {
-        initScanner();
-      } else if (isScanCompleteRef.current) {
-        startDetection();
-      }
     } else {
       stopScanner();
       setIsReady(false);
     }
-  }, [isActive, initScanner, startDetection, stopScanner]);
+    
+    return () => {
+      stopScanner();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   return (
     <div
@@ -267,7 +267,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
         </div>
       )}
 
-      {isReady && import.meta.env.DEV && (
+      {isReady && false /* import.meta.env.DEV temporarily disabled for testing */ && (
         <div className='absolute inset-0 flex flex-col items-center justify-center p-6 bg-gray-900/40 backdrop-blur-sm z-20 text-center'>
           <span className='material-symbols-rounded text-primary-400 text-3xl mb-2'>
             developer_mode
