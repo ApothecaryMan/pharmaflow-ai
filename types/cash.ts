@@ -52,6 +52,8 @@ export interface CashTransaction {
 export interface Shift {
   /** Unique shift ID */
   id: string;
+  /** Server-minted shift serial (SH), e.g. CAI-SH-26-000001 */
+  serialId?: string;
   /** Branch this shift belongs to — required for RLS isolation */
   branchId: string;
   /** Organization this shift belongs to */

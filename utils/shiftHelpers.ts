@@ -41,7 +41,10 @@ export async function addTransactionToOpenShift(
     const now = getVerifiedDate();
 
     const newTransaction: CashTransaction = {
-      id: await idGenerator.generate('transactions', openShift.branchId),
+      id: await idGenerator.nextSerial({
+        branchId: openShift.branchId,
+        docType: 'transactions',
+      }),
       branchId: openShift.branchId,
       orgId: openShift.orgId,
       shiftId: openShift.id,

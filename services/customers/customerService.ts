@@ -53,17 +53,30 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
     const effectiveBranchId =
       branchId || (customer as any).branchId || settings.activeBranchId || settings.branchCode;
 
+    const serialBranchId = settings.activeBranchId || '';
+
+    const [serialId, code] = await Promise.all([
+      idGenerator.nextSerial({
+        branchId: serialBranchId,
+        docType: 'customers-serial',
+        branchCode: settings.branchCode,
+        zeroPad: 4,
+      }),
+      customer.code
+        ? Promise.resolve(customer.code)
+        : idGenerator.nextSerial({
+            branchId: serialBranchId,
+            docType: 'customers-serial',
+            branchCode: settings.branchCode,
+            zeroPad: 0,
+          }),
+    ]);
+
     const newCustomer: Customer = {
       ...customer,
       id: idGenerator.uuid(),
-      serialId: await idGenerator.generate(
-        'customers-serial',
-        settings.activeBranchId || '',
-        settings.branchCode
-      ),
-      code:
-        customer.code ||
-        idGenerator.code('CUST', settings.activeBranchId || '', settings.branchCode),
+      serialId,
+      code,
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,

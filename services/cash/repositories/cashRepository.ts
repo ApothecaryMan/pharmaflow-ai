@@ -4,7 +4,7 @@ import type { CashTransaction, Shift } from '../../../types';
 import type { CashTransactionType } from '../../../types/cash';
 
 const SHIFT_LIST_COLUMNS =
-  'id, branch_id, org_id, status, open_time, close_time, opened_by, opening_balance, closing_balance, expected_balance, cash_sales, card_sales, cash_in, cash_out, returns, cash_purchases, cash_purchase_returns, card_returns';
+  'id, serial_id, branch_id, org_id, status, open_time, close_time, opened_by, opening_balance, closing_balance, expected_balance, cash_sales, card_sales, cash_in, cash_out, returns, cash_purchases, cash_purchase_returns, card_returns';
 
 const SHIFT_FULL_COLUMNS = `${SHIFT_LIST_COLUMNS}, branch_name, closed_by, notes`;
 
@@ -15,6 +15,7 @@ const TX_FULL_COLUMNS = `${TX_LIST_COLUMNS}, org_id, related_sale_id`;
 
 interface ShiftDbRow {
   id?: string;
+  serial_id?: string;
   branch_id?: string;
   org_id?: string;
   branch_name?: string;
@@ -71,6 +72,7 @@ interface ShiftRpcResult {
   success?: boolean;
   error?: string;
   shiftId?: string;
+  serialId?: string;
 }
 
 interface CashTransactionPayload {
@@ -94,6 +96,7 @@ export const cashRepository = {
   mapShiftFromDb(db: ShiftDbRow): Shift {
     return {
       id: db.id,
+      serialId: db.serial_id,
       branchId: db.branch_id,
       orgId: db.org_id,
       branchName: db.branch_name,
@@ -121,6 +124,7 @@ export const cashRepository = {
   mapShiftToDb(s: Partial<Shift>): ShiftDbRow {
     const db: ShiftDbRow = {};
     if (s.id !== undefined) db.id = s.id;
+    if (s.serialId !== undefined) db.serial_id = s.serialId;
     if (s.branchId !== undefined) db.branch_id = s.branchId;
     if (s.orgId !== undefined) db.org_id = s.orgId;
     if (s.branchName !== undefined) db.branch_name = s.branchName;

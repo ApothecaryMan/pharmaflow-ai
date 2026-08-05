@@ -69,7 +69,12 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     const effectiveBranchId =
       branchId || drug.branchId || settings.activeBranchId || settings.branchCode;
 
-    const internalCode = drug.internalCode || (await idGenerator.code('DRUG', effectiveBranchId));
+    const internalCode =
+      drug.internalCode ||
+      (await idGenerator.nextSerial({
+        branchId: effectiveBranchId,
+        docType: 'inventory',
+      }));
 
     const newDrug: Drug = {
       ...drug,

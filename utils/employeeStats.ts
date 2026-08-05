@@ -30,6 +30,7 @@ export interface EmployeeSalesStats {
   // Best Performance Metrics
   highestInvoice?: {
     id: string;
+    serialId?: string;
     total: number;
     date: string;
   };
@@ -146,6 +147,7 @@ export function getEmployeeSalesStats(
       maxInvoiceTotal = saleTotal;
       highestInvoice = {
         id: sale.id,
+        serialId: sale.serialId,
         total: saleTotal,
         date: sale.date,
       };

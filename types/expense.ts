@@ -16,6 +16,8 @@ export type ExpensePaymentMethod = 'cash' | 'bank_transfer' | 'card';
 
 export interface Expense {
   id: string;
+  /** Server-minted expense serial (EX), e.g. CAI-EX-26-000001 */
+  serialId?: string;
   orgId: string;
   branchId: string;
   employeeId: string;

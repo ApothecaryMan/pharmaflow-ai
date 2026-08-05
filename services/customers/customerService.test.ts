@@ -27,9 +27,8 @@ vi.mock('../settings/settingsService', () => ({
 
 vi.mock('../../utils/idGenerator', () => ({
   idGenerator: {
-    generate: vi.fn().mockResolvedValue('C_NEW'),
+    nextSerial: vi.fn().mockResolvedValue('C_NEW'),
     uuid: vi.fn().mockReturnValue('C_NEW'),
-    code: vi.fn().mockReturnValue('CUST-NEW'),
   },
 }));
 
@@ -51,7 +50,7 @@ describe('CustomerService', () => {
       activeBranchId: 'B1',
       orgId: 'ORG_1',
     } as any);
-    vi.mocked(idGenerator.generate).mockResolvedValue('C_NEW');
+    vi.mocked(idGenerator.nextSerial).mockResolvedValue('C_NEW');
     vi.mocked(idGenerator.uuid).mockReturnValue('C_NEW');
   });
 

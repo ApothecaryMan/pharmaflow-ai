@@ -303,11 +303,12 @@ export const employeeRepository = {
   },
 
   async incrementSequenceRPC(branchId: string, entityType: string): Promise<number> {
-    const { data, error } = await supabase.rpc('increment_sequence', {
+    const { data, error } = await supabase.rpc('generate_serial_id', {
       p_branch_id: branchId,
-      p_entity_type: entityType,
+      p_doc_type: entityType,
+      p_raw: true,
     });
     if (error) throw error;
-    return data as number;
+    return Number(data);
   },
 };

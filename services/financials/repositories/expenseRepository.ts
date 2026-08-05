@@ -2,7 +2,7 @@ import { supabase } from '../../../lib/supabase';
 import type { Expense, ExpenseCategory, ExpenseSummary } from '../../../types';
 
 const EXPENSE_LIST_COLUMNS =
-  'id, org_id, branch_id, amount, category, description, payment_method, recorded_at, approved, employee_id';
+  'id, org_id, branch_id, serial_id, amount, category, description, payment_method, recorded_at, approved, employee_id';
 
 const EXPENSE_FULL_COLUMNS = `${EXPENSE_LIST_COLUMNS}, shift_id, approved_by, created_at`;
 
@@ -10,6 +10,7 @@ export const expenseRepository = {
   mapFromDb(db: any): Expense {
     return {
       id: db.id,
+      serialId: db.serial_id || undefined,
       orgId: db.org_id,
       branchId: db.branch_id,
       employeeId: db.employee_id,
@@ -28,6 +29,7 @@ export const expenseRepository = {
   mapToDb(e: Partial<Expense>): Record<string, any> {
     const db: Record<string, any> = {};
     if (e.id !== undefined) db.id = e.id;
+    if (e.serialId !== undefined) db.serial_id = e.serialId;
     if (e.orgId !== undefined) db.org_id = e.orgId;
     if (e.branchId !== undefined) db.branch_id = e.branchId;
     if (e.employeeId !== undefined) db.employee_id = e.employeeId;

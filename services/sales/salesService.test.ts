@@ -28,7 +28,6 @@ vi.mock('../settings/settingsService', () => ({
 
 vi.mock('../../utils/idGenerator', () => ({
   idGenerator: {
-    generate: vi.fn(),
     uuid: vi.fn(() => 'SALE_NEW'),
   },
 }));
@@ -69,7 +68,6 @@ describe('SalesService', () => {
       branchCode: 'MAIN',
       orgId: 'ORG_1',
     } as any);
-    vi.mocked(idGenerator.generate).mockResolvedValue('SALE_NEW');
     vi.mocked(salesRepository.getAll).mockResolvedValue([...mockSales]);
     vi.mocked(salesRepository.insert).mockImplementation(async (_s) => {
       return;
