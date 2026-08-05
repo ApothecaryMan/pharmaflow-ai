@@ -548,7 +548,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
 
   const saveNewTemplate = () => {
     if (!newTemplateName.trim()) return;
-    const newId = idGenerator.generateSync('barcodes');
+    const newId = idGenerator.draftId();
     const design = getDesignState();
     design.activeTemplateId = newId;
 
@@ -681,7 +681,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
       return;
     }
 
-    const id = `custom-${idGenerator.generateSync('generic')}`;
+    const id = `custom-${idGenerator.draftId()}`;
     const newEl: LabelElement = {
       id,
       type,
@@ -706,7 +706,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        const id = `img-${idGenerator.generateSync('generic')}`;
+        const id = `img-${idGenerator.draftId()}`;
         const newEl: LabelElement = {
           id,
           type: 'image',
@@ -939,7 +939,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ color, t }) => {
         saveToHistory();
         const newEl = {
           ...el,
-          id: idGenerator.generateSync('generic'),
+          id: idGenerator.draftId(),
           x: el.x + 2,
           y: el.y + 2,
         };

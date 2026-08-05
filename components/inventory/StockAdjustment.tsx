@@ -570,7 +570,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ color = 'blue'
       const newTransactionMovements = adjustments
         .filter((item) => item.difference !== 0)
         .map((item) => ({
-          id: idGenerator.generateSync('generic', activeBranchId),
+          id: idGenerator.draftId(),
           drugId: item.drugId,
           drugName: item.drugName,
           branchId: activeBranchId, // Fixed: use activeBranchId instead of branchCode

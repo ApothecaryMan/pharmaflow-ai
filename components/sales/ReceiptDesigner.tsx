@@ -176,7 +176,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color: _color,
   const handleCreateTemplate = () => {
     if (!newTemplateName.trim()) return;
     const newTemplate: SavedTemplate = {
-      id: idGenerator.generateSync('receipts'),
+      id: idGenerator.draftId(),
       name: newTemplateName,
       isDefault: false,
       options: { ...options },

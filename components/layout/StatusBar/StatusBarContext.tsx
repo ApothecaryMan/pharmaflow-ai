@@ -177,7 +177,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
           type: 'ADD_NOTIFICATION',
           payload: {
             ...notification,
-            id: idGenerator.generateSync('notification'),
+            id: idGenerator.draftId(),
             timestamp: timeService.getVerifiedDate(),
           },
         }),

@@ -7,7 +7,7 @@ import { storage } from '../../utils/storage';
 const MAX_TABS = 10;
 
 const createNewTab = (index: number): PurchaseTab => ({
-  id: idGenerator.generateSync('tabs'),
+  id: idGenerator.draftId(),
   name: `Purchase ${index}`,
   cart: [],
   supplierId: '',

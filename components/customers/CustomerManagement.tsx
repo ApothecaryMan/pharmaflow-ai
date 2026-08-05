@@ -150,19 +150,16 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   // Contact Options
 
   /**
-   * generateUniqueCode - Generates a mnemonic code (e.g., CUST-123456)
-   * Centralized in idGenerator.code
+   * generateUniqueCode - Generates the next sequential customer code
+   * (e.g., CUST-0042). Single source: server generate_serial_id RPC.
    */
   const generateUniqueCode = () => {
-    return idGenerator.code('CUST', activeBranchId);
-  };
-
-  /**
-   * getNextSerialId - Finds the highest existing serialId
-   * and returns the next value in the sequence.
-   */
-  const _getNextSerialId = () => {
-    return idGenerator.generate('customers-serial', activeBranchId);
+    return idGenerator.nextSerial({
+      branchId: activeBranchId,
+      docType: 'customers-serial',
+      branchCode: 'CUST',
+      zeroPad: 0,
+    });
   };
 
   /**
