@@ -135,6 +135,13 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   // Define table columns
   const columns = useMemo(
     () => [
+      columnHelper.accessor('serialId', {
+        header: t.expenses.table.id,
+        cell: (info) => {
+          const serial = info.getValue() as string | undefined;
+          return <span className='text-xs font-mono text-(--text-secondary)'>{serial || '—'}</span>;
+        },
+      }),
       columnHelper.accessor('recordedAt', {
         header: t.expenses.table.time,
         cell: (info) => {

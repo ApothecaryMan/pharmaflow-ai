@@ -3164,6 +3164,7 @@ export const TRANSLATIONS = {
       },
       table: {
         time: 'Time',
+        id: 'Ref',
         category: 'Category',
         description: 'Description',
         paymentMethod: 'Payment Method',
@@ -6500,6 +6501,7 @@ export const TRANSLATIONS = {
       },
       table: {
         time: 'الوقت',
+        id: 'المرجع',
         category: 'الفئة',
         description: 'البيان',
         paymentMethod: 'طريقة الدفع',

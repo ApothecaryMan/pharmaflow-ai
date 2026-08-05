@@ -226,7 +226,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     () => [
       {
         id: 'id',
-        accessorFn: (row) => row.handoverReceiptNumber || row.id.slice(-6),
+        accessorFn: (row) => row.serialId || '—',
         header: t.shiftHistory?.headers?.shiftNumber || 'Shift #',
         cell: ({ getValue, row }) => {
           const shiftId = getValue() as string;
@@ -605,7 +605,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           icon='receipt_long'
           disabled={isLoading}
           bodyClassName='p-4'
-          subtitle={`${t.shiftHistory?.headers?.shiftNumber || 'Shift #'}: #${selectedShift.handoverReceiptNumber || selectedShift.id.slice(-6)} • ${new Date(selectedShift.openTime).toLocaleDateString()}`}
+          subtitle={`${t.shiftHistory?.headers?.shiftNumber || 'Shift #'}: #${selectedShift.serialId || '—'} • ${new Date(selectedShift.openTime).toLocaleDateString()}`}
           tabs={[
             {
               label: t.shiftHistory?.details?.title || 'Details',

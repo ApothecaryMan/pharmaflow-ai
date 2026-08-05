@@ -1276,7 +1276,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                         {t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        #{stats.highestInvoice.id.slice(-6)}
+                        #{stats.highestInvoice.serialId || '—'}
                       </p>
                     </>
                   ) : (

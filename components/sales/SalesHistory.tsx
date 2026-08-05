@@ -99,7 +99,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     () => [
       {
         id: 'serialId',
-        accessorFn: (row) => row.serialId || row.id.slice(0, 8),
+        accessorFn: (row) => row.serialId || '—',
         header: t.modal.id,
         cell: ({ getValue }) => (
           <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>

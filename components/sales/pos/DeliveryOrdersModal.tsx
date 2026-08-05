@@ -709,7 +709,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         meta: { align: 'start' },
         cell: (info) => (
           <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
-            {info.getValue() || info.row.original.id.slice(0, 8)}
+            {info.getValue() as string || '—'}
           </span>
         ),
       }),
@@ -1086,7 +1086,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   {/* 2. Order Identity */}
                   <div className='flex items-center shrink-0'>
                     <span className='text-[16px] font-black font-mono text-zinc-900 dark:text-white leading-none tracking-tight'>
-                      #{selectedSale.serialId || selectedSale.id.slice(0, 8)}
+                      #{selectedSale.serialId || '—'}
                     </span>
                   </div>
 

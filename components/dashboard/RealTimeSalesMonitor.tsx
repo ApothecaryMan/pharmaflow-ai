@@ -450,7 +450,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   >
                     <td className='p-4 font-bold text-sm'>
                       <span data-no-convert='true' dir='ltr'>
-                        #{s.serialId || s.id.substring(0, 8)}
+                        #{s.serialId || '—'}
                       </span>
                     </td>
                     <td className='p-4 text-sm text-gray-500'>
@@ -836,7 +836,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                               className={`py-3 px-2 text-sm font-medium transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
                             >
                               <span data-no-convert='true' dir='ltr'>
-                                #{sale.serialId || sale.id.substring(0, 8)}
+                                #{sale.serialId || '—'}
                               </span>
                             </td>
                             <td

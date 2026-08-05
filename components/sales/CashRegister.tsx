@@ -448,7 +448,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   ) : (
                     <span className='badge-neutral gap-1.5'>
                       <span className='material-symbols-rounded'>tag</span>
-                      {currentShift?.id.slice(-6)}
+                      {currentShift?.serialId || '—'}
                     </span>
                   )}
                 </div>
