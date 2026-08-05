@@ -1,66 +1,134 @@
 /**
- * ID Generator Utility
+ * Serial / ID Generator — single client contract
  *
- * Implements "Prefix Strategy" (BranchCode-Sequence) for entity IDs.
- * Features:
- * - Centralized sequence management
- * - Self-healing (finds max existing ID on startup/first run)
- * - Zero padding (e.g., B1-0042)
- * - Sequential access pattern (single-threaded environment)
- * - No circular dependencies (reads storage directly)
+ * Numbering is AUTHORITATIVE on the server:
+ *   - `increment_sequence`   : atomic per-(tenant, branch, doc_type, year) counter
+ *                              (Supabase RPC, SECURITY DEFINER, row-locked).
+ *   - `generate_serial_id`   : single canonical formatter. Layout lives in ONE
+ *                              place (SQL), so client never duplicates prefixes.
+ *
+ * Client responsibilities are limited to:
+ *   - `uuid()`      : PKs (uuid v4, correct for Supabase).
+ *   - `nextSerial()`: ask the server for the next serial (throws on error —
+ *                     NO client-side fallback, to preserve data integrity).
+ *   - `draftId()`   : LOCAL, UI-only identifiers (tabs, notifications, draft
+ *                     row keys). NOT a serial — never persisted as one.
  */
 
 import { supabase } from '../lib/supabase';
 
-// Supported Entity Types
-export type EntityType =
+// Supported document / counter types
+// Document types (new scheme: {BranchCode}-{TypeCode}-{YY}-{000001}):
+//   SL sale · SR sale return · QT quotation · PU purchase
+//   PR purchase return · PO purchase order · TR transfer
+//   AD adjustment · DS disposal · SH shift · CS cash · EX expense
+//   DO delivery order · RV review · SB subscription (tenant-level)
+// Legacy/master-data types retain their current formats.
+export type DocType =
   | 'sales'
-  | 'inventory'
-  | 'customers'
-  | 'suppliers'
-  | 'employees'
-  | 'purchases'
   | 'returns'
-  | 'shifts'
-  | 'transactions'
-  | 'tabs'
-  | 'batch'
-  | 'movement'
-  | 'returnItem'
+  | 'purchase_returns'
+  | 'supplier_payments'
   | 'customers-serial'
-  | 'notification'
+  | 'inventory'
   | 'barcodes'
-  | 'receipts'
+  | 'employees'
+  | 'transactions'
+  | 'purchases'
+  | 'shifts'
   | 'branches'
+  | 'suppliers'
   | 'branches-code'
-  | 'generic';
+  | 'generic'
+  | 'SL'
+  | 'SR'
+  | 'QT'
+  | 'PU'
+  | 'PR'
+  | 'PO'
+  | 'TR'
+  | 'AD'
+  | 'DS'
+  | 'SH'
+  | 'CS'
+  | 'EX'
+  | 'DO'
+  | 'RV'
+  | 'SB';
 
-// Sequence Map Interface
-export interface SequenceMap {
-  [key: string]: number;
+export interface NextSerialParams {
+  /** UUID of the branch (DB counter scope). Required for DB sequence. */
+  branchId: string;
+  /** Which counter/format family to use. */
+  docType: DocType;
+  /** Branch code prefix (e.g. "B1"). Falls back to "PF" server-side. */
+  branchCode?: string;
+  /** Business date for date-embedded formats (defaults to now). */
+  date?: string | Date;
+  /** Use a caller-owned sequence number instead of incrementing the counter. */
+  customSeq?: number;
+  /** Zero-pad the sequence to N digits (0 = no padding). */
+  zeroPad?: number;
+  /** Return the raw sequence number as text (no prefix/format). */
+  raw?: boolean;
 }
 
-const ID_PADDING = 4; // B1-0001
-const GLOBAL_PREFIX = 'PF'; // Systems/Branches use PF instead of BranchCode
+const DEFAULT_ZERO_PAD = 4;
 
 /**
- * Parses an ID to extract its sequence number
- * @param id The ID string (e.g., "B1-0042")
- * @returns The sequence number (e.g., 42) or 0 if invalid
+ * Raised when the server cannot mint a serial after retries are exhausted.
+ * There is NEVER a client-side fallback number — callers must abort the
+ * whole operation and surface a clear message to the user.
  */
-const _extractSequence = (id: string): number => {
-  if (!id || typeof id !== 'string') return 0;
-  const parts = id.split('-');
-  const seq = parseInt(parts[parts.length - 1], 10);
-  return Number.isNaN(seq) ? 0 : seq;
-};
+export class SerialGenerationError extends Error {
+  readonly docType: DocType;
+  readonly cause?: unknown;
 
-// Sequences are now handled atomically in Supabase via increment_sequence RPC
+  constructor(docType: DocType, cause?: unknown) {
+    super(
+      `Failed to generate serial for ${docType}. Operation aborted to preserve data integrity.`
+    );
+    this.name = 'SerialGenerationError';
+    this.docType = docType;
+    this.cause = cause;
+  }
+}
+
+const delay = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+// Retry: attempt 1, backoff 150ms, attempt 2, backoff 300ms, attempt 3, then fail.
+const TRANSIENT_BACKOFF_MS = [150, 300];
+
+/**
+ * True for transient failures worth retrying (network / timeout / 5xx /
+ * rollback races). Logical errors (unique violation, permissions, invalid
+ * input) are never retryable — they will not resolve.
+ */
+export function isTransientError(err: unknown): boolean {
+  if (!err) return false;
+  const e = err as { code?: string; name?: string; message?: string };
+  const code = String(e?.code || '');
+  const name = String(e?.name || '');
+  const msg = String(e?.message || '');
+
+  // Postgres/PGRST codes that represent connection/race conditions.
+  if (/^(52[0-9]|53[0-9]|60[0-9]|57014|40001|40P01)$/.test(code)) return true;
+  // supabase-js retryable fetch error types.
+  if (/RetryableFetchError|FetchError/i.test(name)) return true;
+  // Network-level failures.
+  if (
+    /failed to fetch|network error|socket hang up|ECONN(RESET|REFUSED|ABORTED)|time\s*out|timed out|ETIMEDOUT/i.test(
+      msg
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export const idGenerator = {
   /**
-   * Generates a standard UUID with fallbacks for non-secure contexts
-   * @returns Formatted UUID string
+   * Generates a standard UUID v4 (with a fallback for non-secure contexts).
    */
   uuid: (): string => {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -74,156 +142,86 @@ export const idGenerator = {
   },
 
   /**
-   * Generates the next ID for a given entity type (Online-Only version)
-   * @param type The type of entity (e.g., 'sales', 'inventory')
-   * @param branchId The UUID of the branch (Required for DB sequence)
-   * @param branchCode Optional branch code prefix (e.g., "B1")
-   * @returns Formatted ID string (e.g., "B1-1050")
+   * Requests the next serial from the server's single source of truth.
+   * Retries transient (network/timeout/5xx) failures with backoff — on the
+   * SAME RPC, never a local fallback. Once the retry budget is exhausted it
+   * throws a SerialGenerationError; callers must abort the operation.
    */
-  generate: async (type: EntityType, branchId: string, branchCode?: string): Promise<string> => {
-    // Only truly transient or UI-only types should be generated synchronously
-    const nonCriticalTypes: EntityType[] = ['notification', 'generic', 'tabs'];
-    if (nonCriticalTypes.includes(type)) {
-      return idGenerator.generateSync(type, branchCode);
-    }
+  nextSerial: async (params: NextSerialParams): Promise<string> => {
+    const { branchId, docType, branchCode, date, customSeq, zeroPad, raw } = params;
 
-    try {
-      // 1. Get next value from Supabase
-      const { data, error } = await supabase.rpc('increment_sequence', {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= TRANSIENT_BACKOFF_MS.length; attempt++) {
+      const { data, error } = await supabase.rpc('generate_serial_id', {
         p_branch_id: branchId,
-        p_entity_type: type,
+        p_doc_type: docType,
+        p_branch_code: branchCode || null,
+        ...(date ? { p_date: new Date(date).toISOString() } : {}),
+        p_custom_seq: customSeq ?? null,
+        p_zero_pad: zeroPad ?? DEFAULT_ZERO_PAD,
+        p_raw: raw ?? false,
       });
 
-      if (error) throw error;
+      if (!error && typeof data === 'string') return data;
 
-      // 2. Format with branch prefix
-      const prefix = branchCode || 'PF';
-      return `${prefix}-${data.toString().padStart(ID_PADDING, '0')}`;
-    } catch (err) {
-      // Do not fallback to timestamp - throw a clear error to preserve data integrity
-      console.error(`[idGenerator] Sequence generation failed for ${type}:`, err);
-      throw new Error(
-        `Failed to generate ID for ${type}. ` +
-          `This may indicate a database connectivity issue. ` +
-          `Transaction aborted to preserve data integrity.`
-      );
+      lastError =
+        error || new Error(`generate_serial_id returned a non-string value for ${docType}`);
+
+      // A logical error (unique violation, permission denied, invalid input)
+      // will not resolve on retry — fail fast instead of retrying.
+      if (error && !isTransientError(error)) break;
+
+      if (attempt < TRANSIENT_BACKOFF_MS.length) {
+        await delay(TRANSIENT_BACKOFF_MS[attempt]);
+      }
     }
+
+    console.error(`[idGenerator] Serial generation failed for ${docType}:`, lastError);
+    throw new SerialGenerationError(docType, lastError);
   },
 
   /**
-   * Synchronous generator for non-critical IDs (tabs, notifications, etc.)
-   * Uses timestamp + random to ensure uniqueness without DB roundtrip.
+   * LOCAL, UI-only identifier (React keys, draft rows, notifications).
+   * Timestamp + entropy. NOT a serial — do not persist as a serial number.
    */
-  generateSync: (_type: EntityType, branchCode?: string): string => {
-    const prefix = branchCode || GLOBAL_PREFIX;
-    // Use full timestamp in Base36 (unlikely to wrap around for centuries)
+  draftId: (): string => {
     const timePart = Date.now().toString(36).toUpperCase();
-    // Add 4-character alphanumeric entropy for high-frequency calls
     const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `${prefix}-${timePart}${randomPart}`;
+    return `${timePart}${randomPart}`;
   },
 
   /**
-   * Generates a secondary mnemonic code (e.g., B1-000042)
-   * Backed by database sequence to ensure absolute uniqueness.
-   * @param prefix The type of code ('CUST' for customers, 'DRUG' for inventory)
-   * @param branchId The UUID of the branch
-   * @param branchCode The short code of the branch (e.g., "B1")
-   * @returns Formatted code string
-   */
-  code: async (prefix: 'CUST' | 'DRUG', branchId: string, branchCode?: string): Promise<string> => {
-    const type: EntityType = prefix === 'CUST' ? 'customers-serial' : 'inventory';
-
-    try {
-      const { data, error } = await supabase.rpc('increment_sequence', {
-        p_branch_id: branchId,
-        p_entity_type: type,
-      });
-      if (error) throw error;
-
-      // Use branchCode for customers (e.g., B1-1),
-      // but keep 'DRUG' for medications to maintain clear classification.
-      const finalPrefix = prefix === 'CUST' && branchCode ? branchCode : prefix;
-
-      return `${finalPrefix}-${data}`;
-    } catch (err) {
-      console.error(`[idGenerator] Code generation failed for ${prefix}:`, err);
-      const ts = Date.now().toString(36).toUpperCase();
-      const finalPrefix = prefix === 'CUST' && branchCode ? branchCode : prefix;
-      return `${finalPrefix}-TEMP-${ts}`;
-    }
-  },
-
-  /**
-   * Generates a numeric-only barcode for medications (e.g., 1042)
-   * Starts from 1000 to differentiate from manufacturer barcodes.
-   * @param branchId The UUID of the branch
-   * @returns Formatted numeric string
-   */
-  barcode: async (branchId: string): Promise<string> => {
-    try {
-      const { data, error } = await supabase.rpc('increment_sequence', {
-        p_branch_id: branchId,
-        p_entity_type: 'barcodes',
-      });
-      if (error) throw error;
-
-      // Start from 1000 (DB sequence starts at 1, so we add 999)
-      const finalValue = Number(data) + 999;
-      return finalValue.toString();
-    } catch (err) {
-      console.error(`[idGenerator] Barcode generation failed:`, err);
-      return Date.now().toString().slice(-8); // Fallback
-    }
-  },
-
-  /**
-   * Generates a short, smart, and deterministic batch barcode.
-   * Format: [DrugID in Base36][Months since 2024 in Base36]
-   * Example: Drug 2166 + Expiry 2027-10 => "1O62D"
-   * @param drugId Numeric ID of the drug
-   * @param expiryDate Expiry date of the batch
-   */
-  generateBatchBarcode: (drugId: number, expiryDate: string | Date): string => {
-    // 1. Encode Drug ID (e.g., 2166 => "1O6")
-    const drugPart = drugId.toString(36).toUpperCase();
-
-    // 2. Encode Expiry Date as months since 2024-01
-    const date = new Date(expiryDate);
-    const startYear = 2024;
-    const months = (date.getFullYear() - startYear) * 12 + date.getMonth();
-    const datePart = months.toString(36).toUpperCase().padStart(2, '0');
-
-    return `${drugPart}${datePart}`;
-  },
-
-  /**
-   * Decodes a smart batch barcode back into drugId and approximate expiry date.
-   * Useful for offline interpretation of scanned internal stickers.
-   */
-  decodeBatchBarcode: (barcode: string): { drugId: number; expiryDate: Date } => {
-    const datePart = barcode.slice(-2);
-    const drugPart = barcode.slice(0, -2);
-
-    const drugId = parseInt(drugPart, 36);
-    const months = parseInt(datePart, 36);
-
-    const year = Math.floor(months / 12) + 2024;
-    const month = months % 12;
-
-    return {
-      drugId,
-      expiryDate: new Date(year, month, 1),
-    };
-  },
-
-  /**
-   * Validates if a string is a valid UUID
-   * @param id The string to check
+   * Validates if a string is a valid UUID v4.
    */
   isUuid: (id: string): boolean => {
     if (!id || typeof id !== 'string') return false;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
+  },
+
+  /**
+   * Generates a short, smart, and deterministic batch barcode.
+   * Format: [DrugID in Base36][Months since 2024 in Base36]
+   */
+  generateBatchBarcode: (drugId: number, expiryDate: string | Date): string => {
+    const drugPart = drugId.toString(36).toUpperCase();
+    const date = new Date(expiryDate);
+    const months = (date.getFullYear() - 2024) * 12 + date.getMonth();
+    const datePart = months.toString(36).toUpperCase().padStart(2, '0');
+    return `${drugPart}${datePart}`;
+  },
+
+  /**
+   * Decodes a smart batch barcode back into drugId and approximate expiry date.
+   */
+  decodeBatchBarcode: (barcode: string): { drugId: number; expiryDate: Date } => {
+    const datePart = barcode.slice(-2);
+    const drugPart = barcode.slice(0, -2);
+    const drugId = parseInt(drugPart, 36);
+    const months = parseInt(datePart, 36);
+    const year = Math.floor(months / 12) + 2024;
+    const month = months % 12;
+    return { drugId, expiryDate: new Date(year, month, 1) };
   },
 };
