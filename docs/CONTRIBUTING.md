@@ -161,7 +161,7 @@ zinc/
 │   │   │   ├── logAuditEvent()      # Audit logger
 │   │   │   ├── getLoginHistory()    # History retriever
 │   │   │   └── login/logout()       # Auth actions
-│   │   ├── hashUtils.ts             # SHA-256 hashing
+│   │   ├── hashUtils.ts             # bcrypt hashing
 │   │   └── index.ts                 # Barrel export
 │   ├── sales/                       # Sales & POS Logic
 │   ├── inventory/                   # Stock & Product Logic
@@ -1222,7 +1222,7 @@ CREATE POLICY "tenant_isolation" ON sales
 ### Dual-Layer Authentication
 
 1. **Global Identity** (`auth.users`): Supabase Auth for Employee Portal. Email/phone registration, not tied to any pharmacy.
-2. **Pharmacy Access** (`employees` table): Local credentials hashed via SHA-256, bypasses `auth.users`. Used for POS QuickLogin.
+2. **Pharmacy Access** (`employees` table): Local credentials hashed via bcrypt, bypasses `auth.users`. Used for POS QuickLogin.
 3. **Workspace Switcher**: Multi-pharmacy employees select active `orgId` + `branchId` on login.
 
 ### Role-Based Permissions
