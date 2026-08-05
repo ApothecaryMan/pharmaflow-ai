@@ -3,8 +3,8 @@
  * Business logic layer that orchestrates data access via PurchaseRepository.
  */
 
+import { supabase } from '../../lib/supabase';
 import type { Purchase, PurchaseStatus } from '../../types';
-import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { BaseDomainService } from '../core/baseDomainService';
 import { settingsService } from '../settings/settingsService';
@@ -72,24 +72,22 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     });
   }
 
+  /**
+   * Returns the most recently minted purchase number (display-only).
+   * Purchase numbers are AUTHORITATIVE on the server (generate_serial_id, 'PU').
+   * The client never predicts/increments the next number — that caused
+   * duplicate invoice numbers under concurrent purchases. Returns '' if none.
+   */
   async getNextInvoiceId(branchId?: string): Promise<string> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
 
     try {
-      const invoiceId = await purchaseRepository.getNextInvoiceId(effectiveBranchId);
-
-      if (invoiceId) {
-        const parts = invoiceId.split('-');
-        if (parts.length === 2 && !Number.isNaN(Number.parseInt(parts[1], 10))) {
-          const nextNum = Number.parseInt(parts[1], 10) + 1;
-          return `INV-${nextNum.toString().padStart(6, '0')}`;
-        }
-      }
+      return (await purchaseRepository.getNextInvoiceId(effectiveBranchId)) || '';
     } catch (error) {
       console.warn('Failed to get latest invoice ID', error);
+      return '';
     }
-    return 'INV-000001';
   }
 
   async create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> {
@@ -97,53 +95,70 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     const effectiveBranchId =
       branchId || purchase.branchId || settings.activeBranchId || settings.branchCode;
 
-    const items = purchase.items;
-    const newPurchase: Purchase = {
-      ...purchase,
-      id: idGenerator.uuid(),
-      status: purchase.status || 'pending',
-      branchId: effectiveBranchId,
-      orgId: settings.orgId,
-      date: purchase.date || new Date().toISOString(),
+    const normalizeDate = (d: string | undefined | null): string | null => {
+      if (!d) return null;
+      if (d.length === 7) return `${d}-01`;
+      return d;
     };
 
-    const created = await purchaseRepository.insert(newPurchase);
-
-    if (items.length > 0) {
-      const normalizeDate = (d: string | undefined | null): string | null => {
-        if (!d) return null;
-        if (d.length === 7) return d + '-01';
-        return d;
-      };
-
-      const purchaseItems = items.map((item) => ({
-        id: idGenerator.uuid(),
-        purchase_id: created.id,
-        branch_id: effectiveBranchId,
-        drug_id: item.drugId,
+    // Purchase creation is ATOMIC on the server: create_purchase mints the PU
+    // serial via generate_serial_id and inserts header + items in ONE database
+    // transaction. The client never mints numbers or predicts them — it sends
+    // the computed payload and the server returns the authoritative serial.
+    const payload = {
+      branchId: effectiveBranchId,
+      orgId: settings.orgId,
+      date: purchase.date,
+      supplierId: purchase.supplierId,
+      supplierName: purchase.supplierName,
+      subtotal: purchase.subtotal,
+      discount: purchase.discount,
+      totalTax: purchase.totalTax,
+      totalCost: purchase.totalCost,
+      status: purchase.status,
+      paymentMethod: purchase.paymentMethod,
+      externalInvoiceId: purchase.externalInvoiceId,
+      createdBy: purchase.createdBy,
+      createdByName: purchase.createdByName,
+      notes: purchase.notes,
+      dueDate: purchase.dueDate,
+      items: (purchase.items || []).map((item) => ({
+        drugId: item.drugId,
         name: item.name,
-        dosage_form: item.dosageForm || null,
+        dosageForm: item.dosageForm,
         quantity: item.quantity,
-        cost_price: item.costPrice,
-        expiry_date: normalizeDate(item.expiryDate),
-        discount: item.discount || 0,
-        public_price: item.publicPrice,
-        unit_price: item.unitPrice || null,
-        unit_cost_price: item.unitCostPrice || null,
-        tax: item.tax || 0,
-        is_unit: item.isUnit || false,
-        units_per_pack: item.unitsPerPack || 1,
-        batch_number: item.batchNumber || null,
-      }));
+        costPrice: item.costPrice,
+        expiryDate: normalizeDate(item.expiryDate),
+        discount: item.discount,
+        publicPrice: item.publicPrice,
+        unitPrice: item.unitPrice,
+        unitCostPrice: item.unitCostPrice,
+        tax: item.tax,
+        isUnit: item.isUnit,
+        unitsPerPack: item.unitsPerPack,
+        batchNumber: item.batchNumber,
+      })),
+    };
 
-      try {
-        await purchaseRepository.insertPurchaseItems(purchaseItems);
-      } catch (insertError: any) {
-        throw new Error(`Failed to insert purchase items: ${insertError.message}`);
-      }
+    const { data, error } = await supabase.rpc('create_purchase', { p_payload: payload });
+
+    if (error) {
+      throw new Error(`Failed to create purchase: ${error.message}`);
+    }
+    if (!data?.success) {
+      throw new Error(data?.error || 'Failed to create purchase');
     }
 
-    return created;
+    return {
+      ...purchase,
+      id: data.purchaseId,
+      branchId: effectiveBranchId,
+      orgId: settings.orgId,
+      date: data.purchase?.date || purchase.date || new Date().toISOString(),
+      status: data.purchase?.status || purchase.status || 'pending',
+      invoiceId: data.invoiceId || purchase.invoiceId || '',
+      items: purchase.items || [],
+    };
   }
 
   async update(id: string, updates: Partial<Purchase>): Promise<Purchase> {

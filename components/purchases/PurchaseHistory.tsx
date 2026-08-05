@@ -60,6 +60,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
     employees,
     activeBranchId,
     activeOrgId,
+    t,
     purchases,
     setPurchases: infra.setPurchases,
     purchaseReturns,

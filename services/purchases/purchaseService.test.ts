@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Purchase } from '../../types';
+import { supabase } from '../../lib/supabase';
 import { settingsService } from '../settings/settingsService';
 import { purchaseService } from './purchaseService';
 import { purchaseRepository } from './repositories/purchaseRepository';
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: { rpc: vi.fn() },
+}));
 
 // Mocks
 vi.mock('./repositories/purchaseRepository', () => ({
@@ -56,6 +61,16 @@ describe('PurchaseService', () => {
       branchCode: 'MAIN',
       orgId: 'ORG_1',
     } as any);
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: {
+        success: true,
+        purchaseId: 'PURCHASE_1',
+        invoiceId: 'CAI-PU-26-000001',
+        serialId: 'CAI-PU-26-000001',
+        purchase: { id: 'PURCHASE_1', status: 'pending', date: '2026-01-01T00:00:00.000Z' },
+      },
+      error: null,
+    });
     vi.mocked(purchaseRepository.getAll).mockResolvedValue([...mockPurchases]);
     vi.mocked(purchaseRepository.getById).mockImplementation(async (id) => {
       return mockPurchases.find((p) => p.id === id) || null;
@@ -72,19 +87,50 @@ describe('PurchaseService', () => {
     expect(result).toHaveLength(2);
   });
 
-  it('should create purchase with pending status', async () => {
+  it('should create purchase via atomic create_purchase RPC', async () => {
     const newPurchase: any = {
       supplierId: 'SUP2',
       supplierName: 'Test Supplier 2',
       items: [],
       totalCost: 200,
+      status: 'pending',
     };
 
     const created = await purchaseService.create(newPurchase);
 
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'create_purchase',
+      expect.objectContaining({ p_payload: expect.any(Object) })
+    );
     expect(created.status).toBe('pending');
     expect(created.branchId).toBe('MAIN');
-    expect(purchaseRepository.insert).toHaveBeenCalled();
+    expect(created.id).toBe('PURCHASE_1');
+    expect(created.invoiceId).toBe('CAI-PU-26-000001');
+    // Atomic server mint: the client must NOT mint or insert serials itself.
+    expect(purchaseRepository.insert).not.toHaveBeenCalled();
+    expect(purchaseRepository.insertPurchaseItems).not.toBeDefined();
+  });
+
+  it('should throw when create_purchase RPC fails (no fallback)', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: null,
+      error: { message: 'boom' },
+    });
+
+    await expect(
+      purchaseService.create({ supplierId: 'SUP2', items: [], totalCost: 100 } as any)
+    ).rejects.toThrow('Failed to create purchase');
+  });
+
+  it('should throw when create_purchase returns success:false (atomic rollback)', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: { success: false, error: 'serial generation failed' },
+      error: null,
+    });
+
+    await expect(
+      purchaseService.create({ supplierId: 'SUP2', items: [], totalCost: 100 } as any)
+    ).rejects.toThrow('serial generation failed');
   });
 
   it('should approve purchase', async () => {

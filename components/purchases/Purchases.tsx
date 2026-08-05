@@ -605,6 +605,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     employees,
     activeBranchId,
     activeOrgId,
+    t,
     purchases,
     setPurchases: infra.setPurchases,
     purchaseReturns,
@@ -932,7 +933,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     }
 
     return {
-      id: idGenerator.generateSync('generic', activeBranchId),
+      id: idGenerator.draftId(),
       drugId: drug.id,
       barcode: drug.barcode,
       internalCode: drug.internalCode,
@@ -1019,8 +1020,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const _drugSearchDir = useSmartDirection(search, t.searchDrug);
 
   // Invoice ID State
-  const [invoiceId, setInvoiceId] = useState('INV-000001');
+  const [invoiceId, setInvoiceId] = useState('');
 
+  // Display-only: seed the counter with the most recently server-minted
+  // purchase number (if any). New numbers are minted on demand server-side.
   useEffect(() => {
     let isCancelled = false;
     import('../../services/purchases/purchaseService').then(({ purchaseService }) => {
@@ -1031,7 +1034,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, []); // Keep listening to purchases prop changes to bump ID when new ones arrive via realtime
+  }, []);
 
   const externalInvoiceIdDir = useSmartDirection(
     externalInvoiceId,
@@ -1243,19 +1246,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
   };
 
   // Helper: Generate unique order ID (auto-increment if duplicate)
-  const getUniqueOrderId = (): string => {
-    let currentId = invoiceId;
-    let currentNum = parseInt(currentId.replace('INV-', ''), 10) || 0;
-
-    // Check if current ID exists in purchases
-    while (purchases.some((p) => p.invoiceId === currentId)) {
-      currentNum++;
-      currentId = `INV-${String(currentNum).padStart(6, '0')}`;
-    }
-
-    return currentId;
-  };
-
   const handleConfirm = async () => {
     if (!permissionsService.can('purchase.create')) {
       showToastError('Permission Denied: Cannot complete purchase');
@@ -1321,9 +1311,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     const supplier = suppliers.find((s) => s.id === selectedSupplierId);
 
-    // Get unique order ID (auto-increment if duplicate)
-    const uniqueOrderId = getUniqueOrderId();
-
     const taxResults = tax.multiRate(
       cart.map((item) => ({
         amount: money.multiply(item.costPrice, item.quantity, 0),
@@ -1356,7 +1343,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
       totalCost: taxResults.total,
       totalTax: taxResults.taxAmount,
       status: 'completed',
-      invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentMethod: paymentMethod,
       paidNow: paymentMethod === 'cash' ? taxResults.total : paymentMethod === 'partial' ? activeTab.paidNow ?? cartTotal : 0,
@@ -1368,9 +1354,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     setIsConfirming(true);
     try {
-      const success = await handlePurchaseComplete(purchase);
+      const created = await handlePurchaseComplete(purchase);
 
-      if (success) {
+      if (created) {
         updateTab(activeTabId, {
           cart: [],
           supplierId: '',
@@ -1379,9 +1365,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
           createdAt: 0,
         });
 
-        // Generate Next ID
-        const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
-        setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`);
+        // Display the server-minted purchase number (returned by the atomic
+        // create_purchase RPC — never guessed client-side).
+        setInvoiceId(created.invoiceId || '');
         setExternalInvoiceId('');
       }
     } finally {
@@ -1449,9 +1435,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     const supplier = suppliers.find((s) => s.id === selectedSupplierId);
 
-    // Get unique order ID (auto-increment if duplicate)
-    const uniqueOrderId = getUniqueOrderId();
-
     const taxResults = tax.multiRate(
       cart.map((item) => ({
         amount: money.multiply(item.costPrice, item.quantity, 0),
@@ -1461,7 +1444,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     );
 
     const purchase: Purchase = {
-      id: idGenerator.generateSync('purchases', activeBranchId),
+      id: idGenerator.draftId(),
       branchId: activeBranchId,
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
@@ -1484,7 +1467,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
       totalCost: taxResults.total,
       totalTax: taxResults.taxAmount,
       status: 'pending',
-      invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentMethod: paymentMethod,
       orgId: activeOrgId,
@@ -1501,14 +1483,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     setIsConfirming(true);
     try {
-      const success = await handlePurchaseComplete(purchase);
-      if (success) {
+      const created = await handlePurchaseComplete(purchase);
+      if (created) {
         setCart([]);
         setSelectedSupplierId('');
 
-        // Generate Next ID
-        const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
-        setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`);
+        // Display the server-minted purchase number (returned by the atomic
+        // create_purchase RPC — never guessed client-side).
+        setInvoiceId(created.invoiceId || '');
         setExternalInvoiceId('');
       }
     } finally {
@@ -1895,9 +1877,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 <button
                   type='button'
                   onClick={() => setIsCartQrOpen(true)}
-                  disabled={cart.length === 0}
                   title={t.cartQr?.title || 'Cart QR'}
-                  className='h-10 w-10 flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-neutral-800/50 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                  className='h-10 w-10 flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-neutral-800/50 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700/60 transition-colors'
                 >
                   <span className='material-symbols-rounded text-xl'>qr_code_2</span>
                 </button>
@@ -2372,6 +2353,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
         t={t}
         language={language}
         onScanned={handleCartScanned}
+        resolveDrugInfo={(code) => {
+          const drug = barcodeIndex.get(code);
+          return drug ? { name: drug.name, dosageForm: drug.dosageForm } : undefined;
+        }}
       />
 
       {/* Suppliers Directory Modal */}

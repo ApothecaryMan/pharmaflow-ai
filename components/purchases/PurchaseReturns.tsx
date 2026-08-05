@@ -60,6 +60,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
     employees,
     activeBranchId,
     activeOrgId,
+    t,
     purchases,
     setPurchases: infra.setPurchases,
     purchaseReturns,
@@ -243,7 +244,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
         header: t.purchaseReturns?.tableHeaders?.purchaseId || 'PO ID',
         width: 'w-36 shrink-0',
         className: 'text-gray-900 dark:text-gray-400 justify-center text-center font-mono text-xs',
-        render: (p: Purchase) => `PO #${p.id.slice(0, 8)}`,
+        render: (p: Purchase) => `PO #${p.invoiceId || '—'}`,
       },
       {
         header: t.purchaseReturns?.tableHeaders?.supplier || 'Supplier',
@@ -396,7 +397,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
       .map((item) => {
         const qty = returnQuantities[item.drugId];
         return {
-          id: idGenerator.generateSync('returnItem', activeBranchId),
+          id: idGenerator.draftId(),
           drugId: item.drugId,
           name: item.name,
           quantityReturned: qty,
@@ -408,7 +409,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
         };
       });
 
-    const nextId = idGenerator.generateSync('returns', activeBranchId);
+    const nextId = idGenerator.draftId();
 
     const newReturn: PurchaseReturn = {
       id: nextId,
@@ -600,7 +601,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                   value={
                     poSearch ||
                     (selectedPurchase
-                      ? `PO #${selectedPurchase.id.slice(0, 8)} - ${selectedPurchase.supplierName}`
+                      ? `PO #${selectedPurchase.invoiceId || '—'} - ${selectedPurchase.supplierName}`
                       : '')
                   }
                   onSearchChange={(val) => {
@@ -649,7 +650,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                       {t.purchaseReturns?.selectedPO || 'Selected PO'}
                     </p>
                     <p className='text-sm font-bold text-gray-800 dark:text-gray-100'>
-                      PO #{selectedPurchase.id.slice(0, 8)} — {selectedPurchase.supplierName}
+                      PO #{selectedPurchase.invoiceId || '—'} — {selectedPurchase.supplierName}
                     </p>
                   </div>
                   <div className='flex gap-3 items-center'>
@@ -971,7 +972,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ color, t, lang
                     {t.purchaseReturns?.tableHeaders?.id || 'Return ID'}
                   </span>
                   <p className='font-bold text-gray-900 dark:text-white font-mono text-sm'>
-                    {viewingReturn.serialId || viewingReturn.id.substring(0, 8)}
+                    {viewingReturn.serialId || '—'}
                   </p>
                 </div>
                 <div>

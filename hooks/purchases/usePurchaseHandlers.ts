@@ -11,6 +11,7 @@ export interface UsePurchaseHandlersParams {
   employees: Employee[];
   activeBranchId: string;
   activeOrgId: string;
+  t: Translations;
   purchases: Purchase[];
   setPurchases: React.Dispatch<React.SetStateAction<Purchase[]>>;
   purchaseReturns: PurchaseReturn[];
@@ -35,6 +36,7 @@ export function usePurchaseHandlers({
   employees,
   activeBranchId,
   activeOrgId,
+  t,
   purchases,
   setPurchases,
   purchaseReturns,
@@ -48,7 +50,7 @@ export function usePurchaseHandlers({
   const { success, error, info } = useAlert();
 
   const handlePurchaseComplete = useCallback(
-    async (purchase: Purchase): Promise<boolean> => {
+    async (purchase: Purchase): Promise<Purchase | false> => {
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
       if (!currentUser) {
         error('Authentication required: Please log in to complete purchases');
@@ -78,12 +80,15 @@ export function usePurchaseHandlers({
           } else {
             info(`Purchase Order PO #${result.invoiceId} saved as pending`);
           }
-          return true;
+          return result;
         } else {
           throw new Error('Add purchase action not initialized');
         }
       } catch (err) {
-        error(`Failed to process purchase: ${err instanceof Error ? err.message : String(err)}`);
+        console.error('[Purchase] create failed:', err);
+        // No fallback number: the server failed atomically (no row, no serial
+        // consumed). Abort the whole operation with a clear message.
+        error(t.alerts?.couldNotCreateInvoice || 'Could not create the invoice, please try again.');
         return false;
       }
     },
@@ -97,6 +102,7 @@ export function usePurchaseHandlers({
       error,
       success,
       info,
+      t,
     ]
   );
 

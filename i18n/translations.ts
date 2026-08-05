@@ -1143,6 +1143,7 @@ export const TRANSLATIONS = {
         promptQuantity: 'Enter quantity:',
         confirmCloseTab:
           'This tab contains items. Are you sure you want to close it and move it to history?',
+        couldNotCreateInvoice: 'Could not create the invoice, please try again.',
       },
       // Other labels
       unknown: 'Unknown',
@@ -4859,6 +4860,7 @@ export const TRANSLATIONS = {
         promptQuantity: 'أدخل الكمية:',
         confirmCloseTab:
           'هذا التبويب يحتوي على أصناف. هل أنت متأكد من رغبتك في إغلاقه ونقله إلى السجل؟',
+        couldNotCreateInvoice: 'تعذر إنشاء الفاتورة، حاول تاني',
       },
       // Other labels
       unknown: 'غير معروف',

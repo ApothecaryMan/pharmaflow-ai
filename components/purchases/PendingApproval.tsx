@@ -65,6 +65,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
     employees,
     activeBranchId,
     activeOrgId,
+    t,
     purchases,
     setPurchases: infra.setPurchases,
     purchaseReturns: [], // not needed by PendingApproval
@@ -293,7 +294,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     </div>
                     <p className='text-[10px] text-gray-400 font-mono'>
                       {t.invCode || 'INV'}:{' '}
-                      {purchase.externalInvoiceId || purchase.invoiceId.slice(0, 8)}
+                      {purchase.externalInvoiceId || purchase.invoiceId || '—'}
                     </p>
                   </div>
                 </div>
@@ -414,7 +415,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   {
                     label: t.modal?.id || 'ID',
                     icon: 'tag',
-                    value: selectedPurchase.invoiceId || selectedPurchase.id.slice(0, 8),
+                    value: selectedPurchase.invoiceId || '—',
                   },
                   {
                     label: t.supplier || 'Supplier',
