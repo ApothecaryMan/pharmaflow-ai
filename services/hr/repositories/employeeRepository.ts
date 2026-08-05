@@ -3,9 +3,9 @@ import { supabase } from '../../../lib/supabase';
 import type { Employee } from '../../../types';
 
 const EMPLOYEE_LIST_COLUMNS =
-  'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, username, auth_user_id, photo, cover_style, design_settings';
+  'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, username, auth_user_id, photo, cover_style, design_settings, biometric_credential_id';
 
-const EMPLOYEE_FULL_COLUMNS = `${EMPLOYEE_LIST_COLUMNS}, notes, password, biometric_credential_id, biometric_public_key, national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card`;
+const EMPLOYEE_FULL_COLUMNS = `${EMPLOYEE_LIST_COLUMNS}, notes, password, biometric_public_key, national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card`;
 
 interface WorkspaceRpcRow {
   id: string;

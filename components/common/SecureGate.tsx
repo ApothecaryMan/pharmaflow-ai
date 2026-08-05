@@ -3,7 +3,6 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { supabase } from '../../lib/supabase';
-import { hashPassword } from '../../services/auth/hashUtils';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
 import { isWebAuthnSupported } from '../../utils/webAuthnUtils';
@@ -75,17 +74,16 @@ export const SecureGate: React.FC<SecureGateProps> = ({
     setIsLoading(true);
     setErrorMessage('');
 
-    try {
-      // Hash the password client-side, then verify server-side via RPC
-      // The stored hash NEVER leaves the database
-      const passwordHash = await hashPassword(passwordInput);
-
-      const { data, error } = await supabase.rpc('verify_employee_credentials', {
-        p_payload: {
-          username: usernameInput.trim(),
-          passwordHash,
-        },
+    // bcrypt is non-deterministic, so we send the plain password and the server
+    // verifies it with pgcrypto.crypt(). The stored hash never leaves the server.
+    const verifyViaRpc = (username: string, password: string) =>
+      supabase.rpc('verify_employee_credentials', {
+        p_payload: { username, password },
       });
+
+    try {
+      const username = usernameInput.trim();
+      const { data, error } = await verifyViaRpc(username, passwordInput);
 
       if (error) {
         console.error('[SecureGate] RPC error:', error);
@@ -94,15 +92,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
       }
 
       if (!data?.success) {
-        // Map server error codes to user-facing messages
-        const errorMap: Record<string, string> = {
-          username_required: t.secureGate.usernameRequiredError,
-          password_required: t.secureGate.passwordRequiredError,
-          user_not_found: t.secureGate.usernameNotFoundError,
-          no_password_set: t.secureGate.verificationFailedError,
-          invalid_credentials: t.secureGate.incorrectPassword,
-        };
-        setErrorMessage(errorMap[data?.error] || t.secureGate.verificationFailedError);
+        setErrorMessage(errorMap(data?.error));
         return;
       }
 
@@ -123,6 +113,17 @@ export const SecureGate: React.FC<SecureGateProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const errorMap = (code?: string) => {
+    const map: Record<string, string> = {
+      username_required: t.secureGate.usernameRequiredError,
+      password_required: t.secureGate.passwordRequiredError,
+      user_not_found: t.secureGate.usernameNotFoundError,
+      no_password_set: t.secureGate.verificationFailedError,
+      invalid_credentials: t.secureGate.incorrectPassword,
+    };
+    return map[code] || t.secureGate.verificationFailedError;
   };
 
   const handleBiometricUnlock = async () => {
