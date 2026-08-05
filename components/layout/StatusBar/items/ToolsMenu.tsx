@@ -5,6 +5,7 @@ import { StatusBarItem } from '../StatusBarItem';
 import { Calculator } from './Calculator';
 import { CurrencyConverter } from './CurrencyConverter';
 import { HolidaysTracker } from './HolidaysTracker';
+import { BranchDirectory } from './BranchDirectory';
 
 export interface ToolsMenuProps {
   dropDirection?: 'up' | 'down';
@@ -23,8 +24,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const { language } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const [activeTool, setActiveTool] = useState<'converter' | 'calculator' | 'holidays'>(
-    'converter'
+  const [activeTool, setActiveTool] = useState<'converter' | 'calculator' | 'holidays' | 'directory' | null>(
+    null
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -77,54 +78,88 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
       {isOpen && (
         <div className={menuContainerClasses}>
-          {/* Segmented Control Header */}
+          {/* Header */}
           <div className='px-2 py-1.5 border-b border-(--border-divider) flex items-center justify-between'>
-            <div className='flex bg-black/5 dark:bg-white/5 p-0.5 rounded-lg border border-(--border-divider) w-[80%]'>
-              {(['converter', 'calculator', 'holidays'] as const).map((tool) => (
+            {activeTool === null ? (
+              <span className="text-sm font-medium text-(--text-primary) w-full text-center">{t.tools || 'Tools'}</span>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <button
+                    type='button'
+                    onClick={() => setActiveTool(null)}
+                    className='flex items-center justify-center w-8 h-8 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-(--text-secondary) hover:text-(--text-primary) focus:outline-none transition-colors'
+                    title={language === 'AR' ? 'رجوع' : 'Back'}
+                  >
+                    <span className='material-symbols-rounded text-[20px] rtl:-scale-x-100'>
+                      arrow_back
+                    </span>
+                  </button>
+                  <span className="text-sm font-medium text-(--text-primary)">
+                    {activeTool === 'directory'
+                      ? (language === 'AR' ? 'دليل الفروع' : 'Branches Directory')
+                      : activeTool === 'converter'
+                        ? cT?.title || 'Converter'
+                        : activeTool === 'calculator'
+                          ? t.calculator?.title || 'Calculator'
+                          : t.holidays?.title || 'Holidays'}
+                  </span>
+                </div>
+
                 <button
-                  key={tool}
                   type='button'
-                  onClick={() => setActiveTool(tool)}
-                  className={`flex-1 py-1 flex items-center justify-center rounded-md transition-all duration-200 focus:outline-none ${
-                    activeTool === tool
-                      ? 'bg-white dark:bg-white/10 text-primary-500 shadow-xs'
-                      : 'text-(--text-secondary) hover:text-(--text-primary)'
+                  onClick={() => setIsPinned(!isPinned)}
+                  className={`flex items-center justify-center w-8 h-8 rounded-full focus:outline-none hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${
+                    isPinned ? 'text-primary-500' : 'text-(--text-tertiary) hover:text-(--text-primary)'
                   }`}
-                  title={
-                    tool === 'converter'
+                  title={isPinned ? 'Unpin' : 'Pin to stay open'}
+                >
+                  <span className='material-symbols-rounded text-[18px] leading-none'>keep</span>
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className='p-3' style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
+            {activeTool === null ? (
+              <div className='flex flex-col space-y-1'>
+                {(['directory', 'converter', 'calculator', 'holidays'] as const).map((tool) => {
+                  const title = tool === 'directory'
+                    ? (language === 'AR' ? 'دليل الفروع' : 'Branches Directory')
+                    : tool === 'converter'
                       ? cT?.title || 'Converter'
                       : tool === 'calculator'
                         ? t.calculator?.title || 'Calculator'
-                        : t.holidays?.title || 'Holidays'
-                  }
-                >
-                  <span className='material-symbols-rounded text-base leading-none'>
-                    {tool === 'converter'
+                        : t.holidays?.title || 'Holidays';
+                  const icon = tool === 'directory'
+                    ? 'contact_phone'
+                    : tool === 'converter'
                       ? 'payments'
                       : tool === 'calculator'
                         ? 'calculate'
-                        : 'calendar_month'}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <button
-              type='button'
-              onClick={() => setIsPinned(!isPinned)}
-              className={`flex items-center justify-center w-10 h-10 rounded-full shadow-sm focus:outline-none bg-black/5 dark:bg-white/5 ${
-                isPinned ? 'text-primary-500' : 'text-(--text-tertiary) hover:text-(--text-primary)'
-              }`}
-              title={isPinned ? 'Unpin' : 'Pin to stay open'}
-            >
-              <span className='material-symbols-rounded text-[16px] leading-none'>keep</span>
-            </button>
-          </div>
-
-          <div className='p-3 space-y-3' style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
-            {activeTool === 'calculator' && <Calculator />}
-            {activeTool === 'converter' && <CurrencyConverter />}
-            {activeTool === 'holidays' && <HolidaysTracker />}
+                        : 'calendar_month';
+                  return (
+                    <button
+                      key={tool}
+                      type='button'
+                      onClick={() => setActiveTool(tool)}
+                      className='flex items-center gap-3 p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-(--text-secondary) hover:text-(--text-primary) transition-colors focus:outline-none w-full text-start'
+                      title={title}
+                    >
+                      <span className='material-symbols-rounded text-[20px]'>{icon}</span>
+                      <span className='text-sm font-medium'>{title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className='space-y-3'>
+                {activeTool === 'directory' && <BranchDirectory />}
+                {activeTool === 'calculator' && <Calculator />}
+                {activeTool === 'converter' && <CurrencyConverter />}
+                {activeTool === 'holidays' && <HolidaysTracker />}
+              </div>
+            )}
           </div>
         </div>
       )}

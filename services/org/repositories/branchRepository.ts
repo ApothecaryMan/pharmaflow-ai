@@ -2,9 +2,9 @@ import { supabase } from '../../../lib/supabase';
 import type { Branch } from '../../../types';
 
 const BRANCH_LIST_COLUMNS =
-  'id, org_id, code, name, status, phone, governorate, city, area, delivery_fee, monthly_sales_target';
+  'id, org_id, code, name, status, phone, address, governorate, city, area, delivery_fee, monthly_sales_target, shift_start_time';
 
-const BRANCH_FULL_COLUMNS = `${BRANCH_LIST_COLUMNS}, address, delivery_fee, monthly_sales_target, shift_start_time, latitude, longitude, print_settings, created_at, updated_at`;
+const BRANCH_FULL_COLUMNS = `${BRANCH_LIST_COLUMNS}, latitude, longitude, print_settings, created_at, updated_at`;
 
 export const branchRepository = {
   tableName: 'branches',
