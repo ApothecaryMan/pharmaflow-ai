@@ -6,7 +6,7 @@
  */
 
 /**
- * Standardizes the display of expiry dates as MM/YY.
+ * Standardizes the display of expiry dates as MM/YYYY.
  * Handles Date objects, ISO strings (YYYY-MM-DD), YYYY-MM strings, and MM/YYYY strings.
  */
 export const formatExpiryDate = (expiryDate: any): string => {
@@ -15,13 +15,13 @@ export const formatExpiryDate = (expiryDate: any): string => {
   // Handle YYYY-MM strings directly for efficiency
   if (typeof expiryDate === 'string' && /^\d{4}-\d{2}$/.test(expiryDate)) {
     const [year, month] = expiryDate.split('-');
-    return `${month}/${year.slice(-2)}`;
+    return `${month}/${year}`;
   }
 
   // Handle YYYY-MM-DD strings directly
   if (typeof expiryDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(expiryDate)) {
     const [year, month] = expiryDate.split('-');
-    return `${month}/${year.slice(-2)}`;
+    return `${month}/${year}`;
   }
 
   // Fallback for Date objects or ISO strings
@@ -29,7 +29,7 @@ export const formatExpiryDate = (expiryDate: any): string => {
   if (!Number.isNaN(dateObj.getTime())) {
     return dateObj.toLocaleDateString('en-US', {
       month: '2-digit',
-      year: '2-digit',
+      year: 'numeric',
     });
   }
 
@@ -38,7 +38,8 @@ export const formatExpiryDate = (expiryDate: any): string => {
     const parts = expiryDate.split('/');
     if (parts.length === 2) {
       const month = parts[0].padStart(2, '0');
-      const year = parts[1].length === 4 ? parts[1].slice(-2) : parts[1];
+      let year = parts[1];
+      if (year.length === 2) year = `20${year}`;
       return `${month}/${year}`;
     }
   }

@@ -105,7 +105,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
         <span className='text-sm font-bold text-gray-700 dark:text-gray-300 leading-tight'>
           {dateStr}
         </span>
-        <span className='text-[11px] text-gray-400 font-medium font-mono leading-tight'>
+        <span className='text-sm font-bold text-gray-400 leading-tight'>
           {timeStr}
         </span>
       </div>
@@ -126,22 +126,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
       <div className='flex-1 pt-[30px] pb-7 group-last:pb-7 border-b border-gray-100 dark:border-(--border) group-last:border-0 min-w-0'>
         <div className='flex flex-col gap-3'>
           {/* Header */}
-          <div className='flex items-center gap-2 text-sm leading-normal'>
-            {drugName && (
-              <>
-                <span
-                  className='font-black text-gray-900 dark:text-gray-100 truncate max-w-[200px]'
-                  title={drugName}
-                >
-                  {drugName}
-                </span>
-                <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
-              </>
-            )}
-            <span className={`font-bold text-sm tracking-tight ${colorClass.split(' ')[1]}`}>
-              {_isRTL ? config.arLabel : config.label}
-            </span>
-            <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
+          <div className='flex items-center flex-wrap gap-2 text-sm leading-normal'>
             <span className='text-[11px] text-(--text-secondary) font-bold flex items-center gap-1 uppercase tracking-wider max-w-[150px]'>
               <span
                 className='material-symbols-rounded shrink-0'
@@ -151,6 +136,21 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               </span>
               <span className='truncate'>{performedBy}</span>
             </span>
+            <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
+            <span className={`font-bold text-sm tracking-tight ${colorClass.split(' ')[1]}`}>
+              {_isRTL ? config.arLabel : config.label}
+            </span>
+            {drugName && (
+              <>
+                <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
+                <span
+                  className='font-black text-gray-900 dark:text-gray-100'
+                  title={drugName}
+                >
+                  {drugName}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Main Stats Row */}
@@ -245,12 +245,6 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                     <div
                       className={`flex items-center gap-1 text-[11px] font-bold text-${config.color}-600 dark:text-${config.color}-400/80`}
                     >
-                      <span
-                        className='material-symbols-rounded opacity-80'
-                        style={{ fontSize: 'var(--icon-sm)' }}
-                      >
-                        {status === 'invalid' ? 'event_busy' : 'event_available'}
-                      </span>
                       <span>{formatExpiryDate(expiryDate)}</span>
                     </div>
                   );

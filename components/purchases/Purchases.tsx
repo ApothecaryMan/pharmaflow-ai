@@ -304,7 +304,7 @@ Cost Price: ${item.costPrice}`
           />
           {/* Actual units floating badge on hover — absolute position without row height change */}
           {(item.unitsPerPack ?? 1) > 1 && item.quantity > 0 && (
-            <div 
+            <div
               className='absolute -top-2 -right-1 hidden group-hover/qty:flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-600 dark:bg-primary-500 text-white rounded-full text-[10px] font-black shadow-md z-40 pointer-events-none tabular-nums'
               dir={language === 'AR' ? 'rtl' : 'ltr'}
             >
@@ -1236,8 +1236,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     if (added.length > 0) {
       showToastSuccess(
-        `${added.length} ${t.cartQr?.done || 'items added'}${
-          notFound.length ? ` • ${notFound.length} ${t.cartQr?.notFound || 'not found'}` : ''
+        `${added.length} ${t.cartQr?.done || 'items added'}${notFound.length ? ` • ${notFound.length} ${t.cartQr?.notFound || 'not found'}` : ''
         }`
       );
     } else {
@@ -2095,7 +2094,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{t.tableHeaders?.barcode || 'Barcode'}</th>
                           <th className='h-10 align-middle px-3 font-semibold'>{t.headers?.product || 'Product'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-14'>{t.cartFields?.qty || 'Qty'}</th>
-                          <th className='h-10 align-middle px-1 text-center font-semibold w-16'>{t.cartFields?.expiry || 'Expiry'}</th>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-22'>{t.cartFields?.expiry || 'Expiry'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-24'>{t.cartFields?.batchNumber || 'Batch #'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.cost || 'Cost'}</th>
                           {showUnitPrices && <th className='h-10 align-middle px-1 text-center font-semibold w-28'>{t.cartFields?.unitCost || 'U. Cost'}</th>}
@@ -2345,7 +2344,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         </div>
       </div>
 
-{/* Cart QR Export / Import Modal */}
+      {/* Cart QR Export / Import Modal */}
       <CartQRModal
         isOpen={isCartQrOpen}
         onClose={() => setIsCartQrOpen(false)}
