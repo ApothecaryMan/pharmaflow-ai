@@ -29,6 +29,7 @@ export interface POSCustomerPanelProps {
   paymentMethod: 'cash' | 'visa';
   setPaymentMethod: (method: 'cash' | 'visa') => void;
   onShowHistory?: () => void;
+  customerSearchRef?: React.RefObject<HTMLInputElement>;
 }
 
 export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
@@ -50,6 +51,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
   paymentMethod,
   setPaymentMethod,
   onShowHistory,
+  customerSearchRef,
 }) => {
   const paymentOptions = [
     {
@@ -210,6 +212,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
               {t.customerInfo}
             </span>
             <SearchInput
+              ref={customerSearchRef}
               value={customerName}
               onSearchChange={(val) => {
                 setCustomerName(val);

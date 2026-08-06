@@ -165,6 +165,39 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const customerSearchRef = useRef<HTMLInputElement>(null);
+
+  // Local capture listener for Insert key to toggle between customer and product search safely
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Insert' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Stop KeyboardProvider from handling this
+        e.stopPropagation();
+        e.preventDefault();
+
+        const activeEl = document.activeElement as HTMLElement | null;
+        
+        // If currently focused on customer search, jump to drug search
+        if (customerSearchRef.current && (activeEl === customerSearchRef.current || customerSearchRef.current.contains(activeEl))) {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        } 
+        // If currently focused on drug search, jump to customer search
+        else if (searchInputRef.current && (activeEl === searchInputRef.current || searchInputRef.current.contains(activeEl))) {
+          customerSearchRef.current?.focus();
+          customerSearchRef.current?.select();
+        } 
+        // Otherwise default to focusing drug search
+        else {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
+  }, []);
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>(
     'overview'
@@ -1049,6 +1082,7 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
               setHistoryCustomer(selectedCustomer);
               setIsHistoryModalOpen(true);
             }}
+            customerSearchRef={customerSearchRef}
           />
 
           {/* Search & Filter - No Card Container */}

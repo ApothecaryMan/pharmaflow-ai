@@ -75,6 +75,17 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const { showMenu, hideMenu, isMouseOverMenu } = useContextMenu();
     const filterLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isCapsLock, setIsCapsLock] = useState(false);
+    
+    // Internal ref for focus management when external ref is not provided
+    const internalRef = useRef<HTMLInputElement>(null);
+    const setRefs = (element: HTMLInputElement | null) => {
+      internalRef.current = element;
+      if (typeof ref === 'function') {
+        ref(element);
+      } else if (ref) {
+        ref.current = element;
+      }
+    };
 
     // --- Autocomplete Logic ---
     const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
@@ -204,6 +215,11 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
     useEffect(() => {
       if (!expanded) return;
+      setTimeout(() => {
+        if (internalRef.current) {
+          internalRef.current.focus();
+        }
+      }, 10);
       const handleClickOutside = (e: MouseEvent | TouchEvent) => {
         if (expandRef.current && !expandRef.current.contains(e.target as Node)) {
           setExpanded(false);
@@ -326,7 +342,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                     >
                       {renderLeadingIcon()}
                       <input
-                        ref={ref}
+                        data-search-input="true"
+                        ref={setRefs}
                         type='text'
                         value={value}
                         onChange={(e) => onSearchChange(e.target.value)}
@@ -356,6 +373,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               ) : (
                 <button
                   type='button'
+                  data-search-button="true"
                   onClick={() => setExpanded(true)}
                   className='relative flex items-center justify-center gap-2 px-3 h-pageheader rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 custom-card-css-target no-padding hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
                 >
@@ -391,7 +409,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               >
                 {renderLeadingIcon()}
                 <input
-                  ref={ref}
+                  data-search-input="true"
+                  ref={setRefs}
                   type='text'
                   value={value}
                   onChange={(e) => onSearchChange(e.target.value)}
@@ -430,7 +449,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         >
           {renderLeadingIcon()}
           <input
-            ref={ref}
+            data-search-input="true"
+            ref={setRefs}
             type='text'
             value={value}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -509,6 +529,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         `}
         >
           <input
+            data-search-input="true"
             ref={ref}
             {...props}
             type='search'

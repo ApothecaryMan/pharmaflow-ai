@@ -194,7 +194,7 @@ export function KeyboardProvider({
         return;
       }
 
-      if (isInput && !isFunctionKey && !hasModifier && e.key !== 'Escape') {
+      if (isInput && !isFunctionKey && !hasModifier && e.key !== 'Escape' && e.key !== 'Insert') {
         return;
       }
 
@@ -216,6 +216,49 @@ export function KeyboardProvider({
       if (e.key === 'F1') {
         e.preventDefault();
         setShortcutsOverlayOpen(true);
+        return;
+      }
+
+      if (e.key === 'Insert' && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+        e.preventDefault();
+        
+        // Find active modals to restrict search context
+        const activeModals = Array.from(document.querySelectorAll('[data-modal-open="true"]'));
+        const searchContext = activeModals.length > 0 ? activeModals[activeModals.length - 1] : document;
+
+        // Find all standard search inputs or expand buttons in the active context (Modal or Page)
+        const searchElements = Array.from(
+          searchContext.querySelectorAll<HTMLElement>('input[data-search-input="true"], button[data-search-button="true"]')
+        ).filter(el => {
+          if ((el as HTMLInputElement).disabled) return false;
+          // Robust visibility check
+          return el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0;
+        });
+
+        if (searchElements.length > 0) {
+          const currentIndex = searchElements.findIndex(el => el === document.activeElement);
+          
+          if (currentIndex >= 0) {
+            // If one is already focused, cycle to the next one
+            const nextIndex = (currentIndex + 1) % searchElements.length;
+            const nextEl = searchElements[nextIndex];
+            if (nextEl.tagName === 'BUTTON') {
+              nextEl.click();
+            } else {
+              nextEl.focus();
+              (nextEl as HTMLInputElement).select?.();
+            }
+          } else {
+            // Focus the first Search element found
+            const firstEl = searchElements[0];
+            if (firstEl.tagName === 'BUTTON') {
+              firstEl.click();
+            } else {
+              firstEl.focus();
+              (firstEl as HTMLInputElement).select?.();
+            }
+          }
+        }
         return;
       }
 

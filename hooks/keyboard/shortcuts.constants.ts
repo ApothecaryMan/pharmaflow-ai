@@ -22,6 +22,14 @@ export const SHORTCUT_CATEGORIES: ShortcutCategory[] = [
         scope: 'global',
       },
       {
+        id: 'global.focus-search',
+        keys: 'insert',
+        label: 'Focus Search',
+        labelAr: 'التركيز على البحث',
+        category: 'Global',
+        scope: 'global',
+      },
+      {
         id: 'global.nav-pos',
         keys: 'alt+1',
         label: 'Navigate → POS',
