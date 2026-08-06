@@ -74,11 +74,25 @@ function bumpVersion() {
     // 4. Update public/version.json
     if (fs.existsSync(versionJsonPath)) {
       const versionJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
-      const _oldReleaseDate = versionJson.releaseDate;
+      const oldVersion = versionJson.version;
+      const oldReleaseDate = versionJson.releaseDate;
+      const oldNotes = versionJson.notes;
       const newReleaseDate = new Date().toISOString().split('T')[0];
 
       const notesAr = parseArg('notes-ar');
       const notesEn = parseArg('notes-en');
+
+      // Preserve the outgoing version as history (max 3 entries total: new + 2 previous).
+      const history = Array.isArray(versionJson.history) ? versionJson.history : [];
+      if (oldVersion && oldVersion !== newVersion) {
+        history.unshift({
+          version: oldVersion,
+          releaseDate: oldReleaseDate,
+          notes: oldNotes,
+        });
+        // Keep at most 2 previous entries so current + history stays <= 3.
+        while (history.length > 2) history.pop();
+      }
 
       versionJson.version = newVersion;
       versionJson.releaseDate = newReleaseDate;
@@ -90,6 +104,8 @@ function bumpVersion() {
         EN:
           notesEn ?? versionJson.notes?.EN ?? 'General improvements and system stability updates.',
       };
+
+      versionJson.history = history;
 
       fs.writeFileSync(versionJsonPath, `${JSON.stringify(versionJson, null, 2)}\n`);
       console.log(`✅ Updated public/version.json (Date: ${newReleaseDate})`);

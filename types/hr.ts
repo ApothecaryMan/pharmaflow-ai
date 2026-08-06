@@ -39,6 +39,8 @@ export interface Employee {
   biometricCredentialId?: string; // WebAuthn Credential ID
   biometricPublicKey?: string; // WebAuthn Public Key (Base64)
   attendancePin?: string; // Hashed 4-digit PIN (bcrypt) — fallback for non-biometric devices
+  /** Highest app version whose changelog this employee has already seen. */
+  lastSeenChangelogVersion?: string;
 
   // --- Profile ---
   image?: string; // Base64 encoded profile image

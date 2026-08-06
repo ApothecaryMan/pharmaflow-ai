@@ -5,5 +5,23 @@
     "AR": "مرحباً بك في التحديث الجديد!\n\nما الجديد في هذه النسخة:\n• إشعار فوري بالتحديثات: عند تثبيت نسخة جديدة ستظهر لك نافذة توضح ملخص التحسينات والإضافات.\n• واجهة أدوات محسّنة: أدوات القائمة أصبحت أوضح مع أيقونات أكثر حداثة.\n• عروض أفضل للتواريخ: عرض صلاحية الأصناف بسهولة أكبر ووضوح أعلى في الجدول الزمني.\n• تنظيف الجداول: إزالة أيقونات متكررة وتوسيع أعمدة المعرفات لعرض أسهل.\n• تجربة تصفح أهدأ: تحسين إخفاء أشرطة التمرير لتجربة أنظف أثناء العمل.\n• استقرار النظام: إصلاحات لتحسين موثوقية الاتصال بقاعدة البيانات.",
     "EN": "Welcome to the new release!\n\nWhat's new in this version:\n• Instant update notices: after installing a new version, a window shows you a summary of what changed and what's new.\n• Improved tools menu: clearer menu with more modern icons.\n• Better date displays: product expiry shown more clearly and tidier in the timeline.\n• Cleaner tables: removed redundant icons and widened ID columns for easier reading.\n• Smoother scrolling experience while you work.\n• System stability: fixes to improve database connection reliability."
   },
+  "history": [
+    {
+      "version": "2.0.74",
+      "releaseDate": "2026-08-05",
+      "notes": {
+        "AR": "ما الجديد في هذه النسخة:\n• أمان أقوى لتسجيل الدخول: تحقق محسّن من كلمات المرور مع دعم ترقية تلقائية للبيانات القديمة.\n• فواتير الشراء: أرقام فواتير أوتوماتيكية من الخادم مع إمكانية فحص الباركود وإضافة الصنف مباشرة من عربة الشراء.\n• أدوات أسهل: إضافة مجلد الفروع إلى قائمة الأدوات في الشريط السفلي.\n• أرقام أوامر واضحة: عرض الأرقام الكاملة من النظام بدلاً من معرفات مختصرة.",
+        "EN": "What's new in this version:\n• Stronger login security: improved password verification with automatic upgrade for legacy accounts.\n• Purchase invoices: server-generated invoice numbers with barcode scan and add-to-cart workflow.\n• Easier tools: added the branches directory to the bottom-bar tools menu.\n• Clearer order numbers: full system serials shown instead of truncated IDs."
+      }
+    },
+    {
+      "version": "2.0.73",
+      "releaseDate": "2026-08-03",
+      "notes": {
+        "AR": "ما الجديد في هذه النسخة:\n• تحسينات واسعة في واجهة المشتريات وتجربة الاستخدام.\n• إعادة تصميم سلة الشراء وتحسين عرض الأصناف والجداول.\n• إصلاحات وتحسينات في أداء النظام واستقراره.",
+        "EN": "What's new in this version:\n• Extensive purchases UI and usability improvements.\n• Redesigned cart and better item/table presentation.\n• Performance and stability fixes."
+      }
+    }
+  ],
   "forceUpdate": false
 }

@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import type { Employee } from '../../../types';
 
 const EMPLOYEE_LIST_COLUMNS =
-  'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, username, auth_user_id, photo, cover_style, design_settings, biometric_credential_id';
+  'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, username, auth_user_id, photo, cover_style, design_settings, biometric_credential_id, last_seen_changelog_version';
 
 const EMPLOYEE_FULL_COLUMNS = `${EMPLOYEE_LIST_COLUMNS}, notes, password, biometric_public_key, national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card`;
 
@@ -70,6 +70,7 @@ export const employeeRepository = {
       userId: db.auth_user_id || undefined,
       password: db.password || undefined,
       biometricCredentialId: db.biometric_credential_id || undefined,
+      lastSeenChangelogVersion: db.last_seen_changelog_version || undefined,
       biometricPublicKey: db.biometric_public_key || undefined,
       image: db.photo || undefined,
       coverStyle: db.cover_style || undefined,
@@ -103,6 +104,8 @@ export const employeeRepository = {
     if (e.userId !== undefined) db.auth_user_id = e.userId;
     if (e.password !== undefined) db.password = e.password;
     if (e.biometricCredentialId !== undefined) db.biometric_credential_id = e.biometricCredentialId;
+    if (e.lastSeenChangelogVersion !== undefined)
+      db.last_seen_changelog_version = e.lastSeenChangelogVersion;
     if (e.biometricPublicKey !== undefined) db.biometric_public_key = e.biometricPublicKey;
     if (e.image !== undefined) db.photo = e.image;
     if (e.coverStyle !== undefined) db.cover_style = e.coverStyle;
@@ -177,6 +180,15 @@ export const employeeRepository = {
       .maybeSingle();
     if (error) throw error;
     return data?.photo || null;
+  },
+
+  /** Marks the highest app version whose changelog this employee has seen. */
+  async setLastSeenChangelogVersion(id: string, version: string): Promise<void> {
+    const { error } = await supabase
+      .from(this.tableName)
+      .update({ last_seen_changelog_version: version })
+      .eq('id', id);
+    if (error) throw error;
   },
 
   async insert(employee: Employee): Promise<void> {

@@ -6013,7 +6013,7 @@ export const TRANSLATIONS = {
       help: '@@import(./cashRegisterHelp.json)',
     },
     shiftHistory: {
-      title: 'سجل الورديـــــات',
+      title: 'سجل الورديات',
       subtitle: 'عرض ورديات سجل النقدية السابقة',
       searchPlaceholder: 'بحث برقم الوردية أو المستخدم...',
       activeNow: 'نشطة حالياً',

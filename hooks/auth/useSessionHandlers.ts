@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { dispatchEmployeeActivated } from '../../components/features/updates/changelogEvents';
 import { MODULE_VIEW_MAPPING, PHARMACY_MENU } from '../../config/menuData';
 import { ROUTES } from '../../config/routes';
 import { StorageKeys } from '../../config/storageKeys';
@@ -186,6 +187,14 @@ export const useSessionHandlers = ({
             setActiveModule(targetModule);
 
             setCurrentEmployeeId(id);
+            // Real session boundary: login or employee switch → allow the
+            // changelog modal to (re)assess for this identity.
+            if (session.userId) {
+              dispatchEmployeeActivated({
+                employeeId: id,
+                lastSeenChangelogVersion: selectedEmployee.lastSeenChangelogVersion,
+              });
+            }
           }
         }
       }
