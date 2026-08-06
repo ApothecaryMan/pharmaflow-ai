@@ -80,25 +80,17 @@ export const MemoizedCell = React.memo(
       <td
         data-no-convert={isTechnical ? 'true' : undefined}
         className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
-      ${meta?.isFlex ? 'min-w-0 overflow-hidden' : 'whitespace-nowrap'} ${meta?.isAction ? 'action-col' : ''}`}
+      ${meta?.isFlex ? 'min-w-0 overflow-hidden' : 'truncate'} ${meta?.isAction ? 'action-col' : ''}`}
         style={{
-          width: getColumnWidth(cell.column, meta?.isFlex, columnSizing),
+          width: getColumnWidth(cell.column, meta, columnSizing),
           minWidth: meta?.minWidth,
         }}
         dir={cellDir}
       >
         <div className={`flex items-center gap-1.5 w-full min-w-0 ${meta?.justifyClass}`}>
-          {meta?.isId && (
-            <span
-              className='material-symbols-rounded text-gray-400 shrink-0'
-              style={{ fontSize: 'var(--icon-md)' }}
-            >
-              tag
-            </span>
-          )}
           <span
             className={
-              meta?.isFlex ? `min-w-0 w-full block ${meta.textAlignClass || ''}` : undefined
+              meta?.isFlex ? `min-w-0 w-full block ${meta.textAlignClass || ''}` : 'truncate min-w-0 block'
             }
             dir={meta?.isId ? 'ltr' : undefined}
           >

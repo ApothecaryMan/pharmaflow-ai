@@ -950,8 +950,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         ${textAlignClass}
                         ${isFlex ? '' : 'w-[1%] whitespace-nowrap'}`}
                           style={{
-                            width: getColumnWidth(header.column, isFlex, columnSizing),
-                            minWidth: header.column.columnDef.meta?.minWidth,
+                            width: getColumnWidth(header.column, meta, columnSizing),
+                            minWidth: meta?.minWidth,
                           }}
                         >
                           <ContextMenuTrigger

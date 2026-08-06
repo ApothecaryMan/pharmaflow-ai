@@ -122,9 +122,12 @@ export const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end'
   return 'start';
 };
 
-export const getColumnWidth = (column: any, isFlex: boolean, columnSizing: any) => {
+export const getColumnWidth = (column: any, meta: any, columnSizing: any) => {
   const isResized = columnSizing && !!columnSizing[column.id];
-  return isFlex && !isResized ? 'auto' : column.getSize();
+  if (meta?.isFlex && !isResized) return 'auto';
+  const size = column.getSize();
+  if (!isResized && meta?.isId && size === 150) return 190;
+  return size;
 };
 
 export const getCellDirection = (columnId: string, meta: any, _cellValue: any, isRtl: boolean) => {
@@ -203,7 +206,7 @@ export const computeColumnMeta = (column: any, columnAlignment: Record<string, a
     textAlignClass: getTextAlignClass(align),
     itemsAlignClass: getItemsAlignClass(align),
     width: meta?.width,
-    minWidth: meta?.minWidth,
+    minWidth: meta?.minWidth || (isId ? 190 : undefined),
     smartDate: meta?.smartDate !== false,
   };
 };
