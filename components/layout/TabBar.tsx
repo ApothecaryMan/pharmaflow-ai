@@ -7,7 +7,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { restrictToHorizontalAxis, restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { restrictToHorizontalAxis, restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   horizontalListSortingStrategy,
@@ -422,7 +422,7 @@ export const TabBar: React.FC<TabBarProps> = ({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
-      modifiers={[vertical ? restrictToVerticalAxis : restrictToHorizontalAxis]}
+      modifiers={[vertical ? restrictToVerticalAxis : restrictToHorizontalAxis, restrictToParentElement]}
     >
       <div
         className={

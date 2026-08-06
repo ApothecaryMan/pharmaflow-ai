@@ -9,7 +9,6 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   SortableContext,
@@ -17,6 +16,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis, restrictToWindowEdges, restrictToParentElement } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { TabBar } from '../../components/layout/TabBar';
@@ -153,7 +153,7 @@ const CartTableRow = React.memo(
     const style = {
       transform: CSS.Transform.toString(transform),
       transition,
-      ...(isDragging ? { zIndex: 50, position: 'relative' as const, boxShadow: '0 5px 15px rgba(0,0,0,0.1)' } : {}),
+      ...(isDragging ? { zIndex: 50, position: 'relative' as const } : {}),
     };
 
     const isCellSelected = (field: keyof PurchaseItem | 'rowSelection') => {
@@ -195,7 +195,7 @@ const CartTableRow = React.memo(
         }}
         style={style}
         onClick={() => setSelectedCartIndex(index)}
-        className={`group transition-colors bg-(--bg-page-surface) ${isDragging ? 'opacity-90 bg-white/95 dark:bg-gray-800/90' : ''}`}
+        className={`group transition-colors bg-(--bg-page-surface) ${isDragging ? 'is-dragging !bg-white dark:!bg-gray-800 outline-2 outline-dashed outline-primary-500' : ''}`}
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -379,7 +379,7 @@ Cost Price: ${item.costPrice}`
               }`}
             onFocus={(e) => {
               setSelectedCartIndex(index);
-              setTimeout(() => e.target.select(), 10);
+              e.target.select();
             }}
             onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
           />
@@ -2081,16 +2081,19 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
-                  modifiers={[restrictToVerticalAxis]}
+                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
                 >
                   <div
                     ref={tableContainerRef}
+                    onDragStart={(e) => e.preventDefault()}
                     className='relative h-full overflow-auto no-scrollbar bg-(--bg-page-surface) border border-(--border-primary) shadow-sm shadow-gray-900/5 rounded-lg select-none'
                   >
                     <table dir='ltr' className='w-full text-left border-separate border-spacing-0 [&_th]:border-b [&_th]:border-r [&_td]:border-b [&_td]:border-r [&_th]:border-(--border-primary) [&_td]:border-(--border-primary) [&_th:last-child]:border-r-0 [&_td:last-child]:border-r-0'>
                       <thead className='sticky top-0 z-30 bg-(--bg-page-surface) backdrop-blur-sm rounded-t-lg'>
-                        <tr className='text-[10px] uppercase text-(--text-tertiary)'>
-                          <th className='h-10 align-middle px-1 text-center font-semibold w-[60px] text-(--text-tertiary)'>#</th>
+                        <tr style={{ fontSize: '14px' }} className='uppercase text-(--text-tertiary)'>
+                          <th className='h-10 align-middle px-1 text-center font-semibold w-[60px] text-(--text-tertiary)'>
+                            <span className="material-symbols-rounded text-[16px] align-middle">numbers</span>
+                          </th>
                           <th className='h-10 align-middle px-2 font-semibold w-24 text-start'>{t.tableHeaders?.barcode || 'Barcode'}</th>
                           <th className='h-10 align-middle px-3 font-semibold'>{t.headers?.product || 'Product'}</th>
                           <th className='h-10 align-middle px-1 text-center font-semibold w-14'>{t.cartFields?.qty || 'Qty'}</th>
@@ -2107,7 +2110,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         </tr>
                       </thead>
                       <SortableContext items={cart.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                        <tbody>
+                        <tbody className="[&_.is-dragging_+_tr_td]:shadow-[inset_0_1px_0_var(--border-primary)]">
                           {cart.map((item, index) => (
                             <CartTableRow
                               key={item.id}

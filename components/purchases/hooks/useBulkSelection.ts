@@ -116,11 +116,15 @@ export function useBulkSelection<T>() {
     };
 
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('dragend', handleMouseUp);
+    window.addEventListener('blur', handleMouseUp);
     window.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('dragend', handleMouseUp);
+      window.removeEventListener('blur', handleMouseUp);
       window.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('keydown', handleKeyDown);
     };
