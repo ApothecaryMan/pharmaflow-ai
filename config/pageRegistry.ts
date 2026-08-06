@@ -724,6 +724,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: [],
     permission: 'system.debug' as any,
+    layout: 'full-bleed',
   },
   'scrollbar-lab': {
     id: 'scrollbar-lab',
