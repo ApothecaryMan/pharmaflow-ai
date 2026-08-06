@@ -3337,6 +3337,9 @@ export const TRANSLATIONS = {
       downloading: 'Downloading update in background...',
       appVersion: 'App Version',
       error: 'Failed to update application.',
+      changelogTitle: "What's new?",
+      changelogGotIt: 'Got it',
+      changelogFallback: 'General improvements and system stability updates.',
     },
   },
   AR: {
@@ -6672,6 +6675,9 @@ export const TRANSLATIONS = {
       downloading: 'جاري تنزيل التحديث في الخلفية...',
       appVersion: 'نسخة النظام',
       error: 'فشل تحديث التطبيق.',
+      changelogTitle: 'ما الجديد؟',
+      changelogGotIt: 'ممتاز',
+      changelogFallback: 'تحسينات عامة وتحديثات في استقرار النظام.',
     },
   },
 };

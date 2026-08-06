@@ -5,6 +5,7 @@ export const CURRENT_APP_VERSION = pkg.version;
 export const StorageKeys = {
   // Core config
   STORAGE_VERSION: 'pharma_storage_version',
+  CHANGELOG_SEEN: 'pharma_changelog_seen',
   VIEW: 'pharma_view',
   ACTIVE_MODULE: 'pharma_activeModule',
   THEME: 'pharma_theme', // Note: SettingsContext might use different keys, need to check

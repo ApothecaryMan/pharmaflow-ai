@@ -17,6 +17,18 @@ const packageLockPath = path.resolve(process.cwd(), 'package-lock.json');
 const versionJsonPath = path.resolve(process.cwd(), 'public/version.json');
 const cargoTomlPath = path.resolve(process.cwd(), 'src-tauri/Cargo.toml');
 
+function parseArg(name: string): string | undefined {
+  const flag = `--${name}`;
+  const index = process.argv.indexOf(flag);
+  if (index === -1) return undefined;
+  const value = process.argv[index + 1];
+  if (value === undefined || value.startsWith('--')) {
+    console.error(`❌ Error: Missing value for "--${name}".`);
+    process.exit(1);
+  }
+  return value;
+}
+
 function bumpVersion() {
   try {
     // 1. Read package.json
@@ -65,14 +77,18 @@ function bumpVersion() {
       const _oldReleaseDate = versionJson.releaseDate;
       const newReleaseDate = new Date().toISOString().split('T')[0];
 
+      const notesAr = parseArg('notes-ar');
+      const notesEn = parseArg('notes-en');
+
       versionJson.version = newVersion;
       versionJson.releaseDate = newReleaseDate;
 
-      // Keep old notes as a template if it was a manual bump without notes
-      // Or set default ones
+      // Keep previous notes as a template if none provided,
+      // or set default ones on the very first bump.
       versionJson.notes = {
-        AR: 'تحسينات عامة وتحديثات في استقرار النظام.',
-        EN: 'General improvements and system stability updates.',
+        AR: notesAr ?? versionJson.notes?.AR ?? 'تحسينات عامة وتحديثات في استقرار النظام.',
+        EN:
+          notesEn ?? versionJson.notes?.EN ?? 'General improvements and system stability updates.',
       };
 
       fs.writeFileSync(versionJsonPath, `${JSON.stringify(versionJson, null, 2)}\n`);

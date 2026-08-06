@@ -42,6 +42,7 @@ const EmployeeSetupScreen = lazy(() =>
 );
 
 import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
+import { ChangelogModal } from './components/features/updates/ChangelogModal';
 
 import { ROUTES } from './config/routes';
 import { useAlert, useSettings } from './context';
@@ -378,6 +379,7 @@ const App: React.FC = () => {
     <div className='h-dvh flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
       <div className='flex-1 overflow-hidden relative'>
         {showNotificationOverlay !== false && <NotificationOverlay />}
+        <ChangelogModal />
         {finalContent}
       </div>
 
