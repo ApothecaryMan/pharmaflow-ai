@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatDateWithRelativeLabel } from '../../../utils/dateFormatter';
 import { CURRENT_APP_VERSION } from '../../../config/storageKeys';
 import { useSettings } from '../../../context';
 import { TRANSLATIONS } from '../../../i18n/translations';
@@ -100,21 +101,28 @@ export const ChangelogModal: React.FC = () => {
         icon='auto_awesome'
         size='lg'
         preventSidebar
+        disableHeaderContextMenu
         closeOnBackdropClick
-        backdropStyle={{ backdropFilter: 'none', WebkitBackdropFilter: 'none' }}
         zIndex={60}
-        footer={
-          <button
-            type='button'
-            onClick={handleClose}
-            className='w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-sm font-semibold transition-colors cursor-pointer'
-          >
-            {t?.changelogGotIt || (language === 'AR' ? 'ممتاز' : 'Got it')}
-          </button>
-        }
       >
         <div dir={language === 'AR' ? 'rtl' : 'ltr'} className='max-h-[60vh] overflow-y-auto py-1'>
           {latestEntry && <VersionBlock entry={latestEntry} />}
+          
+          <div className='mt-6 flex flex-col items-center gap-3 w-full'>
+            {latestEntry && (
+              <div className='text-xs text-gray-400 dark:text-gray-500 font-medium'>
+                v{latestEntry.version}
+                {latestEntry.releaseDate && ` • ${formatDateWithRelativeLabel(latestEntry.releaseDate, language).label}`}
+              </div>
+            )}
+            <button
+              type='button'
+              onClick={handleClose}
+              className='w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-sm font-semibold transition-colors cursor-pointer'
+            >
+              {t?.changelogGotIt || (language === 'AR' ? 'ممتاز' : 'Got it')}
+            </button>
+          </div>
         </div>
       </Modal>
     </ContextMenuProvider>
@@ -134,8 +142,8 @@ const VersionBlock: React.FC<VersionBlockProps> = ({ entry }) => {
 
   const headingText =
     language === 'AR'
-      ? `ما الجديد في هذه النسخة (v${entry.version})؟`
-      : `What's new in this version (v${entry.version})?`;
+      ? `ما الجديد في هذه النسخة؟`
+      : `What's new in this version?`;
 
   const parsed = useMemo(() => {
     const lines = notesRaw
@@ -182,7 +190,6 @@ const VersionBlock: React.FC<VersionBlockProps> = ({ entry }) => {
             <span className='relative'>{headingText}</span>
           </span>
         </h3>
-        {entry.releaseDate && <span className='text-xs opacity-50'>{entry.releaseDate}</span>}
       </div>
 
       {parsed.bullets.length > 0 ? (

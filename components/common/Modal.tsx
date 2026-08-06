@@ -119,6 +119,11 @@ interface ModalProps {
    */
   preventSidebar?: boolean;
 
+  /**
+   * Whether to disable the header context menu (which allows switching between Modal and Sidebar view).
+   */
+  disableHeaderContextMenu?: boolean;
+
   /** Enables a compact search bar below the header */
   searchable?: boolean;
   searchValue?: string;
@@ -165,6 +170,7 @@ export const Modal: React.FC<ModalProps> = ({
   style,
   backdropStyle,
   preventSidebar = false,
+  disableHeaderContextMenu = false,
   searchable = false,
   searchValue = '',
   onSearchChange,
@@ -354,9 +360,9 @@ export const Modal: React.FC<ModalProps> = ({
 
   const cardVariants = {
     modal: {
-      initial: { opacity: 0, scale: 0.95, y: 20 },
+      initial: { opacity: 0, scale: 0.9, y: 20 },
       animate: { opacity: 1, scale: 1, y: 0 },
-      exit: { opacity: 0, scale: 0.95, y: 20 },
+      exit: { opacity: 0, transition: { duration: 0.1 } },
     },
     sidebar: {
       initial: { opacity: 0, x: '100%' },
@@ -393,7 +399,7 @@ export const Modal: React.FC<ModalProps> = ({
             {/* Backdrop */}
             <motion.div
               key='backdrop'
-              className={`absolute inset-0 bg-black/10 dark:bg-black/60 pointer-events-auto ${isSidebar ? 'sidebar-modal-backdrop' : 'modal-backdrop backdrop-blur-md'}`}
+              className={`absolute inset-0 bg-black/10 dark:bg-black/60 pointer-events-auto ${isSidebar ? 'sidebar-modal-backdrop' : 'modal-backdrop'}`}
               style={backdropStyle}
               onClick={closeOnBackdropClick ? onClose : undefined}
               variants={backdropVariants}
@@ -427,7 +433,7 @@ export const Modal: React.FC<ModalProps> = ({
                     role="button"
                     tabIndex={0}
                     className='shrink-0 bg-(--bg-card) px-4 h-11 flex items-center relative select-none custom-card-css-target no-padding'
-                    onContextMenu={handleHeaderContextMenu}
+                    onContextMenu={disableHeaderContextMenu ? undefined : handleHeaderContextMenu}
                   >
                     {/* Title Section: Icon + Title */}
                     {title || icon ? (
