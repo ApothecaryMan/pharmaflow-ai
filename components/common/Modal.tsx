@@ -410,7 +410,7 @@ export const Modal: React.FC<ModalProps> = ({
               className={
                 isSidebar
                   ? `relative w-full h-dvh bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card select-none pointer-events-auto ${className}`
-                  : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none pointer-events-auto modal-card ${className}`
+                  : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 select-none pointer-events-auto modal-card ${className}`
               }
               style={isSidebar ? style : { height: height || 'auto', ...style }}
               onClick={(e) => e.stopPropagation()}
