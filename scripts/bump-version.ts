@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 
 /**
  * ZINC Version Bumper
@@ -140,6 +141,19 @@ function bumpVersion() {
         content = content.replace(cargoVersionRegex, `version = "${newVersion}"`);
         fs.writeFileSync(cargoTomlPath, content, 'utf8');
         console.log(`✅ Updated src-tauri/Cargo.toml (Version: ${newVersion})`);
+      }
+    }
+
+    // 5.5 Update src-tauri/Cargo.lock using the official Rust way
+    const srcTauriDir = path.resolve(process.cwd(), 'src-tauri');
+    const cargoLockPath = path.resolve(srcTauriDir, 'Cargo.lock');
+    if (fs.existsSync(cargoLockPath)) {
+      try {
+        console.log(`⏳ Updating Cargo.lock via cargo update...`);
+        execSync('cargo update -p zinc', { cwd: srcTauriDir, stdio: 'ignore' });
+        console.log(`✅ Updated src-tauri/Cargo.lock (via cargo update)`);
+      } catch (e) {
+        console.warn(`⚠️ Warning: Failed to update Cargo.lock automatically. Do you have Cargo installed?`);
       }
     }
 

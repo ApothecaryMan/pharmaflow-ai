@@ -53,7 +53,7 @@ fn print_raw_data(_printer_name: String, _data: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         unsafe {
-            let mut printer_name_wide: Vec<u16> = std::ffi::OsStr::new(&_printer_name)
+            let printer_name_wide: Vec<u16> = std::ffi::OsStr::new(&_printer_name)
                 .encode_wide()
                 .chain(std::iter::once(0))
                 .collect();

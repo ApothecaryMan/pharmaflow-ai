@@ -63,6 +63,7 @@
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-updater": "^2.10.1",
+    "@types/bcryptjs": "^2.4.6",
     "barcode-detector": "^3.1.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",

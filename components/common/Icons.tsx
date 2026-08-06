@@ -1,4 +1,5 @@
-import * as Myna from '@mynaui/icons-react';
+import * as MynaLib from '@mynaui/icons-react';
+const Myna: any = MynaLib;
 import type React from 'react';
 
 export type IconProps = {
