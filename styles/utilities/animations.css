@@ -181,3 +181,18 @@
   background-size: 200% auto;
   animation: wave-shimmer 2s linear infinite;
 }
+
+/* --- Changelog Title Highlight (eye-catching, irregular tilt) --- */
+@keyframes changelog-highlight {
+  0%,
+  100% {
+    transform: rotate(-0.5deg) skewX(-1deg) scaleX(1);
+    opacity: 0.9;
+    filter: blur(1px) brightness(1);
+  }
+  50% {
+    transform: rotate(-0.5deg) skewX(0deg) scaleX(1.02);
+    opacity: 1;
+    filter: blur(0.5px) brightness(1.08);
+  }
+}
