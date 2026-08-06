@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION public.verify_employee_credentials(p_payload JSONB)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
     v_username TEXT := NULLIF(TRIM(p_payload->>'username'), '');

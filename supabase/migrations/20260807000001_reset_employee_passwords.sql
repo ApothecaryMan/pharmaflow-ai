@@ -24,11 +24,6 @@ WHERE password IS NOT NULL
   AND password <> ''
   AND password !~ '^\$2[aby]\$';
 
--- Reset attendance PINs only for employees not already on bcrypt
-UPDATE public.employees
-SET attendance_pin = crypt('1234', gen_salt('bf', 10))
-WHERE attendance_pin IS NOT NULL
-  AND attendance_pin <> ''
-  AND attendance_pin !~ '^\$2[aby]\$';
+
 
 COMMIT;
