@@ -1,9 +1,9 @@
 {
-  "version": "2.0.74",
-  "releaseDate": "2026-08-05",
+  "version": "2.0.75",
+  "releaseDate": "2026-08-06",
   "notes": {
-    "AR": "تحسينات عامة وتحديثات في استقرار النظام.",
-    "EN": "General improvements and system stability updates."
+    "AR": "مرحباً بك في التحديث الجديد!\n\nما الجديد في هذه النسخة:\n• إشعار فوري بالتحديثات: عند تثبيت نسخة جديدة ستظهر لك نافذة توضح ملخص التحسينات والإضافات.\n• واجهة أدوات محسّنة: أدوات القائمة أصبحت أوضح مع أيقونات أكثر حداثة.\n• عروض أفضل للتواريخ: عرض صلاحية الأصناف بسهولة أكبر ووضوح أعلى في الجدول الزمني.\n• تنظيف الجداول: إزالة أيقونات متكررة وتوسيع أعمدة المعرفات لعرض أسهل.\n• تجربة تصفح أهدأ: تحسين إخفاء أشرطة التمرير لتجربة أنظف أثناء العمل.\n• استقرار النظام: إصلاحات لتحسين موثوقية الاتصال بقاعدة البيانات.",
+    "EN": "Welcome to the new release!\n\nWhat's new in this version:\n• Instant update notices: after installing a new version, a window shows you a summary of what changed and what's new.\n• Improved tools menu: clearer menu with more modern icons.\n• Better date displays: product expiry shown more clearly and tidier in the timeline.\n• Cleaner tables: removed redundant icons and widened ID columns for easier reading.\n• Smoother scrolling experience while you work.\n• System stability: fixes to improve database connection reliability."
   },
   "forceUpdate": false
 }
