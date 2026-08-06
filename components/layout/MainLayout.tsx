@@ -224,15 +224,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           >
             {/* Layout Wrapper with Static Curves */}
             <div
+              dir="ltr"
               className={`flex-1 flex overflow-hidden ${isStandalone || !currentEmployeeId ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-page-surface) shadow-inner m-0'}`}
               style={{ borderColor: 'var(--border-divider)' }}
             >
               {/* Sidebar */}
               {!isStandalone && currentEmployeeId && view !== 'theme-studio' && (
                 <motion.aside
+                  dir={language === 'AR' ? 'rtl' : 'ltr'}
                   initial={false}
                   animate={{
-                    width: isActuallyCollapsed ? 80 : 256,
+                    width: isActuallyCollapsed ? 78 : 246,
                   }}
                   transition={{
                     type: 'spring',
@@ -261,28 +263,31 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               )}
 
               {/* Mobile Navigation (Drawer & Bottom Bar) */}
-              <MobileNavigation
-                mobileMenuOpen={mobileMenuOpen}
-                setMobileMenuOpen={setMobileMenuOpen}
-                filteredMenuItems={filteredMenuItems}
-                activeModule={activeModule}
-                handleModuleChange={handleModuleChange}
-                view={view}
-                dashboardSubView={dashboardSubView}
-                handleNavigate={handleNavigate}
-                handleViewChange={handleViewChange}
-                theme={theme}
-                t={t}
-                language={language}
-                hideInactiveModules={hideInactiveModules}
-                isStandalone={isStandalone}
-                currentEmployeeId={currentEmployeeId}
-                onSelectEmployee={setCurrentEmployeeId}
-                employees={employees}
-              />
+              <div dir={language === 'AR' ? 'rtl' : 'ltr'} className="contents">
+                <MobileNavigation
+                  mobileMenuOpen={mobileMenuOpen}
+                  setMobileMenuOpen={setMobileMenuOpen}
+                  filteredMenuItems={filteredMenuItems}
+                  activeModule={activeModule}
+                  handleModuleChange={handleModuleChange}
+                  view={view}
+                  dashboardSubView={dashboardSubView}
+                  handleNavigate={handleNavigate}
+                  handleViewChange={handleViewChange}
+                  theme={theme}
+                  t={t}
+                  language={language}
+                  hideInactiveModules={hideInactiveModules}
+                  isStandalone={isStandalone}
+                  currentEmployeeId={currentEmployeeId}
+                  onSelectEmployee={setCurrentEmployeeId}
+                  employees={employees}
+                />
+              </div>
 
               {/* Actual Page Surface */}
               <main
+                dir={language === 'AR' ? 'rtl' : 'ltr'}
                 className='flex-1 h-full overflow-hidden relative main-layout-content'
                 style={
                   {

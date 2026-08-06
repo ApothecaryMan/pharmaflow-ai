@@ -44,7 +44,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
       translations={t}
       language={language}
       hideInactiveModules={hideInactiveModules}
-      hideSearch={isMobile}
+      hideSearch={true}
       sidebarCollapsed={sidebarCollapsed}
     />
   );

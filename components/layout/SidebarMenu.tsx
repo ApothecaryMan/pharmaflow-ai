@@ -152,7 +152,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
       }> = [];
 
       filteredSubmenus.forEach((submenu, submenuIdx) => {
-        if (submenuIdx > 0 && !sidebarCollapsed) {
+        if (submenuIdx > 0) {
           rows.push({
             type: 'divider',
             data: null,
@@ -177,8 +177,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
       getScrollElement: () => navRef.current,
       estimateSize: (index) => {
         const item = flatItems[index];
-        if (item.type === 'divider') return 25;
-        return sidebarCollapsed ? 54 : 46;
+        if (item.type === 'divider') return 1;
+        return 46;
       },
       overscan: 10,
     });
@@ -186,7 +186,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
     if (!activeModuleData) return null;
 
     return (
-      <div className='flex-1 flex flex-col w-full h-full p-2.5 overflow-hidden'>
+      <div className='flex-1 flex flex-col w-full h-full p-2.5 pr-0 overflow-hidden'>
         {/* Unified Sidebar Card - Matches CARD_BASE style */}
         <div
           className='flex-1 flex flex-col w-full overflow-hidden rounded-2xl border border-(--border-divider) card-shadow'
@@ -227,14 +227,13 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
 
           {/* Submenus - Simplified Flat List */}
           <motion.nav
-            layout
             ref={navRef}
             onScroll={handleScroll}
-            className='flex-1 space-y-1.5 w-full overflow-y-auto pb-[6px] custom-scrollbar'
+            className='flex-1 space-y-1.5 w-full overflow-y-auto pb-[6px] scrollbar-hide'
             animate={{
-              paddingLeft: sidebarCollapsed ? 6 : 12,
-              paddingRight: sidebarCollapsed ? 6 : 12,
-              paddingTop: sidebarCollapsed ? 6 : 0,
+              paddingLeft: 8,
+              paddingRight: 8,
+              paddingTop: hideSearch ? 16 : 0,
             }}
             transition={{ duration: 0.2 }}
           >
@@ -270,7 +269,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                         }}
                       >
                         <div
-                          className='my-3 mx-3'
+                          className='my-0 mx-3'
                           style={{
                             height: '1px',
                             backgroundColor: 'var(--border-divider)',
@@ -303,20 +302,15 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                       }}
                       className={`
                         relative flex items-center type-interactive transition-all duration-200
-                        ${
-                          sidebarCollapsed
-                            ? 'justify-center w-11 h-11 rounded-full'
-                            : 'w-full gap-2.5 ltr:text-left rtl:text-right px-3 py-2 rounded-lg'
-                        }
+                        w-full gap-2.5 ltr:text-left rtl:text-right px-3 py-2 rounded-lg
                         ${
                           !isImplemented
                             ? 'opacity-30 cursor-not-allowed text-gray-400 dark:text-gray-600'
                             : isActive
                               ? sidebarCollapsed
-                                ? 'text-primary-600 dark:text-primary-400 font-semibold'
-                                : `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-semibold border-(--border-divider)`
-                              : `text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white 
-                                 ${sidebarCollapsed ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10' : 'hover:bg-(--bg-menu-hover)'}`
+                                ? 'text-primary-900 dark:text-primary-400 font-bold'
+                                : 'bg-(--bg-menu-hover) text-primary-900 dark:text-primary-400 font-bold shadow-xs border-(--border-divider)'
+                              : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-(--bg-menu-hover)'
                         }
                       `}
                       type='button'
@@ -324,7 +318,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                       {isActive && sidebarCollapsed && (
                         <motion.div
                           layoutId='active-indicator'
-                          className='absolute ltr:left-0 rtl:right-0 w-1 h-6 bg-primary-600 rounded-full'
+                          className='absolute -left-2 w-1.5 h-6 bg-primary-600 rounded-r-full'
                         />
                       )}
 
@@ -376,19 +370,18 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                         height: `${virtualRow.size}px`,
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
-                      className={sidebarCollapsed ? 'flex justify-center' : ''}
                     >
-                      {sidebarCollapsed ? (
-                        <Tooltip
-                          content={translatedLabel}
-                          position={language === 'AR' ? 'bottom' : 'bottom'}
-                          delay={100}
-                        >
-                          {buttonContent}
-                        </Tooltip>
-                      ) : (
-                        buttonContent
-                      )}
+                      {/* Always render Tooltip to keep DOM identical, disable it when not collapsed */}
+                      <Tooltip
+                        content={translatedLabel}
+                        position={language === 'AR' ? 'left' : 'right'}
+                        delay={100}
+                        className="!w-full"
+                        triggerClassName="!w-full"
+                        disabled={!sidebarCollapsed}
+                      >
+                        {buttonContent}
+                      </Tooltip>
                     </div>
                   );
                 })}
