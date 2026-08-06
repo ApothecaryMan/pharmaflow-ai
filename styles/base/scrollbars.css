@@ -110,5 +110,25 @@
 }
 
 .no-scrollbar::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+}
+
+/* 
+  ZINC ROOT CAUSE FIX: Page-level Scrollbar Hiding
+  ------------------------------------------------
+  MainLayout itself has overflow-hidden. Each page component implements its own 
+  scrolling on its root element. To hide the scrollbar for the "main page" ONLY,
+  we target the direct children (the page root elements) rendered inside MainLayout's 
+  wrappers. Nested components (cards, tables, etc.) will not match this selector 
+  and will retain their scrollbars.
+*/
+.main-layout-content > div > *,
+.main-layout-content > div > div > * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.main-layout-content > div > *::-webkit-scrollbar,
+.main-layout-content > div > div > *::-webkit-scrollbar {
+  display: none !important;
 }
