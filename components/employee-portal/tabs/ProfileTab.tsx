@@ -585,7 +585,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
   const avatarSrc = removeImage
     ? undefined
-    : preview || (profile?.image?.startsWith('data:image/') ? profile.image : undefined);
+    : preview || profile?.image || undefined;
 
   return (
     <div className=''>
