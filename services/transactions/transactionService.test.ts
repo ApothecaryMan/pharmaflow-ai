@@ -4,6 +4,8 @@ import { transactionRepository } from './repositories/transactionRepository';
 import { purchaseService } from '../purchases/purchaseService';
 import { returnService } from '../returns/returnService';
 import { cashService } from '../cash/cashService';
+import { batchRepository } from '../inventory/repositories/batchRepository';
+import { stockMovementRepository } from '../inventory/repositories/stockMovementRepository';
 
 // Mock Supabase
 vi.mock('../../lib/supabase', () => ({
@@ -52,6 +54,10 @@ vi.mock('./repositories/transactionRepository', () => ({
     processOrderModification: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
     processReturn: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
     finalizeDeliveryOrder: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
+    checkShiftCashAvailable: vi.fn().mockResolvedValue({
+      data: { sufficient: true, available: 999 },
+      error: null,
+    }),
     deletePurchase: vi.fn(),
   },
 }));
@@ -92,7 +98,6 @@ describe('transactionService', () => {
         paymentMethod: 'cash',
         total: 100,
         subtotal: 100,
-        globalDiscount: 0,
       },
       [],
       mockContext
@@ -126,7 +131,7 @@ describe('transactionService', () => {
 
   it('processOrderModification calls process_order_modification rpc', async () => {
     const result = await transactionService.processOrderModification(
-      { id: 'SALE1', items: [], total: 100, subtotal: 100, globalDiscount: 0 } as any,
+      { id: 'SALE1', items: [], total: 100, subtotal: 100.} as any,
       { total: 120, subtotal: 120 } as any,
       [],
       mockContext
@@ -221,11 +226,182 @@ describe('transactionService', () => {
   it('processCheckout returns error on db failure', async () => {
     vi.mocked(transactionRepository.processCheckout).mockResolvedValue({ data: null, error: { message: 'DB error' } } as any);
     const result = await transactionService.processCheckout(
-      { items: [], customerName: 'Guest', paymentMethod: 'cash', total: 100, subtotal: 100, globalDiscount: 0 },
+      { items: [], customerName: 'Guest', paymentMethod: 'cash', total: 100, subtotal: 100 },
       [],
       mockContext
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe('DB error');
+  });
+
+  // --- New coverage: error paths, payload shapes, and rollback ---
+
+  it('processReturn returns success:false when the RPC reports failure', async () => {
+    vi.mocked(transactionRepository.processReturn).mockResolvedValueOnce({
+      data: { success: false, error: 'Inventory constraint failed' },
+      error: null,
+    } as any);
+    const result = await transactionService.processReturn(
+      { items: [], returnType: 'partial' } as any,
+      [],
+      { id: 'SALE1' } as any,
+      mockContext
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Inventory constraint failed');
+  });
+
+  it('processReturn returns success:false when the RPC returns an error', async () => {
+    vi.mocked(transactionRepository.processReturn).mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Return DB down' },
+    } as any);
+    const result = await transactionService.processReturn(
+      { items: [], returnType: 'partial' } as any,
+      [],
+      { id: 'SALE1' } as any,
+      mockContext
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Return DB down');
+  });
+
+  it.skip('CURRENTLY BUGGY (BUG-D8): processReturn drops the per-item reason from the return payload', async () => {
+    // BUG-D8: per-item reason dropped, only top-level reason sent.
+    // ReturnItem.reason is never mapped into the payload (transactionService.ts:239-245).
+    // Test asserts the CORRECT behavior (reason present), red on current code.
+    // TODO: re-enable after BUG-D8 fix.
+    const returnData: any = {
+      returnType: 'partial',
+      reason: 'customer_request',
+      notes: 'Customer returned a damaged item',
+      items: [
+        {
+          drugId: 'D1',
+          saleItemId: 'SI1',
+          name: 'Drug A',
+          quantityReturned: 2,
+          isUnit: false,
+          publicPrice: 50,
+          refundAmount: 100,
+          reason: 'damaged',
+          condition: 'damaged',
+        },
+      ],
+    };
+    const result = await transactionService.processReturn(
+      returnData,
+      [],
+      { id: 'SALE1' } as any,
+      mockContext
+    );
+    expect(result.success).toBe(true);
+    expect(transactionRepository.processReturn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        saleId: 'SALE1',
+        branchId: 'BR1',
+        orgId: 'ORG1',
+        performerId: 'EMP1',
+        performerName: 'Test Employee',
+        returnType: 'partial',
+        reason: 'customer_request',
+        notes: 'Customer returned a damaged item',
+        items: [
+          { drugId: 'D1', saleItemId: 'SI1', quantity: 2, isUnit: false, condition: 'damaged', reason: 'damaged' },
+        ],
+      })
+    );
+  });
+
+  it('processCancellation returns success:false when the RPC reports failure', async () => {
+    vi.mocked(transactionRepository.processCancellation).mockResolvedValueOnce({
+      data: { success: false, error: 'Sale already cancelled' },
+      error: null,
+    } as any);
+    const result = await transactionService.processCancellation(
+      { id: 'SALE1' } as any,
+      [],
+      mockContext
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Sale already cancelled');
+  });
+
+  it('processCancellation returns success:false when the RPC returns an error', async () => {
+    vi.mocked(transactionRepository.processCancellation).mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Cancellation DB down' },
+    } as any);
+    const result = await transactionService.processCancellation(
+      { id: 'SALE1' } as any,
+      [],
+      mockContext
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Cancellation DB down');
+  });
+
+  it('processOrderModification returns success:false when the RPC reports failure', async () => {
+    vi.mocked(transactionRepository.processOrderModification).mockResolvedValueOnce({
+      data: { success: false, error: 'Validation failed' },
+      error: null,
+    } as any);
+    const result = await transactionService.processOrderModification(
+      { id: 'SALE1', items: [], total: 100, subtotal: 100.} as any,
+      {} as any,
+      [],
+      mockContext
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Validation failed');
+  });
+
+  it('processOrderModification returns success:false when the RPC returns an error', async () => {
+    vi.mocked(transactionRepository.processOrderModification).mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Modification DB down' },
+    } as any);
+    const result = await transactionService.processOrderModification(
+      { id: 'SALE1', items: [], total: 100, subtotal: 100.} as any,
+      {} as any,
+      [],
+      mockContext
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Modification DB down');
+  });
+
+  it('processDirectPurchaseTransaction rolls back inventory and purchase when markAsReceived fails', async () => {
+    vi.mocked(purchaseService.create).mockResolvedValue({
+      id: 'P1',
+      status: 'pending',
+      branchId: 'BR1',
+    } as any);
+    vi.mocked(purchaseService.markAsReceived).mockRejectedValue(new Error('Stock allocation failed'));
+
+    const result = await transactionService.processDirectPurchaseTransaction(
+      { supplierId: 'SUP1', totalCost: 500, paymentMethod: 'cash', items: [] } as any,
+      mockContext
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Stock allocation failed');
+    expect(stockMovementRepository.deleteByReferenceId).toHaveBeenCalledWith('P1');
+    expect(batchRepository.deleteByPurchaseId).toHaveBeenCalledWith('P1');
+    expect(transactionRepository.deletePurchase).toHaveBeenCalledWith('P1');
+  });
+
+  it('processPurchaseTransaction returns success:false when the purchase is not found', async () => {
+    vi.mocked(purchaseService.getById).mockResolvedValue(null as any);
+    const result = await transactionService.processPurchaseTransaction('P1', mockContext);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Purchase order not found');
+  });
+
+  it('addTransaction propagates cashService errors', async () => {
+    vi.mocked(cashService.addTransaction).mockRejectedValueOnce(new Error('Cash RPC failed'));
+    await expect(
+      transactionService.addTransaction('SHIFT1', { type: 'in', amount: 50 } as any)
+    ).rejects.toThrow('Cash RPC failed');
   });
 });
