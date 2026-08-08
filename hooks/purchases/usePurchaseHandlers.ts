@@ -87,8 +87,15 @@ export function usePurchaseHandlers({
       } catch (err) {
         console.error('[Purchase] create failed:', err);
         // No fallback number: the server failed atomically (no row, no serial
-        // consumed). Abort the whole operation with a clear message.
-        error(t.alerts?.couldNotCreateInvoice || 'Could not create the invoice, please try again.');
+        // consumed). Abort the whole operation with a clear message. Show the
+        // real server error when present (e.g. insufficient drawer balance),
+        // otherwise fall back to a generic, localized message.
+        const detail = err instanceof Error ? err.message.trim() : '';
+        if (detail) {
+          error(detail);
+        } else {
+          error(t.alerts?.couldNotCreateInvoice || 'Could not create the invoice, please try again.');
+        }
         return false;
       }
     },

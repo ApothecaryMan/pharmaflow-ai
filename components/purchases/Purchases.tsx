@@ -59,7 +59,6 @@ import {
   useSearchKeyboardNavigation,
   useSmartDirection,
 } from '../common';
-import { AnimatedCounter } from '../common/AnimatedCounter';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { CartQRModal } from './CartQRModal';
 import { toMmyy, type CartQrLine } from '../../utils/cartQr';
@@ -1043,12 +1042,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Parse invoiceId dynamically for high-performance AnimatedCounter rolling animation
+  // Parse invoiceId dynamically for a plain rollover display
   const invoiceIdMatch = useMemo(() => invoiceId.match(/^(.*?)(\d+)$/), [invoiceId]);
   const invoicePrefix = invoiceIdMatch ? invoiceIdMatch[1] : '';
   const invoiceNumStr = invoiceIdMatch ? invoiceIdMatch[2] : '0';
-  const invoiceNum = useMemo(() => parseInt(invoiceNumStr, 10), [invoiceNumStr]);
-  const invoicePadLength = invoiceNumStr.length;
 
   // Sidebar Resize Logic with branch-scoped persistence
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -1910,11 +1907,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   className='relative h-10 flex items-center px-2 py-0.5 select-none text-xl font-bold text-gray-600 dark:text-gray-300'
                 >
                   <span>{invoicePrefix}</span>
-                  <AnimatedCounter
-                    value={invoiceNum}
-                    mode='rolling'
-                    minimumIntegerDigits={invoicePadLength}
-                  />
+                  <span className='tabular-nums'>{invoiceNumStr}</span>
                 </div>
               </div>
 
