@@ -12,6 +12,10 @@
     "supabase": {
       "type": "remote",
       "url": "https://mcp.supabase.com/mcp?project_ref=vhewcoumaxicnfsjwcai",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:SUPABASE_ACCESS_TOKEN}"
+      },
       "enabled": true
     }
   }

@@ -43,4 +43,7 @@ React 19 / TypeScript 5: Follow standard conventions
 2.  **PRESERVE COMMENTS**: Never delete existing comments during code edits. Preserve all logic explanations, documentation, and organizational comments.
 3.  **CLEAN UI/NUMERIC FOCUS**: Prioritize clear, numeric-focused interfaces for POS operations (e.g., hiding currency symbols where requested for a cleaner look).
 4.  **MINIMAL UI LOGIC**: Keep components focused on rendering. Move complex calculations, data transformations, and business logic into hooks (e.g., `usePOSCart`) or dedicated service layers.
+5.  **NO UNPROMPTED CHANGES (ASK ONLY MODE)**: Do not execute, modify, or change any code or files when the user is only asking questions or inquiring about the code. Only apply changes when explicitly requested.
+6.  **COMPREHENSIVE TESTING**: Always provide unit tests for new hooks, services, and complex components (especially in Sales, Cash, and POS). Ensure external dependencies (like Supabase) are properly mocked.
+7.  **STATE MANAGEMENT DISCIPLINE**: Avoid local state (`useState`) for global POS/Cash operations. Rely strictly on centralized stores or designated hooks (e.g., `usePOSCart`, `useShift`) to maintain a single source of truth.
 <!-- MANUAL ADDITIONS END -->
