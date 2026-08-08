@@ -1512,6 +1512,8 @@ export const TRANSLATIONS = {
       modifications: 'Changes',
       customer: 'Customer',
       guestCustomer: 'Guest Customer',
+      cashCustomer: 'Cash Customer',
+      deliveryCustomer: 'Delivery Customer',
       stockLimitReached: 'Stock limit reached',
       units: 'Units',
       packs: 'Packs',
@@ -1687,6 +1689,8 @@ export const TRANSLATIONS = {
       noResults: 'No sales records found.',
       visa: 'Card',
       cash: 'Cash',
+      cashCustomer: 'Cash Customer',
+      deliveryCustomer: 'Delivery Customer',
       modal: {
         title: 'Sale Details',
         id: 'Transaction ID',
@@ -2344,6 +2348,7 @@ export const TRANSLATIONS = {
     receiptDesigner: {
       title: 'Receipt Designer',
       subtitle: 'Customize templates for your sales receipts',
+      previewOptions: 'Preview Options',
       activeTemplate: 'Active Template',
       newTemplate: 'New Template',
       newTemplatePlaceholder: 'New Template Name...',
@@ -5233,6 +5238,8 @@ export const TRANSLATIONS = {
       modifications: 'تعديلات',
       customer: 'العميل',
       guestCustomer: 'عميل غير مسجل',
+      cashCustomer: 'عميل نقدي',
+      deliveryCustomer: 'عميل توصيل',
       stockLimitReached: 'تم الوصول للحد الأقصى للمخزن',
       units: 'وحدات',
       packs: 'علب',
@@ -5272,6 +5279,8 @@ export const TRANSLATIONS = {
       noResults: 'لم يتم العثور على سجلات مبيعات.',
       visa: 'كرت',
       cash: 'كاش',
+      cashCustomer: 'عميل نقدي',
+      deliveryCustomer: 'عميل توصيل',
       modal: {
         title: 'تفاصيل البيع',
         id: 'رقم المعاملة',
@@ -6065,6 +6074,7 @@ export const TRANSLATIONS = {
     receiptDesigner: {
       title: 'مصمم الفواتير',
       subtitle: 'خصص قوالب إيصالات المبيعات الخاصة بك',
+      previewOptions: 'خيارات المعاينة',
       activeTemplate: 'القالب النشط',
       newTemplate: 'قالب جديد',
       newTemplatePlaceholder: 'اسم القالب الجديد...',

@@ -9,6 +9,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
+import { Switch } from '../common/Switch';
 import { TemplateMarketplaceModal } from '../common/TemplateMarketplaceModal';
 import { Tooltip } from '../common/Tooltip';
 import { useStatusBar } from '../layout/StatusBar';
@@ -24,6 +25,32 @@ interface ReceiptDesignerProps {
   t: Translations;
   language: 'EN' | 'AR';
 }
+
+interface PreviewToggleRowProps {
+  icon: string;
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}
+
+const PreviewToggleRow: React.FC<PreviewToggleRowProps> = ({
+  icon,
+  label,
+  checked,
+  onChange,
+}) => (
+  <div className='flex items-center justify-between gap-2 w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30'>
+    <span className='flex items-center gap-2.5 min-w-0'>
+      <span className='w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-gray-400 bg-gray-100 dark:bg-muted/60'>
+        <span className='material-symbols-rounded text-[16px]'>{icon}</span>
+      </span>
+      <span className='text-[11px] font-bold truncate text-gray-500 dark:text-gray-400'>
+        {label}
+      </span>
+    </span>
+    <Switch checked={checked} onChange={onChange} />
+  </div>
+);
 
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color: _color, t, language }) => {
   const branches = useAuthStore((s) => s.branches);
@@ -289,7 +316,6 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color: _color,
     ],
     subtotal: 101.0,
     total: showDeliveryPreview ? 111.0 : 101.0,
-    globalDiscount: 0,
     paymentMethod: 'cash',
     customerName: 'Ahmed Mohamed',
     customerCode: 'CUST-101',
@@ -942,15 +968,24 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color: _color,
                 <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
                   {t.receiptDesigner.options.font}
                 </span>
-                <SegmentedControl
-                  value={options.receiptFont || 'courier'}
-                  onChange={(val) => setOptions({ ...options, receiptFont: val })}
-                  size='sm'
-                  options={[
-                    { label: 'Fake Receipt', value: 'courier' },
-                    { label: 'Receiptional', value: 'receipt-basic' },
-                  ]}
-                />
+                {options.receiptLayout === 'layout-5' ? (
+                  <div className='flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-xs text-gray-500 dark:text-gray-400'>
+                    <span className='material-symbols-rounded text-[16px]'>font_download</span>
+                    {language === 'AR'
+                      ? 'هذا التصميم يستخدم خطاً ثابتاً خاصاً به'
+                      : 'This layout uses its own fixed typography'}
+                  </div>
+                ) : (
+                  <SegmentedControl
+                    value={options.receiptFont || 'courier'}
+                    onChange={(val) => setOptions({ ...options, receiptFont: val })}
+                    size='sm'
+                    options={[
+                      { label: 'Fake Receipt', value: 'courier' },
+                      { label: 'Receiptional', value: 'receipt-basic' },
+                    ]}
+                  />
+                )}
               </div>
 
               <div className='col-span-1 space-y-1'>
@@ -1127,52 +1162,43 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color: _color,
               </div>
             </div>
 
-            {/* Toggles */}
-            <div className='grid grid-cols-3 gap-2 mt-2'>
-              <label
-                htmlFor='field-1130'
-                className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'
-              >
-                <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
-                  {t.receiptDesigner.options.addressBox}
+            {/* Preview Options */}
+            <div className='pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2'>
+              <div className='flex items-center gap-1.5 mb-1'>
+                <span className='material-symbols-rounded text-[15px] text-gray-400'>
+                  visibility
                 </span>
-                <input
-                  type='checkbox'
-                  checked={options.showAddressBox !== false}
-                  onChange={(e) => setOptions({ ...options, showAddressBox: e.target.checked })}
-                  className={`w-4 h-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
-                />
-              </label>
-
-              <label
-                htmlFor='field-1142'
-                className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'
-              >
-                <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
-                  {t.pos.deliveryOrder}
+                <span className='text-[11px] font-bold text-gray-500 uppercase tracking-wider'>
+                  {t.receiptDesigner.previewOptions || 'Preview Options'}
                 </span>
-                <input
-                  type='checkbox'
-                  checked={showDeliveryPreview}
-                  onChange={(e) => setShowDeliveryPreview(e.target.checked)}
-                  className={`w-4 h-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
-                />
-              </label>
-
-              <label
-                htmlFor='field-1154'
-                className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'
-              >
-                <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
-                  {t.salesHistory.returns.returned}
-                </span>
-                <input
-                  type='checkbox'
-                  checked={showReturnsPreview}
-                  onChange={(e) => setShowReturnsPreview(e.target.checked)}
-                  className={`w-4 h-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
-                />
-              </label>
+              </div>
+              <PreviewToggleRow
+                icon='border_all'
+                label={
+                  t.receiptDesigner.options.addressBox ||
+                  (language === 'AR' ? 'إظهار مربع العنوان' : 'Show Address Box')
+                }
+                checked={options.showAddressBox !== false}
+                onChange={(v) => setOptions({ ...options, showAddressBox: v })}
+              />
+              <PreviewToggleRow
+                icon='local_shipping'
+                label={
+                  t.receiptDesigner.options.delivery ||
+                  (language === 'AR' ? 'معاينة التوصيل' : 'Delivery Preview')
+                }
+                checked={showDeliveryPreview}
+                onChange={setShowDeliveryPreview}
+              />
+              <PreviewToggleRow
+                icon='assignment_return'
+                label={
+                  t.receiptDesigner.options.returns ||
+                  (language === 'AR' ? 'معاينة المرتجعات' : 'Returns Preview')
+                }
+                checked={showReturnsPreview}
+                onChange={setShowReturnsPreview}
+              />
             </div>
           </div>
         </div>

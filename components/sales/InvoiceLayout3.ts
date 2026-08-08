@@ -1,8 +1,12 @@
 import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
-import { getReceiptFontsCSS } from '../../utils/printing';
 import { pricing } from '../../utils/money';
+import { getReceiptFontsCSS } from '../../utils/printing';
+import {
+  INVOICE_DEFAULTS,
+  type InvoiceTemplateOptions,
+  resolveCustomerName,
+} from './InvoiceTemplate';
 
 export function generateLayout3HTML(
   sale: Sale,
@@ -74,7 +78,7 @@ export function generateLayout3HTML(
       
       <hr class="divider">
       <div class="meta-info">
-        <span>${sale.customerName ? sale.customerName : 'GUEST'}</span>
+        <span>${sale.customerName ? sale.customerName : resolveCustomerName(sale, lang)}</span>
         <span>#${sale.dailyOrderNumber || 1}</span>
       </div>
       <div class="meta-info">
@@ -84,7 +88,7 @@ export function generateLayout3HTML(
       ${
         sale.saleType === 'delivery'
           ? `
-      <div style="text-align: center; margin: 4px 0;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block;">DELIVERY</span></div>
+      <div style="text-align: center; margin: 4px 0;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block;">${lang === 'AR' ? 'توصيل' : 'DELIVERY'}</span></div>
       ${sale.customerPhone ? `<div dir="ltr" style="text-align: center;">${sale.customerPhone}</div>` : ''}
       ${sale.customerAddress ? `<div dir="rtl" style="text-align: center;">${sale.customerAddress.replace(/\n/g, ' ')}</div>` : ''}
       ${sale.customerStreetAddress ? `<div dir="rtl" style="text-align: center;">${sale.customerStreetAddress.replace(/\n/g, ' ')}</div>` : ''}
@@ -98,9 +102,11 @@ export function generateLayout3HTML(
         <tbody>
           ${(sale.items || [])
             .map((item) => {
-              const effectivePrice =
-                item.publicPrice;
-              const lineTotal = pricing.afterDiscount(effectivePrice * item.quantity, item.discount || 0);
+              const effectivePrice = item.publicPrice;
+              const lineTotal = pricing.afterDiscount(
+                effectivePrice * item.quantity,
+                item.discount || 0
+              );
               return `
             <tr>
               <td>
@@ -115,21 +121,20 @@ export function generateLayout3HTML(
       </table>
       
       <div class="totals">
-        <div class="total-row"><span>SUB</span><span>${(sale.subtotal || 0).toFixed(2)}</span></div>
-        ${sale.globalDiscount ? `<div class="total-row"><span>DISC</span><span>-${(((sale.subtotal || 0) * sale.globalDiscount) / 100).toFixed(2)}</span></div>` : ''}
-        ${sale.deliveryFee && sale.deliveryFee > 0 ? `<div class="total-row"><span>DEL</span><span>${sale.deliveryFee.toFixed(2)}</span></div>` : ''}
+        <div class="total-row"><span>${lang === 'AR' ? 'فرعي' : 'SUB'}</span><span>${(sale.subtotal || 0).toFixed(2)}</span></div>
+        ${sale.deliveryFee && sale.deliveryFee > 0 ? `<div class="total-row"><span>${lang === 'AR' ? 'توصيل' : 'DEL'}</span><span>${sale.deliveryFee.toFixed(2)}</span></div>` : ''}
         ${
           sale.tax && sale.tax > 0
-            ? `<div class="total-row"><span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¶ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â©' : 'TAX'}</span><span>${sale.tax.toFixed(2)}</span></div>`
+            ? `<div class="total-row"><span>${lang === 'AR' ? 'الضريبة' : 'TAX'}</span><span>${sale.tax.toFixed(2)}</span></div>`
             : ''
         }
-        <div class="total-row final"><span>TOT</span><span>${sale.total.toFixed(2)} EGP</span></div>
+        <div class="total-row final"><span>${lang === 'AR' ? 'إجمالي' : 'TOT'}</span><span>${sale.total.toFixed(2)} ${lang === 'AR' ? 'ج.م' : 'EGP'}</span></div>
         
         ${
           sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
             ? `
         <div style="margin-top: 4px; padding-top: 2px;">
-          <div style="text-align: center; margin-bottom: 4px;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block;">RETURNS</span></div>
+          <div style="text-align: center; margin-bottom: 4px;"><span style="background-color: #000; color: #fff; padding: 2px 8px; border-radius: 2px; display: inline-block;">${lang === 'AR' ? 'مرتجعات' : 'RETURNS'}</span></div>
           ${
             sale.itemReturnedQuantities
               ? Object.entries(sale.itemReturnedQuantities)
@@ -148,9 +153,11 @@ export function generateLayout3HTML(
                       return true;
                     });
                     if (!item) return '';
-                    const effectivePrice =
-                      item.publicPrice;
-                    const returnedAmount = pricing.afterDiscount(effectivePrice * qty, item.discount || 0);
+                    const effectivePrice = item.publicPrice;
+                    const returnedAmount = pricing.afterDiscount(
+                      effectivePrice * qty,
+                      item.discount || 0
+                    );
                     return `
           <div style="display: flex; justify-content: space-between;  margin: 1px 0;">
             <span>${item.name} x${qty}</span>
@@ -161,11 +168,11 @@ export function generateLayout3HTML(
               : ''
           }
           <div class="total-row" style="margin-top: 2px;">
-            <span>RET. TOT</span>
+            <span>${lang === 'AR' ? 'إجمالي المرتجع' : 'RET. TOT'}</span>
             <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
           </div>
           <div class="total-row final">
-            <span>NET</span>
+            <span>${lang === 'AR' ? 'صافي' : 'NET'}</span>
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>

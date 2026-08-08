@@ -1,8 +1,12 @@
 import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { INVOICE_DEFAULTS, type InvoiceTemplateOptions } from './InvoiceTemplate';
-import { getReceiptFontsCSS } from '../../utils/printing';
 import { pricing } from '../../utils/money';
+import { getReceiptFontsCSS } from '../../utils/printing';
+import {
+  INVOICE_DEFAULTS,
+  type InvoiceTemplateOptions,
+  resolveCustomerName,
+} from './InvoiceTemplate';
 
 export function generateLayout2HTML(
   sale: Sale,
@@ -68,6 +72,9 @@ export function generateLayout2HTML(
           padding: 6px; border-radius: 4px; margin-top: 6px; 
         }
         
+        .returns-box { border: 2px solid #000; border-radius: 6px; padding: 6px; margin: 8px 0; }
+        .returns-title { font-weight: bold; text-align: center; margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid #000; }
+        
         .footer { text-align: center; margin-top: 12px; line-height: 1.4; font-weight: bold; font-size: 11px; }
         .barcode-section { text-align: center; margin-top: 12px; }
         #barcode { width: 100%; max-width: 220px; }
@@ -85,7 +92,7 @@ export function generateLayout2HTML(
             : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
-        <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'Ãƒâ„¢Ã¢â‚¬Â ÃƒËœÃ‚Â¸ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Â¦ ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¯ÃƒËœÃ‚Â§ÃƒËœÃ‚Â±ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â ÃƒËœÃ‚Â¯Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'Pharmacy Management System')}</div>
+        <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
         <div class="store-info ${opts.highlightedField === 'headerAddress' ? 'highlight' : ''}" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
         <div class="store-info ${opts.highlightedField === 'headerArea' ? 'highlight' : ''}" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
         <div class="store-info ${opts.highlightedField === 'headerHotline' ? 'highlight' : ''}" dir="ltr" style="font-weight: bold; font-size: 12px; margin-top: 4px;">${opts.headerHotline ?? currentDefaults.hotline}</div>
@@ -93,7 +100,7 @@ export function generateLayout2HTML(
       
       <div class="section-box">
         <div class="info-row">
-          <span>${sale.customerName ? (sale.customerCode ? `${sale.customerCode} ` : '') + sale.customerName : 'GUEST'}</span>
+          <span>${sale.customerName ? (sale.customerCode ? `${sale.customerCode} ` : '') + sale.customerName : resolveCustomerName(sale, lang)}</span>
           <span>#${sale.dailyOrderNumber || 1}</span>
         </div>
         <div class="info-row" style="font-size: 10px; font-weight: normal;">
@@ -104,7 +111,7 @@ export function generateLayout2HTML(
           sale.saleType !== 'delivery'
             ? `
         <div style="text-align: center; margin-top: 4px; font-weight: bold; border-top: 1px solid #000; padding-top: 4px;">
-          WALK-IN
+          ${lang === 'AR' ? 'بيع مباشر' : 'WALK-IN'}
         </div>`
             : ''
         }
@@ -133,9 +140,11 @@ export function generateLayout2HTML(
         <tbody>
           ${(sale.items || [])
             .map((item) => {
-              const effectivePrice =
-                item.publicPrice;
-              const lineTotal = pricing.afterDiscount(effectivePrice * item.quantity, item.discount || 0);
+              const effectivePrice = item.publicPrice;
+              const lineTotal = pricing.afterDiscount(
+                effectivePrice * item.quantity,
+                item.discount || 0
+              );
 
               return `
             <tr>
@@ -158,84 +167,78 @@ export function generateLayout2HTML(
       
       <div class="totals">
         <div class="total-row">
-          <span>SUBTOTAL</span>
+          <span>${lang === 'AR' ? 'المجموع الفرعي' : 'SUBTOTAL'}</span>
           <span>${(sale.subtotal || 0).toFixed(2)}</span>
         </div>
         ${
-          sale.globalDiscount
-            ? `<div class="total-row">
-                <span>DISCOUNT (${sale.globalDiscount}%)</span>
-                <span>-${(((sale.subtotal || 0) * sale.globalDiscount) / 100).toFixed(2)}</span>
-              </div>`
-            : ''
-        }
-        ${
           sale.deliveryFee && sale.deliveryFee > 0
-            ? `<div class="total-row"><span>DELIVERY</span><span>${sale.deliveryFee.toFixed(2)}</span></div>`
+            ? `<div class="total-row"><span>${lang === 'AR' ? 'خدمة التوصيل' : 'DELIVERY'}</span><span>${sale.deliveryFee.toFixed(2)}</span></div>`
             : ''
         }
         ${
           sale.tax && sale.tax > 0
             ? `
         <div class="total-row">
-          <span>TAX</span>
+          <span>${lang === 'AR' ? 'الضريبة' : 'TAX'}</span>
           <span>${sale.tax.toFixed(2)}</span>
         </div>`
             : ''
         }
         <div class="total-row final">
-          <span>TOTAL</span>
-          <span>${sale.total.toFixed(2)} EGP</span>
+          <span>${lang === 'AR' ? 'الإجمالي' : 'TOTAL'}</span>
+          <span>${sale.total.toFixed(2)} ${lang === 'AR' ? 'ج.م' : 'EGP'}</span>
         </div>
-        
-        ${
-          sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
-            ? `
-        <div style="margin-top: 8px; padding-top: 6px; border-top: 2px solid #000;">
-          <div style="text-align: center; font-weight: bold; margin-bottom: 4px;">RETURNS</div>
-          ${
-            sale.itemReturnedQuantities
-              ? Object.entries(sale.itemReturnedQuantities)
-                  .filter(([_, qty]) => qty > 0)
-                  .map(([lineKey, qty]) => {
-                    const parts = lineKey.split('_');
-                    const drugId = parts[0];
-                    const suffix = parts.length > 1 ? parts[1] : null;
+      </div>
 
-                    const item = (sale.items || []).find((it) => {
-                      const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
-                      if (itDrugId !== drugId) return false;
-                      if (!suffix) return true;
-                      if (suffix === 'unit') return !!it.isUnit;
-                      if (suffix === 'pack') return !it.isUnit;
-                      return true;
-                    });
-                    if (!item) return '';
-                    const effectivePrice =
-                      item.publicPrice;
-                    const returnedAmount = pricing.afterDiscount(effectivePrice * qty, item.discount || 0);
-                    return `
-          <div style="display: flex; justify-content: space-between; font-size: 10px; margin: 2px 0;">
-            <span>${item.name} x${qty}</span>
-            <span>-${returnedAmount.toFixed(2)}</span>
-          </div>`;
-                  })
-                  .join('')
-              : ''
-          }
-          <div class="total-row" style="margin-top: 6px;">
-            <span>RETURNED TOTAL</span>
-            <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
-          </div>
-          <div class="total-row final" style="margin-top: 4px; background: #333;">
-            <span>NET TOTAL</span>
-            <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
-          </div>
-        </div>
-        `
+      ${
+        sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
+          ? `
+      <div class="returns-box">
+        <div class="returns-title">${lang === 'AR' ? 'المرتجعات' : 'RETURNS'}</div>
+        ${
+          sale.itemReturnedQuantities
+            ? Object.entries(sale.itemReturnedQuantities)
+                .filter(([_, qty]) => qty > 0)
+                .map(([lineKey, qty]) => {
+                  const parts = lineKey.split('_');
+                  const drugId = parts[0];
+                  const suffix = parts.length > 1 ? parts[1] : null;
+
+                  const item = (sale.items || []).find((it) => {
+                    const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
+                    if (itDrugId !== drugId) return false;
+                    if (!suffix) return true;
+                    if (suffix === 'unit') return !!it.isUnit;
+                    if (suffix === 'pack') return !it.isUnit;
+                    return true;
+                  });
+                  if (!item) return '';
+                  const effectivePrice = item.publicPrice;
+                  const returnedAmount = pricing.afterDiscount(
+                    effectivePrice * qty,
+                    item.discount || 0
+                  );
+                  return `
+        <div style="display: flex; justify-content: space-between; font-size: 10px; margin: 2px 0;">
+          <span>${item.name} x${qty}</span>
+          <span>-${returnedAmount.toFixed(2)}</span>
+        </div>`;
+                })
+                .join('')
             : ''
         }
+        <div class="total-row" style="border-top: 1px solid #000; padding-top: 4px; margin-top: 4px;">
+          <span>${lang === 'AR' ? 'إجمالي المرتجع' : 'RETURNED TOTAL'}</span>
+          <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
+        </div>
+        <div class="total-row" style="border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; font-weight: bold; font-size: 13px;">
+          <span>${lang === 'AR' ? 'الصافي' : 'NET TOTAL'}</span>
+          <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
+        </div>
       </div>
+      `
+          : ''
+      }
       
       <div style="text-align: center; margin: 12px 0 8px 0; font-size: 10px;">
          ${opts.footerInquiry ? `<div class="${opts.highlightedField === 'footerInquiry' ? 'highlight' : ''}" style="margin-bottom: 4px; font-weight: bold;">${opts.footerInquiry}</div>` : ''}

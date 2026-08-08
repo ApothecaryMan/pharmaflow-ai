@@ -8,14 +8,13 @@
 import { StorageKeys } from '../../config/storageKeys';
 import type { Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { printDocument } from '../../utils/printing';
-import { getReceiptFontsCSS } from '../../utils/printing';
+import { pricing } from '../../utils/money';
+import { getReceiptFontsCSS, printDocument } from '../../utils/printing';
 import { generateLayout2HTML } from './InvoiceLayout2';
 import { generateLayout3HTML } from './InvoiceLayout3';
 import { generateLayout4HTML } from './InvoiceLayout4';
 import { generateLayout5HTML } from './InvoiceLayout5';
 import { generateLayout6HTML } from './InvoiceLayout6';
-import { pricing } from '../../utils/money';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -56,6 +55,17 @@ export interface InvoiceTemplateOptions {
   receiptLayout?: 'layout-1' | 'layout-2' | 'layout-3' | 'layout-4' | 'layout-5' | 'layout-6';
 }
 
+/**
+ * Resolves the customer name to display on an invoice.
+ * Uses the registered customer name, or falls back to a sale-type-aware
+ * generic label (Delivery Customer / Cash Customer) in the active language.
+ */
+export function resolveCustomerName(sale: Sale, lang: 'EN' | 'AR'): string {
+  if (sale.customerName) return sale.customerName;
+  if (sale.saleType === 'delivery') return lang === 'AR' ? 'عميل توصيل' : 'Delivery Customer';
+  return lang === 'AR' ? 'عميل نقدي' : 'Cash Customer';
+}
+
 export const defaultOptions: InvoiceTemplateOptions = {
   storeName: 'ZINC',
   storeSubtitle: 'Pharmacy Management System',
@@ -93,13 +103,13 @@ export const INVOICE_DEFAULTS = {
     address: '123 Abu Hamous',
     area: 'Beheira',
     hotline: '19099',
-    terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`,
+    terms: `ادوية الثلاجة ومستحضرات التجميل وشرائط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`,
   },
   AR: {
-    address: 'Ãƒâ„¢Ã‚Â¡Ãƒâ„¢Ã‚Â¢Ãƒâ„¢Ã‚Â£ ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¨Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â­Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Âµ',
-    area: 'Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â¯Ãƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Â ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â­Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â±ÃƒËœÃ‚Â©',
-    hotline: '19099',
-    terms: `ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¯Ãƒâ„¢Ã‹â€ Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂªÃƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¬ÃƒËœÃ‚Â© Ãƒâ„¢Ã‹â€ Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â³ÃƒËœÃ‚ÂªÃƒËœÃ‚Â­ÃƒËœÃ‚Â¶ÃƒËœÃ‚Â±ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂªÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¦Ãƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Å¾ Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â´ÃƒËœÃ‚Â±ÃƒËœÃ‚Â§Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â· ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¯Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¡ Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â§ ÃƒËœÃ‚ÂªÃƒËœÃ‚Â±ÃƒËœÃ‚Â¬ÃƒËœÃ‚Â¹<br>ÃƒËœÃ‚Â§ÃƒËœÃ‚Â³ÃƒËœÃ‚ÂªÃƒËœÃ‚Â±ÃƒËœÃ‚Â¬ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¹ ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¯Ãƒâ„¢Ã‹â€ Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â© Ãƒâ„¢Ã‹â€ ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¡ÃƒËœÃ‚Â²ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â³Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â© ÃƒËœÃ‚Â®Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ 14 Ãƒâ„¢Ã…Â Ãƒâ„¢Ã‹â€ Ãƒâ„¢Ã¢â‚¬Â¦<br>ÃƒËœÃ‚Â¶Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Â  30 Ãƒâ„¢Ã…Â Ãƒâ„¢Ã‹â€ Ãƒâ„¢Ã¢â‚¬Â¦ ÃƒËœÃ‚Â¹Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã¢â‚¬Â° ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â§ÃƒËœÃ‚Â¬Ãƒâ„¢Ã¢â‚¬Â¡ÃƒËœÃ‚Â²ÃƒËœÃ‚Â©`,
+    address: '123 ابوحمص',
+    area: 'مدينة البحيرة',
+    hotline: '19000',
+    terms: `ادوية الثلاجة ومستحضرات التجميل وشرائط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`,
   },
 };
 
@@ -216,7 +226,7 @@ export function generateLayout1HTML(
             : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
-        <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'Ãƒâ„¢Ã¢â‚¬Â ÃƒËœÃ‚Â¸ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Â¦ ÃƒËœÃ‚Â¥ÃƒËœÃ‚Â¯ÃƒËœÃ‚Â§ÃƒËœÃ‚Â±ÃƒËœÃ‚Â© ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚ÂµÃƒâ„¢Ã…Â ÃƒËœÃ‚Â¯Ãƒâ„¢Ã¢â‚¬Å¾Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â§ÃƒËœÃ‚Âª' : 'Pharmacy Management System')}</div>
+        <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
         <div class="store-info ${opts.highlightedField === 'headerAddress' ? 'highlight' : ''}" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
         <div class="store-info ${opts.highlightedField === 'headerArea' ? 'highlight' : ''}" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
         <div class="hotline ${opts.highlightedField === 'headerHotline' ? 'highlight' : ''}" dir="ltr">${opts.headerHotline ?? currentDefaults.hotline}</div>
@@ -225,7 +235,7 @@ export function generateLayout1HTML(
       <hr class="divider">
       
       <div class="info-row">
-        <span>${sale.customerCode ? sale.customerCode : ''} ${sale.customerName || 'Guest'}${(sale as any).isTemporaryInfo ? ' *' : ''}</span>
+        <span>${sale.customerCode ? sale.customerCode : ''} ${resolveCustomerName(sale, lang)}${(sale as any).isTemporaryInfo ? ' *' : ''}</span>
         <span>#${sale.dailyOrderNumber || 1}</span>
       </div>
       
@@ -236,7 +246,7 @@ export function generateLayout1HTML(
       
       <hr class="divider">
       <div style="text-align: center; margin: 5px 0;">
-        ${sale.saleType === 'delivery' ? 'DELIVERY' : 'WALK-IN'}
+        ${sale.saleType === 'delivery' ? (lang === 'AR' ? 'توصيل' : 'DELIVERY') : lang === 'AR' ? 'بيع مباشر' : 'WALK-IN'}
       </div>
       ${
         sale.saleType === 'delivery' &&
@@ -256,8 +266,7 @@ export function generateLayout1HTML(
         <tbody>
           ${(sale.items || [])
             .map((item) => {
-              const effectivePrice =
-                item.publicPrice;
+              const effectivePrice = item.publicPrice;
               const _lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
 
               return `
@@ -286,23 +295,14 @@ export function generateLayout1HTML(
       
       <div class="totals">
         <div class="total-row">
-          <span>SUBTOTAL</span>
+          <span>${lang === 'AR' ? 'المجموع الفرعي' : 'SUBTOTAL'}</span>
           <span>${(sale.subtotal || 0).toFixed(2)}</span>
         </div>
-        ${
-          sale.globalDiscount
-            ? `
-        <div class="total-row">
-          <span>DISCOUNT (${sale.globalDiscount}%)</span>
-          <span>-${(((sale.subtotal || 0) * sale.globalDiscount) / 100).toFixed(2)}</span>
-        </div>`
-            : ''
-        }
         ${
           sale.deliveryFee && sale.deliveryFee > 0
             ? `
         <div class="total-row">
-          <span>DELIVERY</span>
+          <span>${lang === 'AR' ? 'خدمة التوصيل' : 'DELIVERY'}</span>
           <span>${sale.deliveryFee.toFixed(2)}</span>
         </div>`
             : ''
@@ -311,24 +311,24 @@ export function generateLayout1HTML(
           sale.tax && sale.tax > 0
             ? `
         <div class="total-row">
-          <span>${lang === 'AR' ? 'ÃƒËœÃ‚Â§Ãƒâ„¢Ã¢â‚¬Å¾ÃƒËœÃ‚Â¶ÃƒËœÃ‚Â±Ãƒâ„¢Ã…Â ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â©' : 'TAX'}</span>
+          <span>${lang === 'AR' ? 'الضريبة' : 'TAX'}</span>
           <span>${sale.tax.toFixed(2)}</span>
         </div>`
             : ''
         }
         <div class="total-row">
-          <span>PAYMENT (${(sale.paymentMethod || 'CASH').toUpperCase()})</span>
+          <span>${lang === 'AR' ? 'الدفع' : 'PAYMENT'} (${(sale.paymentMethod || 'CASH').toUpperCase() === 'VISA' ? (lang === 'AR' ? 'فيزا' : 'VISA') : lang === 'AR' ? 'نقدي' : 'CASH'})</span>
           <span>${sale.total.toFixed(2)}</span>
         </div>
         <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 2px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
-          <span>TOTAL</span>
-          <span>${sale.total.toFixed(2)} EGP</span>
+          <span>${lang === 'AR' ? 'الإجمالي' : 'TOTAL'}</span>
+          <span>${sale.total.toFixed(2)} ${lang === 'AR' ? 'ج.م' : 'EGP'}</span>
         </div>
         ${
           sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
             ? `
         <div style="margin-top: 8px; padding-top: 4px;">
-          <div style="text-align: center; margin-bottom: 4px;">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â© RETURNS</div>
+          <div style="text-align: center; margin-bottom: 4px;">↓ ${lang === 'AR' ? 'المرتجعات' : 'RETURNS'}</div>
           ${
             sale.itemReturnedQuantities
               ? Object.entries(sale.itemReturnedQuantities)
@@ -348,9 +348,11 @@ export function generateLayout1HTML(
                       return true;
                     });
                     if (!item) return '';
-                    const effectivePrice =
-                      item.publicPrice;
-                    const returnedAmount = pricing.afterDiscount(effectivePrice * qty, item.discount || 0);
+                    const effectivePrice = item.publicPrice;
+                    const returnedAmount = pricing.afterDiscount(
+                      effectivePrice * qty,
+                      item.discount || 0
+                    );
                     return `
           <div style="display: flex; justify-content: space-between; font-size: 11px; color: #000; margin: 2px 0;">
             <span>${item.name} x${qty}</span>
@@ -361,11 +363,11 @@ export function generateLayout1HTML(
               : ''
           }
           <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 4px;">
-            <span>RETURNED TOTAL</span>
+            <span>${lang === 'AR' ? 'إجمالي المرتجع' : 'RETURNED TOTAL'}</span>
             <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
           </div>
           <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 2px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
-            <span>NET TOTAL</span>
+            <span>${lang === 'AR' ? 'الصافي' : 'NET TOTAL'}</span>
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>
@@ -471,7 +473,6 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
     tax: sale.tax || 0,
     deliveryFee: sale.deliveryFee || 0,
     netTotal: sale.netTotal !== undefined ? sale.netTotal : sale.total || 0,
-    globalDiscount: sale.globalDiscount || 0,
   } as Sale;
 
   if (opts.receiptLayout === 'layout-2') return generateLayout2HTML(safeSale, opts);

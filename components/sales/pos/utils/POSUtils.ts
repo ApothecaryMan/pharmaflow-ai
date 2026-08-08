@@ -50,7 +50,6 @@ export interface SalePayloadParams {
   paymentMethod: 'cash' | 'visa';
   saleType: 'walk-in' | 'delivery';
   deliveryFee: number;
-  globalDiscount: number;
   subtotal: number;
   total: number;
   branchId: string;
@@ -70,7 +69,6 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     paymentMethod,
     saleType,
     deliveryFee,
-    globalDiscount,
     subtotal,
     total,
     language = 'EN',
@@ -85,7 +83,16 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     date: date.toISOString(),
     items,
     branchId,
-    customerName: customerName || customer?.name || 'Guest Customer',
+    customerName:
+      customerName ||
+      customer?.name ||
+      (saleType === 'delivery'
+        ? language === 'AR'
+          ? 'عميل توصيل'
+          : 'Delivery Customer'
+        : language === 'AR'
+          ? 'عميل نقدي'
+          : 'Cash Customer'),
     customerCode: customerCode || customer?.code || undefined,
     customerPhone: customer?.phone,
     customerAddress: formatFullAddress(customer, language),
@@ -93,7 +100,6 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     paymentMethod,
     saleType,
     deliveryFee,
-    globalDiscount,
     subtotal,
     total,
     deliveryEmployeeId: deliveryEmployeeId || undefined,
