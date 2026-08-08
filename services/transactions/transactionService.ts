@@ -42,7 +42,6 @@ interface CheckoutData {
   status?: string;
   total: number;
   subtotal: number;
-  globalDiscount: number;
   deliveryFee?: number;
 }
 
@@ -63,7 +62,6 @@ export const transactionService = {
       saleType?: 'walk-in' | 'delivery';
       total: number;
       subtotal: number;
-      globalDiscount: number;
       deliveryFee?: number;
     },
     _inventory: Drug[], // Kept for signature compatibility, unused now
@@ -138,7 +136,6 @@ export const transactionService = {
       saleType: saleData.saleType || 'walk-in',
       status: saleData.status || 'completed',
       deliveryFee: saleData.deliveryFee || 0,
-      globalDiscount: saleData.globalDiscount || 0,
       total: saleData.total,
       subtotal: saleData.subtotal,
     };
@@ -197,7 +194,6 @@ export const transactionService = {
         performerName: context.performerName,
         total: updates.total ?? sale.total,
         subtotal: updates.subtotal ?? sale.subtotal,
-        globalDiscount: updates.globalDiscount ?? sale.globalDiscount,
         items: (updates.items || sale.items).map((item) => ({
           id: item.id,
           name: item.name,
@@ -299,6 +295,24 @@ export const transactionService = {
   ): Promise<TransactionResult<Purchase>> {
     const undoManager = new UndoManager();
     try {
+      // 0. Preflight cash: abort BEFORE create mints a serial if the drawer
+      //    lacks the cash, so failed payments don't burn PU sequence numbers.
+      const cashToPay =
+        purchase.paymentMethod === 'cash'
+          ? purchase.paidNow ?? purchase.totalCost ?? 0
+          : purchase.paidNow ?? 0;
+      if (cashToPay > 0 && context.shiftId) {
+        const { data: check, error: checkErr } =
+          await transactionRepository.checkShiftCashAvailable(context.shiftId, cashToPay);
+        if (checkErr) throw new Error(checkErr.message);
+        if (check && check.sufficient === false) {
+          const available = check.available ?? 0;
+          throw new Error(
+            `Insufficient balance: Cannot withdraw more than available cash above base (${available})`
+          );
+        }
+      }
+
       // 1. Create the purchase record with "Purchaser" info
       const newPurchase = await purchaseService.create(
         {

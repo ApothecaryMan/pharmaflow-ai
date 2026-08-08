@@ -40,7 +40,6 @@ interface CheckoutPayload {
   saleType: string;
   status: string;
   deliveryFee: number;
-  globalDiscount: number;
   total: number;
   subtotal: number;
 }
@@ -61,7 +60,6 @@ interface OrderModificationPayload {
   performerName: string;
   total: number;
   subtotal: number;
-  globalDiscount: number;
   items: {
     id: string;
     name: string;
@@ -98,6 +96,13 @@ interface FinalizeDeliveryPayload {
   performerName: string;
 }
 
+interface ShiftCashCheckResult {
+  success?: boolean;
+  error?: string;
+  available?: number;
+  sufficient?: boolean;
+}
+
 export const transactionRepository = {
   async processCheckout(payload: CheckoutPayload): Promise<TransactionRpcResult> {
     return supabase.rpc('process_checkout', { p_payload: payload });
@@ -122,5 +127,15 @@ export const transactionRepository = {
   async deletePurchase(id: string): Promise<void> {
     const { error } = await supabase.from('purchases').delete().eq('id', id);
     if (error) throw error;
+  },
+
+  async checkShiftCashAvailable(
+    shiftId: string,
+    requireAmount: number
+  ): Promise<{ data: ShiftCashCheckResult | null; error: PostgrestError | null }> {
+    return supabase.rpc('check_shift_cash_available', {
+      p_shift_id: shiftId,
+      p_require_amount: requireAmount,
+    });
   },
 };
