@@ -109,7 +109,6 @@ function makeSaleData(overrides?: Partial<SaleData>): SaleData {
     total: 100,
     customerName: 'Guest',
     paymentMethod: 'cash',
-    globalDiscount: 0,
     subtotal: 100,
     ...overrides,
   };

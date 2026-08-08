@@ -240,7 +240,15 @@ export const useCashRegister = ({
       .filter(
         (s) => new Date(s.date).getTime() >= shiftStart && new Date(s.date).getTime() <= shiftEnd
       )
-      .reduce((sum, s) => sum + (s.globalDiscount || 0), 0);
+      .reduce(
+        (sum, s) =>
+          sum +
+          (s.items || []).reduce(
+            (lineSum, i) => lineSum + (i.publicPrice * i.quantity * (i.discount || 0)) / 100,
+            0
+          ),
+        0
+      );
 
     const shiftDurationMinutes = Math.round((shiftEnd - shiftStart) / 60000);
 

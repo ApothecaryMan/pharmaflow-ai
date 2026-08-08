@@ -135,8 +135,6 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     cart,
     setCart: _setCart,
     mergedCartItems,
-    globalDiscount,
-    setGlobalDiscount,
     addToCart,
     addGroupToCart,
     removeFromCart,
@@ -241,14 +239,14 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
   }, [mergedCartItems, highlightedItemId]);
 
   const { grossSubtotal, cartTotal, subtotal, taxAmount } = useMemo(() => {
-    const totals = pricingService.calculateOrderTotals(cart, globalDiscount || 0);
+    const totals = pricingService.calculateOrderTotals(cart);
     return {
       grossSubtotal: totals.grossSubtotal,
       cartTotal: totals.finalTotal,
       subtotal: totals.grossSubtotal,
       taxAmount: totals.taxAmount,
     };
-  }, [cart, globalDiscount]);
+  }, [cart]);
 
   const infra = useHandlerInfrastructure();
   const { handleCompleteSale, handleUpdateSale } = useSalesHandlers({
@@ -305,7 +303,6 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
     t,
     cartTotal,
     subtotal,
-    globalDiscount,
     playSuccess,
     activeBranchId,
     sales: sales || [],
@@ -1277,14 +1274,12 @@ export const POS: React.FC<POSProps> = ({ color, t, language = 'EN' }) => {
           removeFromCart={removeFromCart}
           toggleUnitMode={toggleUnitMode}
           updateItemDiscount={updateItemDiscount}
-          setGlobalDiscount={setGlobalDiscount}
           updateQuantity={updateQuantity}
           addToCart={addToCart}
           removeDrugFromCart={removeDrugFromCart}
           batchesMap={batchesMap}
           switchBatchWithAutoSplit={switchBatchWithAutoSplit}
           currentLang={currentLang}
-          globalDiscount={globalDiscount}
           setSearch={setSearch}
           searchInputRef={searchInputRef}
           grossSubtotal={grossSubtotal}

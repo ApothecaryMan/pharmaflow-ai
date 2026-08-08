@@ -265,13 +265,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   const handleSaveGuestInfo = useCallback(() => {
     if (orderToEditGuestId) {
       onUpdateSale(orderToEditGuestId, {
-        customerName: tempGuestName || t.guestCustomer || 'Guest Customer',
+        customerName: tempGuestName || t.deliveryCustomer || 'Delivery Customer',
         customerStreetAddress: tempGuestAddress,
         isTemporaryInfo: true, // Special flag for visual marking
       } as any);
       setOrderToEditGuestId(null);
     }
-  }, [orderToEditGuestId, tempGuestName, tempGuestAddress, onUpdateSale, t.guestCustomer]);
+  }, [orderToEditGuestId, tempGuestName, tempGuestAddress, onUpdateSale, t.deliveryCustomer]);
 
   // Check if order can be edited (only pending/active, not completed)
   const canEdit = useMemo(() => {
@@ -576,10 +576,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       }
 
       // Step 1: Calculate totals using unified pricing service
-      const totals = pricingService.calculateOrderTotals(
-        updatedItems,
-        selectedSale.globalDiscount || 0
-      );
+      const totals = pricingService.calculateOrderTotals(updatedItems);
 
       const subtotal = totals.netSubtotal;
       const finalTotal = money.add(totals.finalTotal, selectedSale.deliveryFee || 0);
@@ -709,7 +706,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         meta: { align: 'start' },
         cell: (info) => (
           <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
-            {info.getValue() as string || '—'}
+            {(info.getValue() as string) || '—'}
           </span>
         ),
       }),
@@ -745,7 +742,17 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   onViewCustomerHistory(customer);
                 }
               }}
-              onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onViewCustomerHistory(customer); } } : undefined}
+              onKeyDown={
+                isClickable
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onViewCustomerHistory(customer);
+                      }
+                    }
+                  : undefined
+              }
               className={`font-mono font-bold text-sm select-none ${
                 isClickable
                   ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95'
@@ -770,8 +777,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const _hasTempInfo = (s as any).isTemporaryInfo;
           // Support both English and Arabic identifiers for Guest Customer
           const isGuestName =
-            name === 'Guest Customer' || name === 'عميل غير مسجل' || name === t.guestCustomer;
-          const displayName = isGuestName ? t.guestCustomer || name : name;
+            name === 'Guest Customer' ||
+            name === 'عميل غير مسجل' ||
+            name === t.guestCustomer ||
+            name === t.deliveryCustomer ||
+            name === 'Delivery Customer' ||
+            name === 'عميل توصيل';
+          const displayName = isGuestName ? t.deliveryCustomer || name : name;
 
           return (
             <div className='flex items-center gap-1 group'>
@@ -786,7 +798,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     const isGenericGuest =
                       s.customerName === 'Guest Customer' ||
                       s.customerName === 'عميل غير مسجل' ||
-                      s.customerName === t.guestCustomer;
+                      s.customerName === t.guestCustomer ||
+                      s.customerName === t.deliveryCustomer;
                     const name = isGenericGuest ? '' : s.customerName;
                     const address = s.customerStreetAddress || '';
                     setTempGuestName(name);
@@ -846,11 +859,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               >
                 {formatCurrency(info.getValue())}
               </span>
-              {(info.row.original.globalDiscount || 0) > 0 && (
-                <span className='text-[10px] text-red-500 font-medium'>
-                  -{info.row.original.globalDiscount}%
-                </span>
-              )}
             </div>
           );
         },
@@ -865,7 +873,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const isSelectDisabled = s.status === 'completed' || s.status === 'cancelled';
 
           return (
-            <div role="button" tabIndex={0} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}>
+            <div
+              role='button'
+              tabIndex={0}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+              }}
+            >
               <DriverSelect
                 driverId={info.getValue()}
                 drivers={deliveryDrivers}
@@ -891,11 +906,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           if (!hasOpenShift && s.status !== 'completed' && s.status !== 'cancelled') {
             return (
               <div
-                role="button"
+                role='button'
                 tabIndex={0}
                 className='flex items-center justify-end h-full'
                 onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+                }}
               >
                 <ShiftWarning t={t} compact={true} />
               </div>
@@ -904,11 +921,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
           return (
             <div
-              role="button"
+              role='button'
               tabIndex={0}
               className='flex items-center justify-end gap-1.5'
               onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+              }}
             >
               {/* Slot 1: Cancel Button (Fixed Width) */}
               <div className='w-8 flex justify-center shrink-0'>
@@ -1297,7 +1316,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                         // Display Price Calculation
                         const unitsPerPack = common.unitsPerPack || 1;
                         const packPrice = common.basePackPrice ?? common.publicPrice;
-                        const unitPrice = common.unitPrice ?? (packPrice / unitsPerPack);
+                        const unitPrice = common.unitPrice ?? packPrice / unitsPerPack;
                         const totalPrice = money.add(
                           money.multiply(packPrice, packQty, 0),
                           money.multiply(unitPrice, unitQty, 0)
@@ -1615,28 +1634,30 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                           </span>
                                         </div>
                                         <div className='flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 flex-wrap'>
-                                          {// biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
-                                          record.modifications.map((m, mIdx) => {
-                                            const drug = inventory.find((d) => d.id === m.itemId);
-                                            const displayName = getDisplayName(
-                                              {
-                                                name: m.itemName,
-                                                dosageForm: m.dosageForm || drug?.dosageForm,
-                                              },
-                                              textTransform
-                                            );
-                                            return (
-                                              <span
-                                                key={mIdx}
-                                                className='whitespace-nowrap flex items-center'
-                                              >
-                                                {displayName}
-                                                {mIdx < record.modifications.length - 1 && (
-                                                  <span className='mx-1 opacity-50'>|</span>
-                                                )}
-                                              </span>
-                                            );
-                                          })}
+                                          {
+                                            // biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
+                                            record.modifications.map((m, mIdx) => {
+                                              const drug = inventory.find((d) => d.id === m.itemId);
+                                              const displayName = getDisplayName(
+                                                {
+                                                  name: m.itemName,
+                                                  dosageForm: m.dosageForm || drug?.dosageForm,
+                                                },
+                                                textTransform
+                                              );
+                                              return (
+                                                <span
+                                                  key={mIdx}
+                                                  className='whitespace-nowrap flex items-center'
+                                                >
+                                                  {displayName}
+                                                  {mIdx < record.modifications.length - 1 && (
+                                                    <span className='mx-1 opacity-50'>|</span>
+                                                  )}
+                                                </span>
+                                              );
+                                            })
+                                          }
                                         </div>
                                       </div>
 
@@ -1733,90 +1754,92 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       </div>
 
                                       <div className='space-y-1'>
-                                        {// biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
-                                        record.modifications.map((mod, modIdx) => {
-                                          const isIncrease =
-                                            (mod.newQuantity || 0) > (mod.previousQuantity || 0);
-                                          const isDeletion = mod.type === 'item_removed';
-                                          const isDiscount = mod.type === 'discount_update';
+                                        {
+                                          // biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
+                                          record.modifications.map((mod, modIdx) => {
+                                            const isIncrease =
+                                              (mod.newQuantity || 0) > (mod.previousQuantity || 0);
+                                            const isDeletion = mod.type === 'item_removed';
+                                            const isDiscount = mod.type === 'discount_update';
 
-                                          return (
-                                            <div
-                                              key={modIdx}
-                                              className='flex items-center gap-3 py-1'
-                                            >
-                                              <span
-                                                className={`shrink-0 ${
-                                                  isDeletion
-                                                    ? 'text-red-600 dark:text-red-400'
-                                                    : isDiscount
-                                                      ? 'text-blue-600 dark:text-blue-400'
-                                                      : isIncrease
-                                                        ? 'text-green-600 dark:text-green-400'
-                                                        : 'text-orange-600 dark:text-orange-400'
-                                                }`}
+                                            return (
+                                              <div
+                                                key={modIdx}
+                                                className='flex items-center gap-3 py-1'
                                               >
-                                                <span className='material-symbols-rounded text-lg'>
-                                                  {isDeletion ? 'delete' : 'edit_square'}
+                                                <span
+                                                  className={`shrink-0 ${
+                                                    isDeletion
+                                                      ? 'text-red-600 dark:text-red-400'
+                                                      : isDiscount
+                                                        ? 'text-blue-600 dark:text-blue-400'
+                                                        : isIncrease
+                                                          ? 'text-green-600 dark:text-green-400'
+                                                          : 'text-orange-600 dark:text-orange-400'
+                                                  }`}
+                                                >
+                                                  <span className='material-symbols-rounded text-lg'>
+                                                    {isDeletion ? 'delete' : 'edit_square'}
+                                                  </span>
                                                 </span>
-                                              </span>
 
-                                              <div className='flex items-center justify-between flex-1 min-w-0 gap-4'>
-                                                <span className='font-bold text-gray-900 dark:text-gray-100 text-sm truncate'>
-                                                  {(() => {
-                                                    const drug = inventory.find(
-                                                      (d) => d.id === mod.itemId
-                                                    );
-                                                    return getDisplayName(
-                                                      {
-                                                        name: mod.itemName,
-                                                        dosageForm:
-                                                          mod.dosageForm || drug?.dosageForm,
-                                                      },
-                                                      textTransform
-                                                    );
-                                                  })()}
-                                                </span>
-                                                <div className='flex items-center gap-2 ml-8 shrink-0'>
-                                                  <div
-                                                    className={`flex items-center gap-1.5 font-bold text-xs ${
-                                                      isDeletion
-                                                        ? 'text-red-600 dark:text-red-400'
-                                                        : isDiscount
-                                                          ? 'text-blue-600 dark:text-blue-400'
-                                                          : isIncrease
-                                                            ? 'text-green-600 dark:text-green-400'
-                                                            : 'text-orange-600 dark:text-orange-400'
-                                                    }`}
-                                                  >
-                                                    {isDiscount ? (
-                                                      <>
-                                                        <span>{mod.previousDiscount}%</span>
-                                                        <span className='material-symbols-rounded text-sm opacity-50'>
-                                                          arrow_forward
+                                                <div className='flex items-center justify-between flex-1 min-w-0 gap-4'>
+                                                  <span className='font-bold text-gray-900 dark:text-gray-100 text-sm truncate'>
+                                                    {(() => {
+                                                      const drug = inventory.find(
+                                                        (d) => d.id === mod.itemId
+                                                      );
+                                                      return getDisplayName(
+                                                        {
+                                                          name: mod.itemName,
+                                                          dosageForm:
+                                                            mod.dosageForm || drug?.dosageForm,
+                                                        },
+                                                        textTransform
+                                                      );
+                                                    })()}
+                                                  </span>
+                                                  <div className='flex items-center gap-2 ml-8 shrink-0'>
+                                                    <div
+                                                      className={`flex items-center gap-1.5 font-bold text-xs ${
+                                                        isDeletion
+                                                          ? 'text-red-600 dark:text-red-400'
+                                                          : isDiscount
+                                                            ? 'text-blue-600 dark:text-blue-400'
+                                                            : isIncrease
+                                                              ? 'text-green-600 dark:text-green-400'
+                                                              : 'text-orange-600 dark:text-orange-400'
+                                                      }`}
+                                                    >
+                                                      {isDiscount ? (
+                                                        <>
+                                                          <span>{mod.previousDiscount}%</span>
+                                                          <span className='material-symbols-rounded text-sm opacity-50'>
+                                                            arrow_forward
+                                                          </span>
+                                                          <span>{mod.newDiscount}%</span>
+                                                        </>
+                                                      ) : isDeletion ? (
+                                                        <span className='text-red-500 font-bold text-xs'>
+                                                          {t.deleted || 'Deleted'}{' '}
+                                                          {mod.previousQuantity}
                                                         </span>
-                                                        <span>{mod.newDiscount}%</span>
-                                                      </>
-                                                    ) : isDeletion ? (
-                                                      <span className='text-red-500 font-bold text-xs'>
-                                                        {t.deleted || 'Deleted'}{' '}
-                                                        {mod.previousQuantity}
-                                                      </span>
-                                                    ) : (
-                                                      <>
-                                                        <span>{mod.previousQuantity}</span>
-                                                        <span className='material-symbols-rounded text-sm opacity-50'>
-                                                          arrow_forward
-                                                        </span>
-                                                        <span>{mod.newQuantity}</span>
-                                                      </>
-                                                    )}
+                                                      ) : (
+                                                        <>
+                                                          <span>{mod.previousQuantity}</span>
+                                                          <span className='material-symbols-rounded text-sm opacity-50'>
+                                                            arrow_forward
+                                                          </span>
+                                                          <span>{mod.newQuantity}</span>
+                                                        </>
+                                                      )}
+                                                    </div>
                                                   </div>
                                                 </div>
                                               </div>
-                                            </div>
-                                          );
-                                        })}
+                                            );
+                                          })
+                                        }
                                       </div>
                                     </div>
                                   </div>
@@ -2021,7 +2044,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   type='text'
                   value={tempGuestName}
                   onChange={(e) => setTempGuestName(e.target.value)}
-                  placeholder={t.guestCustomer || 'Guest Customer'}
+                  placeholder={t.deliveryCustomer || 'Delivery Customer'}
                   className='!py-1.5'
                   autoFocus
                 />

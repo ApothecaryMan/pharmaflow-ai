@@ -46,24 +46,6 @@ export const usePOSCart = ({
     [activeTabId, updateTab]
   );
 
-  const globalDiscount = activeTab?.discount || 0;
-  const setGlobalDiscount = useCallback(
-    (discount: number) => {
-      if (!permissionsService.can('sale.discount')) {
-        showToastError('Permission Denied: Cannot apply global discount');
-        return;
-      }
-      updateTab(activeTabId, { discount });
-      // BUG-D5: Clear all item-level discounts when setting a global discount
-      if (discount > 0) {
-        setCart((prev: CartItem[]) =>
-          prev.map((item) => (item.discount ? { ...item, discount: 0 } : item))
-        );
-      }
-    },
-    [activeTabId, updateTab, showToastError, setCart]
-  );
-
   // Derived state: Group cart items by Drug ID (Visual Merging)
   const mergedCartItems = useMemo(() => {
     const map = new Map<string, { pack?: CartItem; unit?: CartItem; order: number }>();
@@ -512,8 +494,6 @@ export const usePOSCart = ({
     cart,
     setCart,
     mergedCartItems,
-    globalDiscount,
-    setGlobalDiscount,
     addToCart,
     addGroupToCart,
     removeFromCart,

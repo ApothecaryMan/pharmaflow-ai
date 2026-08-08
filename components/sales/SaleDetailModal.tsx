@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useAuthStore } from '../../stores/authStore';
-import type { Return, Sale, Shift, ProcessReturnPayload } from '../../types';
+import type { ProcessReturnPayload, Return, Sale, Shift } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { money, pricing } from '../../utils/money';
@@ -196,10 +196,15 @@ const ListItem: React.FC<{
           : 'rounded-md';
   return (
     <div
-      role="button"
+      role='button'
       tabIndex={0}
       onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
       className={`flex items-center justify-between py-1.5 px-3 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding} ${className}`}
     >
       {children}
@@ -324,7 +329,10 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   icon: 'person',
                   value: (
                     <div className='flex items-center gap-1.5 truncate'>
-                      <span className='font-bold'>{sale.customerName || 'Guest'}</span>
+                      <span className='font-bold'>
+                        {sale.customerName ||
+                          (sale.saleType === 'delivery' ? t.deliveryCustomer : t.cashCustomer)}
+                      </span>
                       {sale.customerCode && (
                         <>
                           <span className='opacity-30'>•</span>
@@ -339,18 +347,18 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   icon: 'payments',
                   value: sale.paymentMethod === 'visa' ? t.visa : t.cash,
                 },
-              ]// biome-ignore lint/suspicious/noArrayIndexKey: inline config objects have no id
-              .map((item, i, arr) => (
-                <ListItem key={`${item.label}-${i}`} index={i} total={arr.length}>
-                  <div className='flex items-center gap-2 shrink-0'>
-                    <span className='material-symbols-rounded text-base opacity-40'>
-                      {item.icon}
-                    </span>
-                    <span className={labelText}>{item.label}</span>
-                  </div>
-                  <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
-                </ListItem>
-              ))}
+              ] // biome-ignore lint/suspicious/noArrayIndexKey: inline config objects have no id
+                .map((item, i, arr) => (
+                  <ListItem key={`${item.label}-${i}`} index={i} total={arr.length}>
+                    <div className='flex items-center gap-2 shrink-0'>
+                      <span className='material-symbols-rounded text-base opacity-40'>
+                        {item.icon}
+                      </span>
+                      <span className={labelText}>{item.label}</span>
+                    </div>
+                    <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
+                  </ListItem>
+                ))}
             </ListWrapper>
           </div>
 
@@ -361,7 +369,10 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                 {isLoadingDetails ? (
                   <div className='animate-pulse space-y-2 p-2'>
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className='bg-gray-50 dark:bg-white/[0.03] rounded-2xl p-3 border border-gray-100 dark:border-white/5 flex gap-4'>
+                      <div
+                        key={i}
+                        className='bg-gray-50 dark:bg-white/[0.03] rounded-2xl p-3 border border-gray-100 dark:border-white/5 flex gap-4'
+                      >
                         <div className='w-10 h-10 rounded-xl bg-[var(--bg-skeleton)] shrink-0' />
                         <div className='flex-1 space-y-2'>
                           <div className='h-4 bg-[var(--bg-skeleton)] rounded w-1/2' />
@@ -383,7 +394,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                           const drug = inventoryMap.get(rawId);
                           const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
 
-                          const dosageForm = item.dosageForm ?? item.dosage_form ?? drug?.dosageForm;
+                          const dosageForm =
+                            item.dosageForm ?? item.dosage_form ?? drug?.dosageForm;
                           const unitsPerPack =
                             item.unitsPerPack ?? item.units_per_pack ?? drug?.unitsPerPack ?? 1;
                           const publicPrice = item.publicPrice ?? item.public_price ?? 0;
@@ -517,7 +529,9 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                                   )}
                                   {!isFullRet && (
                                     <div className='flex flex-col items-end leading-tight'>
-                                      <span className='font-bold'>{formatCurrency(g.totalPrice)}</span>
+                                      <span className='font-bold'>
+                                        {formatCurrency(g.totalPrice)}
+                                      </span>
                                       {hasDisc && (
                                         <span className='text-[9px] text-gray-400 line-through opacity-60'>
                                           {formatCurrency(g.preDiscountTotal)}
@@ -574,15 +588,17 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                             </span>
                           </div>
                           <div className='flex flex-col gap-1.5'>
-                            {// biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
-                            r.modifications.map((m, mi) => (
-                              <ModificationItem
-                                key={mi}
-                                mod={m}
-                                textTransform={textTransform}
-                                t={t}
-                              />
-                            ))}
+                            {
+                              // biome-ignore lint/suspicious/noArrayIndexKey: modifications have no unique id
+                              r.modifications.map((m, mi) => (
+                                <ModificationItem
+                                  key={mi}
+                                  mod={m}
+                                  textTransform={textTransform}
+                                  t={t}
+                                />
+                              ))
+                            }
                           </div>
                         </ListItem>
                       ))}

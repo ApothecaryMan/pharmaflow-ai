@@ -27,7 +27,6 @@ export interface SortableCartItemProps {
   removeFromCart: (id: string, isUnit: boolean) => void;
   toggleUnitMode: (id: string, currentIsUnit: boolean) => void;
   updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
-  setGlobalDiscount: (discount: number) => void;
   updateQuantity: (id: string, isUnit: boolean, delta: number) => void;
   addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
   removeDrugFromCart: (id: string) => void;
@@ -35,7 +34,6 @@ export interface SortableCartItemProps {
   onSelectBatch: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
   isHighlighted?: boolean;
   currentLang: 'en' | 'ar';
-  globalDiscount?: number;
   onSearchInTable: (term: string) => void;
   isMobile?: boolean;
   isLoading?: boolean;
@@ -54,7 +52,6 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
     removeFromCart,
     toggleUnitMode,
     updateItemDiscount,
-    setGlobalDiscount,
     updateQuantity,
     addToCart,
     removeDrugFromCart,
@@ -62,7 +59,6 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
     onSelectBatch,
     isHighlighted,
     currentLang,
-    globalDiscount,
     onSearchInTable,
     isMobile,
     isLoading,
@@ -198,7 +194,6 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
                   alert(`Discount cannot exceed ${maxDisc}%`);
                 } else {
                   updateItemDiscount(item.id, !!item.isUnit, val);
-                  if (val > 0) setGlobalDiscount(0);
                 }
               }
             }
@@ -288,9 +283,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
               item={item}
               packItem={packItem}
               unitItem={unitItem}
-              globalDiscount={globalDiscount}
               updateItemDiscount={updateItemDiscount}
-              setGlobalDiscount={setGlobalDiscount}
             />
 
             {/* Dual Qty Control */}

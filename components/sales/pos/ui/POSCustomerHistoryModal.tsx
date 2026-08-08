@@ -332,14 +332,6 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
 
                           {/* Invoice Summary Footer */}
                           <div className='pt-3 flex flex-col gap-1.5'>
-                            {sale.globalDiscount > 0 && (
-                              <div className='flex justify-between text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-1'>
-                                <span>{t.globalDiscount || 'Global Discount'}</span>
-                                <span className='tabular-nums'>
-                                  -{formatCurrency(sale.globalDiscount)}
-                                </span>
-                              </div>
-                            )}
                             <div dir={language === 'AR' ? 'rtl' : 'ltr'} className='flex justify-between items-center px-4 py-2 mt-1 bg-primary-700 dark:bg-primary-200 rounded-full shadow-md'>
                               <span className='text-xs font-black text-primary-100 dark:text-primary-800 uppercase tracking-widest leading-none'>
                                 {t.total || 'Total'}

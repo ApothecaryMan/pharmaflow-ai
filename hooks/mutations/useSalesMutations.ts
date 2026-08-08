@@ -21,7 +21,6 @@ export function useCompleteSale() {
         saleType?: 'walk-in' | 'delivery';
         total: number;
         subtotal: number;
-        globalDiscount: number;
       };
       context: ActionContext;
     }) => transactionService.processCheckout(saleData, [], context),

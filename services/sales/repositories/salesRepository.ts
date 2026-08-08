@@ -46,7 +46,6 @@ const SALE_LIST_COLUMNS = [
   'customer_address',
   'customer_street_address',
   'subtotal',
-  'global_discount',
   'tax',
   'total',
   'payment_method',
@@ -103,7 +102,6 @@ export const salesRepository = {
         })),
       })),
       subtotal: money.fromSmallestUnit(money.toSmallestUnit(db.subtotal || 0)),
-      globalDiscount: db.global_discount || 0,
       tax: money.fromSmallestUnit(money.toSmallestUnit(db.tax || 0)),
       total: money.fromSmallestUnit(money.toSmallestUnit(db.total || 0)),
       paymentMethod: db.payment_method,
@@ -141,7 +139,6 @@ export const salesRepository = {
     if (s.customerStreetAddress !== undefined) db.customer_street_address = s.customerStreetAddress;
     if (s.subtotal !== undefined)
       db.subtotal = money.fromSmallestUnit(money.toSmallestUnit(s.subtotal || 0));
-    if (s.globalDiscount !== undefined) db.global_discount = s.globalDiscount;
     if (s.tax !== undefined) db.tax = money.fromSmallestUnit(money.toSmallestUnit(s.tax || 0));
     if (s.total !== undefined)
       db.total = money.fromSmallestUnit(money.toSmallestUnit(s.total || 0));

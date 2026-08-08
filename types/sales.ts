@@ -179,11 +179,6 @@ export interface Sale {
   paymentMethod: 'cash' | 'visa' | 'credit';
   saleType?: 'walk-in' | 'delivery';
   deliveryFee?: number;
-  /**
-   * @computed Total discount calculated as sum of all item discounts.
-   * Formula: sum(item.publicPrice * item.quantity * (item.discount/100)) for all items
-   */
-  globalDiscount?: number;
   /** Optional notes */
   notes?: string;
   /** Optimistic lock version */

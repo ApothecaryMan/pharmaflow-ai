@@ -74,9 +74,7 @@ export interface CartItemDiscountControlProps {
   item: CartItem;
   packItem?: CartItem;
   unitItem?: CartItem;
-  globalDiscount?: number;
   updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
-  setGlobalDiscount: (discount: number) => void;
 }
 // ==========================================
 // 2. ITEM DISCOUNT CONTROL COMPONENT
@@ -85,9 +83,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
   item,
   packItem,
   unitItem,
-  globalDiscount,
   updateItemDiscount,
-  setGlobalDiscount,
 }) => {
   const effectiveMax = pricingService.calculateMaxDiscount(
     item.costPrice || 0,
@@ -97,7 +93,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
 
   const margin = pricing.actualMargin(item.costPrice || 0, item.publicPrice || 0);
 
-  if ((globalDiscount && globalDiscount > 0) || !permissionsService.can('sale.discount')) {
+  if (!permissionsService.can('sale.discount')) {
     return null;
   }
 
@@ -124,7 +120,6 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
           const newVal = currentDiscount === 0 ? effectiveMax : 0;
           if (packItem) updateItemDiscount(packItem.id, false, newVal);
           if (unitItem) updateItemDiscount(unitItem.id, true, newVal);
-          if (newVal > 0) setGlobalDiscount(0);
         }}
         onPointerDown={(e) => e.stopPropagation()}
         className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
@@ -151,7 +146,6 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
 
           if (packItem) updateItemDiscount(packItem.id, false, finalVal);
           if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
-          if (finalVal > 0) setGlobalDiscount(0);
         }}
         className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none leading-none ${
           hasDiscount

@@ -120,14 +120,12 @@ export interface POSCartSidebarProps {
   removeFromCart: any;
   toggleUnitMode: any;
   updateItemDiscount: any;
-  setGlobalDiscount: any;
   updateQuantity: any;
   addToCart: any;
   removeDrugFromCart: any;
   batchesMap: Map<string, Drug[]>;
   switchBatchWithAutoSplit: any;
   currentLang: string;
-  globalDiscount: number;
   setSearch: (term: string) => void;
   searchInputRef: React.RefObject<HTMLInputElement>;
   grossSubtotal: number;
@@ -175,14 +173,12 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
     removeFromCart,
     toggleUnitMode,
     updateItemDiscount,
-    setGlobalDiscount,
     updateQuantity,
     addToCart,
     removeDrugFromCart,
     batchesMap,
     switchBatchWithAutoSplit,
     currentLang,
-    globalDiscount,
     setSearch,
     searchInputRef,
     grossSubtotal,
@@ -492,7 +488,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                     removeFromCart={() => {}}
                     toggleUnitMode={() => {}}
                     updateItemDiscount={() => {}}
-                    setGlobalDiscount={() => {}}
                     updateQuantity={() => {}}
                     addToCart={() => {}}
                     removeDrugFromCart={() => {}}
@@ -550,7 +545,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                             removeFromCart={removeFromCart}
                             toggleUnitMode={toggleUnitMode}
                             updateItemDiscount={updateItemDiscount}
-                            setGlobalDiscount={setGlobalDiscount}
                             updateQuantity={updateQuantity}
                             addToCart={addToCart}
                             removeDrugFromCart={removeDrugFromCart}
@@ -560,7 +554,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                             onSelectBatch={switchBatchWithAutoSplit}
                             isHighlighted={itemId === highlightedItemId}
                             currentLang={currentLang as 'en' | 'ar'}
-                            globalDiscount={globalDiscount}
                             onSearchInTable={handleSearchInTable}
                             isMobile={isMobile}
                             cart={cart}

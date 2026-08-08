@@ -147,7 +147,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       },
       {
         id: 'customerInfo',
-        accessorFn: (row) => row.customerName || 'Guest',
+        accessorFn: (row) =>
+          row.customerName || (row.saleType === 'delivery' ? t.deliveryCustomer : t.cashCustomer),
         header: t.headers.customer,
         cell: ({ getValue }) => (
           <div className='font-medium text-gray-900 dark:text-gray-100 text-sm'>
@@ -196,7 +197,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
           // Build tooltip text for detailed breakdown
           const isAr = language === 'AR';
-          const discountVal = (sale.subtotal || 0) * ((sale.globalDiscount || 0) / 100);
           const returnedAmount = sale.total - (sale.netTotal || 0);
 
           const itemsText = sale.items
@@ -212,8 +212,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             '-------------------',
             sale.subtotal &&
               `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
-            sale.globalDiscount &&
-              `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
             sale.tax && `${isAr ? 'الضريبة' : 'Tax'}: ${formatCurrency(sale.tax)}`,
             sale.deliveryFee &&
               `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
@@ -461,7 +459,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     pageSize,
     serverFilters
   );
-  
+
   const pagedSales = pageData?.rows || [];
   const _totalSales = pageData?.total || 0;
 
@@ -516,7 +514,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       'Payment Method',
       'Items Count',
       'Subtotal',
-      'Global Discount (%)',
       'Total',
     ];
     const escapeCsv = (str: string | number | undefined) =>
@@ -525,12 +522,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     const rows = pagedSales.map((sale) => [
       sale.id,
       new Date(sale.date).toLocaleString(locale, { numberingSystem: 'latn' }),
-      sale.customerName || 'Guest',
+      sale.customerName || (sale.saleType === 'delivery' ? 'Delivery Customer' : 'Cash Customer'),
       sale.customerCode || '-',
       sale.paymentMethod === 'visa' ? 'Visa' : 'Cash',
       sale.items.length,
       money.divide(sale.subtotal || 0, 1).toFixed(2),
-      sale.globalDiscount || 0,
       money.divide(sale.total, 1).toFixed(2),
     ]);
 
@@ -564,7 +560,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         shiftId: currentShift?.id,
         timestamp: new Date().toISOString(),
       };
-      
+
       await infra.processSalesReturn(returnData, selectedSale, context);
 
       // Fetch the updated sale from the server to get the fresh modificationHistory and net totals

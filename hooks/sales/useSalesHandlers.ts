@@ -39,7 +39,6 @@ export interface SaleData {
   paymentMethod: 'cash' | 'visa';
   saleType?: 'walk-in' | 'delivery';
   deliveryFee?: number;
-  globalDiscount: number;
   subtotal: number;
   total: number;
   processingTimeMinutes?: number;

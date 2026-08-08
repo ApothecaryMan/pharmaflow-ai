@@ -25,7 +25,6 @@ interface UsePOSCheckoutProps {
   t: Translations;
   cartTotal: number;
   subtotal: number;
-  globalDiscount: number;
   activeBranchId: string;
   sales: Sale[];
 }
@@ -48,7 +47,6 @@ export const usePOSCheckout = ({
   t,
   cartTotal,
   subtotal,
-  globalDiscount,
   activeBranchId,
   sales,
 }: UsePOSCheckoutProps) => {
@@ -136,7 +134,6 @@ export const usePOSCheckout = ({
           paymentMethod,
           saleType,
           deliveryFee: currentDeliveryFee,
-          globalDiscount,
           subtotal,
           total: money.add(cartTotal, currentDeliveryFee),
           language: (language as 'EN' | 'AR') || 'EN',
@@ -218,7 +215,6 @@ export const usePOSCheckout = ({
       selectedCustomer,
       language,
       paymentMethod,
-      globalDiscount,
       subtotal,
       getVerifiedDate,
       removeTab,
